@@ -1623,25 +1623,36 @@ public class MainActivity extends AppCompatActivity {
     private void showServerConfigDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("Backend Server URL (Developer Mode)");
-        builder.setMessage("Configure the base URL of your hosted backend server:\n(Default: " + PreferencesHelper.DEFAULT_API_URL + ")");
+        builder.setMessage("Configure the base URL of your hosted backend server:\n• Local Dev: " + PreferencesHelper.EMULATOR_API_URL + "\n• Production: " + PreferencesHelper.DEFAULT_API_URL);
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        int marginPx = (int) (20 * getResources().getDisplayMetrics().density);
+        container.setPadding(marginPx, (int) (8 * getResources().getDisplayMetrics().density), marginPx, (int) (8 * getResources().getDisplayMetrics().density));
 
         final EditText input = new EditText(this);
         input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
         input.setText(PreferencesHelper.getApiUrl(this));
         input.setSelectAllOnFocus(true);
-
-        FrameLayout container = new FrameLayout(this);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        int marginPx = (int) (20 * getResources().getDisplayMetrics().density);
-        params.leftMargin = marginPx;
-        params.rightMargin = marginPx;
-        params.topMargin = (int) (8 * getResources().getDisplayMetrics().density);
-        params.bottomMargin = (int) (8 * getResources().getDisplayMetrics().density);
-        input.setLayoutParams(params);
         container.addView(input);
+
+        LinearLayout presetsLayout = new LinearLayout(this);
+        presetsLayout.setOrientation(LinearLayout.HORIZONTAL);
+        presetsLayout.setPadding(0, (int) (8 * getResources().getDisplayMetrics().density), 0, 0);
+
+        android.widget.Button btnLocal = new android.widget.Button(this, null, android.R.attr.buttonStyleSmall);
+        btnLocal.setText("Local Dev");
+        btnLocal.setTextSize(11f);
+        btnLocal.setOnClickListener(v -> input.setText(PreferencesHelper.EMULATOR_API_URL));
+        presetsLayout.addView(btnLocal);
+
+        android.widget.Button btnProd = new android.widget.Button(this, null, android.R.attr.buttonStyleSmall);
+        btnProd.setText("Production Render");
+        btnProd.setTextSize(11f);
+        btnProd.setOnClickListener(v -> input.setText(PreferencesHelper.DEFAULT_API_URL));
+        presetsLayout.addView(btnProd);
+
+        container.addView(presetsLayout);
         builder.setView(container);
 
         builder.setPositiveButton("Save & Connect", (dialog, which) -> {

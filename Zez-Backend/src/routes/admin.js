@@ -14,6 +14,15 @@ function safeCompare(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
+function parseIsoDate(val) {
+  if (!val || typeof val !== "string") return null;
+  val = val.trim();
+  if (!val) return null;
+  const ts = Date.parse(val);
+  if (isNaN(ts)) return null;
+  return new Date(ts).toISOString();
+}
+
 function decodeRecord(row) {
   let call = null;
   let decryptionFailed = false;
@@ -291,13 +300,16 @@ router.get("/devices/:deviceId/calls", async (req, res, next) => {
     const conditions = ["device_id = $1"];
     const params = [deviceId];
 
-    if (from) {
-      params.push(from);
+    const fromDate = parseIsoDate(from);
+    const toDate = parseIsoDate(to);
+
+    if (fromDate) {
+      params.push(fromDate);
       conditions.push(`call_timestamp >= $${params.length}::timestamptz`);
     }
 
-    if (to) {
-      params.push(to);
+    if (toDate) {
+      params.push(toDate);
       conditions.push(`call_timestamp <= $${params.length}::timestamptz`);
     }
 
@@ -374,13 +386,16 @@ router.get("/calls", async (req, res, next) => {
       conditions.push(`cl.device_id = $${params.length}`);
     }
 
-    if (from) {
-      params.push(from);
+    const fromDate = parseIsoDate(from);
+    const toDate = parseIsoDate(to);
+
+    if (fromDate) {
+      params.push(fromDate);
       conditions.push(`cl.call_timestamp >= $${params.length}::timestamptz`);
     }
 
-    if (to) {
-      params.push(to);
+    if (toDate) {
+      params.push(toDate);
       conditions.push(`cl.call_timestamp <= $${params.length}::timestamptz`);
     }
 

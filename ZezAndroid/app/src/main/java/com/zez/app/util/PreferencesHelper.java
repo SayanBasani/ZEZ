@@ -74,13 +74,18 @@ public class PreferencesHelper {
     public static String getApiUrl(Context context) {
         String saved = getPrefs(context).getString(KEY_API_URL, null);
         if (saved != null && !saved.trim().isEmpty()) {
-            if ("https://zez-backend.onrender.com".equalsIgnoreCase(saved.trim())
-                    || "http://10.0.2.2:3000".equalsIgnoreCase(saved.trim())) {
+            // Only migrate the old inactive legacy Render URL
+            if ("https://zez-backend.onrender.com".equalsIgnoreCase(saved.trim())) {
                 setApiUrl(context, DEFAULT_API_URL);
                 return DEFAULT_API_URL;
             }
             return saved.trim();
         }
+        // In development emulator, default to local hosted backend
+        if (isEmulator()) {
+            return EMULATOR_API_URL;
+        }
+        // For normal users / physical devices, default to production hosted backend
         String assetUrl = getAssetConfigUrl(context);
         if (assetUrl != null && !assetUrl.trim().isEmpty()) {
             return assetUrl.trim();
