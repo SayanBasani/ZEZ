@@ -1,0 +1,106 @@
+package com.zez.app.receiver;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.util.Log;
+
+import com.zez.app.model.AlarmItem;
+import com.zez.app.service.AlarmRingingService;
+import com.zez.app.util.AlarmHelper;
+
+import java.util.List;
+
+public class AlarmReceiver extends BroadcastReceiver {
+    private static final String TAG = "AlarmReceiver";
+
+    public static final String ACTION_FIRE_ALARM = "com.zez.app.ACTION_FIRE_ALARM";
+    public static final String ACTION_DISMISS_ALARM = "com.zez.app.ACTION_DISMISS_ALARM";
+    public static final String ACTION_SNOOZE_ALARM = "com.zez.app.ACTION_SNOOZE_ALARM";
+
+    public static final String EXTRA_ALARM_ID = "extra_alarm_id";
+    public static final String EXTRA_ALARM_LABEL = "extra_alarm_label";
+    public static final String EXTRA_RINGTONE_URI = "extra_ringtone_uri";
+    public static final String EXTRA_VIBRATE = "extra_vibrate";
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent == null) return;
+        String action = intent.getAction();
+        Log.d(TAG, "AlarmReceiver onReceive action: " + action);
+
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action) ||
+                "android.intent.action.QUICKBOOT_POWERON".equals(action) ||
+                Intent.ACTION_TIME_CHANGED.equals(action) ||
+                Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
+            // Reschedule all active alarms after reboot or time change
+            AlarmHelper.rescheduleAllAlarms(context);
+            return;
+        }
+
+        if (ACTION_FIRE_ALARM.equals(action)) {
+            long alarmId = intent.getLongExtra(EXTRA_ALARM_ID, 0);
+            String label = intent.getStringExtra(EXTRA_ALARM_LABEL);
+            String ringtoneUri = intent.getStringExtra(EXTRA_RINGTONE_URI);
+            boolean vibrate = intent.getBooleanExtra(EXTRA_VIBRATE, true);
+
+            // Start foreground ringing service
+            Intent serviceIntent = new Intent(context, AlarmRingingService.class);
+            serviceIntent.putExtra(EXTRA_ALARM_ID, alarmId);
+            serviceIntent.putExtra(EXTRA_ALARM_LABEL, label);
+            serviceIntent.putExtra(EXTRA_RINGTONE_URI, ringtoneUri);
+            serviceIntent.putExtra(EXTRA_VIBRATE, vibrate);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent);
+            } else {
+                context.startService(serviceIntent);
+            }
+
+            // If non-repeating alarm, disable it in list; if repeating, reschedule for next day
+            List<AlarmItem> alarms = AlarmHelper.getAlarms(context);
+            for (AlarmItem a : alarms) {
+                if (a.id == alarmId) {
+                    boolean hasRepeatingDays = false;
+                    if (a.daysOfWeek != null) {
+                        for (boolean d : a.daysOfWeek) {
+                            if (d) { hasRepeatingDays = true; break; }
+                        }
+                    }
+                    if (!hasRepeatingDays) {
+                        a.isEnabled = false;
+                        AlarmHelper.saveAlarms(context, alarms);
+                    } else {
+                        // Reschedule for next occurrence
+                        AlarmHelper.scheduleAlarm(context, a);
+                    }
+                    break;
+                }
+            }
+        } else if (ACTION_DISMISS_ALARM.equals(action)) {
+            Intent stopIntent = new Intent(context, AlarmRingingService.class);
+            context.stopService(stopIntent);
+        } else if (ACTION_SNOOZE_ALARM.equals(action)) {
+            Intent stopIntent = new Intent(context, AlarmRingingService.class);
+            context.stopService(stopIntent);
+
+            // Re-arm for 10 minutes later
+            long alarmId = intent.getLongExtra(EXTRA_ALARM_ID, 0);
+            AlarmItem temp = new AlarmItem();
+            temp.id = alarmId > 0 ? alarmId : System.currentTimeMillis();
+            temp.label = "Snoozed: " + intent.getStringExtra(EXTRA_ALARM_LABEL);
+            temp.ringtoneUri = intent.getStringExtra(EXTRA_RINGTONE_URI);
+            temp.isVibrate = intent.getBooleanExtra(EXTRA_VIBRATE, true);
+            temp.isEnabled = true;
+            temp.daysOfWeek = null; // one-time
+
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.add(java.util.Calendar.MINUTE, 10);
+            temp.hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
+            temp.minute = cal.get(java.util.Calendar.MINUTE);
+
+            AlarmHelper.scheduleAlarm(context, temp);
+        }
+    }
+}

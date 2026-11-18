@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="6dp">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="@color/theme_surface"
+        android:foreground="?attr/selectableItemBackground">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Album Cover -->
+            <ImageView
+                android:id="@+id/iv_album_cover"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:scaleType="centerCrop"
+                android:contentDescription="Album cover"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintDimensionRatio="1:1" />
+
+            <!-- Special Type Badge / Star Icon -->
+            <ImageView
+                android:id="@+id/iv_special_badge"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_margin="8dp"
+                android:padding="4dp"
+                android:background="@drawable/gradient_bottom_dark"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Overflow Menu Button -->
+            <ImageButton
+                android:id="@+id/btn_album_menu"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_margin="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                android:contentDescription="Album options"
+                app:tint="#FFFFFF"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Bottom gradient scrim for contrast -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:background="@drawable/gradient_bottom_dark"
+                app:layout_constraintStart_toStartOf="@id/iv_album_cover"
+                app:layout_constraintEnd_toEndOf="@id/iv_album_cover"
+                app:layout_constraintBottom_toBottomOf="@id/iv_album_cover" />
+
+            <!-- Item Count pill inside cover -->
+            <TextView
+                android:id="@+id/tv_album_count_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:text="0 items"
+                app:layout_constraintEnd_toEndOf="@id/iv_album_cover"
+                app:layout_constraintBottom_toBottomOf="@id/iv_album_cover" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Album Name & Subtitle Details Below Tile -->
+    <TextView
+        android:id="@+id/tv_album_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="6dp"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/theme_text_primary"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:text="Album" />
+
+    <TextView
+        android:id="@+id/tv_album_count"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:textSize="12sp"
+        android:textColor="@color/theme_text_secondary"
+        android:maxLines="1"
+        android:text="0 items" />
+
+</LinearLayout>
