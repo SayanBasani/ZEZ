@@ -7,7 +7,7 @@ async function deploy() {
   const destDir = path.resolve('src/public/downloads');
   if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
 
-  const destVersioned = path.join(destDir, 'app-release-1.0.11.apk');
+  const destVersioned = path.join(destDir, 'app-release-1.0.12.apk');
   const destLatest = path.join(destDir, 'app-release.apk');
 
   fs.copyFileSync(src, destVersioned);
@@ -23,12 +23,12 @@ async function deploy() {
      VALUES ($1, $2, $3, $4, $5, $6, TRUE, $7) 
      RETURNING *`,
     [
-      '1.0.11',
-      12,
-      'Admin portal call filter fix ([object Object] bug resolved), modern responsive UI layout, full TypeScript definitions, and local dev vs production render dual-endpoint config.',
-      'app-release-1.0.11.apk',
+      '1.0.12',
+      13,
+      'Vivo-style gallery viewer with bottom thumbnail filmstrip, 4-action bottom bar, proper aspect ratio and long-screenshot vertical panning/zoom handling, unified screen refresh with background call syncing, and admin chat error resilience.',
+      'app-release-1.0.12.apk',
       stats.size,
-      '/downloads/app-release-1.0.11.apk',
+      '/downloads/app-release-1.0.12.apk',
       'admin'
     ]
   );

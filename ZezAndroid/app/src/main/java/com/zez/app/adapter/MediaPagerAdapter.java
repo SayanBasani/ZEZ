@@ -41,7 +41,9 @@ public class MediaPagerAdapter extends RecyclerView.Adapter<MediaPagerAdapter.Pa
             .load(item.getUri())
             .diskCacheStrategy(DiskCacheStrategy.ALL)
             .into(h.zoomView);
-        h.zoomView.setOnClickListener(v -> { if (tapListener != null) tapListener.onTap(); });
+        h.zoomView.setOnTapListener(() -> {
+            if (tapListener != null) tapListener.onTap();
+        });
     }
 
     @Override public int getItemCount() { return items.size(); }

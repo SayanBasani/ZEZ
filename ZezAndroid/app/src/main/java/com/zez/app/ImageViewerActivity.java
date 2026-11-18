@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -17,16 +18,20 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.material.button.MaterialButton;
+import com.zez.app.adapter.FilmstripAdapter;
 import com.zez.app.adapter.MediaPagerAdapter;
 import com.zez.app.model.MediaItem;
 import com.zez.app.util.FavoritesHelper;
 import com.zez.app.util.RecycleBinHelper;
 
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -38,6 +43,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     public static final String EXTRA_SIZE      = "extra_size";
     public static final String EXTRA_WIDTH     = "extra_width";
     public static final String EXTRA_HEIGHT    = "extra_height";
+    public static final String EXTRA_DATE      = "extra_date";
     public static final String EXTRA_START_IDX = "extra_start_idx";
 
     public static final String EXTRA_URI_LIST   = "extra_uri_list";
@@ -46,35 +52,45 @@ public class ImageViewerActivity extends AppCompatActivity {
     public static final String EXTRA_SIZE_LIST  = "extra_size_list";
     public static final String EXTRA_W_LIST     = "extra_w_list";
     public static final String EXTRA_H_LIST     = "extra_h_list";
+    public static final String EXTRA_DATE_LIST  = "extra_date_list";
     public static final String EXTRA_VIDEO_LIST = "extra_video_list";
     public static final String EXTRA_DUR_LIST   = "extra_dur_list";
 
-    private ViewPager2     viewPager;
-    private LinearLayout   topBar, bottomBar;
-    private TextView       tvTitle;
-    private ImageButton    btnFavorite, btnMore;
-    private MaterialButton btnEdit;
-    private boolean        barsVisible = true;
-    private boolean        dataChanged = false;
+    private ViewPager2       viewPager;
+    private LinearLayout     topBar;
+    private LinearLayout     bottomContainer;
+    private RecyclerView     filmstripRecycler;
+    private FilmstripAdapter filmstripAdapter;
 
-    private List<MediaItem> mediaList = new ArrayList<>();
+    private TextView    tvImageDate, tvImageTime;
+    private ImageButton btnFavorite;
+    private View        btnActionEdit;
+
+    private boolean barsVisible = true;
+    private boolean dataChanged = false;
+
+    private final List<MediaItem> mediaList = new ArrayList<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_viewer);
 
-        viewPager   = findViewById(R.id.view_pager);
-        topBar      = findViewById(R.id.top_bar);
-        bottomBar   = findViewById(R.id.bottom_bar);
-        tvTitle     = findViewById(R.id.tv_image_title);
-        btnFavorite = findViewById(R.id.btn_favorite);
-        btnMore     = findViewById(R.id.btn_viewer_options);
-        ImageButton    btnBack   = findViewById(R.id.btn_back);
-        ImageButton    btnInfo   = findViewById(R.id.btn_info);
-        btnEdit                  = findViewById(R.id.btn_edit);
-        MaterialButton btnShare  = findViewById(R.id.btn_share);
-        MaterialButton btnDelete = findViewById(R.id.btn_delete);
+        viewPager         = findViewById(R.id.view_pager);
+        topBar            = findViewById(R.id.top_bar);
+        bottomContainer   = findViewById(R.id.bottom_container);
+        filmstripRecycler = findViewById(R.id.filmstrip_recycler);
+        tvImageDate       = findViewById(R.id.tv_image_date);
+        tvImageTime       = findViewById(R.id.tv_image_time);
+        btnFavorite       = findViewById(R.id.btn_favorite);
+
+        ImageButton btnBack = findViewById(R.id.btn_back);
+        ImageButton btnInfo = findViewById(R.id.btn_info);
+
+        View btnActionShare  = findViewById(R.id.btn_action_share);
+        btnActionEdit        = findViewById(R.id.btn_action_edit);
+        View btnActionDelete = findViewById(R.id.btn_action_delete);
+        View btnActionMore   = findViewById(R.id.btn_action_more);
 
         // Reconstruct media list
         ArrayList<String>  uriList  = getIntent().getStringArrayListExtra(EXTRA_URI_LIST);
@@ -83,6 +99,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         ArrayList<Long>    sizeList = (ArrayList<Long>)    getIntent().getSerializableExtra(EXTRA_SIZE_LIST);
         ArrayList<Integer> wList    = (ArrayList<Integer>) getIntent().getSerializableExtra(EXTRA_W_LIST);
         ArrayList<Integer> hList    = (ArrayList<Integer>) getIntent().getSerializableExtra(EXTRA_H_LIST);
+        ArrayList<Long>    dateList = (ArrayList<Long>)    getIntent().getSerializableExtra(EXTRA_DATE_LIST);
         ArrayList<Boolean> vidList  = (ArrayList<Boolean>) getIntent().getSerializableExtra(EXTRA_VIDEO_LIST);
         ArrayList<Long>    durList  = (ArrayList<Long>)    getIntent().getSerializableExtra(EXTRA_DUR_LIST);
         int startIdx = getIntent().getIntExtra(EXTRA_START_IDX, 0);
@@ -94,9 +111,10 @@ public class ImageViewerActivity extends AppCompatActivity {
                 int     w     = wList    != null && i < wList.size()    ? wList.get(i)    : 0;
                 int     h     = hList    != null && i < hList.size()    ? hList.get(i)    : 0;
                 long    sz    = sizeList != null && i < sizeList.size() ? sizeList.get(i) : 0;
+                long    date  = dateList != null && i < dateList.size() ? dateList.get(i) : 0;
                 String  nm    = nameList != null && i < nameList.size() ? nameList.get(i) : "";
                 mediaList.add(new MediaItem(idList.get(i), Uri.parse(uriList.get(i)),
-                    nm, sz, 0, isVid, dur, w, h, ""));
+                        nm, sz, date, isVid, dur, w, h, ""));
             }
         } else {
             // Single-item fallback
@@ -106,24 +124,40 @@ public class ImageViewerActivity extends AppCompatActivity {
             long   size   = getIntent().getLongExtra(EXTRA_SIZE, 0);
             int    width  = getIntent().getIntExtra(EXTRA_WIDTH, 0);
             int    height = getIntent().getIntExtra(EXTRA_HEIGHT, 0);
+            long   date   = getIntent().getLongExtra(EXTRA_DATE, 0);
             if (uriStr != null) {
-                mediaList.add(new MediaItem(id, Uri.parse(uriStr), name, size, 0, false, 0, width, height, ""));
+                mediaList.add(new MediaItem(id, Uri.parse(uriStr), name, size, date, false, 0, width, height, ""));
             }
         }
 
-        if (mediaList.isEmpty()) { finish(); return; }
+        if (mediaList.isEmpty()) {
+            finish();
+            return;
+        }
 
+        // Pager setup
         MediaPagerAdapter pagerAdapter = new MediaPagerAdapter(mediaList, this::toggleBars);
         viewPager.setAdapter(pagerAdapter);
         viewPager.setCurrentItem(startIdx, false);
 
+        // Filmstrip RecyclerView setup
+        filmstripAdapter = new FilmstripAdapter(mediaList, position -> {
+            viewPager.setCurrentItem(position, true);
+        });
+        filmstripRecycler.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        filmstripRecycler.setAdapter(filmstripAdapter);
+        filmstripAdapter.setSelectedPosition(startIdx);
+        filmstripRecycler.scrollToPosition(startIdx);
+
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override public void onPageSelected(int position) {
+            @Override
+            public void onPageSelected(int position) {
                 updateUIForPosition(position);
             }
         });
         updateUIForPosition(startIdx);
 
+        // Top bar buttons
         btnBack.setOnClickListener(v -> handleBack());
 
         btnFavorite.setOnClickListener(v -> {
@@ -142,7 +176,13 @@ public class ImageViewerActivity extends AppCompatActivity {
             if (pos < mediaList.size()) showMeta(mediaList.get(pos));
         });
 
-        btnEdit.setOnClickListener(v -> {
+        // Bottom Vivo-style actions
+        btnActionShare.setOnClickListener(v -> {
+            int pos = viewPager.getCurrentItem();
+            if (pos < mediaList.size()) shareItem(mediaList.get(pos));
+        });
+
+        btnActionEdit.setOnClickListener(v -> {
             int pos = viewPager.getCurrentItem();
             if (pos < mediaList.size()) {
                 MediaItem item = mediaList.get(pos);
@@ -157,41 +197,136 @@ public class ImageViewerActivity extends AppCompatActivity {
             }
         });
 
-        btnShare.setOnClickListener(v -> {
-            int pos = viewPager.getCurrentItem();
-            if (pos < mediaList.size()) shareItem(mediaList.get(pos));
-        });
-
-        btnDelete.setOnClickListener(v -> {
+        btnActionDelete.setOnClickListener(v -> {
             int pos = viewPager.getCurrentItem();
             if (pos < mediaList.size()) confirmDelete(pos);
         });
 
-        btnMore.setOnClickListener(v -> {
+        btnActionMore.setOnClickListener(v -> {
             int pos = viewPager.getCurrentItem();
             if (pos >= mediaList.size()) return;
             MediaItem item = mediaList.get(pos);
 
             PopupMenu popup = new PopupMenu(this, v);
-            popup.getMenu().add(0, 1, 0, "Details");
-            popup.getMenu().add(0, 2, 1, "Set as Wallpaper");
+            popup.getMenu().add(0, 1, 0, "Set as wallpaper");
+            popup.getMenu().add(0, 2, 1, "Details");
             popup.getMenu().add(0, 3, 2, "Share");
+            popup.getMenu().add(0, 4, 3, "Move to Recycle Bin");
 
             popup.setOnMenuItemClickListener(menuItem -> {
-                if (menuItem.getItemId() == 1) {
-                    showMeta(item);
-                    return true;
-                } else if (menuItem.getItemId() == 2) {
+                int id = menuItem.getItemId();
+                if (id == 1) {
                     setAsWallpaper(item);
                     return true;
-                } else if (menuItem.getItemId() == 3) {
+                } else if (id == 2) {
+                    showMeta(item);
+                    return true;
+                } else if (id == 3) {
                     shareItem(item);
+                    return true;
+                } else if (id == 4) {
+                    confirmDelete(pos);
                     return true;
                 }
                 return false;
             });
             popup.show();
         });
+    }
+
+    private void updateUIForPosition(int pos) {
+        if (pos >= 0 && pos < mediaList.size()) {
+            MediaItem item = mediaList.get(pos);
+
+            // Date and Time (Vivo style: Line 1 = "Today", "Yesterday", or "Oct 24, 2026", Line 2 = "3:11 PM")
+            long dateMs = item.getDateAdded();
+            if (dateMs > 0) {
+                if (dateMs < 100000000000L) {
+                    dateMs *= 1000L; // convert from seconds to milliseconds
+                }
+                Date dateObj = new Date(dateMs);
+
+                if (DateUtils.isToday(dateMs)) {
+                    tvImageDate.setText("Today");
+                } else if (DateUtils.isToday(dateMs + DateUtils.DAY_IN_MILLIS)) {
+                    tvImageDate.setText("Yesterday");
+                } else {
+                    SimpleDateFormat df = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
+                    tvImageDate.setText(df.format(dateObj));
+                }
+
+                SimpleDateFormat tf = new SimpleDateFormat("h:mm a", Locale.getDefault());
+                tvImageTime.setText(tf.format(dateObj));
+            } else {
+                tvImageDate.setText(item.getName() != null ? item.getName() : "Photo");
+                tvImageTime.setText(fmtSize(item.getSize()));
+            }
+
+            // Favorite status
+            boolean isFav = FavoritesHelper.isFavorite(this, item.getId());
+            updateFavoriteIcon(isFav);
+
+            // Edit button visibility (photos only)
+            if (btnActionEdit != null) {
+                btnActionEdit.setVisibility(item.isVideo() ? View.GONE : View.VISIBLE);
+            }
+
+            // Sync filmstrip selection
+            if (filmstripAdapter != null) {
+                filmstripAdapter.setSelectedPosition(pos);
+                filmstripRecycler.smoothScrollToPosition(pos);
+            }
+        }
+    }
+
+    private void updateFavoriteIcon(boolean isFav) {
+        if (isFav) {
+            btnFavorite.setImageResource(R.drawable.ic_favorite_filled);
+            btnFavorite.setColorFilter(0xFFE11D48); // Red filled heart
+        } else {
+            btnFavorite.setImageResource(R.drawable.ic_favorite_border);
+            btnFavorite.setColorFilter(0xFFFFFFFF); // White outline
+        }
+    }
+
+    private void toggleBars() {
+        barsVisible = !barsVisible;
+        int vis = barsVisible ? View.VISIBLE : View.GONE;
+        topBar.setVisibility(vis);
+        bottomContainer.setVisibility(vis);
+    }
+
+    private void shareItem(MediaItem item) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType(item.isVideo() ? "video/*" : "image/*");
+        intent.putExtra(Intent.EXTRA_STREAM, item.getUri());
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(intent, "Share via"));
+    }
+
+    private void confirmDelete(int pos) {
+        MediaItem item = mediaList.get(pos);
+        new AlertDialog.Builder(this)
+                .setTitle("Move to Recycle Bin?")
+                .setMessage("\"" + item.getName() + "\" will be moved to the Recycle Bin.")
+                .setPositiveButton("Move", (d, w) -> {
+                    RecycleBinHelper.addToRecycleBin(this, item.getId(),
+                            item.getUri().toString(), item.getName());
+                    Toast.makeText(this, "Moved to Recycle Bin", Toast.LENGTH_SHORT).show();
+                    dataChanged = true;
+                    if (mediaList.size() <= 1) {
+                        setResult(RESULT_OK);
+                        finish();
+                    } else {
+                        mediaList.remove(pos);
+                        viewPager.getAdapter().notifyDataSetChanged();
+                        filmstripAdapter.notifyDataSetChanged();
+                        int newPos = Math.min(pos, mediaList.size() - 1);
+                        updateUIForPosition(newPos);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void setAsWallpaper(MediaItem item) {
@@ -232,86 +367,40 @@ public class ImageViewerActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void updateUIForPosition(int pos) {
-        if (pos >= 0 && pos < mediaList.size()) {
-            MediaItem item = mediaList.get(pos);
-            String name = item.getName();
-            tvTitle.setText(name != null ? name : "Photo");
-
-            boolean isFav = FavoritesHelper.isFavorite(this, item.getId());
-            updateFavoriteIcon(isFav);
-
-            if (btnEdit != null) {
-                btnEdit.setVisibility(item.isVideo() ? View.GONE : View.VISIBLE);
-            }
-        }
-    }
-
-    private void updateFavoriteIcon(boolean isFav) {
-        if (isFav) {
-            btnFavorite.setImageResource(R.drawable.ic_favorite_filled);
-            btnFavorite.setColorFilter(0xFFE11D48); // Red filled heart
-        } else {
-            btnFavorite.setImageResource(R.drawable.ic_favorite_border);
-            btnFavorite.setColorFilter(0xFFFFFFFF); // White outline
-        }
-    }
-
-    private void toggleBars() {
-        barsVisible = !barsVisible;
-        int vis = barsVisible ? View.VISIBLE : View.GONE;
-        topBar.setVisibility(vis);
-        bottomBar.setVisibility(vis);
-    }
-
-    private void shareItem(MediaItem item) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType(item.isVideo() ? "video/*" : "image/*");
-        intent.putExtra(Intent.EXTRA_STREAM, item.getUri());
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(Intent.createChooser(intent, "Share via"));
-    }
-
-    private void confirmDelete(int pos) {
-        MediaItem item = mediaList.get(pos);
-        new AlertDialog.Builder(this)
-            .setTitle("Move to Recycle Bin?")
-            .setMessage("\"" + item.getName() + "\" will be moved to the Recycle Bin.")
-            .setPositiveButton("Move", (d, w) -> {
-                RecycleBinHelper.addToRecycleBin(this, item.getId(),
-                    item.getUri().toString(), item.getName());
-                Toast.makeText(this, "Moved to Recycle Bin", Toast.LENGTH_SHORT).show();
-                dataChanged = true;
-                if (mediaList.size() == 1) {
-                    setResult(RESULT_OK);
-                    finish();
-                } else {
-                    mediaList.remove(pos);
-                    viewPager.getAdapter().notifyDataSetChanged();
-                    int newPos = Math.min(pos, mediaList.size() - 1);
-                    updateUIForPosition(newPos);
-                }
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
-    }
-
     private void showMeta(MediaItem item) {
-        String size = item.getSize() > 0
-            ? String.format(Locale.US, "%.2f MB", item.getSize() / (1024.0 * 1024.0))
-            : "Unknown";
         StringBuilder sb = new StringBuilder();
-        sb.append("File: ").append(item.getName()).append("\n");
-        sb.append("Size: ").append(size).append("\n");
-        if (item.getWidth() > 0)
-            sb.append("Dimensions: ").append(item.getWidth()).append(" × ").append(item.getHeight()).append(" px\n");
-        if (item.isVideo() && item.getDuration() > 0)
-            sb.append("Duration: ").append(fmtDur(item.getDuration())).append("\n");
+        sb.append("File name: ").append(item.getName()).append("\n\n");
+        sb.append("Size: ").append(fmtSize(item.getSize())).append("\n\n");
+
+        if (item.getWidth() > 0 && item.getHeight() > 0) {
+            sb.append("Resolution: ").append(item.getWidth()).append(" × ").append(item.getHeight()).append(" px\n\n");
+        }
+
+        if (item.getDateAdded() > 0) {
+            long dateMs = item.getDateAdded() < 100000000000L ? item.getDateAdded() * 1000L : item.getDateAdded();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            sb.append("Date modified: ").append(sdf.format(new Date(dateMs))).append("\n\n");
+        }
+
+        if (item.isVideo() && item.getDuration() > 0) {
+            sb.append("Duration: ").append(fmtDur(item.getDuration())).append("\n\n");
+        }
+
+        sb.append("Storage path: ").append(item.getUri().toString());
+
         new AlertDialog.Builder(this)
-            .setTitle("Media Info")
-            .setMessage(sb.toString().trim())
-            .setPositiveButton("Close", null)
-            .show();
+                .setTitle("Media Details")
+                .setMessage(sb.toString().trim())
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    private String fmtSize(long bytes) {
+        if (bytes <= 0) return "Unknown size";
+        if (bytes < 1024 * 1024) {
+            return String.format(Locale.US, "%.1f KB", bytes / 1024.0);
+        }
+        return String.format(Locale.US, "%.2f MB", bytes / (1024.0 * 1024.0));
     }
 
     private String fmtDur(long ms) {
@@ -334,7 +423,8 @@ public class ImageViewerActivity extends AppCompatActivity {
         finish();
     }
 
-    @Override public void onBackPressed() {
+    @Override
+    public void onBackPressed() {
         handleBack();
     }
 }

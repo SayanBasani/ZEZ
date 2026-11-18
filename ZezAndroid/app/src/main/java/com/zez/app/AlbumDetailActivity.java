@@ -287,6 +287,7 @@ public class AlbumDetailActivity extends AppCompatActivity {
         ArrayList<Long> sizeList = new ArrayList<>();
         ArrayList<Integer> wList = new ArrayList<>();
         ArrayList<Integer> hList = new ArrayList<>();
+        ArrayList<Long> dateList = new ArrayList<>();
         ArrayList<Boolean> vidList = new ArrayList<>();
         ArrayList<Long> durList = new ArrayList<>();
         for (MediaItem m : list) {
@@ -296,6 +297,7 @@ public class AlbumDetailActivity extends AppCompatActivity {
             sizeList.add(m.getSize());
             wList.add(m.getWidth());
             hList.add(m.getHeight());
+            dateList.add(m.getDateAdded());
             vidList.add(m.isVideo());
             durList.add(m.getDuration());
         }
@@ -305,6 +307,7 @@ public class AlbumDetailActivity extends AppCompatActivity {
         intent.putExtra(ImageViewerActivity.EXTRA_SIZE_LIST, sizeList);
         intent.putIntegerArrayListExtra(ImageViewerActivity.EXTRA_W_LIST, wList);
         intent.putIntegerArrayListExtra(ImageViewerActivity.EXTRA_H_LIST, hList);
+        intent.putExtra(ImageViewerActivity.EXTRA_DATE_LIST, dateList);
         intent.putExtra(ImageViewerActivity.EXTRA_VIDEO_LIST, vidList);
         intent.putExtra(ImageViewerActivity.EXTRA_DUR_LIST, durList);
         intent.putExtra(ImageViewerActivity.EXTRA_START_IDX, startIdx);

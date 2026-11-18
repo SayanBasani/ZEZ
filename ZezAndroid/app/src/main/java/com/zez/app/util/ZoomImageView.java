@@ -1,29 +1,39 @@
 package com.zez.app.util;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Matrix;
-import android.graphics.PointF;
+import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.animation.DecelerateInterpolator;
 
 import androidx.appcompat.widget.AppCompatImageView;
 
 public class ZoomImageView extends AppCompatImageView {
-    private Matrix matrix = new Matrix();
-    private Matrix savedMatrix = new Matrix();
 
-    private static final int NONE = 0;
-    private static final int DRAG = 1;
-    private static final int ZOOM = 2;
-    private int mode = NONE;
+    public interface OnTapListener {
+        void onTap();
+    }
 
-    private PointF start = new PointF();
-    private PointF mid = new PointF();
-    private float oldDist = 1f;
+    private final Matrix matrix = new Matrix();
+    private final float[] matrixValues = new float[9];
 
     private ScaleGestureDetector scaleDetector;
-    private float scaleFactor = 1.0f;
+    private GestureDetector gestureDetector;
+    private OnTapListener onTapListener;
+
+    private float baseScale = 1.0f;
+    private float minScale = 1.0f;
+    private float maxScale = 4.0f;
+    private boolean isLongScreenshot = false;
+
+    private int viewWidth = 0;
+    private int viewHeight = 0;
+    private boolean imageFitted = false;
 
     public ZoomImageView(Context context) {
         super(context);
@@ -42,72 +52,231 @@ public class ZoomImageView extends AppCompatImageView {
 
     private void init(Context context) {
         setScaleType(ScaleType.MATRIX);
+
         scaleDetector = new ScaleGestureDetector(context, new ScaleListener());
+        gestureDetector = new GestureDetector(context, new GestureListener());
+    }
+
+    public void setOnTapListener(OnTapListener listener) {
+        this.onTapListener = listener;
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        viewWidth = w;
+        viewHeight = h;
+        fitImage();
+    }
+
+    @Override
+    public void setImageDrawable(Drawable drawable) {
+        super.setImageDrawable(drawable);
+        imageFitted = false;
+        fitImage();
+    }
+
+    public void fitImage() {
+        Drawable drawable = getDrawable();
+        if (drawable == null || viewWidth <= 0 || viewHeight <= 0) return;
+
+        int dw = drawable.getIntrinsicWidth();
+        int dh = drawable.getIntrinsicHeight();
+        if (dw <= 0 || dh <= 0) return;
+
+        float ratio = (float) dh / (float) dw;
+        isLongScreenshot = (ratio >= 1.75f);
+
+        matrix.reset();
+
+        if (isLongScreenshot) {
+            // Long screenshot: fit width exactly, align at top (y = 0) so top of document/page is visible
+            baseScale = (float) viewWidth / (float) dw;
+            matrix.postScale(baseScale, baseScale);
+            matrix.postTranslate(0f, 0f);
+        } else {
+            // Standard image: fit center
+            float scaleX = (float) viewWidth / (float) dw;
+            float scaleY = (float) viewHeight / (float) dh;
+            baseScale = Math.min(scaleX, scaleY);
+            matrix.postScale(baseScale, baseScale);
+
+            float transX = (viewWidth - (dw * baseScale)) / 2f;
+            float transY = (viewHeight - (dh * baseScale)) / 2f;
+            matrix.postTranslate(transX, transY);
+        }
+
+        minScale = baseScale;
+        maxScale = Math.max(baseScale * 4.5f, 4.0f);
+
+        setImageMatrix(matrix);
+        imageFitted = true;
+    }
+
+    public void resetZoom() {
+        fitImage();
+    }
+
+    private RectF getImageBounds() {
+        RectF bounds = new RectF();
+        Drawable d = getDrawable();
+        if (d != null) {
+            bounds.set(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
+            matrix.mapRect(bounds);
+        }
+        return bounds;
+    }
+
+    private float getScale() {
+        matrix.getValues(matrixValues);
+        return matrixValues[Matrix.MSCALE_X];
+    }
+
+    private void clampAndApply() {
+        RectF bounds = getImageBounds();
+        float deltaX = 0f;
+        float deltaY = 0f;
+
+        // Horizontal bounds
+        if (bounds.width() <= viewWidth) {
+            deltaX = (viewWidth - bounds.width()) / 2f - bounds.left;
+        } else {
+            if (bounds.left > 0) {
+                deltaX = -bounds.left;
+            } else if (bounds.right < viewWidth) {
+                deltaX = viewWidth - bounds.right;
+            }
+        }
+
+        // Vertical bounds
+        if (bounds.height() <= viewHeight) {
+            deltaY = (viewHeight - bounds.height()) / 2f - bounds.top;
+        } else {
+            if (bounds.top > 0) {
+                deltaY = -bounds.top;
+            } else if (bounds.bottom < viewHeight) {
+                deltaY = viewHeight - bounds.bottom;
+            }
+        }
+
+        if (deltaX != 0 || deltaY != 0) {
+            matrix.postTranslate(deltaX, deltaY);
+        }
+        setImageMatrix(matrix);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        scaleDetector.onTouchEvent(event);
+        boolean scaleActive = scaleDetector.isInProgress();
+        boolean handled = scaleDetector.onTouchEvent(event);
+        handled |= gestureDetector.onTouchEvent(event);
 
-        PointF curr = new PointF(event.getX(), event.getY());
-
-        switch (event.getAction() & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_DOWN:
-                savedMatrix.set(matrix);
-                start.set(event.getX(), event.getY());
-                mode = DRAG;
-                break;
-
-            case MotionEvent.ACTION_POINTER_DOWN:
-                oldDist = spacing(event);
-                if (oldDist > 10f) {
-                    savedMatrix.set(matrix);
-                    midPoint(mid, event);
-                    mode = ZOOM;
-                }
-                break;
-
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_POINTER_UP:
-                mode = NONE;
-                break;
-
-            case MotionEvent.ACTION_MOVE:
-                if (mode == DRAG && scaleFactor > 1.0f) {
-                    matrix.set(savedMatrix);
-                    matrix.postTranslate(event.getX() - start.x, event.getY() - start.y);
-                } else if (mode == ZOOM) {
-                    float newDist = spacing(event);
-                    if (newDist > 10f) {
-                        matrix.set(savedMatrix);
-                        float scale = newDist / oldDist;
-                        matrix.postScale(scale, scale, mid.x, mid.y);
-                    }
-                }
-                break;
+        if (event.getActionMasked() == MotionEvent.ACTION_UP || event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+            float currentScale = getScale();
+            if (currentScale < minScale) {
+                // Animate smoothly back to minScale
+                animateScale(currentScale, minScale, viewWidth / 2f, viewHeight / 2f);
+            } else {
+                clampAndApply();
+            }
         }
 
-        setImageMatrix(matrix);
-        return true;
+        return handled || super.onTouchEvent(event);
     }
 
-    private float spacing(MotionEvent event) {
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return (float) Math.sqrt(x * x + y * y);
-    }
-
-    private void midPoint(PointF point, MotionEvent event) {
-        float x = event.getX(0) + event.getX(1);
-        float y = event.getY(0) + event.getY(1);
-        point.set(x / 2, y / 2);
+    private void animateScale(float fromScale, float toScale, float focusX, float focusY) {
+        ValueAnimator animator = ValueAnimator.ofFloat(fromScale, toScale);
+        animator.setDuration(220);
+        animator.setInterpolator(new DecelerateInterpolator());
+        animator.addUpdateListener(animation -> {
+            float val = (Float) animation.getAnimatedValue();
+            float curr = getScale();
+            float factor = val / curr;
+            matrix.postScale(factor, factor, focusX, focusY);
+            clampAndApply();
+        });
+        animator.start();
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            scaleFactor *= detector.getScaleFactor();
-            scaleFactor = Math.max(0.5f, Math.min(scaleFactor, 5.0f));
+            float scaleFactor = detector.getScaleFactor();
+            float currentScale = getScale();
+            float newScale = currentScale * scaleFactor;
+
+            // Soft limits during gesture
+            if (newScale < minScale * 0.75f) {
+                scaleFactor = (minScale * 0.75f) / currentScale;
+            } else if (newScale > maxScale * 1.35f) {
+                scaleFactor = (maxScale * 1.35f) / currentScale;
+            }
+
+            matrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
+            clampAndApply();
+
+            if (getParent() != null) {
+                getParent().requestDisallowInterceptTouchEvent(true);
+            }
+            return true;
+        }
+    }
+
+    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return true;
+        }
+
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            if (onTapListener != null) {
+                onTapListener.onTap();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean onDoubleTap(MotionEvent e) {
+            float currentScale = getScale();
+            float targetScale;
+            if (currentScale > baseScale * 1.3f) {
+                targetScale = minScale;
+            } else {
+                targetScale = Math.min(baseScale * 2.8f, maxScale);
+            }
+            animateScale(currentScale, targetScale, e.getX(), e.getY());
+            return true;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            if (scaleDetector.isInProgress()) return false;
+
+            float currentScale = getScale();
+            RectF bounds = getImageBounds();
+
+            // Paging / parent scroll coordination
+            if (getParent() != null) {
+                if (currentScale > baseScale * 1.05f) {
+                    boolean atLeftEdge = (bounds.left >= -1f && distanceX < 0);
+                    boolean atRightEdge = (bounds.right <= viewWidth + 1f && distanceX > 0);
+                    getParent().requestDisallowInterceptTouchEvent(!atLeftEdge && !atRightEdge);
+                } else if (isLongScreenshot) {
+                    // For tall screenshot at 1x: vertical drag scrolls image, horizontal drag allows ViewPager2
+                    if (Math.abs(distanceY) > Math.abs(distanceX)) {
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                    } else {
+                        getParent().requestDisallowInterceptTouchEvent(false);
+                    }
+                } else {
+                    getParent().requestDisallowInterceptTouchEvent(false);
+                }
+            }
+
+            matrix.postTranslate(-distanceX, -distanceY);
+            clampAndApply();
             return true;
         }
     }
