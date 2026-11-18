@@ -13,14 +13,18 @@ import com.zez.app.model.ChatConversation;
 import com.zez.app.model.ChatMessage;
 import com.zez.app.model.ChatUser;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import android.net.Uri;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -45,12 +49,239 @@ public class ChatApiClient {
         void onError(String errorMessage);
     }
 
-    private static String getBaseUrl(Context context) {
+    public static String getBaseUrl(Context context) {
         String base = PreferencesHelper.getApiUrl(context);
         if (base.endsWith("/")) {
             base = base.substring(0, base.length() - 1);
         }
         return base;
+    }
+
+    public static String getAbsoluteMediaUrl(Context context, String relativeOrAbsoluteUrl) {
+        if (relativeOrAbsoluteUrl == null || relativeOrAbsoluteUrl.trim().isEmpty()) return null;
+        String trimmed = relativeOrAbsoluteUrl.trim();
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return trimmed;
+        }
+        String base = getBaseUrl(context);
+        return base + (trimmed.startsWith("/") ? "" : "/") + trimmed;
+    }
+
+    public static class MediaUploadResult {
+        public String url;
+        public String fileName;
+        public long fileSize;
+        public String mediaType;
+    }
+
+    public static void updateProfile(Context context, String userId, String name, String avatar, String status, ChatCallback<ChatUser> callback) {
+        String url = getBaseUrl(context) + "/api/chat/profile";
+        JsonObject body = new JsonObject();
+        body.addProperty("id", userId);
+        if (name != null) body.addProperty("name", name);
+        if (avatar != null) body.addProperty("avatar_url", avatar);
+        if (status != null) body.addProperty("status_message", status);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Update profile failed: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    postError(callback, "Update profile HTTP " + response.code());
+                    return;
+                }
+                try {
+                    String str = response.body().string();
+                    JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                    if (json.has("success") && json.get("success").getAsBoolean() && json.has("user")) {
+                        ChatUser user = gson.fromJson(json.get("user"), ChatUser.class);
+                        postSuccess(callback, user);
+                    } else {
+                        postError(callback, json.has("error") ? json.get("error").getAsString() : "Update failed.");
+                    }
+                } catch (Exception e) {
+                    postError(callback, "Error: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    public static void uploadChatMedia(Context context, Uri fileUri, String fileName, String mimeType, ChatCallback<MediaUploadResult> callback) {
+        new Thread(() -> {
+            try {
+                InputStream is = context.getContentResolver().openInputStream(fileUri);
+                if (is == null) {
+                    postError(callback, "Cannot open selected file");
+                    return;
+                }
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = is.read(buffer)) != -1) {
+                    baos.write(buffer, 0, len);
+                }
+                is.close();
+                byte[] fileBytes = baos.toByteArray();
+
+                String safeName = fileName != null ? fileName : "file_" + System.currentTimeMillis();
+                MediaType okMediaType = MediaType.parse(mimeType != null ? mimeType : "application/octet-stream");
+                RequestBody fileBody = RequestBody.create(fileBytes, okMediaType);
+
+                MultipartBody multipartBody = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("file", safeName, fileBody)
+                        .build();
+
+                String url = getBaseUrl(context) + "/api/chat/upload";
+                Request request = new Request.Builder()
+                        .url(url)
+                        .post(multipartBody)
+                        .build();
+
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        postError(callback, "Upload failed: " + e.getMessage());
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (!response.isSuccessful() || response.body() == null) {
+                            postError(callback, "Upload HTTP " + response.code());
+                            return;
+                        }
+                        try {
+                            String str = response.body().string();
+                            JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                            if (json.has("success") && json.get("success").getAsBoolean() && json.has("url")) {
+                                MediaUploadResult res = new MediaUploadResult();
+                                res.url = json.get("url").getAsString();
+                                if (json.has("fileName")) res.fileName = json.get("fileName").getAsString();
+                                if (json.has("fileSize")) res.fileSize = json.get("fileSize").getAsLong();
+                                if (json.has("mediaType")) res.mediaType = json.get("mediaType").getAsString();
+                                postSuccess(callback, res);
+                            } else {
+                                postError(callback, json.has("error") ? json.get("error").getAsString() : "Upload failed");
+                            }
+                        } catch (Exception e) {
+                            postError(callback, "Parse error: " + e.getMessage());
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                postError(callback, "File read error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    public static void uploadAvatar(Context context, Uri imageUri, String userId, ChatCallback<String> callback) {
+        new Thread(() -> {
+            try {
+                InputStream is = context.getContentResolver().openInputStream(imageUri);
+                if (is == null) {
+                    postError(callback, "Cannot open image");
+                    return;
+                }
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = is.read(buffer)) != -1) {
+                    baos.write(buffer, 0, len);
+                }
+                is.close();
+                byte[] fileBytes = baos.toByteArray();
+
+                RequestBody fileBody = RequestBody.create(fileBytes, MediaType.parse("image/jpeg"));
+                MultipartBody.Builder builder = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("avatar", "avatar_" + System.currentTimeMillis() + ".jpg", fileBody);
+                if (userId != null) {
+                    builder.addFormDataPart("userId", userId);
+                }
+
+                String url = getBaseUrl(context) + "/api/chat/upload-avatar";
+                Request request = new Request.Builder()
+                        .url(url)
+                        .post(builder.build())
+                        .build();
+
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        postError(callback, "Avatar upload failed: " + e.getMessage());
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (!response.isSuccessful() || response.body() == null) {
+                            postError(callback, "Avatar upload HTTP " + response.code());
+                            return;
+                        }
+                        try {
+                            String str = response.body().string();
+                            JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                            if (json.has("success") && json.get("success").getAsBoolean() && json.has("avatar_url")) {
+                                postSuccess(callback, json.get("avatar_url").getAsString());
+                            } else {
+                                postError(callback, json.has("error") ? json.get("error").getAsString() : "Avatar upload failed");
+                            }
+                        } catch (Exception e) {
+                            postError(callback, "Parse error: " + e.getMessage());
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                postError(callback, "Avatar read error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    public static void resolveDirectContact(Context context, String phone, String name, ChatCallback<ChatUser> callback) {
+        String url = getBaseUrl(context) + "/api/chat/direct-contact";
+        JsonObject body = new JsonObject();
+        body.addProperty("phone_number", phone);
+        if (name != null) body.addProperty("name", name);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Failed to resolve contact: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    postError(callback, "HTTP " + response.code());
+                    return;
+                }
+                try {
+                    String str = response.body().string();
+                    JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                    if (json.has("success") && json.get("success").getAsBoolean() && json.has("user")) {
+                        ChatUser user = gson.fromJson(json.get("user"), ChatUser.class);
+                        postSuccess(callback, user);
+                    } else {
+                        postError(callback, json.has("error") ? json.get("error").getAsString() : "Failed to resolve contact");
+                    }
+                } catch (Exception e) {
+                    postError(callback, "Parse error: " + e.getMessage());
+                }
+            }
+        });
     }
 
     // 1. Register or update chat profile
@@ -235,6 +466,9 @@ public class ChatApiClient {
                             if (m.has("receiver_id")) msg.setReceiverId(m.get("receiver_id").getAsString());
                             if (m.has("message_text")) msg.setMessageText(m.get("message_text").getAsString());
                             if (m.has("media_url") && !m.get("media_url").isJsonNull()) msg.setMediaUrl(m.get("media_url").getAsString());
+                            if (m.has("media_type") && !m.get("media_type").isJsonNull()) msg.setMediaType(m.get("media_type").getAsString());
+                            if (m.has("file_name") && !m.get("file_name").isJsonNull()) msg.setFileName(m.get("file_name").getAsString());
+                            if (m.has("file_size") && !m.get("file_size").isJsonNull()) msg.setFileSize(m.get("file_size").getAsLong());
                             if (m.has("status")) msg.setStatus(m.get("status").getAsString());
                             if (m.has("created_at")) msg.setCreatedAt(m.get("created_at").getAsString());
                             msgs.add(msg);
@@ -248,14 +482,21 @@ public class ChatApiClient {
         });
     }
 
-    // 5. Send Message
+    // 5. Send Message (with optional media)
     public static void sendMessage(Context context, String senderId, String receiverId, String text, String mediaUrl, ChatCallback<ChatMessage> callback) {
+        sendMessage(context, senderId, receiverId, text, mediaUrl, null, null, null, callback);
+    }
+
+    public static void sendMessage(Context context, String senderId, String receiverId, String text, String mediaUrl, String mediaType, String fileName, Long fileSize, ChatCallback<ChatMessage> callback) {
         String url = getBaseUrl(context) + "/api/chat/messages/send";
         JsonObject body = new JsonObject();
         body.addProperty("sender_id", senderId);
         body.addProperty("receiver_id", receiverId);
-        body.addProperty("message_text", text);
+        if (text != null) body.addProperty("message_text", text);
         if (mediaUrl != null) body.addProperty("media_url", mediaUrl);
+        if (mediaType != null) body.addProperty("media_type", mediaType);
+        if (fileName != null) body.addProperty("file_name", fileName);
+        if (fileSize != null) body.addProperty("file_size", fileSize);
 
         Request request = new Request.Builder()
                 .url(url)
@@ -285,6 +526,10 @@ public class ChatApiClient {
                         if (m.has("sender_id")) msg.setSenderId(m.get("sender_id").getAsString());
                         if (m.has("receiver_id")) msg.setReceiverId(m.get("receiver_id").getAsString());
                         if (m.has("message_text")) msg.setMessageText(m.get("message_text").getAsString());
+                        if (m.has("media_url") && !m.get("media_url").isJsonNull()) msg.setMediaUrl(m.get("media_url").getAsString());
+                        if (m.has("media_type") && !m.get("media_type").isJsonNull()) msg.setMediaType(m.get("media_type").getAsString());
+                        if (m.has("file_name") && !m.get("file_name").isJsonNull()) msg.setFileName(m.get("file_name").getAsString());
+                        if (m.has("file_size") && !m.get("file_size").isJsonNull()) msg.setFileSize(m.get("file_size").getAsLong());
                         if (m.has("status")) msg.setStatus(m.get("status").getAsString());
                         if (m.has("created_at")) msg.setCreatedAt(m.get("created_at").getAsString());
                         postSuccess(callback, msg);
@@ -295,6 +540,24 @@ public class ChatApiClient {
                     postError(callback, "Parse error: " + e.getMessage());
                 }
             }
+        });
+    }
+
+    public static void markMessagesAsRead(Context context, String conversationId, String currentUserId) {
+        if (conversationId == null || currentUserId == null) return;
+        String url = getBaseUrl(context) + "/api/chat/messages/status";
+        JsonObject body = new JsonObject();
+        body.addProperty("conversation_id", conversationId);
+        body.addProperty("receiver_id", currentUserId);
+        body.addProperty("status", "read");
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(Call call, IOException e) {}
+            @Override public void onResponse(Call call, Response response) throws IOException { response.close(); }
         });
     }
 

@@ -10,6 +10,8 @@ import android.provider.ContactsContract;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -18,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -80,6 +83,11 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
         btnBack.setOnClickListener(v -> finish());
         btnRefresh.setOnClickListener(v -> checkPermissionAndLoad());
         swipeRefresh.setOnRefreshListener(this::checkPermissionAndLoad);
+
+        View btnAddNewContact = findViewById(R.id.btn_add_new_contact);
+        if (btnAddNewContact != null) {
+            btnAddNewContact.setOnClickListener(v -> showAddContactDialog());
+        }
 
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -266,6 +274,68 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
         }
 
         adapter.setData(filteredReg, filteredNotReg);
+    }
+
+    private void showAddContactDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_contact, null);
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        EditText etName = dialogView.findViewById(R.id.et_new_contact_name);
+        EditText etPhone = dialogView.findViewById(R.id.et_new_contact_phone);
+        CheckBox cbSave = dialogView.findViewById(R.id.cb_save_to_phone);
+        Button btnCancel = dialogView.findViewById(R.id.btn_cancel_add_contact);
+        Button btnStartChat = dialogView.findViewById(R.id.btn_start_direct_chat);
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnStartChat.setOnClickListener(v -> {
+            String rawPhone = etPhone.getText().toString().trim();
+            String name = etName.getText().toString().trim();
+            if (rawPhone.isEmpty()) {
+                etPhone.setError("Phone number required");
+                return;
+            }
+
+            if (cbSave != null && cbSave.isChecked()) {
+                saveContactToPhone(name.isEmpty() ? rawPhone : name, rawPhone);
+            }
+
+            dialog.dismiss();
+            Toast.makeText(this, "Opening chat...", Toast.LENGTH_SHORT).show();
+
+            ChatApiClient.resolveDirectContact(this, rawPhone, name, new ChatApiClient.ChatCallback<ChatUser>() {
+                @Override
+                public void onSuccess(ChatUser user) {
+                    Intent intent = new Intent(ContactsActivity.this, ChatActivity.class);
+                    intent.putExtra("extra_other_user_id", user.getId());
+                    intent.putExtra("extra_other_user_name", (name.isEmpty() ? user.getName() : name));
+                    intent.putExtra("extra_other_user_phone", user.getPhoneNumber());
+                    startActivity(intent);
+                    finish();
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    Toast.makeText(ContactsActivity.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        dialog.show();
+    }
+
+    private void saveContactToPhone(String name, String phone) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_INSERT);
+            intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
+            intent.putExtra(ContactsContract.Intents.Insert.NAME, name);
+            intent.putExtra(ContactsContract.Intents.Insert.PHONE, phone);
+            startActivity(intent);
+        } catch (Exception ignored) {}
     }
 
     @Override

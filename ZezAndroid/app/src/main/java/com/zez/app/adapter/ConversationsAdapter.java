@@ -82,6 +82,25 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
         void bind(ChatConversation item, OnConversationClickListener listener, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt, SimpleDateFormat dateFmt) {
             tvName.setText(item.getOtherUserName());
 
+            String avatarUrl = item.getOtherUserAvatar();
+            if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+                String fullUrl = com.zez.app.util.ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), avatarUrl);
+                com.bumptech.glide.Glide.with(itemView.getContext())
+                        .load(fullUrl)
+                        .circleCrop()
+                        .placeholder(R.drawable.bg_circle_glass)
+                        .error(R.drawable.bg_circle_glass)
+                        .into(ivAvatar);
+                if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+            } else {
+                ivAvatar.setImageResource(R.drawable.bg_circle_glass);
+                if (tvInitials != null) {
+                    tvInitials.setVisibility(View.VISIBLE);
+                    String name = item.getOtherUserName();
+                    tvInitials.setText(name != null && !name.isEmpty() ? String.valueOf(name.charAt(0)).toUpperCase(java.util.Locale.ROOT) : "?");
+                }
+            }
+
             String lastMsg = item.getLastMessageText();
             tvLastMessage.setText(lastMsg != null && !lastMsg.isEmpty() ? lastMsg : "No messages yet");
 

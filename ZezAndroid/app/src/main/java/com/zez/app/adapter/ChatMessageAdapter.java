@@ -1,23 +1,31 @@
 package com.zez.app.adapter;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.zez.app.R;
 import com.zez.app.model.ChatMessage;
+import com.zez.app.util.ChatApiClient;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_DATE_HEADER = 0;
@@ -52,6 +60,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public ChatMessageAdapter(String currentUserId) {
         this.currentUserId = currentUserId;
+        this.isoFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     public void setMessages(List<ChatMessage> messages) {
@@ -153,16 +162,40 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView tvText;
         TextView tvTime;
         ImageView ivTick;
+        FrameLayout layoutMedia;
+        ImageView ivImage;
+        ImageView ivPlay;
+        LinearLayout layoutFile;
+        TextView tvFileName;
+        TextView tvFileSize;
 
         OutgoingViewHolder(@NonNull View itemView) {
             super(itemView);
             tvText = itemView.findViewById(R.id.tv_msg_outgoing_text);
             tvTime = itemView.findViewById(R.id.tv_msg_outgoing_time);
             ivTick = itemView.findViewById(R.id.iv_msg_status_tick);
+            layoutMedia = itemView.findViewById(R.id.layout_msg_outgoing_media);
+            ivImage = itemView.findViewById(R.id.iv_msg_outgoing_image);
+            ivPlay = itemView.findViewById(R.id.iv_msg_outgoing_play);
+            layoutFile = itemView.findViewById(R.id.layout_msg_outgoing_file);
+            tvFileName = itemView.findViewById(R.id.tv_msg_outgoing_filename);
+            tvFileSize = itemView.findViewById(R.id.tv_msg_outgoing_filesize);
         }
 
         void bind(ChatMessage msg, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
-            tvText.setText(msg.getMessageText());
+            bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
+
+            String text = msg.getMessageText();
+            if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
+                tvText.setVisibility(View.VISIBLE);
+                tvText.setText(text);
+            } else if (msg.getMediaUrl() == null || msg.getMediaUrl().isEmpty()) {
+                tvText.setVisibility(View.VISIBLE);
+                tvText.setText(text != null ? text : "");
+            } else {
+                tvText.setVisibility(View.GONE);
+            }
+
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
 
             String status = msg.getStatus();
@@ -182,17 +215,121 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     static class IncomingViewHolder extends RecyclerView.ViewHolder {
         TextView tvText;
         TextView tvTime;
+        FrameLayout layoutMedia;
+        ImageView ivImage;
+        ImageView ivPlay;
+        LinearLayout layoutFile;
+        TextView tvFileName;
+        TextView tvFileSize;
 
         IncomingViewHolder(@NonNull View itemView) {
             super(itemView);
             tvText = itemView.findViewById(R.id.tv_msg_incoming_text);
             tvTime = itemView.findViewById(R.id.tv_msg_incoming_time);
+            layoutMedia = itemView.findViewById(R.id.layout_msg_incoming_media);
+            ivImage = itemView.findViewById(R.id.iv_msg_incoming_image);
+            ivPlay = itemView.findViewById(R.id.iv_msg_incoming_play);
+            layoutFile = itemView.findViewById(R.id.layout_msg_incoming_file);
+            tvFileName = itemView.findViewById(R.id.tv_msg_incoming_filename);
+            tvFileSize = itemView.findViewById(R.id.tv_msg_incoming_filesize);
         }
 
         void bind(ChatMessage msg, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
-            tvText.setText(msg.getMessageText());
+            bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
+
+            String text = msg.getMessageText();
+            if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
+                tvText.setVisibility(View.VISIBLE);
+                tvText.setText(text);
+            } else if (msg.getMediaUrl() == null || msg.getMediaUrl().isEmpty()) {
+                tvText.setVisibility(View.VISIBLE);
+                tvText.setText(text != null ? text : "");
+            } else {
+                tvText.setVisibility(View.GONE);
+            }
+
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
         }
+    }
+
+    private static void bindMedia(Context context, ChatMessage msg, FrameLayout layoutMedia, ImageView ivImage, ImageView ivPlay, LinearLayout layoutFile, TextView tvFileName, TextView tvFileSize) {
+        String mediaUrl = msg.getMediaUrl();
+        if (mediaUrl == null || mediaUrl.trim().isEmpty()) {
+            if (layoutMedia != null) layoutMedia.setVisibility(View.GONE);
+            if (layoutFile != null) layoutFile.setVisibility(View.GONE);
+            return;
+        }
+
+        String fullUrl = ChatApiClient.getAbsoluteMediaUrl(context, mediaUrl);
+        String mediaType = msg.getMediaType();
+        if (mediaType == null) {
+            String lower = mediaUrl.toLowerCase();
+            if (lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp") || lower.endsWith(".gif")) {
+                mediaType = "image";
+            } else if (lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".mov") || lower.endsWith(".3gp")) {
+                mediaType = "video";
+            } else {
+                mediaType = "file";
+            }
+        }
+        final String resolvedType = mediaType;
+
+        if ("image".equalsIgnoreCase(resolvedType) || "video".equalsIgnoreCase(resolvedType)) {
+            if (layoutFile != null) layoutFile.setVisibility(View.GONE);
+            if (layoutMedia != null) {
+                layoutMedia.setVisibility(View.VISIBLE);
+                if (ivImage != null) {
+                    Glide.with(context)
+                            .load(fullUrl)
+                            .placeholder(R.drawable.bg_search_input)
+                            .error(R.drawable.ic_photo_library)
+                            .centerCrop()
+                            .into(ivImage);
+                }
+                if (ivPlay != null) {
+                    ivPlay.setVisibility("video".equalsIgnoreCase(resolvedType) ? View.VISIBLE : View.GONE);
+                }
+                layoutMedia.setOnClickListener(v -> {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setDataAndType(Uri.parse(fullUrl), "video".equalsIgnoreCase(resolvedType) ? "video/*" : "image/*");
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(intent);
+                    } catch (Exception e) {
+                        try {
+                            Intent web = new Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl));
+                            web.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(web);
+                        } catch (Exception ignored) {}
+                    }
+                });
+            }
+        } else {
+            if (layoutMedia != null) layoutMedia.setVisibility(View.GONE);
+            if (layoutFile != null) {
+                layoutFile.setVisibility(View.VISIBLE);
+                if (tvFileName != null) {
+                    tvFileName.setText(msg.getFileName() != null ? msg.getFileName() : "Document");
+                }
+                if (tvFileSize != null) {
+                    tvFileSize.setText(formatFileSize(msg.getFileSize()));
+                }
+                layoutFile.setOnClickListener(v -> {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl));
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(intent);
+                    } catch (Exception ignored) {}
+                });
+            }
+        }
+    }
+
+    private static String formatFileSize(Long bytes) {
+        if (bytes == null || bytes <= 0) return "";
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format(Locale.getDefault(), "%.1f KB", bytes / 1024.0);
+        return String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024.0));
     }
 
     private static String formatTime(String raw, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {

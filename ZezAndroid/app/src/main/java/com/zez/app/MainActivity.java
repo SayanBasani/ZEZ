@@ -8,18 +8,23 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import android.net.Uri;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import com.bumptech.glide.Glide;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -157,6 +162,13 @@ public class MainActivity extends AppCompatActivity {
     private com.zez.app.model.AlarmItem pendingRingtoneAlarm;
     private TextView pendingRingtoneTextView;
 
+    // Chat Extra & Settings UI
+    private ImageButton btnChatSettingsMenu;
+    private ActivityResultLauncher<String> avatarPickerLauncher;
+    private ImageView currentProfileDialogAvatar;
+    private final android.os.Handler chatListPollHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private boolean isChatListPolling = false;
+
     @Override
     protected void attachBaseContext(android.content.Context newBase) {
         float fontScale = PreferencesHelper.getFontScale(newBase);
@@ -170,6 +182,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        avatarPickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                uploadProfileAvatar(uri);
+            }
+        });
 
         initViews();
         checkAndRequestPermissions();
@@ -434,6 +452,10 @@ public class MainActivity extends AppCompatActivity {
         fabNewChat = findViewById(R.id.fab_new_chat);
         layoutChatsEmpty = findViewById(R.id.layout_chats_empty);
         etSearchChats = findViewById(R.id.et_search_chats);
+        btnChatSettingsMenu = findViewById(R.id.btn_chat_settings_menu);
+        if (btnChatSettingsMenu != null) {
+            btnChatSettingsMenu.setOnClickListener(this::showChatMenu);
+        }
 
         conversationsAdapter = new ConversationsAdapter(this::openChatConversation);
         if (recyclerChats != null) {
@@ -495,18 +517,22 @@ public class MainActivity extends AppCompatActivity {
             tvTitle.setText("Chats");
             if (viewChatsContainer != null) viewChatsContainer.setVisibility(View.VISIBLE);
             loadChatsData();
-        } else if (tabId == R.id.nav_alarms) {
-            tvTitle.setText("Alarms");
-            layoutAlarmsContainer.setVisibility(View.VISIBLE);
-            loadAlarmsData();
-        } else if (tabId == R.id.nav_gallery) {
-            tvTitle.setText("Gallery");
-            viewGalleryContainer.setVisibility(View.VISIBLE);
-            loadGalleryData();
-        } else if (tabId == R.id.nav_settings) {
-            tvTitle.setText("Settings");
-            scrollSettings.setVisibility(View.VISIBLE);
-            loadSettingsData();
+            startChatListPolling();
+        } else {
+            stopChatListPolling();
+            if (tabId == R.id.nav_alarms) {
+                tvTitle.setText("Alarms");
+                layoutAlarmsContainer.setVisibility(View.VISIBLE);
+                loadAlarmsData();
+            } else if (tabId == R.id.nav_gallery) {
+                tvTitle.setText("Gallery");
+                viewGalleryContainer.setVisibility(View.VISIBLE);
+                loadGalleryData();
+            } else if (tabId == R.id.nav_settings) {
+                tvTitle.setText("Settings");
+                scrollSettings.setVisibility(View.VISIBLE);
+                loadSettingsData();
+            }
         }
     }
 
@@ -535,7 +561,14 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         if (currentTab == R.id.nav_chats && ChatPreferencesHelper.isChatRegistered(this)) {
             loadChatsData();
+            startChatListPolling();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopChatListPolling();
     }
 
     private void onNewChatClicked() {
@@ -629,6 +662,177 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         conversationsAdapter.setConversations(filtered);
+    }
+
+    private final Runnable chatListPollRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!isChatListPolling || currentTab != R.id.nav_chats || !ChatPreferencesHelper.isChatRegistered(MainActivity.this)) {
+                return;
+            }
+            String userId = ChatPreferencesHelper.getUserId(MainActivity.this);
+            if (userId != null) {
+                ChatApiClient.getConversations(MainActivity.this, userId, new ChatApiClient.ChatCallback<List<ChatConversation>>() {
+                    @Override
+                    public void onSuccess(List<ChatConversation> conversations) {
+                        if (conversations != null && isChatListPolling && currentTab == R.id.nav_chats) {
+                            allLoadedConversations.clear();
+                            allLoadedConversations.addAll(conversations);
+                            if (layoutChatsEmpty != null) {
+                                layoutChatsEmpty.setVisibility(allLoadedConversations.isEmpty() ? View.VISIBLE : View.GONE);
+                            }
+                            if (conversationsAdapter != null) {
+                                conversationsAdapter.setConversations(allLoadedConversations);
+                            }
+                        }
+                        if (isChatListPolling && currentTab == R.id.nav_chats) {
+                            chatListPollHandler.postDelayed(chatListPollRunnable, 2500);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        if (isChatListPolling && currentTab == R.id.nav_chats) {
+                            chatListPollHandler.postDelayed(chatListPollRunnable, 4000);
+                        }
+                    }
+                });
+            } else {
+                if (isChatListPolling && currentTab == R.id.nav_chats) {
+                    chatListPollHandler.postDelayed(chatListPollRunnable, 3000);
+                }
+            }
+        }
+    };
+
+    private void startChatListPolling() {
+        if (!isChatListPolling) {
+            isChatListPolling = true;
+            chatListPollHandler.postDelayed(chatListPollRunnable, 2000);
+        }
+    }
+
+    private void stopChatListPolling() {
+        isChatListPolling = false;
+        chatListPollHandler.removeCallbacks(chatListPollRunnable);
+    }
+
+    private void showChatMenu(View anchor) {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, anchor);
+        popup.getMenu().add(0, 1, 0, "Profile & Settings");
+        popup.getMenu().add(0, 2, 1, "Server Settings");
+        popup.getMenu().add(0, 3, 2, "Refresh Chats");
+        popup.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case 1:
+                    showChatProfileDialog();
+                    return true;
+                case 2:
+                    showServerConfigDialog();
+                    return true;
+                case 3:
+                    loadChatsData();
+                    return true;
+            }
+            return false;
+        });
+        popup.show();
+    }
+
+    private void showChatProfileDialog() {
+        if (!ChatPreferencesHelper.isChatRegistered(this)) {
+            showChatRegistrationDialog();
+            return;
+        }
+
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_chat_profile, null);
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        currentProfileDialogAvatar = dialogView.findViewById(R.id.iv_profile_avatar);
+        View btnChangePhoto = dialogView.findViewById(R.id.btn_profile_change_photo);
+        View btnClose = dialogView.findViewById(R.id.btn_close_profile_dialog);
+        TextView tvPhone = dialogView.findViewById(R.id.tv_profile_phone_val);
+        EditText etName = dialogView.findViewById(R.id.et_profile_name_val);
+        EditText etStatus = dialogView.findViewById(R.id.et_profile_status_val);
+        android.widget.Button btnCancel = dialogView.findViewById(R.id.btn_cancel_profile);
+        android.widget.Button btnSave = dialogView.findViewById(R.id.btn_save_profile);
+
+        String currentAvatar = ChatPreferencesHelper.getUserAvatar(this);
+        if (currentProfileDialogAvatar != null && currentAvatar != null && !currentAvatar.isEmpty()) {
+            String fullUrl = ChatApiClient.getAbsoluteMediaUrl(this, currentAvatar);
+            Glide.with(this).load(fullUrl).placeholder(R.drawable.ic_person).into(currentProfileDialogAvatar);
+        }
+
+        if (tvPhone != null) tvPhone.setText(ChatPreferencesHelper.getUserPhone(this));
+        if (etName != null) etName.setText(ChatPreferencesHelper.getUserName(this));
+        if (etStatus != null) etStatus.setText(ChatPreferencesHelper.getStatusMessage(this));
+
+        View.OnClickListener pickPhotoListener = v -> {
+            if (avatarPickerLauncher != null) {
+                avatarPickerLauncher.launch("image/*");
+            }
+        };
+
+        if (btnChangePhoto != null) btnChangePhoto.setOnClickListener(pickPhotoListener);
+        if (currentProfileDialogAvatar != null) currentProfileDialogAvatar.setOnClickListener(pickPhotoListener);
+        if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
+        if (btnCancel != null) btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        if (btnSave != null) {
+            btnSave.setOnClickListener(v -> {
+                String newName = etName != null ? etName.getText().toString().trim() : "";
+                String newStatus = etStatus != null ? etStatus.getText().toString().trim() : "";
+                if (newName.isEmpty()) {
+                    if (etName != null) etName.setError("Name cannot be empty");
+                    return;
+                }
+                String userId = ChatPreferencesHelper.getUserId(this);
+                ChatPreferencesHelper.saveUserName(this, newName);
+                ChatPreferencesHelper.saveStatusMessage(this, newStatus);
+
+                ChatApiClient.updateProfile(this, userId, newName, null, newStatus, new ChatApiClient.ChatCallback<ChatUser>() {
+                    @Override
+                    public void onSuccess(ChatUser user) {
+                        Toast.makeText(MainActivity.this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        Toast.makeText(MainActivity.this, "Profile saved locally", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    }
+                });
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void uploadProfileAvatar(Uri uri) {
+        String userId = ChatPreferencesHelper.getUserId(this);
+        Toast.makeText(this, "Uploading profile picture...", Toast.LENGTH_SHORT).show();
+        ChatApiClient.uploadAvatar(this, uri, userId, new ChatApiClient.ChatCallback<String>() {
+            @Override
+            public void onSuccess(String relativeAvatarUrl) {
+                ChatPreferencesHelper.saveUserAvatar(MainActivity.this, relativeAvatarUrl);
+                Toast.makeText(MainActivity.this, "Profile photo updated!", Toast.LENGTH_SHORT).show();
+                if (currentProfileDialogAvatar != null) {
+                    String fullUrl = ChatApiClient.getAbsoluteMediaUrl(MainActivity.this, relativeAvatarUrl);
+                    Glide.with(MainActivity.this).load(fullUrl).into(currentProfileDialogAvatar);
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Toast.makeText(MainActivity.this, "Avatar upload failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void showChatRegistrationDialog() {

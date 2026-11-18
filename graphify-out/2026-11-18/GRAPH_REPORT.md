@@ -1,12 +1,20 @@
 # Graph Report - Call Log Mannager  (2026-11-18)
 
 ## Corpus Check
-- Corpus is ~47,367 words - fits in a single context window. You may not need a graph.
+- 73 files · ~47,893 words
+- Verdict: corpus is large enough that graph structure adds value.
+- Unclassified: 75 file(s) not represented in the graph (top: .xml 66, .properties 5, (none) 2)
+- WARNING: 75 of 161 files seen (47%) have no supported extractor and are missing from this graph entirely. It may look complete while representing only part of the codebase.
 
 ## Summary
 - 955 nodes · 2478 edges · 51 communities (23 shown, 28 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 176 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `1bd96adf`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - Gallery & Media Presentation (C0)
@@ -62,19 +70,19 @@
 7. `AlarmItem` - 26 edges
 8. `ChatContactItem` - 25 edges
 9. `AlbumDetailActivity` - 22 edges
-10. `ContactsActivity` - 21 edges
+10. `ChatUser` - 21 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `decodeRecord()` --calls--> `decryptStoredPayload()`  [EXTRACTED]
-  Zez-Backend/src/routes/admin.js → Zez-Backend/src/crypto.js
-- `decodeRecord()` --calls--> `decryptStoredPayload()`  [EXTRACTED]
-  Zez-Backend/src/routes/callRead.js → Zez-Backend/src/crypto.js
-- `ChatActivity` --references--> `ChatMessageAdapter`  [EXTRACTED]
-  ZezAndroid/app/src/main/java/com/zez/app/ChatActivity.java → ZezAndroid/app/src/main/java/com/zez/app/adapter/ChatMessageAdapter.java
-- `MainActivity` --references--> `AlarmAdapter`  [EXTRACTED]
-  ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java → ZezAndroid/app/src/main/java/com/zez/app/adapter/AlarmAdapter.java
-- `MainActivity` --references--> `AlbumsAdapter`  [EXTRACTED]
-  ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java → ZezAndroid/app/src/main/java/com/zez/app/adapter/AlbumsAdapter.java
+- `GalleryAdapter` --references--> `ViewHolder`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/adapter/GalleryAdapter.java → ZezAndroid/app/src/main/java/com/zez/app/adapter/ConversationsAdapter.java
+- `MainActivity` --references--> `GalleryAdapter`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java → ZezAndroid/app/src/main/java/com/zez/app/adapter/GalleryAdapter.java
+- `MediaPagerAdapter` --references--> `MediaItem`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/adapter/MediaPagerAdapter.java → ZezAndroid/app/src/main/java/com/zez/app/model/MediaItem.java
+- `MainActivity` --references--> `MediaItem`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java → ZezAndroid/app/src/main/java/com/zez/app/model/MediaItem.java
+- `ContactSyncResult` --references--> `ChatUser`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/util/ChatApiClient.java → ZezAndroid/app/src/main/java/com/zez/app/model/ChatUser.java
 
 ## Import Cycles
 - None detected.
@@ -174,7 +182,7 @@ Cohesion: 0.47
 Nodes (4): get(), http, post(), run()
 
 ## Knowledge Gaps
-- **4 isolated node(s):** `System Architecture and Sync Guide`, `Project README`, `New Requirements Specification`, `Admin Dashboard Web Interface`
+- **4 isolated node(s):** `New Requirements Specification`, `Project README`, `System Architecture and Sync Guide`, `Admin Dashboard Web Interface`
   These have ≤1 connection - possible missing edges. (Counts symbols only; 177 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **28 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -183,7 +191,7 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `MainActivity` connect `Main Activity & View Navigation (C9)` to `Gallery & Media Presentation (C0)`, `Gallery & Media Presentation (C1)`, `Alarm Scheduling & Triggering (C3)`, `Gallery & Media Presentation (C4)`, `Hardware Info & Performance Telemetry (C36)`, `Hardware Info & Performance Telemetry (C6)`, `Contacts & User Discovery (C7)`, `Gallery & Media Presentation (C8)`, `Gallery & Media Presentation (C10)`, `Gallery & Media Presentation (C11)`, `Main Activity & View Navigation (C14)`, `Gallery & Media Presentation (C17)`, `Gallery & Media Presentation (C18)`, `Settings, Themes & User Preferences (C24)`?**
   _High betweenness centrality (0.123) - this node is a cross-community bridge._
-- **What connects `System Architecture and Sync Guide`, `Project README`, `New Requirements Specification` to the rest of the system?**
+- **What connects `New Requirements Specification`, `Project README`, `System Architecture and Sync Guide` to the rest of the system?**
   _4 weakly-connected nodes found - possible missing edges._
 - **Should `Gallery & Media Presentation (C0)` be split into smaller, more focused modules?**
   _Cohesion score 0.06265432098765432 - nodes in this community are weakly interconnected._
