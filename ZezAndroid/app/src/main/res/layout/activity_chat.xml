@@ -80,6 +80,37 @@
                 android:textColor="@color/primary" />
         </LinearLayout>
 
+        <!-- Mode Toggle Pill Button (Normal <-> Secret Mode) -->
+        <LinearLayout
+            android:id="@+id/btn_chat_mode_toggle"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_marginEnd="6dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_mode_toggle_normal"
+            android:paddingHorizontal="10dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/iv_mode_icon"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_shield_check"
+                app:tint="#22C55E" />
+
+            <TextView
+                android:id="@+id/tv_mode_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="Normal"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#22C55E" />
+        </LinearLayout>
+
         <ImageButton
             android:id="@+id/btn_chat_more"
             android:layout_width="40dp"
@@ -88,6 +119,45 @@
             android:src="@drawable/ic_more_vert"
             app:tint="@color/theme_icon_tint"
             android:contentDescription="Options" />
+    </LinearLayout>
+
+    <!-- Secret Mode Ephemeral Warning Banner -->
+    <LinearLayout
+        android:id="@+id/layout_secret_mode_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp"
+        android:background="#20A855F7"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_incognito"
+            app:tint="#A855F7" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Secret Mode Active • Messages disappear when leaving chat"
+            android:textSize="11sp"
+            android:textColor="#D8B4FE" />
+
+        <TextView
+            android:id="@+id/btn_exit_secret_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Turn Off"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#C084FC"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp" />
     </LinearLayout>
 
     <!-- Message Stream -->

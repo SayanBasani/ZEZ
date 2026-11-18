@@ -3,6 +3,7 @@ package com.zez.app;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,6 +14,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,11 +35,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.TimeZone;
+import java.util.UUID;
 import java.util.TimeZone;
 
 public class ChatActivity extends AppCompatActivity {
@@ -56,6 +61,17 @@ public class ChatActivity extends AppCompatActivity {
     private FrameLayout btnSendContainer;
     private ImageView btnSend;
     private ProgressBar pbSending;
+
+    private LinearLayout btnModeToggle;
+    private ImageView ivModeIcon;
+    private TextView tvModeLabel;
+    private LinearLayout layoutSecretBanner;
+    private TextView btnExitSecretMode;
+
+    private boolean isSecretMode = false;
+    private String currentSecretSessionId = null;
+    private final List<ChatMessage> normalMessages = new ArrayList<>();
+    private final List<ChatMessage> ephemeralSecretMessages = new ArrayList<>();
 
     private ChatMessageAdapter adapter;
     private LinearLayoutManager layoutManager;
@@ -123,6 +139,12 @@ public class ChatActivity extends AppCompatActivity {
         btnSend = findViewById(R.id.btn_chat_send);
         pbSending = findViewById(R.id.pb_chat_sending);
 
+        btnModeToggle = findViewById(R.id.btn_chat_mode_toggle);
+        ivModeIcon = findViewById(R.id.iv_mode_icon);
+        tvModeLabel = findViewById(R.id.tv_mode_label);
+        layoutSecretBanner = findViewById(R.id.layout_secret_mode_banner);
+        btnExitSecretMode = findViewById(R.id.btn_exit_secret_mode);
+
         tvHeaderName.setText(otherUserName != null ? otherUserName : otherUserPhone);
         tvHeaderStatus.setText("online");
 
@@ -130,6 +152,85 @@ public class ChatActivity extends AppCompatActivity {
         btnSendContainer.setOnClickListener(v -> sendMessage());
         if (btnAttach != null) {
             btnAttach.setOnClickListener(v -> showAttachmentDialog());
+        }
+
+        if (btnModeToggle != null) {
+            btnModeToggle.setOnClickListener(v -> toggleMode());
+        }
+        if (btnExitSecretMode != null) {
+            btnExitSecretMode.setOnClickListener(v -> {
+                if (isSecretMode) toggleMode();
+            });
+        }
+    }
+
+    private void updateModeUi() {
+        if (btnModeToggle == null || ivModeIcon == null || tvModeLabel == null) return;
+        if (isSecretMode) {
+            btnModeToggle.setBackgroundResource(R.drawable.bg_mode_toggle_secret);
+            ivModeIcon.setImageResource(R.drawable.ic_incognito);
+            ivModeIcon.setColorFilter(Color.parseColor("#A855F7"));
+            tvModeLabel.setText("Secret");
+            tvModeLabel.setTextColor(Color.parseColor("#A855F7"));
+            if (layoutSecretBanner != null) layoutSecretBanner.setVisibility(View.VISIBLE);
+        } else {
+            btnModeToggle.setBackgroundResource(R.drawable.bg_mode_toggle_normal);
+            ivModeIcon.setImageResource(R.drawable.ic_shield_check);
+            ivModeIcon.setColorFilter(Color.parseColor("#22C55E"));
+            tvModeLabel.setText("Normal");
+            tvModeLabel.setTextColor(Color.parseColor("#22C55E"));
+            if (layoutSecretBanner != null) layoutSecretBanner.setVisibility(View.GONE);
+        }
+    }
+
+    private void toggleMode() {
+        final boolean targetSecret = !isSecretMode;
+        if (conversationId == null) {
+            applyModeState(targetSecret, UUID.randomUUID().toString(), true);
+            return;
+        }
+
+        ChatApiClient.setConversationMode(this, conversationId, currentUserId, targetSecret, new ChatApiClient.ChatCallback<ChatApiClient.ConversationModeInfo>() {
+            @Override
+            public void onSuccess(ChatApiClient.ConversationModeInfo info) {
+                applyModeState(info.isSecretMode, info.secretSessionId, true);
+            }
+
+            @Override
+            public void onError(String error) {
+                Toast.makeText(ChatActivity.this, "Mode toggle error: " + error, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void applyModeState(boolean secret, String sessionId, boolean notifyToast) {
+        if (this.isSecretMode == secret && (secret ? (sessionId != null && sessionId.equals(this.currentSecretSessionId)) : true)) {
+            return;
+        }
+        this.isSecretMode = secret;
+        this.currentSecretSessionId = sessionId;
+        updateModeUi();
+
+        loadedMessageIds.clear();
+        if (isSecretMode) {
+            // Fresh clean screen for secret session!
+            ephemeralSecretMessages.clear();
+            adapter.setMessages(ephemeralSecretMessages);
+            if (notifyToast) {
+                Toast.makeText(this, "Secret Mode Active • Messages disappear on exit", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            ephemeralSecretMessages.clear();
+            for (ChatMessage m : normalMessages) {
+                if (m.getId() != null) loadedMessageIds.add(m.getId());
+            }
+            adapter.setMessages(normalMessages);
+            if (adapter.getItemCount() > 0) {
+                recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+            }
+            if (notifyToast) {
+                Toast.makeText(this, "Normal Mode Active", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -142,18 +243,23 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void loadMessages() {
-        ChatApiClient.getMessages(this, conversationId, currentUserId, otherUserId, 100, new ChatApiClient.ChatCallback<List<ChatMessage>>() {
+        ChatApiClient.getMessages(this, conversationId, currentUserId, otherUserId, 100, "normal", null, new ChatApiClient.ChatCallback<ChatApiClient.MessagesResult>() {
             @Override
-            public void onSuccess(List<ChatMessage> messages) {
+            public void onSuccess(ChatApiClient.MessagesResult result) {
+                normalMessages.clear();
                 loadedMessageIds.clear();
-                if (messages != null) {
-                    for (ChatMessage m : messages) {
-                        if (m.getId() != null) loadedMessageIds.add(m.getId());
-                    }
-                    adapter.setMessages(messages);
-                    if (!messages.isEmpty()) {
-                        lastPollTimestamp = messages.get(messages.size() - 1).getCreatedAt();
-                    }
+                if (result != null && result.messages != null) {
+                    normalMessages.addAll(result.messages);
+                }
+
+                if (result != null && result.isSecretMode) {
+                    applyModeState(true, result.secretSessionId, false);
+                } else {
+                    applyModeState(false, null, false);
+                }
+
+                if (!normalMessages.isEmpty()) {
+                    lastPollTimestamp = normalMessages.get(normalMessages.size() - 1).getCreatedAt();
                 }
                 if (lastPollTimestamp == null) {
                     lastPollTimestamp = isoFormat.format(new Date());
@@ -181,6 +287,9 @@ public class ChatActivity extends AppCompatActivity {
         btnSend.setVisibility(View.GONE);
         pbSending.setVisibility(View.VISIBLE);
 
+        final String activeMode = isSecretMode ? ChatMessage.MODE_SECRET : ChatMessage.MODE_NORMAL;
+        final String sessionUuid = isSecretMode ? currentSecretSessionId : null;
+
         String tempId = "temp_" + System.currentTimeMillis();
         ChatMessage optimisticMsg = new ChatMessage(
                 tempId,
@@ -192,10 +301,18 @@ public class ChatActivity extends AppCompatActivity {
                 ChatMessage.STATUS_SENT,
                 isoFormat.format(new Date())
         );
+        optimisticMsg.setMode(activeMode);
+        optimisticMsg.setSecretSessionId(sessionUuid);
+
+        if (isSecretMode) {
+            ephemeralSecretMessages.add(optimisticMsg);
+        } else {
+            normalMessages.add(optimisticMsg);
+        }
         adapter.addMessage(optimisticMsg);
         recyclerView.scrollToPosition(adapter.getItemCount() - 1);
 
-        ChatApiClient.sendMessage(this, currentUserId, otherUserId, text, null, new ChatApiClient.ChatCallback<ChatMessage>() {
+        ChatApiClient.sendMessage(this, currentUserId, otherUserId, text, null, null, null, null, activeMode, sessionUuid, new ChatApiClient.ChatCallback<ChatMessage>() {
             @Override
             public void onSuccess(ChatMessage sentMessage) {
                 btnSend.setVisibility(View.VISIBLE);
@@ -261,6 +378,8 @@ public class ChatActivity extends AppCompatActivity {
         final String finalName = displayName;
         final long finalSize = fileSize;
         final String finalType = defaultType;
+        final String activeMode = isSecretMode ? ChatMessage.MODE_SECRET : ChatMessage.MODE_NORMAL;
+        final String sessionUuid = isSecretMode ? currentSecretSessionId : null;
 
         ChatApiClient.uploadChatMedia(this, uri, displayName, mimeType, new ChatApiClient.ChatCallback<ChatApiClient.MediaUploadResult>() {
             @Override
@@ -280,12 +399,20 @@ public class ChatActivity extends AppCompatActivity {
                         result.mediaType != null ? result.mediaType : finalType,
                         result.fileName != null ? result.fileName : finalName,
                         result.fileSize > 0 ? result.fileSize : finalSize,
+                        activeMode,
+                        sessionUuid,
                         new ChatApiClient.ChatCallback<ChatMessage>() {
                             @Override
                             public void onSuccess(ChatMessage sentMessage) {
                                 if (sentMessage != null) {
                                     if (sentMessage.getId() != null) loadedMessageIds.add(sentMessage.getId());
                                     if (conversationId == null) conversationId = sentMessage.getConversationId();
+                                    
+                                    if (isSecretMode) {
+                                        ephemeralSecretMessages.add(sentMessage);
+                                    } else {
+                                        normalMessages.add(sentMessage);
+                                    }
                                     adapter.addMessage(sentMessage);
                                     recyclerView.scrollToPosition(adapter.getItemCount() - 1);
                                 }
@@ -327,11 +454,21 @@ public class ChatActivity extends AppCompatActivity {
         public void run() {
             if (!isPollingActive) return;
 
-            ChatApiClient.pollUpdates(ChatActivity.this, currentUserId, lastPollTimestamp, new ChatApiClient.ChatCallback<ChatApiClient.PollResult>() {
+            ChatApiClient.pollUpdates(ChatActivity.this, currentUserId, lastPollTimestamp, conversationId, new ChatApiClient.ChatCallback<ChatApiClient.PollResult>() {
                 @Override
                 public void onSuccess(ChatApiClient.PollResult result) {
                     if (result != null) {
                         if (result.timestamp != null) lastPollTimestamp = result.timestamp;
+
+                        // Synchronize dual mode across peers
+                        if (result.conversationMode != null) {
+                            boolean remoteSecret = result.conversationMode.isSecretMode;
+                            String remoteSession = result.conversationMode.secretSessionId;
+                            if (remoteSecret != isSecretMode) {
+                                applyModeState(remoteSecret, remoteSession, true);
+                            }
+                        }
+
                         if (result.incoming != null && !result.incoming.isEmpty()) {
                             boolean hasNew = false;
                             for (ChatMessage msg : result.incoming) {
@@ -340,8 +477,20 @@ public class ChatActivity extends AppCompatActivity {
                                 }
                                 if (otherUserId != null && otherUserId.equals(msg.getSenderId())) {
                                     if (msg.getId() != null) loadedMessageIds.add(msg.getId());
-                                    adapter.addMessage(msg);
-                                    hasNew = true;
+                                    
+                                    if (msg.isSecretMode()) {
+                                        if (isSecretMode) {
+                                            ephemeralSecretMessages.add(msg);
+                                            adapter.addMessage(msg);
+                                            hasNew = true;
+                                        }
+                                    } else {
+                                        normalMessages.add(msg);
+                                        if (!isSecretMode) {
+                                            adapter.addMessage(msg);
+                                            hasNew = true;
+                                        }
+                                    }
                                 }
                             }
                             if (hasNew) {
@@ -371,6 +520,7 @@ public class ChatActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         isPollingActive = true;
+        updateModeUi();
         pollHandler.postDelayed(pollRunnable, 1000);
     }
 
@@ -379,5 +529,16 @@ public class ChatActivity extends AppCompatActivity {
         super.onPause();
         isPollingActive = false;
         pollHandler.removeCallbacks(pollRunnable);
+        // Ephemeral Secret Mode rule: Purge all in-memory secret messages when user navigates away or pauses
+        ephemeralSecretMessages.clear();
+        if (isSecretMode) {
+            adapter.setMessages(ephemeralSecretMessages);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ephemeralSecretMessages.clear();
     }
 }

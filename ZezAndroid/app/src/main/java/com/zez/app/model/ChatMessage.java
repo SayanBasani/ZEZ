@@ -8,6 +8,9 @@ public class ChatMessage implements Serializable {
     public static final String STATUS_DELIVERED = "delivered";
     public static final String STATUS_READ = "read";
 
+    public static final String MODE_NORMAL = "normal";
+    public static final String MODE_SECRET = "secret";
+
     @SerializedName("id")
     private String id;
 
@@ -34,6 +37,12 @@ public class ChatMessage implements Serializable {
 
     @SerializedName("file_size")
     private Long fileSize;
+
+    @SerializedName("mode")
+    private String mode;
+
+    @SerializedName("secret_session_id")
+    private String secretSessionId;
 
     @SerializedName("status")
     private String status;
@@ -87,6 +96,13 @@ public class ChatMessage implements Serializable {
 
     public Long getFileSize() { return fileSize; }
     public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+
+    public String getMode() { return mode != null ? mode : MODE_NORMAL; }
+    public void setMode(String mode) { this.mode = mode; }
+    public boolean isSecretMode() { return MODE_SECRET.equalsIgnoreCase(this.mode); }
+
+    public String getSecretSessionId() { return secretSessionId; }
+    public void setSecretSessionId(String secretSessionId) { this.secretSessionId = secretSessionId; }
 
     public String getStatus() { return status != null ? status : STATUS_SENT; }
     public void setStatus(String status) { this.status = status; }
