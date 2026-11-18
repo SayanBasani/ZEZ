@@ -23,6 +23,11 @@ function parseIsoDate(val) {
   return new Date(ts).toISOString();
 }
 
+function isValidUuid(val) {
+  if (!val || typeof val !== "string") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val.trim());
+}
+
 function decodeRecord(row) {
   let call = null;
   let decryptionFailed = false;
@@ -313,25 +318,22 @@ router.get("/devices/:deviceId/calls", async (req, res, next) => {
       conditions.push(`call_timestamp <= $${params.length}::timestamptz`);
     }
 
-    // Total call records count for device matching date range
-    const countResult = await pool.query(
-      `SELECT COUNT(*)::int AS total FROM public.call_logs WHERE ${conditions.join(" AND ")}`,
-      params
-    );
-    const totalCount = countResult.rows[0]?.total || 0;
-
-    // Fetch call logs ordered descending
-    params.push(limit);
-    params.push(offset);
-    const query = `
+    // Fetch count and call logs in parallel for high performance
+    const countQuery = `SELECT COUNT(*)::int AS total FROM public.call_logs WHERE ${conditions.join(" AND ")}`;
+    const dataParams = [...params, limit, offset];
+    const dataQuery = `
       SELECT id, device_id, call_timestamp, encrypted_payload, created_at
       FROM public.call_logs
       WHERE ${conditions.join(" AND ")}
       ORDER BY call_timestamp DESC, id DESC
-      LIMIT $${params.length - 1} OFFSET $${params.length}
+      LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}
     `;
 
-    const result = await pool.query(query, params);
+    const [countResult, result] = await Promise.all([
+      pool.query(countQuery, params),
+      pool.query(dataQuery, dataParams)
+    ]);
+    const totalCount = countResult.rows[0]?.total || 0;
     let calls = result.rows.map(decodeRecord);
 
     // Apply optional client-side type or phone/name filter on decrypted payloads
@@ -383,7 +385,11 @@ router.get("/calls", async (req, res, next) => {
 
     if (deviceId && deviceId !== "ALL") {
       params.push(deviceId);
-      conditions.push(`cl.device_id = $${params.length}`);
+      if (isValidUuid(deviceId)) {
+        conditions.push(`cl.device_id = $${params.length}`);
+      } else {
+        conditions.push(`cl.device_id::text = $${params.length}`);
+      }
     }
 
     const fromDate = parseIsoDate(from);
@@ -399,28 +405,21 @@ router.get("/calls", async (req, res, next) => {
       conditions.push(`cl.call_timestamp <= $${params.length}::timestamptz`);
     }
 
-    if (year && !isNaN(year)) {
+    if (year && !isNaN(year) && year >= 1970 && year <= 2100) {
       params.push(year);
       conditions.push(`EXTRACT(YEAR FROM cl.call_timestamp) = $${params.length}`);
     }
 
-    if (month && !isNaN(month)) {
+    if (month && !isNaN(month) && month >= 1 && month <= 12) {
       params.push(month);
       conditions.push(`EXTRACT(MONTH FROM cl.call_timestamp) = $${params.length}`);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const countResult = await pool.query(
-      `SELECT COUNT(*)::int AS total FROM public.call_logs cl ${whereClause}`,
-      params
-    );
-    const total = countResult.rows[0]?.total || 0;
-
-    params.push(limit);
-    params.push(offset);
-
-    const query = `
+    const countQuery = `SELECT COUNT(*)::int AS total FROM public.call_logs cl ${whereClause}`;
+    const dataParams = [...params, limit, offset];
+    const dataQuery = `
       SELECT 
         cl.id, cl.device_id, cl.call_timestamp, cl.encrypted_payload, cl.created_at,
         d.device_name, d.device_model, d.androidid
@@ -428,10 +427,14 @@ router.get("/calls", async (req, res, next) => {
       LEFT JOIN public.devices d ON d.id = cl.device_id
       ${whereClause}
       ORDER BY cl.call_timestamp DESC, cl.id DESC
-      LIMIT $${params.length - 1} OFFSET $${params.length}
+      LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}
     `;
 
-    const result = await pool.query(query, params);
+    const [countResult, result] = await Promise.all([
+      pool.query(countQuery, params),
+      pool.query(dataQuery, dataParams)
+    ]);
+    const total = countResult.rows[0]?.total || 0;
     let calls = result.rows.map(decodeRecord);
 
     if (typeFilter && typeFilter !== "ALL") {
@@ -994,6 +997,7 @@ router.get("/chats/export/:id", async (req, res, next) => {
       res.setHeader("Content-Disposition", `attachment; filename="chat-${safeTitle}-${Date.now()}.json"`);
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       return res.send(JSON.stringify({
+        success: true,
         conversationId: conv.id,
         participants: [
           { name: conv.u1_name, phone: conv.u1_phone },
@@ -1120,6 +1124,7 @@ router.get("/chats/export-all", async (req, res, next) => {
     res.setHeader("Content-Disposition", `attachment; filename="all-chats-${Date.now()}.json"`);
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     return res.send(JSON.stringify({
+      success: true,
       exportedAt: new Date().toISOString(),
       totalMessages: messages.length,
       messages

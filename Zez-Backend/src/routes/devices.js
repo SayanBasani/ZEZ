@@ -12,8 +12,8 @@ router.post("/register", async (req, res, next) => {
   const body = req.body ?? {};
   const ids = body.ids ?? {};
 
-  const androidId = ids.androidId ? String(ids.androidId) : null;
-  const persistentId = ids.persistentId ? String(ids.persistentId) : null;
+  const androidId = ids.androidId ? String(ids.androidId) : (body.androidId ? String(body.androidId) : null);
+  const persistentId = ids.persistentId ? String(ids.persistentId) : (body.persistentId ? String(body.persistentId) : null);
 
   if (!androidId && !persistentId) {
     return res.status(400).json({

@@ -56,15 +56,19 @@ function normalizePhone(raw) {
 // POST /api/chat/register
 router.post("/register", async (req, res) => {
   try {
-    const { phone_number, name, avatar_url, status_message } = req.body;
-    if (!phone_number || !name) {
-      return res.status(400).json({ error: "phone_number and name are required." });
+    const rawPhone = req.body.phone_number || req.body.phoneNumber;
+    const rawName = req.body.name || req.body.displayName;
+    const rawAvatar = req.body.avatar_url || req.body.avatarUrl;
+    const rawStatus = req.body.status_message || req.body.statusMessage;
+
+    if (!rawPhone || !rawName) {
+      return res.status(400).json({ success: false, error: "Phone number and name are required." });
     }
 
-    const cleanPhone = normalizePhone(phone_number);
-    const displayName = String(name).trim();
-    const avatar = avatar_url || null;
-    const status = status_message || "Hey there! I am using Zez.";
+    const cleanPhone = normalizePhone(rawPhone);
+    const displayName = String(rawName).trim();
+    const avatar = rawAvatar || null;
+    const status = rawStatus || "Hey there! I am using Zez.";
 
     const query = `
       INSERT INTO public.chat_users (phone_number, name, avatar_url, status_message, last_seen)
@@ -319,7 +323,7 @@ async function getOrCreateConversation(userA, userB) {
   const [u1, u2] = userA < userB ? [userA, userB] : [userB, userA];
 
   let res = await pool.query(
-    "SELECT id, user1_id, user2_id, last_message_text, last_message_time, created_at FROM public.chat_conversations WHERE user1_id = $1 AND user2_id = $2",
+    "SELECT id, user1_id, user2_id, is_secret_mode, secret_session_id, last_message_text, last_message_time, created_at FROM public.chat_conversations WHERE user1_id = $1 AND user2_id = $2",
     [u1, u2]
   );
 
@@ -328,7 +332,7 @@ async function getOrCreateConversation(userA, userB) {
       `INSERT INTO public.chat_conversations (user1_id, user2_id, last_message_text, last_message_time)
        VALUES ($1, $2, '', NOW())
        ON CONFLICT (user1_id, user2_id) DO UPDATE SET user1_id = EXCLUDED.user1_id
-       RETURNING id, user1_id, user2_id, last_message_text, last_message_time, created_at`,
+       RETURNING id, user1_id, user2_id, is_secret_mode, secret_session_id, last_message_text, last_message_time, created_at`,
       [u1, u2]
     );
   }
@@ -338,7 +342,7 @@ async function getOrCreateConversation(userA, userB) {
 
 // 4b. Get conversation mode
 // GET /api/chat/conversation/:id/mode
-router.get("/conversation/:id/mode", async (req, res) => {
+router.get(["/conversation/:id/mode", "/conversations/:id/mode"], async (req, res) => {
   try {
     const convId = req.params.id;
     const result = await pool.query(
@@ -365,7 +369,7 @@ router.get("/conversation/:id/mode", async (req, res) => {
 
 // 4c. Set / Toggle conversation mode (Normal <-> Secret Mode)
 // POST /api/chat/conversation/:id/mode
-router.post("/conversation/:id/mode", async (req, res) => {
+router.post(["/conversation/:id/mode", "/conversations/:id/mode"], async (req, res) => {
   try {
     const convId = req.params.id;
     const { isSecretMode, userId } = req.body;
@@ -571,20 +575,18 @@ router.get("/messages", async (req, res) => {
 });
 
 // 7. Send message
-// POST /api/chat/messages/send
-router.post("/messages/send", async (req, res) => {
+// POST /api/chat/messages/send or /api/chat/messages
+router.post(["/messages/send", "/messages"], async (req, res) => {
   try {
-    const {
-      sender_id,
-      receiver_id,
-      message_text,
-      media_url,
-      media_type,
-      file_name,
-      file_size,
-      mode = "normal",
-      secret_session_id
-    } = req.body;
+    const sender_id = req.body.sender_id || req.body.senderId;
+    const receiver_id = req.body.receiver_id || req.body.receiverId;
+    const message_text = req.body.message_text ?? req.body.messageText;
+    const media_url = req.body.media_url ?? req.body.mediaUrl;
+    const media_type = req.body.media_type ?? req.body.mediaType;
+    const file_name = req.body.file_name ?? req.body.fileName;
+    const file_size = req.body.file_size ?? req.body.fileSize;
+    const mode = req.body.mode || "normal";
+    const secret_session_id = req.body.secret_session_id || req.body.secretSessionId;
 
     if (!sender_id || !receiver_id) {
       return res.status(400).json({ error: "sender_id and receiver_id are required." });
