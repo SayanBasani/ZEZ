@@ -54,4 +54,16 @@ public class ChatPreferencesHelper {
     public static void clearChatUser(Context context) {
         getPrefs(context).edit().clear().apply();
     }
+
+    public static void saveUserAvatar(Context context, String avatar) {
+        getPrefs(context).edit().putString(KEY_AVATAR, avatar).apply();
+    }
+
+    public static void saveUserName(Context context, String name) {
+        getPrefs(context).edit().putString(KEY_NAME, name).apply();
+    }
+
+    public static void saveStatusMessage(Context context, String status) {
+        getPrefs(context).edit().putString(KEY_STATUS, status).apply();
+    }
 }

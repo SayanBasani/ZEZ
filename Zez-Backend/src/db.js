@@ -102,6 +102,10 @@ async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_chat_messages_conv ON public.chat_messages(conversation_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS idx_chat_messages_recv ON public.chat_messages(receiver_id, status);
     CREATE INDEX IF NOT EXISTS idx_chat_users_phone ON public.chat_users(phone_number);
+
+    ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS media_type VARCHAR(32);
+    ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
+    ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS file_size BIGINT;
   `);
 
   // Seed default admin if table is empty

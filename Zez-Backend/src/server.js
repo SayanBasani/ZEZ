@@ -46,6 +46,7 @@ app.post('/api/ping', (req, res) => {
 // Admin Web Portal (Static UI)
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
 app.use('/downloads', express.static(path.join(__dirname, 'public/downloads')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.get('/', (_req, res) => res.redirect('/admin'));
 
 // API Routes

@@ -28,6 +28,9 @@ public class ChatContactItem implements Serializable {
     public String getPhotoUri() { return photoUri; }
     public void setPhotoUri(String photoUri) { this.photoUri = photoUri; }
 
+    public String getAvatarUrl() { return photoUri; }
+    public void setAvatarUrl(String avatarUrl) { this.photoUri = avatarUrl; }
+
     public boolean isRegistered() { return isRegistered; }
     public void setRegistered(boolean registered) { isRegistered = registered; }
 

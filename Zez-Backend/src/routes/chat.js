@@ -1,7 +1,46 @@
 const express = require("express");
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 const { pool } = require("../db");
 
 const router = express.Router();
+
+// Ensure local upload storage directories exist
+const mediaUploadDir = path.join(__dirname, "../public/uploads/chat_media");
+const avatarUploadDir = path.join(__dirname, "../public/uploads/avatars");
+if (!fs.existsSync(mediaUploadDir)) fs.mkdirSync(mediaUploadDir, { recursive: true });
+if (!fs.existsSync(avatarUploadDir)) fs.mkdirSync(avatarUploadDir, { recursive: true });
+
+const mediaStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, mediaUploadDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const cleanExt = ext || ".bin";
+    const unique = `media-${Date.now()}-${Math.random().toString(36).substring(2, 8)}${cleanExt}`;
+    cb(null, unique);
+  }
+});
+
+const avatarStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, avatarUploadDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const cleanExt = ext || ".jpg";
+    const unique = `avatar-${Date.now()}-${Math.random().toString(36).substring(2, 8)}${cleanExt}`;
+    cb(null, unique);
+  }
+});
+
+const uploadMedia = multer({
+  storage: mediaStorage,
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB max upload
+});
+
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB max avatar
+});
 
 function normalizePhone(raw) {
   if (!raw) return "";
@@ -118,6 +157,93 @@ router.post("/profile", async (req, res) => {
   } catch (err) {
     console.error("Error updating profile:", err);
     return res.status(500).json({ error: "Internal server error updating profile." });
+  }
+});
+
+// 3b. Upload Chat Media (Images, Videos, Files, Audio) - Zero 3rd party storage
+// POST /api/chat/upload
+router.post("/upload", uploadMedia.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded." });
+    }
+
+    const mime = req.file.mimetype || "";
+    let mediaType = "file";
+    if (mime.startsWith("image/")) {
+      mediaType = "image";
+    } else if (mime.startsWith("video/")) {
+      mediaType = "video";
+    } else if (mime.startsWith("audio/")) {
+      mediaType = "audio";
+    }
+
+    const relativeUrl = `/uploads/chat_media/${req.file.filename}`;
+    return res.json({
+      success: true,
+      url: relativeUrl,
+      fileName: req.file.originalname,
+      fileSize: req.file.size,
+      mediaType
+    });
+  } catch (err) {
+    console.error("Error in /api/chat/upload:", err);
+    return res.status(500).json({ error: "Failed to upload chat media." });
+  }
+});
+
+// 3c. Upload Chat User Profile Picture
+// POST /api/chat/upload-avatar
+router.post("/upload-avatar", uploadAvatar.single("avatar"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No avatar image provided." });
+    }
+
+    const relativeUrl = `/uploads/avatars/${req.file.filename}`;
+    const { userId } = req.body;
+
+    if (userId) {
+      await pool.query(
+        "UPDATE public.chat_users SET avatar_url = $1, last_seen = NOW() WHERE id = $2",
+        [relativeUrl, userId]
+      );
+    }
+
+    return res.json({
+      success: true,
+      avatar_url: relativeUrl
+    });
+  } catch (err) {
+    console.error("Error in /api/chat/upload-avatar:", err);
+    return res.status(500).json({ error: "Failed to upload avatar." });
+  }
+});
+
+// 3d. Direct Contact lookup or placeholder creation
+// POST /api/chat/direct-contact
+router.post("/direct-contact", async (req, res) => {
+  try {
+    const { phone_number, name } = req.body;
+    if (!phone_number) {
+      return res.status(400).json({ error: "phone_number is required." });
+    }
+    const cleanPhone = normalizePhone(phone_number);
+    const displayName = (name && String(name).trim()) || cleanPhone;
+
+    const query = `
+      INSERT INTO public.chat_users (phone_number, name)
+      VALUES ($1, $2)
+      ON CONFLICT (phone_number)
+      DO UPDATE SET
+        name = CASE WHEN chat_users.name = chat_users.phone_number THEN EXCLUDED.name ELSE chat_users.name END
+      RETURNING id, phone_number, name, avatar_url, status_message, last_seen;
+    `;
+    const result = await pool.query(query, [cleanPhone, displayName]);
+    return res.json({ success: true, user: result.rows[0] });
+  } catch (err) {
+    console.error("Error in /api/chat/direct-contact:", err);
+    return res.status(500).json({ error: "Failed to resolve contact." });
   }
 });
 
@@ -286,6 +412,9 @@ router.get("/messages", async (req, res) => {
         m.receiver_id,
         m.message_text,
         m.media_url,
+        m.media_type,
+        m.file_name,
+        m.file_size,
         m.status,
         m.created_at
       FROM public.chat_messages m
@@ -322,9 +451,21 @@ router.get("/messages", async (req, res) => {
 // POST /api/chat/messages/send
 router.post("/messages/send", async (req, res) => {
   try {
-    const { sender_id, receiver_id, message_text, media_url } = req.body;
-    if (!sender_id || !receiver_id || !message_text) {
-      return res.status(400).json({ error: "sender_id, receiver_id, and message_text are required." });
+    const { sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size } = req.body;
+    if (!sender_id || !receiver_id) {
+      return res.status(400).json({ error: "sender_id and receiver_id are required." });
+    }
+
+    let finalMessageText = message_text ? String(message_text).trim() : "";
+    if (!finalMessageText && media_url) {
+      if (media_type === "image") finalMessageText = "📷 Photo";
+      else if (media_type === "video") finalMessageText = "🎥 Video";
+      else if (media_type === "audio") finalMessageText = "🎵 Audio";
+      else finalMessageText = file_name ? `📄 ${file_name}` : "📎 Attachment";
+    }
+
+    if (!finalMessageText) {
+      return res.status(400).json({ error: "message_text or media_url is required." });
     }
 
     // Get or create conversation
@@ -332,17 +473,20 @@ router.post("/messages/send", async (req, res) => {
 
     // Insert message
     const msgQuery = `
-      INSERT INTO public.chat_messages (conversation_id, sender_id, receiver_id, message_text, media_url, status)
-      VALUES ($1, $2, $3, $4, $5, 'sent')
-      RETURNING id, conversation_id, sender_id, receiver_id, message_text, media_url, status, created_at;
+      INSERT INTO public.chat_messages (conversation_id, sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'sent')
+      RETURNING id, conversation_id, sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size, status, created_at;
     `;
 
     const msgRes = await pool.query(msgQuery, [
       conversation.id,
       sender_id,
       receiver_id,
-      message_text.trim(),
-      media_url || null
+      finalMessageText,
+      media_url || null,
+      media_type || null,
+      file_name || null,
+      file_size ? parseInt(file_size, 10) : null
     ]);
 
     const sentMessage = msgRes.rows[0];
@@ -374,14 +518,25 @@ router.get("/poll", async (req, res) => {
       return res.status(400).json({ error: "userId is required." });
     }
 
-    const sinceDate = since ? new Date(since) : new Date(Date.now() - 30000);
+    let sinceDate;
+    if (since) {
+      const parsed = new Date(since);
+      // Guard against client clock skew: if client time is > 2 seconds into the future, fallback to last 30s
+      if (isNaN(parsed.getTime()) || parsed.getTime() > (Date.now() + 2000)) {
+        sinceDate = new Date(Date.now() - 30000);
+      } else {
+        sinceDate = parsed;
+      }
+    } else {
+      sinceDate = new Date(Date.now() - 30000);
+    }
 
     // Update last_seen
     pool.query("UPDATE public.chat_users SET last_seen = NOW() WHERE id = $1", [userId]).catch(() => {});
 
     // Incoming messages
     const incomingRes = await pool.query(
-      `SELECT id, conversation_id, sender_id, receiver_id, message_text, media_url, status, created_at
+      `SELECT id, conversation_id, sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size, status, created_at
        FROM public.chat_messages
        WHERE receiver_id = $1 AND created_at > $2
        ORDER BY created_at ASC`,

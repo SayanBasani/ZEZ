@@ -115,14 +115,16 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@drawable/bg_search_input"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="8dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="6dp"
+            android:paddingVertical="4dp"
             android:layout_marginEnd="8dp">
 
             <EditText
                 android:id="@+id/et_chat_message_input"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="@null"
                 android:hint="Message"
                 android:textColorHint="@color/theme_text_secondary"
@@ -130,6 +132,15 @@
                 android:textSize="15sp"
                 android:maxLines="5"
                 android:inputType="textMultiLine|textCapSentences" />
+
+            <ImageButton
+                android:id="@+id/btn_chat_attach"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_attach_file"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Attach file" />
         </LinearLayout>
 
         <!-- Circular WhatsApp Send Button -->

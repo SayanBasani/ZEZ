@@ -129,6 +129,22 @@ public class ContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         void bind(ChatContactItem contact, OnContactClickListener listener) {
             tvName.setText(contact.getDisplayName());
 
+            String avatarUrl = contact.getAvatarUrl();
+            if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+                String fullUrl = com.zez.app.util.ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), avatarUrl);
+                com.bumptech.glide.Glide.with(itemView.getContext())
+                        .load(fullUrl)
+                        .circleCrop()
+                        .placeholder(R.drawable.bg_circle_glass)
+                        .error(R.drawable.bg_circle_glass)
+                        .into(ivAvatar);
+                if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+            } else {
+                ivAvatar.setImageResource(R.drawable.ic_person);
+                ivAvatar.setBackgroundResource(R.drawable.bg_circle_glass);
+                if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+            }
+
             if (contact.isRegistered()) {
                 String status = contact.getStatusMessage();
                 tvDetail.setText(status != null && !status.isEmpty() ? status : "Hey there! I am using Zez.");
