@@ -89,6 +89,13 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvFooterDeviceId;
     private TextView tvFooterPhoneNumber;
 
+    // Protected Developer / Admin Controls
+    private View rowSettingServer;
+    private View dividerSettingServer;
+    private int developerTapCount = 0;
+    private long lastDeveloperTapTime = 0;
+    private static final String ADMIN_PIN = "7788";
+
     // Sub-Pages
     private LinearLayout viewFontPage;
     private LinearLayout viewHardwarePage;
@@ -272,9 +279,19 @@ public class MainActivity extends AppCompatActivity {
         if (rowSettingTheme != null) {
             rowSettingTheme.setOnClickListener(v -> showThemeDialog());
         }
-        View rowSettingServer = findViewById(R.id.row_setting_server);
+        rowSettingServer = findViewById(R.id.row_setting_server);
+        dividerSettingServer = findViewById(R.id.divider_setting_server);
         if (rowSettingServer != null) {
             rowSettingServer.setOnClickListener(v -> showServerConfigDialog());
+        }
+
+        // Tap listener for developer / admin unlock (5 taps within 3 seconds)
+        View.OnClickListener devTapListener = v -> handleDeveloperTap();
+        if (tvSettingVersionInfo != null) {
+            tvSettingVersionInfo.setOnClickListener(devTapListener);
+        }
+        if (tvFooterAppVersion != null) {
+            tvFooterAppVersion.setOnClickListener(devTapListener);
         }
 
         initThemeSpinner();
@@ -735,17 +752,13 @@ public class MainActivity extends AppCompatActivity {
     private void showChatMenu(View anchor) {
         android.widget.PopupMenu popup = new android.widget.PopupMenu(this, anchor);
         popup.getMenu().add(0, 1, 0, "Profile & Settings");
-        popup.getMenu().add(0, 2, 1, "Server Settings");
-        popup.getMenu().add(0, 3, 2, "Refresh Chats");
+        popup.getMenu().add(0, 2, 1, "Refresh Chats");
         popup.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case 1:
                     showChatProfileDialog();
                     return true;
                 case 2:
-                    showServerConfigDialog();
-                    return true;
-                case 3:
                     loadChatsData();
                     return true;
             }
@@ -1552,10 +1565,65 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void handleDeveloperTap() {
+        long now = System.currentTimeMillis();
+        if (now - lastDeveloperTapTime > 3000) {
+            developerTapCount = 0;
+        }
+        lastDeveloperTapTime = now;
+        developerTapCount++;
+
+        if (developerTapCount >= 2 && developerTapCount < 5) {
+            int remaining = 5 - developerTapCount;
+            Toast.makeText(this, "Tap " + remaining + " more times for developer options", Toast.LENGTH_SHORT).show();
+        } else if (developerTapCount >= 5) {
+            developerTapCount = 0;
+            promptAdminPinForServerConfig();
+        }
+    }
+
+    private void promptAdminPinForServerConfig() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Developer Options");
+        builder.setMessage("Enter Admin PIN to unlock Backend Server Configuration:");
+
+        final EditText input = new EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        input.setHint("Enter PIN");
+
+        FrameLayout container = new FrameLayout(this);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        int marginPx = (int) (20 * getResources().getDisplayMetrics().density);
+        params.leftMargin = marginPx;
+        params.rightMargin = marginPx;
+        params.topMargin = (int) (8 * getResources().getDisplayMetrics().density);
+        params.bottomMargin = (int) (8 * getResources().getDisplayMetrics().density);
+        input.setLayoutParams(params);
+        container.addView(input);
+        builder.setView(container);
+
+        builder.setPositiveButton("Unlock", (dialog, which) -> {
+            String entered = input.getText() != null ? input.getText().toString().trim() : "";
+            if (ADMIN_PIN.equals(entered)) {
+                Toast.makeText(this, "Developer Server Configuration Unlocked", Toast.LENGTH_SHORT).show();
+                if (rowSettingServer != null) rowSettingServer.setVisibility(View.VISIBLE);
+                if (dividerSettingServer != null) dividerSettingServer.setVisibility(View.VISIBLE);
+                showServerConfigDialog();
+            } else {
+                Toast.makeText(this, "Incorrect Admin PIN", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+
     private void showServerConfigDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("Backend Server URL");
-        builder.setMessage("Configure the base URL of your hosted backend server (e.g., https://your-server.onrender.com or https://your-server.railway.app):");
+        builder.setTitle("Backend Server URL (Developer Mode)");
+        builder.setMessage("Configure the base URL of your hosted backend server:\n(Default: " + PreferencesHelper.DEFAULT_API_URL + ")");
 
         final EditText input = new EditText(this);
         input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);

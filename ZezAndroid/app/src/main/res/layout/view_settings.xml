@@ -219,11 +219,13 @@
                 </LinearLayout>
 
                 <View
+                    android:id="@+id/divider_setting_server"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
+                    android:visibility="gone"
                     android:background="@color/theme_card_border" />
 
-                <!-- 4. Backend Server URL (Edit Hosted Backend) -->
+                <!-- 4. Backend Server URL (Protected / Developer Mode Only) -->
                 <LinearLayout
                     android:id="@+id/row_setting_server"
                     android:layout_width="match_parent"
@@ -231,6 +233,7 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:padding="16dp"
+                    android:visibility="gone"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true">
@@ -263,7 +266,7 @@
                             android:id="@+id/tv_setting_server_current"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="https://zez-backend.onrender.com"
+                            android:text="https://zez-chat-backend.onrender.com"
                             android:textSize="12sp"
                             android:singleLine="true"
                             android:ellipsize="middle"

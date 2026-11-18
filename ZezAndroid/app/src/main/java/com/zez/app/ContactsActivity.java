@@ -354,7 +354,7 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
     public void onInviteClick(ChatContactItem contact) {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, "Hey " + contact.getDisplayName() + "! Let's chat on Zez: https://zez-backend.onrender.com");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, "Hey " + contact.getDisplayName() + "! Let's chat on Zez: https://zez-chat-backend.onrender.com");
         startActivity(Intent.createChooser(shareIntent, "Invite " + contact.getDisplayName() + " to Zez"));
     }
 }
