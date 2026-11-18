@@ -98,34 +98,44 @@ router.post("/sync", deviceAuth, async (req, res, next) => {
         );
       }
 
-      for (const record of uniqueRecords) {
+      // Batch insert with single multi-row queries for massive performance boost
+      const recordsToInsert = uniqueRecords.map(r => {
         const externalIdHash = crypto
           .createHash("sha256")
-          .update(record.externalId)
+          .update(r.externalId)
           .digest("hex");
+        const encryptedPayload = encryptJson(r);
+        return {
+          deviceId: req.deviceId,
+          externalIdHash,
+          timestamp: r.timestamp,
+          encryptedPayload
+        };
+      });
 
-        const existing = await client.query(
-          `SELECT 1 FROM public.call_logs WHERE device_id = $1 AND external_id_hash = $2 LIMIT 1`,
-          [req.deviceId, externalIdHash]
-        );
-        if (existing.rowCount > 0) {
-          duplicates += 1;
-          continue;
-        }
+      const CHUNK_SIZE = 50;
+      for (let i = 0; i < recordsToInsert.length; i += CHUNK_SIZE) {
+        const chunk = recordsToInsert.slice(i, i + CHUNK_SIZE);
+        const valuePlaceholders = [];
+        const queryParams = [];
 
-        const encryptedPayload = encryptJson(record);
+        chunk.forEach((item, idx) => {
+          const offset = idx * 4;
+          valuePlaceholders.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4})`);
+          queryParams.push(item.deviceId, item.externalIdHash, item.timestamp, item.encryptedPayload);
+        });
 
-        const result = await client.query(
-          `INSERT INTO public.call_logs (device_id, external_id_hash, call_timestamp, encrypted_payload)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT (device_id, external_id_hash) DO NOTHING
-           RETURNING id`,
-          [req.deviceId, externalIdHash, record.timestamp, encryptedPayload]
-        );
+        const batchSql = `
+          INSERT INTO public.call_logs (device_id, external_id_hash, call_timestamp, encrypted_payload)
+          VALUES ${valuePlaceholders.join(", ")}
+          ON CONFLICT (device_id, external_id_hash) DO NOTHING
+          RETURNING id
+        `;
 
-        if (result.rowCount === 1) inserted += 1;
-        else duplicates += 1;
+        const res = await client.query(batchSql, queryParams);
+        inserted += res.rowCount;
       }
+      duplicates += (uniqueRecords.length - inserted);
 
       await client.query("COMMIT");
 

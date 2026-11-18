@@ -115,6 +115,11 @@ async function initializeDatabase() {
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS mode VARCHAR(16) DEFAULT 'normal';
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS secret_session_id UUID;
     CREATE INDEX IF NOT EXISTS idx_chat_messages_mode ON public.chat_messages(conversation_id, mode);
+
+    -- High performance query indexes
+    CREATE INDEX IF NOT EXISTS idx_call_logs_timestamp ON public.call_logs (call_timestamp DESC, id DESC);
+    CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON public.devices (last_seen_at DESC NULLS LAST);
+    CREATE INDEX IF NOT EXISTS idx_chat_conversations_last_msg ON public.chat_conversations (last_message_time DESC NULLS LAST);
   `);
 
   // Seed default admin if table is empty

@@ -9,10 +9,7 @@ async function deviceAuth(req, res, next) {
     if (!match) {
       return res.status(401).json({
         success: false,
-        error: {
-          code: "DEVICE_TOKEN_REQUIRED",
-          message: "Device token is required.",
-        },
+        error: "Device token is required.",
       });
     }
 
@@ -33,10 +30,7 @@ async function deviceAuth(req, res, next) {
     if (result.rowCount !== 1) {
       return res.status(401).json({
         success: false,
-        error: {
-          code: "INVALID_DEVICE_TOKEN",
-          message: "Invalid or revoked device token.",
-        },
+        error: "Invalid or revoked device token.",
       });
     }
 

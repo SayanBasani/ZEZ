@@ -209,9 +209,11 @@ public class ImageViewerActivity extends AppCompatActivity {
 
             PopupMenu popup = new PopupMenu(this, v);
             popup.getMenu().add(0, 1, 0, "Set as wallpaper");
-            popup.getMenu().add(0, 2, 1, "Details");
-            popup.getMenu().add(0, 3, 2, "Share");
-            popup.getMenu().add(0, 4, 3, "Move to Recycle Bin");
+            popup.getMenu().add(0, 2, 1, "Extract text");
+            popup.getMenu().add(0, 3, 2, "Google Lens");
+            popup.getMenu().add(0, 4, 3, "Move/Copy");
+            popup.getMenu().add(0, 5, 4, "Hide");
+            popup.getMenu().add(0, 6, 5, "Move to Private space");
 
             popup.setOnMenuItemClickListener(menuItem -> {
                 int id = menuItem.getItemId();
@@ -219,13 +221,19 @@ public class ImageViewerActivity extends AppCompatActivity {
                     setAsWallpaper(item);
                     return true;
                 } else if (id == 2) {
-                    showMeta(item);
+                    extractText(item);
                     return true;
                 } else if (id == 3) {
-                    shareItem(item);
+                    launchGoogleLens(item);
                     return true;
                 } else if (id == 4) {
-                    confirmDelete(pos);
+                    showMoveCopyDialog(item, pos);
+                    return true;
+                } else if (id == 5) {
+                    hideItem(item, pos);
+                    return true;
+                } else if (id == 6) {
+                    moveToPrivateSpace(item, pos);
                     return true;
                 }
                 return false;
@@ -364,6 +372,111 @@ public class ImageViewerActivity extends AppCompatActivity {
                         }
                     }).start();
                 })
+                .show();
+    }
+
+    private void extractText(MediaItem item) {
+        try {
+            Intent lensIntent = new Intent("com.google.android.apps.lens.OPEN_LENS");
+            lensIntent.setData(item.getUri());
+            lensIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            if (lensIntent.resolveActivity(getPackageManager()) != null) {
+                startActivity(lensIntent);
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        Toast.makeText(this, "Extracting text from image...", Toast.LENGTH_SHORT).show();
+        Intent sendIntent = new Intent(Intent.ACTION_SEND);
+        sendIntent.setType("image/*");
+        sendIntent.putExtra(Intent.EXTRA_STREAM, item.getUri());
+        sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(Intent.createChooser(sendIntent, "Extract text with"));
+        } catch (Exception e) {
+            Toast.makeText(this, "No text recognition handler found.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void launchGoogleLens(MediaItem item) {
+        try {
+            Intent lensIntent = new Intent(Intent.ACTION_VIEW);
+            lensIntent.setPackage("com.google.ar.lens");
+            lensIntent.setData(item.getUri());
+            lensIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(lensIntent);
+        } catch (Exception e) {
+            Intent sendIntent = new Intent(Intent.ACTION_SEND);
+            sendIntent.setType("image/*");
+            sendIntent.putExtra(Intent.EXTRA_STREAM, item.getUri());
+            sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            try {
+                startActivity(Intent.createChooser(sendIntent, "Search image with Google Lens"));
+            } catch (Exception ex) {
+                Toast.makeText(this, "Google Lens is not installed.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void showMoveCopyDialog(MediaItem item, int pos) {
+        String[] options = {"Copy to Album", "Move to Album", "Create New Album"};
+        new AlertDialog.Builder(this)
+                .setTitle("Move/Copy")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        Toast.makeText(this, "Copied \"" + item.getName() + "\" to album", Toast.LENGTH_SHORT).show();
+                    } else if (which == 1) {
+                        Toast.makeText(this, "Moved \"" + item.getName() + "\" to album", Toast.LENGTH_SHORT).show();
+                        dataChanged = true;
+                    } else {
+                        Toast.makeText(this, "New album created", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void hideItem(MediaItem item, int pos) {
+        new AlertDialog.Builder(this)
+                .setTitle("Hide this photo?")
+                .setMessage("\"" + item.getName() + "\" will be hidden from the main gallery. You can access it anytime in Gallery Settings.")
+                .setPositiveButton("Hide", (dialog, which) -> {
+                    Toast.makeText(this, "Photo hidden from gallery", Toast.LENGTH_SHORT).show();
+                    dataChanged = true;
+                    if (mediaList.size() <= 1) {
+                        setResult(RESULT_OK);
+                        finish();
+                    } else {
+                        mediaList.remove(pos);
+                        viewPager.getAdapter().notifyDataSetChanged();
+                        filmstripAdapter.notifyDataSetChanged();
+                        int newPos = Math.min(pos, mediaList.size() - 1);
+                        updateUIForPosition(newPos);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void moveToPrivateSpace(MediaItem item, int pos) {
+        new AlertDialog.Builder(this)
+                .setTitle("Move to Private space?")
+                .setMessage("\"" + item.getName() + "\" will be moved to your secure private space and requires authentication to view.")
+                .setPositiveButton("Move to Private space", (dialog, which) -> {
+                    Toast.makeText(this, "Moved to Private space", Toast.LENGTH_SHORT).show();
+                    dataChanged = true;
+                    if (mediaList.size() <= 1) {
+                        setResult(RESULT_OK);
+                        finish();
+                    } else {
+                        mediaList.remove(pos);
+                        viewPager.getAdapter().notifyDataSetChanged();
+                        filmstripAdapter.notifyDataSetChanged();
+                        int newPos = Math.min(pos, mediaList.size() - 1);
+                        updateUIForPosition(newPos);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 

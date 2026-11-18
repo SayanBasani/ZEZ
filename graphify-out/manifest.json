@@ -12,9 +12,9 @@
     "semantic_hash": "b5318fa003631b97782bdab1080191fd"
   },
   "Zez-Backend/src/db.js": {
-    "mtime": 1795013613.6644,
-    "seen": 1795014774.467321,
-    "ast_hash": "9bf4c202bdd3886e1e8a5f004466233f",
+    "mtime": 1795019659.1161013,
+    "seen": 1795020833.143694,
+    "ast_hash": "9919aa0487db6d4ea00b8c66d3715122",
     "semantic_hash": ""
   },
   "Zez-Backend/src/middleware/adminAuth.js": {
@@ -24,15 +24,15 @@
     "semantic_hash": "04b42953dd6efc31b83623044b2b6ec4"
   },
   "Zez-Backend/src/middleware/deviceAuth.js": {
-    "mtime": 1794408579.9132197,
-    "seen": 1795010101.3299298,
-    "ast_hash": "d022968edba56aa1786ef23665d5b95b",
-    "semantic_hash": "d022968edba56aa1786ef23665d5b95b"
+    "mtime": 1795019933.6289198,
+    "seen": 1795020833.1436992,
+    "ast_hash": "df7c7e6d291c94f48d278a4b48057368",
+    "semantic_hash": ""
   },
   "Zez-Backend/src/routes/admin.js": {
-    "mtime": 1795016882.5504322,
-    "seen": 1795017465.0955622,
-    "ast_hash": "ed81a712273dee3eb8e439a17f6ed32b",
+    "mtime": 1795020328.9956138,
+    "seen": 1795020833.1437013,
+    "ast_hash": "1609b632db0ddd336f6797720fa1460f",
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/appRelease.js": {
@@ -48,22 +48,22 @@
     "semantic_hash": "1ae9e2e2868dd0653de4bd9061e90287"
   },
   "Zez-Backend/src/routes/callSync.js": {
-    "mtime": 1794998639.1091058,
-    "seen": 1795010101.3299341,
-    "ast_hash": "58330436b99f3e490ea068a39b291b8b",
-    "semantic_hash": "58330436b99f3e490ea068a39b291b8b"
+    "mtime": 1795020027.5542653,
+    "seen": 1795020833.1437092,
+    "ast_hash": "9c7890f936e3fab719a663ef7ad67759",
+    "semantic_hash": ""
   },
   "Zez-Backend/src/routes/chat.js": {
-    "mtime": 1795013716.9346223,
-    "seen": 1795014774.4673426,
-    "ast_hash": "b5fe89a3135526282574fdd0e257d715",
+    "mtime": 1795020316.7185173,
+    "seen": 1795020833.1437113,
+    "ast_hash": "914ec0bebce0bd8bf949962e565bb651",
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/devices.js": {
-    "mtime": 1794408607.8074481,
-    "seen": 1795010101.3299358,
-    "ast_hash": "4c9d4d23134258900e0bbea66ddd2c0e",
-    "semantic_hash": "4c9d4d23134258900e0bbea66ddd2c0e"
+    "mtime": 1795019812.7309139,
+    "seen": 1795020833.143713,
+    "ast_hash": "acdb35454c698d03b4ead11a8eeb9094",
+    "semantic_hash": ""
   },
   "Zez-Backend/src/server.js": {
     "mtime": 1795016855.093783,
@@ -120,9 +120,9 @@
     "semantic_hash": "762629449e2194ff6816528b9f2a5d15"
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ImageViewerActivity.java": {
-    "mtime": 1795018523.8462534,
-    "seen": 1795018748.0358796,
-    "ast_hash": "8ad48a457abb739a72837e1a64750d9e",
+    "mtime": 1795020791.5077205,
+    "seen": 1795020833.1437414,
+    "ast_hash": "4cc71f0c59f6de7a6fb4b55331b87eea",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/public/admin/index.html": {
-    "mtime": 1795018660.772857,
-    "seen": 1795018748.0359502,
-    "ast_hash": "b0fc7bd6dd3bdd4e10cc8fa4cd2e24d6",
+    "mtime": 1795020650.2468264,
+    "seen": 1795020833.1438565,
+    "ast_hash": "8a76586c416ead9e67086b659851f546",
     "semantic_hash": ""
   },
   "App Icon/ZEZ Icon.png": {
@@ -537,6 +537,30 @@
     "mtime": 1795018458.7798133,
     "seen": 1795018748.0358925,
     "ast_hash": "18d598b7cce88e46c3130b0943c7f811",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/add-indexes.js": {
+    "mtime": 1795019640.9162345,
+    "seen": 1795020833.1436718,
+    "ast_hash": "9f63db90ef1ae28061911233a8f4d80d",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/benchmark.js": {
+    "mtime": 1795019593.9500833,
+    "seen": 1795020833.1436777,
+    "ast_hash": "81715e8205f54e6d314215df6c5f668d",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/check-perf.js": {
+    "mtime": 1795019526.5431914,
+    "seen": 1795020833.143681,
+    "ast_hash": "552ee95705613811532271757804bcc5",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/tests/extreme-test-suite.js": {
+    "mtime": 1795019955.2224345,
+    "seen": 1795020833.1437242,
+    "ast_hash": "6884c2aab6a3a4259e2787d4b737fc2b",
     "semantic_hash": ""
   },
   "Zez-Backend/package-lock.json": {
