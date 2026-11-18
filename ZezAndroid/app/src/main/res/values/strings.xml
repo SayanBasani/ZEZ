@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Zez</string>
+    <string name="nav_chats">Chats</string>
+    <string name="nav_calls">Calls</string>
+    <string name="nav_alarms">Alarms</string>
+    <string name="nav_gallery">Gallery</string>
+    <string name="nav_recycle_bin">Bin</string>
+    <string name="nav_settings">Settings</string>
+</resources>

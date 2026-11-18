@@ -1,0 +1,294 @@
+[
+    {
+        "merged": "com.zez.app-release-40:/layout_item_contact_entry.xml.flat",
+        "source": "com.zez.app-main-41:/layout/item_contact_entry.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_activity_contacts.xml.flat",
+        "source": "com.zez.app-main-41:/layout/activity_contacts.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_activity_image_viewer.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\activity_image_viewer.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_hardware.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_hardware.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_bg_badge_unread.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/bg_badge_unread.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-xxxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_item_spinner_theme_dropdown.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\item_spinner_theme_dropdown.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_item_message_incoming.xml.flat",
+        "source": "com.zez.app-main-41:/layout/item_message_incoming.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_favorite_filled.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_favorite_filled.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-xxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\xml_file_paths.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\xml\\file_paths.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-xhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_activity_alarm_firing.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\activity_alarm_firing.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_ic_refresh.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/ic_refresh.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-xhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_dialog_chat_register.xml.flat",
+        "source": "com.zez.app-main-41:/layout/dialog_chat_register.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_item_message_outgoing.xml.flat",
+        "source": "com.zez.app-main-41:/layout/item_message_outgoing.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_bg_search_input.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/bg_search_input.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_chevron_right.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_chevron_right.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_ic_person.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/ic_person.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_ic_check_single.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/ic_check_single.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_item_album.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\item_album.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\menu_bottom_nav_menu.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\menu\\bottom_nav_menu.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_item_spinner_theme_selected.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\item_spinner_theme_selected.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_view_font_page.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\view_font_page.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_photo_library.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_photo_library.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-xxxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-xxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_dialog_edit_alarm.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\dialog_edit_alarm.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_bg_circle_glass.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/bg_circle_glass.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_ic_chat.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/ic_chat.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/menu_bottom_nav_menu.xml.flat",
+        "source": "com.zez.app-main-41:/menu/bottom_nav_menu.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_item_recycle_bin.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\item_recycle_bin.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_view_hardware_page.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\view_hardware_page.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_view_settings.xml.flat",
+        "source": "com.zez.app-main-41:/layout/view_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-hdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-mdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-mdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_activity_album_detail.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\activity_album_detail.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_ic_check_double.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/ic_check_double.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_activity_chat.xml.flat",
+        "source": "com.zez.app-main-41:/layout/activity_chat.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_item_chat_conversation.xml.flat",
+        "source": "com.zez.app-main-41:/layout/item_chat_conversation.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_gradient_bottom_dark.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\gradient_bottom_dark.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_view_alarms.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\view_alarms.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_theme.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_theme.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_bg_bottom_sheet.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/bg_bottom_sheet.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_item_alarm.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\item_alarm.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_item_gallery_header.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\item_gallery_header.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_system_update.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_system_update.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_star_filled.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_star_filled.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_bg_bubble_incoming.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/bg_bubble_incoming.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_settings.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_settings.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_item_contact_section_header.xml.flat",
+        "source": "com.zez.app-main-41:/layout/item_contact_section_header.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_item_gallery_media.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\item_gallery_media.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_activity_image_edit.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\activity_image_edit.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_item_media_page.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\item_media_page.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_item_call_log.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\item_call_log.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-hdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-hdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_view_gallery.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\view_gallery.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_favorite_border.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_favorite_border.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_check_circle.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_check_circle.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_view_chats.xml.flat",
+        "source": "com.zez.app-main-41:/layout/view_chats.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_activity_main.xml.flat",
+        "source": "com.zez.app-main-41:/layout/activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_more_vert.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_more_vert.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_view_settings.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\view_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_arrow_back.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_arrow_back.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_font_size.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_font_size.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_bg_bubble_outgoing.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/bg_bubble_outgoing.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_ic_search.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/ic_search.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\drawable_ic_alarm.xml.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\drawable\\ic_alarm.xml"
+    },
+    {
+        "merged": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-release-40:\\mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\sayan\\.gradle\\daemon\\9.6.0\\com.zez.app-main-41:\\mipmap-mdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "com.zez.app-release-40:/layout_item_chat_date_header.xml.flat",
+        "source": "com.zez.app-main-41:/layout/item_chat_date_header.xml"
+    },
+    {
+        "merged": "com.zez.app-release-40:/drawable_ic_send.xml.flat",
+        "source": "com.zez.app-main-41:/drawable/ic_send.xml"
+    }
+]

@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zez Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* Graphite Neutral Ramps from Tokens */
+    :root[data-theme="dark"] {
+      --surface-deep: #0f0f10;
+      --bg: #141415;
+      --card-bg: #19191b;
+      --surface-raised: #232325;
+      --card-hover: #1f1f21;
+      --hairline: rgba(237, 237, 237, 0.08);
+      --hairline-hover: rgba(237, 237, 237, 0.16);
+      
+      --text-primary: #ededed;
+      --text-secondary: #a1a1a6;
+      --text-muted: #85858b;
+      
+      --accent: #3b82f6;
+      --accent-dim: rgba(59, 130, 246, 0.1);
+      --accent-ink: #93c5fd;
+      
+      --positive: #4cc38a;
+      --positive-bg: rgba(76, 195, 138, 0.1);
+      --negative: #e5484d;
+      --negative-bg: rgba(229, 72, 77, 0.1);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --neutral-badge: #2a2a2d;
+
+      --shadow: none;
+    }
+
+    :root[data-theme="light"] {
+      --surface-deep: #f4f4f5;
+      --bg: #fafafa;
+      --card-bg: #ffffff;
+      --surface-raised: #f4f4f5;
+      --card-hover: #f9f9fb;
+      --hairline: rgba(23, 23, 23, 0.08);
+      --hairline-hover: rgba(23, 23, 23, 0.16);
+      
+      --text-primary: #171717;
+      --text-secondary: #525252;
+      --text-muted: #737373;
+      
+      --accent: #2563eb;
+      --accent-dim: rgba(37, 99, 235, 0.08);
+      --accent-ink: #1d4ed8;
+      
+      --positive: #16a34a;
+      --positive-bg: rgba(22, 163, 74, 0.08);
+      --negative: #dc2626;
+      --negative-bg: rgba(220, 38, 38, 0.08);
+      --warning: #d97706;
+      --warning-bg: rgba(217, 119, 6, 0.08);
+      --neutral-badge: #e4e4e7;
+
+      --shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      line-height: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Auth Overlay */
+    #authOverlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      padding: 32px 24px;
+    }
+
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      background: var(--surface-raised);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .auth-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .auth-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+    
+    .form-input, .form-select {
+      width: 100%;
+      height: 36px;
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--hairline-hover);
+      box-shadow: 0 0 0 1px var(--hairline-hover);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 36px;
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background-color 0.12s, border-color 0.12s;
+    }
+    .btn-primary {
+      background: var(--text-primary);
+      color: var(--bg);
+    }
+    .btn-primary:hover { opacity: 0.92; }
+
+    .btn-secondary {
+      background: var(--surface-raised);
+      border-color: var(--hairline);
+      color: var(--text-primary);
+    }
+    .btn-secondary:hover {
+      border-color: var(--hairline-hover);
+    }
+
+    .btn-danger {
+      background: var(--negative-bg);
+      border-color: var(--negative);
+      color: var(--negative);
+    }
+    .btn-danger:hover {
+      background: var(--negative);
+      color: #ffffff;
+    }
+
+    .btn-sm {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-alert {
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: var(--negative-bg);
+      border: 1px solid var(--negative);
+      color: var(--negative);
+      font-size: 12px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* Top Bar */
+    #appContainer { display: none; flex-direction: column; flex: 1; }
+
+    header {
+      height: 56px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--hairline);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-logo-group { display: flex; align-items: center; gap: 10px; }
+    .header-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .header-separator { width: 1px; height: 16px; background: var(--hairline); }
+
+    .header-nav { display: flex; gap: 2px; }
+    .nav-link {
+      height: 34px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    .nav-link:hover { color: var(--text-primary); background: var(--surface-raised); }
+    .nav-link.active { color: var(--text-primary); background: var(--surface-raised); border: 1px solid var(--hairline); }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    .system-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--positive); }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Asymmetric Hero Split with Telemetry Moment */
+    .hero-split {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stats-column {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-row-card {
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-row-label { font-size: 12px; color: var(--text-secondary); }
+    .stat-row-value {
+      font-size: 20px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+    }
+
+    /* Telemetry Chart Moment */
+    .telemetry-card {
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 240px;
+    }
+
+    .telemetry-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .telemetry-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .telemetry-sub { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+    .chart-container {
+      width: 100%;
+      height: 160px;
+      position: relative;
+    }
+    .chart-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* Filter Toolbars */
+    .toolbar {
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+    .search-icon-svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      height: 34px;
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+      border-radius: 6px;
+      padding: 0 12px 0 32px;
+      font-size: 13px;
+      color: var(--text-primary);
+      font-family: inherit;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--hairline-hover); }
+
+    .control-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .control-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+    /* Tables */
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    thead th {
+      background: var(--surface-deep);
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--hairline);
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--hairline);
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--card-hover); }
+    td { padding: 12px 16px; color: var(--text-primary); vertical-align: middle; }
+
+    .cell-mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .badge-incoming { background: var(--positive-bg); color: var(--positive); border: 1px solid var(--positive); }
+    .badge-outgoing { background: var(--accent-dim); color: var(--accent-ink); border: 1px solid var(--accent); }
+    .badge-missed { background: var(--negative-bg); color: var(--negative); border: 1px solid var(--negative); }
+    .badge-rejected { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning); }
+    .badge-neutral { background: var(--neutral-badge); color: var(--text-muted); }
+
+    /* Bulk Action Floating Pill */
+    .bulk-bar {
+      position: sticky;
+      bottom: 24px;
+      margin-top: -56px;
+      background: var(--card-bg);
+      border: 1px solid var(--hairline-hover);
+      border-radius: 8px;
+      padding: 10px 16px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 30;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(2px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 980px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      height: 52px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface-deep);
+    }
+    .modal-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+    }
+    .modal-close:hover { color: var(--text-primary); }
+
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .meta-cell {
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .meta-key { font-size: 11px; color: var(--text-muted); }
+    .meta-val { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px; word-break: break-all; }
+
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--hairline-hover);
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .empty-state { padding: 36px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <!-- Sign In Overlay -->
+  <div id="authOverlay">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-mark">Z</div>
+        <div>
+          <div class="auth-title">Zez Access Portal</div>
+          <div class="auth-desc">Administrative credential verification</div>
+        </div>
+      </div>
+
+      <div id="authAlert" class="auth-alert"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input type="text" id="username" class="form-input" placeholder="admin" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" class="form-input" placeholder="Password" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+          Authenticate
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard Container -->
+  <div id="appContainer">
+    <header>
+      <div class="header-left">
+        <div class="header-logo-group">
+          <div class="brand-mark" style="width:26px; height:26px; font-size:12px;">Z</div>
+          <span class="header-title">Zez Telemetry</span>
+        </div>
+        <div class="header-separator"></div>
+        <nav class="header-nav">
+          <button class="nav-link active" id="tabDevicesBtn">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+            Devices (<span id="devicesBadge">0</span>)
+          </button>
+          <button class="nav-link" id="tabAllCallsBtn">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            Call feed (<span id="callsBadge">0</span>)
+          </button>
+          <button class="nav-link" id="tabSettingsBtn">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+          </button>
+          <button class="nav-link" id="tabReleasesBtn">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            App Releases
+          </button>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <!-- Global Refresh Button -->
+        <button class="btn btn-secondary btn-sm" id="globalRefreshBtn" title="Refresh all calls and devices">
+          <svg id="globalRefreshIcon" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span>Refresh</span>
+        </button>
+        <!-- Theme Toggle -->
+        <button class="btn btn-secondary btn-icon" id="themeToggleBtn" title="Toggle theme">
+          <svg id="themeSun" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg id="themeMoon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="system-status">
+          <div class="status-dot"></div>
+          <span>Neon connected</span>
+        </div>
+
+        <span style="font-size: 12px; color: var(--text-secondary);" id="adminUsernameDisplay">admin</span>
+
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sign out</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Asymmetric Hero: Stats + Telemetry Moment -->
+      <section class="hero-split">
+        <div class="stats-column">
+          <div class="stat-row-card">
+            <span class="stat-row-label">Registered devices</span>
+            <span class="stat-row-value" id="statTotalDevices">-</span>
+          </div>
+          <div class="stat-row-card">
+            <span class="stat-row-label">Active within 24 hours</span>
+            <span class="stat-row-value" id="statActiveDevices">-</span>
+          </div>
+          <div class="stat-row-card">
+            <span class="stat-row-label">Total synchronized calls</span>
+            <span class="stat-row-value" id="statTotalCalls">-</span>
+          </div>
+          <div class="stat-row-card">
+            <span class="stat-row-label">Calls recorded today</span>
+            <span class="stat-row-value" id="statCallsToday">-</span>
+          </div>
+        </div>
+
+        <!-- Telemetry Moment: Call Ingestion Timeline -->
+        <div class="telemetry-card">
+          <div class="telemetry-header">
+            <div>
+              <div class="telemetry-title">Telemetry distribution</div>
+              <div class="telemetry-sub" id="telemetrySubtitle">Call sync density over time</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="refreshBtn">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Refresh
+            </button>
+          </div>
+
+          <div class="chart-container" id="chartContainer">
+            <svg class="chart-svg" id="telemetrySvg" preserveAspectRatio="none" viewBox="0 0 700 130">
+              <!-- Grid lines rendered via JS -->
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SECTION 1: DEVICES VIEW ================= -->
+      <div id="sectionDevices">
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="deviceSearchInput" class="search-input" placeholder="Search devices by name, model, hardware ID...">
+          </div>
+
+          <div style="margin-left: auto; display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" id="btnRefreshDevices" title="Refresh registered devices">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Refresh devices
+            </button>
+            <button class="btn btn-danger btn-sm" id="btnDeleteSelectedDevices" style="display: none;">
+              Delete selected (<span id="selectedDevicesCount">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 32px;"><input type="checkbox" id="selectAllDevices"></th>
+                <th>Device</th>
+                <th>Hardware ID</th>
+                <th>System & app</th>
+                <th>Carrier</th>
+                <th>Total calls</th>
+                <th>Last seen</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="devicesTableBody">
+              <tr><td colspan="8" class="empty-state">Loading registered devices...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 2: ALL CALLS VIEW ================= -->
+      <div id="sectionAllCalls" style="display: none;">
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="callSearchInput" class="search-input" placeholder="Search phone number or contact...">
+          </div>
+
+          <div class="control-item">
+            <span class="control-label">Device</span>
+            <select id="filterCallDevice" class="form-select" style="width: 160px; height: 34px;">
+              <option value="ALL">All devices</option>
+            </select>
+          </div>
+
+          <div class="control-item">
+            <span class="control-label">Type</span>
+            <select id="filterCallType" class="form-select" style="width: 120px; height: 34px;">
+              <option value="ALL">All types</option>
+              <option value="INCOMING">Incoming</option>
+              <option value="OUTGOING">Outgoing</option>
+              <option value="MISSED">Missed</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+          </div>
+
+          <div class="control-item">
+            <span class="control-label">Year</span>
+            <select id="filterCallYear" class="form-select" style="width: 86px; height: 34px;">
+              <option value="">All</option>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+            </select>
+          </div>
+
+          <div class="control-item">
+            <span class="control-label">Month</span>
+            <select id="filterCallMonth" class="form-select" style="width: 86px; height: 34px;">
+              <option value="">All</option>
+              <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+              <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+              <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+              <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+            </select>
+          </div>
+
+          <div class="control-item">
+            <span class="control-label">Date</span>
+            <input type="date" id="filterCallFromDate" class="form-input" style="width: 124px; height: 34px; padding: 0 6px;">
+            <span style="color:var(--text-muted);">-</span>
+            <input type="date" id="filterCallToDate" class="form-input" style="width: 124px; height: 34px; padding: 0 6px;">
+          </div>
+
+          <div style="margin-left: auto; display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" id="btnRefreshCalls" title="Refresh call feed">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Refresh calls
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btnExportAllCallsCsv">Export CSV</button>
+            <button class="btn btn-danger btn-sm" id="btnDeleteSelectedCalls" style="display: none;">
+              Delete selected (<span id="selectedCallsCount">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 32px;"><input type="checkbox" id="selectAllCalls"></th>
+                <th>Device</th>
+                <th>Direction</th>
+                <th>Contact</th>
+                <th>Phone number</th>
+                <th>Duration</th>
+                <th>Timestamp</th>
+                <th>Cipher status</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="allCallsTableBody">
+              <tr><td colspan="9" class="empty-state">Loading call records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 3: SETTINGS VIEW ================= -->
+      <div id="sectionSettings" style="display: none;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px;">
+          <!-- Card 1: Update Current Admin Credentials -->
+          <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; padding: 24px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <h3 style="font-size: 15px; font-weight: 600;">Current Account Settings</h3>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+              Update your username or password used to log in to this portal.
+            </p>
+
+            <div id="settingsProfileAlert" class="auth-alert" style="display: none;"></div>
+
+            <form id="settingsProfileForm">
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label class="form-label">Current Username</label>
+                <input type="text" id="settingsCurrentUsernameInput" class="form-input" style="background: var(--surface-deep);" readonly>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label class="form-label">New Username (leave blank to keep current)</label>
+                <input type="text" id="settingsNewUsernameInput" class="form-input" placeholder="Enter new username...">
+              </div>
+
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label class="form-label">New Password (leave blank to keep current)</label>
+                <input type="password" id="settingsNewPasswordInput" class="form-input" placeholder="Min 6 characters...">
+              </div>
+
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Current Password (required to save changes)</label>
+                <input type="password" id="settingsVerifyPasswordInput" class="form-input" placeholder="Enter current password..." required>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="btnSaveProfile">Save changes</button>
+            </form>
+          </div>
+
+          <!-- Card 2: Team / Admin Credentials Directory -->
+          <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; padding: 24px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <h3 style="font-size: 15px; font-weight: 600;">Admin User Directory</h3>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="btnRefreshAdminUsers" type="button">Refresh list</button>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+              Add new administrative credentials or remove existing logins.
+            </p>
+
+            <div id="settingsUsersAlert" class="auth-alert" style="display: none;"></div>
+
+            <!-- Add Admin Form -->
+            <form id="settingsAddAdminForm" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; padding: 14px; background: var(--surface-deep); border: 1px solid var(--hairline); border-radius: 6px;">
+              <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">Create New Admin Credential</span>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <input type="text" id="newAdminUsername" class="form-input" style="flex: 1; min-width: 130px;" placeholder="Username (min 3 chars)" required>
+                <input type="password" id="newAdminPassword" class="form-input" style="flex: 1; min-width: 130px;" placeholder="Password (min 6 chars)" required>
+                <button type="submit" class="btn btn-primary btn-sm" style="height: 38px;">Add admin</button>
+              </div>
+            </form>
+
+            <!-- Admin Users Table -->
+            <div class="table-container" style="max-height: 260px; overflow-y: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Created</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="adminUsersTableBody">
+                  <tr><td colspan="3" class="empty-state">Loading admin accounts...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 4: APP RELEASES & UPDATES ================= -->
+      <div id="sectionReleases" style="display: none;">
+        <!-- Top Row: Upload Form & Current Active Release -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; margin-bottom: 24px;">
+          
+          <!-- Card 1: Upload New Release Form -->
+          <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; padding: 24px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              <h3 style="font-size: 15px; font-weight: 600;">Publish New APK Release</h3>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+              Upload a newly compiled Android APK. All connected devices checking for updates will be prompted to install this version.
+            </p>
+
+            <div id="releaseUploadAlert" class="auth-alert" style="display: none;"></div>
+
+            <form id="releaseUploadForm" enctype="multipart/form-data">
+              <div class="form-group" style="margin-bottom: 14px;">
+                <label class="form-label">APK Package File (.apk)</label>
+                <input type="file" id="releaseApkFile" class="form-input" accept=".apk" required style="padding-top: 6px;">
+                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">Max file size: 100 MB</span>
+              </div>
+
+              <div style="display: flex; gap: 12px; margin-bottom: 14px;">
+                <div style="flex: 1;">
+                  <label class="form-label">Version Name</label>
+                  <input type="text" id="releaseVersionName" class="form-input" placeholder="e.g. 1.0.1" required>
+                </div>
+                <div style="flex: 1;">
+                  <label class="form-label">Version Code</label>
+                  <input type="number" id="releaseVersionCode" class="form-input" placeholder="e.g. 2" min="1" required>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Release Notes & Changelog</label>
+                <textarea id="releaseNotes" class="form-input" rows="3" placeholder="Describe fixes, new features, or performance improvements..." style="resize: vertical;"></textarea>
+              </div>
+
+              <div id="uploadProgressBarContainer" style="display: none; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+                  <span>Uploading APK...</span>
+                  <span id="uploadProgressText">0%</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: var(--surface-deep); border-radius: 3px; overflow: hidden;">
+                  <div id="uploadProgressBar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.2s;"></div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="btnUploadRelease">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                Publish Release
+              </button>
+            </form>
+          </div>
+
+          <!-- Card 2: Current Production Release Info -->
+          <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; padding: 24px; display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <h3 style="font-size: 15px; font-weight: 600;">Active Production Release</h3>
+              </div>
+              <span id="activeReleaseBadge" class="badge badge-neutral" style="font-size: 11px;">Inactive</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+              Current version distributed to client devices upon update check.
+            </p>
+
+            <div id="activeReleaseDetails" style="flex: 1;">
+              <div style="padding: 16px; background: var(--surface-deep); border: 1px solid var(--hairline); border-radius: 6px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
+                  <span style="font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace;" id="arVersion">No active release</span>
+                  <span style="font-size: 12px; color: var(--text-muted);" id="arCode">Code: -</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                  <div>File Size: <strong id="arSize" style="color: var(--text-primary);">-</strong></div>
+                  <div>Published: <strong id="arDate" style="color: var(--text-primary);">-</strong></div>
+                  <div>Uploaded By: <strong id="arAuthor" style="color: var(--text-primary);">-</strong></div>
+                </div>
+                <div style="border-top: 1px solid var(--hairline); padding-top: 10px;">
+                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); display: block; margin-bottom: 4px;">Release Notes:</span>
+                  <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;" id="arNotes">-</div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <a id="arDownloadBtn" href="#" class="btn btn-secondary btn-sm" download style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  Download APK
+                </a>
+                <button class="btn btn-secondary btn-sm" id="btnCopyDownloadUrl" type="button">Copy Direct URL</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Release History Table -->
+        <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+            <h4 style="font-size: 14px; font-weight: 600;">Release Distribution History</h4>
+            <button class="btn btn-secondary btn-sm" id="btnRefreshReleases" type="button">Refresh list</button>
+          </div>
+          <div class="table-container" style="max-height: 260px; overflow-y: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Version</th>
+                  <th>Version Code</th>
+                  <th>File Size</th>
+                  <th>Release Notes</th>
+                  <th>Published Date</th>
+                  <th>Uploaded By</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="releasesTableBody">
+                <tr><td colspan="7" class="empty-state">Loading release history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Rules, Process & How to Create the App Help Documentation -->
+        <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; padding: 24px;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+            <h3 style="font-size: 15px; font-weight: 600;">Documentation: Rules, Process & APK Creation Guide</h3>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+            <!-- Process & Rules -->
+            <div style="background: var(--surface-deep); border: 1px solid var(--hairline); border-radius: 6px; padding: 16px;">
+              <h4 style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+                Rules for App Upload
+              </h4>
+              <ul style="padding-left: 18px; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
+                <li><strong>Strictly .apk file</strong>: Only compiled Android application packages are accepted (max 100 MB).</li>
+                <li><strong>Strict Version Code Invariant</strong>: Android OS requires <code style="font-family:'JetBrains Mono', monospace; color:var(--accent);">versionCode</code> to be strictly higher than the previously installed APK (e.g., Code 1 &rarr; Code 2). Android rejects downgrades.</li>
+                <li><strong>Keystore Signing Invariant</strong>: The new APK must be signed with the same keystore/debug key. A key mismatch causes Android to throw <code style="font-family:'JetBrains Mono', monospace; color:var(--negative);">INSTALL_FAILED_UPDATE_INCOMPATIBLE</code>.</li>
+                <li><strong>Network Distribution</strong>: The backend automatically hosts the APK under <code style="font-family:'JetBrains Mono', monospace;">/downloads/</code> and makes it available immediately to all connected devices.</li>
+              </ul>
+            </div>
+
+            <!-- How to build APK -->
+            <div style="background: var(--surface-deep); border: 1px solid var(--hairline); border-radius: 6px; padding: 16px;">
+              <h4 style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                How to Build the APK (Windows / Terminal)
+              </h4>
+              <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+                <p style="margin-bottom: 6px;">1. Update version in <code style="font-family:'JetBrains Mono', monospace;">ZezAndroid/app/build.gradle</code>:</p>
+                <pre style="background:var(--card-bg); padding:6px 10px; border-radius:4px; font-family:'JetBrains Mono', monospace; font-size:11px; margin-bottom:8px; border:1px solid var(--hairline);">versionCode 2
+versionName "1.0.1"</pre>
+                <p style="margin-bottom: 6px;">2. Build APK in PowerShell:</p>
+                <pre style="background:var(--card-bg); padding:6px 10px; border-radius:4px; font-family:'JetBrains Mono', monospace; font-size:11px; margin-bottom:8px; border:1px solid var(--hairline);">cd "D:\Call Log Mannager\ZezAndroid"
+.\gradlew.bat assembleDebug</pre>
+                <p style="margin-bottom: 4px;">3. Compiled file output location:</p>
+                <pre style="background:var(--card-bg); padding:6px 10px; border-radius:4px; font-family:'JetBrains Mono', monospace; font-size:11px; border:1px solid var(--hairline); word-break:break-all;">D:\Call Log Mannager\ZezAndroid\app\build\outputs\apk\debug\app-debug.apk</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Device Metadata Modal -->
+  <div id="deviceMetaModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 760px;">
+      <div class="modal-header">
+        <span class="modal-title" id="metaModalTitle">Device metadata</span>
+        <button class="modal-close" onclick="closeMetaModal()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="meta-grid" id="metaGridContainer"></div>
+        <div style="margin-top: 12px;">
+          <span class="control-label" style="display:block; margin-bottom: 6px;">Telemetry configuration payload</span>
+          <pre id="metaJsonBlock" style="background:var(--surface-deep); padding:12px; border-radius:6px; font-family:'JetBrains Mono', monospace; font-size:12px; border:1px solid var(--hairline); max-height:220px; overflow-y:auto; color:var(--text-secondary);"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Device Specific Calls Modal -->
+  <div id="deviceCallsModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" id="devCallsModalTitle">Device call records</span>
+        <button class="modal-close" onclick="closeDeviceCallsModal()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="meta-grid" style="margin-bottom: 12px;">
+          <div class="meta-cell"><div class="meta-key">Device</div><div class="meta-val" id="dcmName">-</div></div>
+          <div class="meta-cell"><div class="meta-key">Hardware ID</div><div class="meta-val cell-mono" id="dcmAndroidId">-</div></div>
+          <div class="meta-cell"><div class="meta-key">Model</div><div class="meta-val" id="dcmModel">-</div></div>
+          <div class="meta-cell"><div class="meta-key">Total records</div><div class="meta-val cell-mono" id="dcmTotalCalls">-</div></div>
+        </div>
+
+        <div class="toolbar" style="margin-bottom: 12px; padding: 8px 12px;">
+          <div class="search-wrap" style="min-width: 180px;">
+            <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="devCallSearchInput" class="search-input" placeholder="Filter phone number or name...">
+          </div>
+
+          <div class="control-item">
+            <span class="control-label">Type</span>
+            <select id="devCallTypeFilter" class="form-select" style="width: 110px; height: 34px;">
+              <option value="ALL">All types</option>
+              <option value="INCOMING">Incoming</option>
+              <option value="OUTGOING">Outgoing</option>
+              <option value="MISSED">Missed</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+          </div>
+
+          <div style="margin-left: auto; display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" id="btnExportDevCallsCsv">Export CSV</button>
+            <button class="btn btn-danger btn-sm" id="btnDeleteSelectedDevCalls" style="display: none;">
+              Delete (<span id="selectedDevCallsCount">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 32px;"><input type="checkbox" id="selectAllDevCalls"></th>
+                <th>Type</th>
+                <th>Contact</th>
+                <th>Phone number</th>
+                <th>Duration</th>
+                <th>Timestamp</th>
+                <th>Integrity</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="devCallsTableBody">
+              <tr><td colspan="8" class="empty-state">Loading call records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const API_BASE = '/api/admin';
+    let currentToken = localStorage.getItem('zez_admin_token') || null;
+    let cachedDevices = [];
+    let cachedGlobalCalls = [];
+    let cachedDeviceCalls = [];
+    let currentActiveDeviceId = null;
+
+    let selectedDeviceIds = new Set();
+    let selectedGlobalCallIds = new Set();
+    let selectedDeviceCallIds = new Set();
+
+    // Theme setup
+    let currentTheme = localStorage.getItem('zez_theme') || 'dark';
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      currentTheme = t;
+      localStorage.setItem('zez_theme', t);
+      document.getElementById('themeSun').style.display = t === 'dark' ? 'block' : 'none';
+      document.getElementById('themeMoon').style.display = t === 'dark' ? 'none' : 'block';
+      if (cachedGlobalCalls.length > 0) renderTelemetryChart(cachedGlobalCalls);
+    }
+    applyTheme(currentTheme);
+
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    async function apiRequest(endpoint, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...options.headers };
+      if (currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
+
+      const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+      if (res.status === 401) {
+        handleLogout();
+        throw new Error('Session expired');
+      }
+
+      const data = await res.json();
+      if (!res.ok || data.success === false) {
+        throw new Error(data.error || 'Request failed');
+      }
+      return data;
+    }
+
+    // Auth
+    const loginForm = document.getElementById('loginForm');
+    const authAlert = document.getElementById('authAlert');
+    const authOverlay = document.getElementById('authOverlay');
+    const appContainer = document.getElementById('appContainer');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      authAlert.style.display = 'none';
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const data = await apiRequest('/login', {
+          method: 'POST',
+          body: JSON.stringify({ username, password })
+        });
+
+        currentToken = data.token;
+        localStorage.setItem('zez_admin_token', currentToken);
+        localStorage.setItem('zez_admin_user', data.username);
+
+        showDashboard(data.username);
+        showToast('Authenticated');
+      } catch (err) {
+        authAlert.textContent = err.message;
+        authAlert.style.display = 'block';
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+    function handleLogout() {
+      currentToken = null;
+      localStorage.removeItem('zez_admin_token');
+      localStorage.removeItem('zez_admin_user');
+      appContainer.style.display = 'none';
+      authOverlay.style.display = 'flex';
+      document.getElementById('password').value = '';
+    }
+
+    function showDashboard(username) {
+      authOverlay.style.display = 'none';
+      appContainer.style.display = 'flex';
+      document.getElementById('adminUsernameDisplay').textContent = username || 'admin';
+      loadAllData();
+    }
+
+    // Navigation Tabs
+    const tabDevicesBtn = document.getElementById('tabDevicesBtn');
+    const tabAllCallsBtn = document.getElementById('tabAllCallsBtn');
+    const tabSettingsBtn = document.getElementById('tabSettingsBtn');
+    const tabReleasesBtn = document.getElementById('tabReleasesBtn');
+    const sectionDevices = document.getElementById('sectionDevices');
+    const sectionAllCalls = document.getElementById('sectionAllCalls');
+    const sectionSettings = document.getElementById('sectionSettings');
+    const sectionReleases = document.getElementById('sectionReleases');
+
+    function setActiveTab(tab) {
+      tabDevicesBtn.classList.toggle('active', tab === 'devices');
+      tabAllCallsBtn.classList.toggle('active', tab === 'calls');
+      tabSettingsBtn.classList.toggle('active', tab === 'settings');
+      tabReleasesBtn.classList.toggle('active', tab === 'releases');
+
+      sectionDevices.style.display = tab === 'devices' ? 'block' : 'none';
+      sectionAllCalls.style.display = tab === 'calls' ? 'block' : 'none';
+      sectionSettings.style.display = tab === 'settings' ? 'block' : 'none';
+      sectionReleases.style.display = tab === 'releases' ? 'block' : 'none';
+    }
+
+    tabDevicesBtn.addEventListener('click', () => {
+      setActiveTab('devices');
+      loadDevices();
+    });
+
+    tabAllCallsBtn.addEventListener('click', () => {
+      setActiveTab('calls');
+      loadGlobalCalls();
+    });
+
+    tabSettingsBtn.addEventListener('click', () => {
+      setActiveTab('settings');
+      loadAdminUsers();
+      const user = localStorage.getItem('zez_admin_user') || 'admin';
+      document.getElementById('settingsCurrentUsernameInput').value = user;
+    });
+
+    tabReleasesBtn.addEventListener('click', () => {
+      setActiveTab('releases');
+      loadReleases();
+    });
+
+    // Refresh Handlers
+    async function triggerFullRefresh(sourceName) {
+      const icon = document.getElementById('globalRefreshIcon');
+      if (icon) icon.style.transform = 'rotate(360deg)';
+      try {
+        await Promise.all([loadStats(), loadDevices()]);
+        if (tabAllCallsBtn.classList.contains('active')) {
+          await loadGlobalCalls();
+        } else {
+          const { calls } = await apiRequest('/calls?limit=150');
+          renderTelemetryChart(calls);
+        }
+        if (tabSettingsBtn.classList.contains('active')) {
+          await loadAdminUsers();
+        }
+        showToast(`${sourceName || 'Data'} refreshed`);
+      } catch (err) {
+        showToast('Refresh error: ' + err.message);
+      } finally {
+        setTimeout(() => { if (icon) icon.style.transform = 'none'; }, 500);
+      }
+    }
+
+    document.getElementById('globalRefreshBtn').addEventListener('click', () => triggerFullRefresh('Telemetry'));
+    document.getElementById('refreshBtn').addEventListener('click', () => triggerFullRefresh('Telemetry'));
+    document.getElementById('btnRefreshDevices').addEventListener('click', () => {
+      loadDevices();
+      loadStats();
+      showToast('Devices refreshed');
+    });
+    document.getElementById('btnRefreshCalls').addEventListener('click', () => {
+      loadGlobalCalls();
+      loadStats();
+      showToast('Calls refreshed');
+    });
+
+    async function loadAllData() {
+      try {
+        await Promise.all([loadStats(), loadDevices()]);
+        // Also load a slice of calls to draw the telemetry moment
+        const { calls } = await apiRequest('/calls?limit=150');
+        renderTelemetryChart(calls);
+      } catch (err) {
+        showToast(err.message);
+      }
+    }
+
+    async function loadStats() {
+      const { stats } = await apiRequest('/stats');
+      document.getElementById('statTotalDevices').textContent = stats.total_devices ?? 0;
+      document.getElementById('statActiveDevices').textContent = stats.active_devices_24h ?? 0;
+      document.getElementById('statTotalCalls').textContent = stats.total_calls ?? 0;
+      document.getElementById('statCallsToday').textContent = stats.calls_today ?? 0;
+    }
+
+    // Telemetry Chart Rendering (Quiet graphite grid, 1 accent moment)
+    function renderTelemetryChart(calls) {
+      const svg = document.getElementById('telemetrySvg');
+      if (!calls || calls.length === 0) {
+        svg.innerHTML = '<text x="350" y="65" text-anchor="middle" fill="currentColor" opacity="0.4" font-size="12">No telemetry data recorded</text>';
+        return;
+      }
+
+      // Group calls by hour or day
+      const buckets = new Array(24).fill(0);
+      calls.forEach(c => {
+        if (!c.callTimestamp) return;
+        const h = new Date(c.callTimestamp).getHours();
+        buckets[h]++;
+      });
+
+      const max = Math.max(...buckets, 1);
+      const width = 700;
+      const height = 130;
+      const barWidth = 18;
+      const gap = (width - (24 * barWidth)) / 25;
+
+      let svgHtml = `
+        <line x1="0" y1="30" x2="${width}" y2="30" stroke="currentColor" stroke-opacity="0.08" stroke-dasharray="2,2"/>
+        <line x1="0" y1="70" x2="${width}" y2="70" stroke="currentColor" stroke-opacity="0.08" stroke-dasharray="2,2"/>
+        <line x1="0" y1="110" x2="${width}" y2="110" stroke="currentColor" stroke-opacity="0.12"/>
+      `;
+
+      buckets.forEach((count, i) => {
+        const x = gap + i * (barWidth + gap);
+        const barHeight = Math.max((count / max) * 85, 3);
+        const y = 110 - barHeight;
+        const isPeak = count === max && max > 0;
+        const color = isPeak ? 'var(--accent)' : 'currentColor';
+        const opacity = isPeak ? '1' : (count > 0 ? '0.25' : '0.08');
+
+        svgHtml += `
+          <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${color}" fill-opacity="${opacity}" />
+          <text x="${x + barWidth/2}" y="125" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="currentColor" opacity="0.3">${i}</text>
+        `;
+      });
+
+      svg.innerHTML = svgHtml;
+    }
+
+    // Devices Management
+    async function loadDevices() {
+      const q = document.getElementById('deviceSearchInput').value.trim();
+      const endpoint = q ? `/devices?q=${encodeURIComponent(q)}` : '/devices';
+      const { devices } = await apiRequest(endpoint);
+      cachedDevices = devices;
+      document.getElementById('devicesBadge').textContent = devices.length;
+
+      const select = document.getElementById('filterCallDevice');
+      const curVal = select.value;
+      select.innerHTML = '<option value="ALL">All devices</option>' + devices.map(d => 
+        `<option value="${d.id}">${escapeHtml(d.device_name || d.device_model || d.androidid)}</option>`
+      ).join('');
+      select.value = curVal || 'ALL';
+
+      selectedDeviceIds.clear();
+      updateSelectedDevicesBar();
+
+      const tbody = document.getElementById('devicesTableBody');
+      if (devices.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No devices found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = devices.map(d => {
+        const lastSeen = d.last_seen_at ? formatTimeAgo(new Date(d.last_seen_at)) : 'Never';
+        const phone = d.primary_phone_number || d.sim1_phone_number || 'N/A';
+        const carrier = d.sim1_carrier || d.sim2_carrier || 'None';
+
+        return `
+          <tr>
+            <td>
+              <input type="checkbox" class="device-cb" data-id="${d.id}" onchange="toggleDeviceSelection('${d.id}', this.checked)">
+            </td>
+            <td>
+              <div style="font-weight: 600;">${escapeHtml(d.device_name || d.device_model || 'Android device')}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(d.manufacturer || '')} ${escapeHtml(d.brand || '')}</div>
+            </td>
+            <td>
+              <div class="cell-mono" style="cursor: pointer;" onclick="copyText('${d.androidid}', 'Hardware ID')">
+                ${escapeHtml(d.androidid || 'N/A')}
+              </div>
+            </td>
+            <td>
+              <div>${escapeHtml(d.os_version ? 'Android ' + d.os_version : d.platform || 'Android')}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">v${escapeHtml(d.app_version || '1.0.0')}</div>
+            </td>
+            <td>
+              <div>${escapeHtml(phone)}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(carrier)}</div>
+            </td>
+            <td>
+              <span class="cell-mono" style="font-weight: 600;">${d.total_calls || 0}</span>
+            </td>
+            <td>
+              <div>${lastSeen}</div>
+            </td>
+            <td style="text-align: right;">
+              <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                <button class="btn btn-secondary btn-sm" onclick="openDeviceMeta('${d.id}')">Metadata</button>
+                <button class="btn btn-secondary btn-sm" onclick="openDeviceCalls('${d.id}')">Calls</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteSingleDevice('${d.id}', '${escapeHtml(d.device_name || d.device_model)}')">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('deviceSearchInput').addEventListener('input', debounce(loadDevices, 300));
+
+    window.toggleDeviceSelection = function(id, isChecked) {
+      if (isChecked) selectedDeviceIds.add(id);
+      else selectedDeviceIds.delete(id);
+      updateSelectedDevicesBar();
+    };
+
+    document.getElementById('selectAllDevices').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      document.querySelectorAll('.device-cb').forEach(cb => {
+        cb.checked = checked;
+        const id = cb.dataset.id;
+        if (checked) selectedDeviceIds.add(id);
+        else selectedDeviceIds.delete(id);
+      });
+      updateSelectedDevicesBar();
+    });
+
+    function updateSelectedDevicesBar() {
+      const count = selectedDeviceIds.size;
+      const btn = document.getElementById('btnDeleteSelectedDevices');
+      document.getElementById('selectedDevicesCount').textContent = count;
+      btn.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+
+    document.getElementById('btnDeleteSelectedDevices').addEventListener('click', async () => {
+      const count = selectedDeviceIds.size;
+      if (!confirm(`Delete ${count} selected device(s) and records?`)) return;
+
+      try {
+        const res = await apiRequest('/devices/batch-delete', {
+          method: 'POST',
+          body: JSON.stringify({ deviceIds: Array.from(selectedDeviceIds) })
+        });
+        showToast(res.message);
+        loadAllData();
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+
+    window.deleteSingleDevice = async function(deviceId, name) {
+      if (!confirm(`Delete device "${name}" and all records?`)) return;
+
+      try {
+        const res = await apiRequest(`/devices/${deviceId}`, { method: 'DELETE' });
+        showToast(res.message);
+        loadAllData();
+      } catch (err) {
+        showToast(err.message);
+      }
+    };
+
+    // Metadata Modal
+    window.openDeviceMeta = function(deviceId) {
+      const d = cachedDevices.find(item => item.id === deviceId);
+      if (!d) return;
+
+      document.getElementById('metaModalTitle').textContent = `Metadata: ${d.device_name || d.device_model || 'Device'}`;
+      const container = document.getElementById('metaGridContainer');
+
+      container.innerHTML = `
+        <div class="meta-cell"><div class="meta-key">Database ID</div><div class="meta-val cell-mono">${d.id}</div></div>
+        <div class="meta-cell"><div class="meta-key">Hardware Android ID</div><div class="meta-val cell-mono">${d.androidid || 'N/A'}</div></div>
+        <div class="meta-cell"><div class="meta-key">Persistent UUID</div><div class="meta-val cell-mono">${d.persistentid || 'N/A'}</div></div>
+        <div class="meta-cell"><div class="meta-key">Device model</div><div class="meta-val">${escapeHtml(d.device_name || 'N/A')} (${escapeHtml(d.device_model || 'N/A')})</div></div>
+        <div class="meta-cell"><div class="meta-key">Manufacturer</div><div class="meta-val">${escapeHtml(d.manufacturer || 'N/A')} / ${escapeHtml(d.brand || 'N/A')}</div></div>
+        <div class="meta-cell"><div class="meta-key">OS & platform</div><div class="meta-val">${escapeHtml(d.platform || 'Android')} (${escapeHtml(d.os_version || 'N/A')})</div></div>
+        <div class="meta-cell"><div class="meta-key">App version</div><div class="meta-val">v${escapeHtml(d.app_version || '1.0.0')}</div></div>
+        <div class="meta-cell"><div class="meta-key">Primary phone</div><div class="meta-val">${escapeHtml(d.primary_phone_number || 'N/A')}</div></div>
+        <div class="meta-cell"><div class="meta-key">SIM 1 carrier</div><div class="meta-val">${escapeHtml(d.sim1_carrier || 'N/A')} (${escapeHtml(d.sim1_country_iso || '')})</div></div>
+        <div class="meta-cell"><div class="meta-key">SIM 2 carrier</div><div class="meta-val">${escapeHtml(d.sim2_carrier || 'N/A')} (${escapeHtml(d.sim2_country_iso || '')})</div></div>
+        <div class="meta-cell"><div class="meta-key">Registration status</div><div class="meta-val">${escapeHtml(d.registration_status || 'active')}</div></div>
+        <div class="meta-cell"><div class="meta-key">Last check-in</div><div class="meta-val">${d.last_seen_at ? new Date(d.last_seen_at).toLocaleString() : 'Never'}</div></div>
+      `;
+
+      document.getElementById('metaJsonBlock').textContent = JSON.stringify(d.device_details || {}, null, 2);
+      document.getElementById('deviceMetaModal').style.display = 'flex';
+    };
+
+    window.closeMetaModal = function() {
+      document.getElementById('deviceMetaModal').style.display = 'none';
+    };
+
+    // Device Specific Calls
+    window.openDeviceCalls = async function(deviceId) {
+      currentActiveDeviceId = deviceId;
+      const d = cachedDevices.find(item => item.id === deviceId);
+
+      document.getElementById('dcmName').textContent = d ? (d.device_name || d.device_model) : 'Device';
+      document.getElementById('dcmAndroidId').textContent = d ? (d.androidid || 'N/A') : 'N/A';
+      document.getElementById('dcmModel').textContent = d ? `${d.manufacturer || ''} ${d.device_model || ''}` : '-';
+      document.getElementById('dcmTotalCalls').textContent = d ? (d.total_calls || 0) : '0';
+
+      selectedDeviceCallIds.clear();
+      updateSelectedDevCallsBar();
+
+      document.getElementById('deviceCallsModal').style.display = 'flex';
+      await loadDeviceSpecificCalls();
+    };
+
+    window.closeDeviceCallsModal = function() {
+      document.getElementById('deviceCallsModal').style.display = 'none';
+      currentActiveDeviceId = null;
+    };
+
+    async function loadDeviceSpecificCalls() {
+      if (!currentActiveDeviceId) return;
+      const tbody = document.getElementById('devCallsTableBody');
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Loading call records...</td></tr>`;
+
+      const q = document.getElementById('devCallSearchInput').value.trim();
+      const type = document.getElementById('devCallTypeFilter').value;
+
+      let url = `/devices/${currentActiveDeviceId}/calls?limit=300`;
+      if (q) url += `&q=${encodeURIComponent(q)}`;
+      if (type && type !== 'ALL') url += `&type=${encodeURIComponent(type)}`;
+
+      try {
+        const { calls } = await apiRequest(url);
+        cachedDeviceCalls = calls;
+        renderDeviceCallsTable(calls);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${err.message}</td></tr>`;
+      }
+    }
+
+    function renderDeviceCallsTable(calls) {
+      const tbody = document.getElementById('devCallsTableBody');
+      selectedDeviceCallIds.clear();
+      updateSelectedDevCallsBar();
+      document.getElementById('selectAllDevCalls').checked = false;
+
+      if (calls.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No call logs found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = calls.map(c => {
+        const d = c.call || {};
+        const type = (d.type || 'UNKNOWN').toUpperCase();
+        const badgeClass = getBadgeClass(type);
+        const duration = formatDuration(d.duration || 0);
+        const timestamp = c.callTimestamp ? new Date(c.callTimestamp).toLocaleString() : 'N/A';
+        const encStatus = c.decryptionFailed 
+          ? '<span style="color:var(--negative);">Cipher error</span>' 
+          : '<span style="color:var(--positive);">Verified AES-256</span>';
+
+        return `
+          <tr>
+            <td>
+              <input type="checkbox" class="dev-call-cb" data-id="${c.id}" onchange="toggleDevCallSelection('${c.id}', this.checked)">
+            </td>
+            <td><span class="badge ${badgeClass}">${type.toLowerCase()}</span></td>
+            <td style="font-weight: 500;">${escapeHtml(d.name || 'Unknown')}</td>
+            <td class="cell-mono">${escapeHtml(d.phoneNumber || 'Private')}</td>
+            <td class="cell-mono">${duration}</td>
+            <td>${timestamp}</td>
+            <td>${encStatus}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-danger btn-sm" onclick="deleteSingleCall('${c.id}', true)">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('devCallSearchInput').addEventListener('input', debounce(loadDeviceSpecificCalls, 300));
+    document.getElementById('devCallTypeFilter').addEventListener('change', loadDeviceSpecificCalls);
+
+    window.toggleDevCallSelection = function(id, isChecked) {
+      if (isChecked) selectedDeviceCallIds.add(id);
+      else selectedDeviceCallIds.delete(id);
+      updateSelectedDevCallsBar();
+    };
+
+    document.getElementById('selectAllDevCalls').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      document.querySelectorAll('.dev-call-cb').forEach(cb => {
+        cb.checked = checked;
+        const id = cb.dataset.id;
+        if (checked) selectedDeviceCallIds.add(id);
+        else selectedDeviceCallIds.delete(id);
+      });
+      updateSelectedDevCallsBar();
+    });
+
+    function updateSelectedDevCallsBar() {
+      const count = selectedDeviceCallIds.size;
+      const btn = document.getElementById('btnDeleteSelectedDevCalls');
+      document.getElementById('selectedDevCallsCount').textContent = count;
+      btn.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+
+    document.getElementById('btnDeleteSelectedDevCalls').addEventListener('click', async () => {
+      const count = selectedDeviceCallIds.size;
+      if (!confirm(`Delete ${count} selected call record(s)?`)) return;
+
+      try {
+        const res = await apiRequest('/calls/batch-delete', {
+          method: 'POST',
+          body: JSON.stringify({ callIds: Array.from(selectedDeviceCallIds) })
+        });
+        showToast(res.message);
+        loadDeviceSpecificCalls();
+        loadAllData();
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+
+    document.getElementById('btnExportDevCallsCsv').addEventListener('click', () => {
+      exportToCsv(cachedDeviceCalls, `calls_${currentActiveDeviceId || 'device'}.csv`);
+    });
+
+    // Global Calls View
+    async function loadGlobalCalls() {
+      const tbody = document.getElementById('allCallsTableBody');
+      tbody.innerHTML = `<tr><td colspan="9" class="empty-state">Loading global call logs...</td></tr>`;
+
+      const q = document.getElementById('callSearchInput').value.trim();
+      const deviceId = document.getElementById('filterCallDevice').value;
+      const type = document.getElementById('filterCallType').value;
+      const year = document.getElementById('filterCallYear').value;
+      const month = document.getElementById('filterCallMonth').value;
+      const from = document.getElementById('filterCallFromDate').value;
+      const to = document.getElementById('filterCallToDate').value;
+
+      let url = `/calls?limit=300`;
+      if (q) url += `&q=${encodeURIComponent(q)}`;
+      if (deviceId && deviceId !== 'ALL') url += `&deviceId=${encodeURIComponent(deviceId)}`;
+      if (type && type !== 'ALL') url += `&type=${encodeURIComponent(type)}`;
+      if (year) url += `&year=${encodeURIComponent(year)}`;
+      if (month) url += `&month=${encodeURIComponent(month)}`;
+      if (from) url += `&from=${encodeURIComponent(from)}`;
+      if (to) url += `&to=${encodeURIComponent(to)}`;
+
+      try {
+        const { calls, total } = await apiRequest(url);
+        cachedGlobalCalls = calls;
+        document.getElementById('callsBadge').textContent = total ?? calls.length;
+        renderGlobalCallsTable(calls);
+        renderTelemetryChart(calls);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state">${err.message}</td></tr>`;
+      }
+    }
+
+    function renderGlobalCallsTable(calls) {
+      const tbody = document.getElementById('allCallsTableBody');
+      selectedGlobalCallIds.clear();
+      updateSelectedGlobalCallsBar();
+      document.getElementById('selectAllCalls').checked = false;
+
+      if (calls.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No call logs match criteria</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = calls.map(c => {
+        const d = c.call || {};
+        const type = (d.type || 'UNKNOWN').toUpperCase();
+        const badgeClass = getBadgeClass(type);
+        const duration = formatDuration(d.duration || 0);
+        const timestamp = c.callTimestamp ? new Date(c.callTimestamp).toLocaleString() : 'N/A';
+        const encStatus = c.decryptionFailed 
+          ? '<span style="color:var(--negative);">Cipher error</span>' 
+          : '<span style="color:var(--positive);">Verified AES-256</span>';
+
+        return `
+          <tr>
+            <td>
+              <input type="checkbox" class="global-call-cb" data-id="${c.id}" onchange="toggleGlobalCallSelection('${c.id}', this.checked)">
+            </td>
+            <td>
+              <span class="cell-mono" style="cursor: pointer;" onclick="openDeviceCalls('${c.deviceId}')">
+                ${escapeHtml(c.deviceName)}
+              </span>
+            </td>
+            <td><span class="badge ${badgeClass}">${type.toLowerCase()}</span></td>
+            <td style="font-weight: 500;">${escapeHtml(d.name || 'Unknown')}</td>
+            <td class="cell-mono">${escapeHtml(d.phoneNumber || 'Private')}</td>
+            <td class="cell-mono">${duration}</td>
+            <td>${timestamp}</td>
+            <td>${encStatus}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-danger btn-sm" onclick="deleteSingleCall('${c.id}', false)">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    ['callSearchInput'].forEach(id => {
+      document.getElementById(id).addEventListener('input', debounce(loadGlobalCalls, 300));
+    });
+    ['filterCallDevice', 'filterCallType', 'filterCallYear', 'filterCallMonth', 'filterCallFromDate', 'filterCallToDate'].forEach(id => {
+      document.getElementById(id).addEventListener('change', loadGlobalCalls);
+    });
+
+    window.toggleGlobalCallSelection = function(id, isChecked) {
+      if (isChecked) selectedGlobalCallIds.add(id);
+      else selectedGlobalCallIds.delete(id);
+      updateSelectedGlobalCallsBar();
+    };
+
+    document.getElementById('selectAllCalls').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      document.querySelectorAll('.global-call-cb').forEach(cb => {
+        cb.checked = checked;
+        const id = cb.dataset.id;
+        if (checked) selectedGlobalCallIds.add(id);
+        else selectedGlobalCallIds.delete(id);
+      });
+      updateSelectedGlobalCallsBar();
+    });
+
+    function updateSelectedGlobalCallsBar() {
+      const count = selectedGlobalCallIds.size;
+      const btn = document.getElementById('btnDeleteSelectedCalls');
+      document.getElementById('selectedCallsCount').textContent = count;
+      btn.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+
+    document.getElementById('btnDeleteSelectedCalls').addEventListener('click', async () => {
+      const count = selectedGlobalCallIds.size;
+      if (!confirm(`Delete ${count} selected call record(s)?`)) return;
+
+      try {
+        const res = await apiRequest('/calls/batch-delete', {
+          method: 'POST',
+          body: JSON.stringify({ callIds: Array.from(selectedGlobalCallIds) })
+        });
+        showToast(res.message);
+        loadGlobalCalls();
+        loadAllData();
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+
+    document.getElementById('btnExportAllCallsCsv').addEventListener('click', () => {
+      exportToCsv(cachedGlobalCalls, 'all_devices_calls_export.csv');
+    });
+
+    window.deleteSingleCall = async function(callId, isDeviceModal) {
+      if (!confirm('Permanently delete this call record?')) return;
+
+      try {
+        const res = await apiRequest(`/calls/${callId}`, { method: 'DELETE' });
+        showToast(res.message);
+        if (isDeviceModal) loadDeviceSpecificCalls();
+        else loadGlobalCalls();
+        loadAllData();
+      } catch (err) {
+        showToast(err.message);
+      }
+    };
+
+    function exportToCsv(calls, filename) {
+      if (!calls || calls.length === 0) {
+        showToast('No call records to export');
+        return;
+      }
+
+      const rows = [
+        ['Call ID', 'Device', 'Device ID', 'Type', 'Contact', 'Phone Number', 'Duration (Seconds)', 'Timestamp', 'Created At']
+      ];
+
+      calls.forEach(c => {
+        const d = c.call || {};
+        rows.push([
+          c.id,
+          `"${(c.deviceName || '').replace(/"/g, '""')}"`,
+          c.deviceId || '',
+          d.type || 'UNKNOWN',
+          `"${(d.name || '').replace(/"/g, '""')}"`,
+          `"${d.phoneNumber || ''}"`,
+          d.duration || 0,
+          c.callTimestamp || '',
+          c.createdAt || ''
+        ]);
+      });
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(r => r.join(',')).join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Export downloaded');
+    }
+
+    function getBadgeClass(type) {
+      if (type === 'INCOMING') return 'badge-incoming';
+      if (type === 'OUTGOING') return 'badge-outgoing';
+      if (type === 'MISSED') return 'badge-missed';
+      if (type === 'REJECTED' || type === 'BLOCKED') return 'badge-rejected';
+      return 'badge-neutral';
+    }
+
+    function formatDuration(sec) {
+      if (!sec || sec <= 0) return '0s';
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
+
+    function formatTimeAgo(date) {
+      const diffSec = Math.floor((new Date() - date) / 1000);
+      if (diffSec < 60) return 'Just now';
+      if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+      if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+      return `${Math.floor(diffSec / 86400)}d ago`;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    function copyText(txt, label) {
+      navigator.clipboard.writeText(txt);
+      showToast(`${label} copied`);
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // ============================================================================
+    // SETTINGS: ADMIN MANAGEMENT LOGIC
+    // ============================================================================
+    async function loadAdminUsers() {
+      const tbody = document.getElementById('adminUsersTableBody');
+      const alertBox = document.getElementById('settingsUsersAlert');
+      if (alertBox) alertBox.style.display = 'none';
+
+      try {
+        const data = await apiRequest('/users');
+        const users = data.users || [];
+        const currentUser = data.currentUser || localStorage.getItem('zez_admin_user') || 'admin';
+        document.getElementById('settingsCurrentUsernameInput').value = currentUser;
+
+        if (users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No admin accounts found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = users.map(u => {
+          const isCurrent = u.username.toLowerCase() === currentUser.toLowerCase();
+          const canDelete = users.length > 1;
+          const createdStr = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
+
+          return `
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-weight: 500;">${escapeHtml(u.username)}</span>
+                  ${isCurrent ? '<span class="badge badge-neutral" style="font-size: 10px;">Current</span>' : ''}
+                </div>
+              </td>
+              <td style="color: var(--text-secondary); font-size: 12px;">${createdStr}</td>
+              <td style="text-align: right;">
+                ${canDelete ? `
+                  <button class="btn btn-danger btn-sm" onclick="handleDeleteAdmin(${u.id}, '${escapeHtml(u.username)}')">
+                    Delete
+                  </button>
+                ` : '<span style="color: var(--text-muted); font-size: 11px;">Primary admin</span>'}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="3" class="empty-state" style="color:var(--negative);">${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    // Refresh button in admin directory
+    document.getElementById('btnRefreshAdminUsers').addEventListener('click', () => {
+      loadAdminUsers();
+      showToast('Admin list refreshed');
+    });
+
+    // Profile Update Form
+    const settingsProfileForm = document.getElementById('settingsProfileForm');
+    const settingsProfileAlert = document.getElementById('settingsProfileAlert');
+
+    settingsProfileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      settingsProfileAlert.style.display = 'none';
+
+      const currentPassword = document.getElementById('settingsVerifyPasswordInput').value;
+      const newUsername = document.getElementById('settingsNewUsernameInput').value.trim();
+      const newPassword = document.getElementById('settingsNewPasswordInput').value;
+
+      try {
+        const body = { currentPassword };
+        if (newUsername) body.newUsername = newUsername;
+        if (newPassword) body.newPassword = newPassword;
+
+        const res = await apiRequest('/users/me', {
+          method: 'PUT',
+          body: JSON.stringify(body)
+        });
+
+        if (res.token) {
+          currentToken = res.token;
+          localStorage.setItem('zez_admin_token', res.token);
+        }
+        if (res.username) {
+          localStorage.setItem('zez_admin_user', res.username);
+          document.getElementById('adminUsernameDisplay').textContent = res.username;
+          document.getElementById('settingsCurrentUsernameInput').value = res.username;
+        }
+
+        document.getElementById('settingsNewUsernameInput').value = '';
+        document.getElementById('settingsNewPasswordInput').value = '';
+        document.getElementById('settingsVerifyPasswordInput').value = '';
+
+        showToast(res.message || 'Credentials updated successfully');
+        loadAdminUsers();
+      } catch (err) {
+        settingsProfileAlert.textContent = err.message;
+        settingsProfileAlert.style.display = 'block';
+      }
+    });
+
+    // Add Admin Form
+    const settingsAddAdminForm = document.getElementById('settingsAddAdminForm');
+    const settingsUsersAlert = document.getElementById('settingsUsersAlert');
+
+    settingsAddAdminForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      settingsUsersAlert.style.display = 'none';
+
+      const username = document.getElementById('newAdminUsername').value.trim();
+      const password = document.getElementById('newAdminPassword').value;
+
+      try {
+        const res = await apiRequest('/users', {
+          method: 'POST',
+          body: JSON.stringify({ username, password })
+        });
+
+        document.getElementById('newAdminUsername').value = '';
+        document.getElementById('newAdminPassword').value = '';
+
+        showToast(res.message || 'Admin user created');
+        loadAdminUsers();
+      } catch (err) {
+        settingsUsersAlert.textContent = err.message;
+        settingsUsersAlert.style.display = 'block';
+      }
+    });
+
+    // Delete Admin User
+    window.handleDeleteAdmin = async function(userId, username) {
+      if (!confirm(`Are you sure you want to permanently delete admin account '${username}'?`)) {
+        return;
+      }
+
+      try {
+        const res = await apiRequest(`/users/${userId}`, { method: 'DELETE' });
+        showToast(res.message || 'Admin deleted');
+        if (res.isSelf) {
+          handleLogout();
+        } else {
+          loadAdminUsers();
+        }
+      } catch (err) {
+        showToast('Error: ' + err.message);
+      }
+    };
+
+    // ============================================================================
+    // APP RELEASES MANAGEMENT LOGIC
+    // ============================================================================
+    async function loadReleases() {
+      const tbody = document.getElementById('releasesTableBody');
+      const alertBox = document.getElementById('releaseUploadAlert');
+      if (alertBox) alertBox.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/app/releases', {
+          headers: {
+            'Authorization': `Bearer ${currentToken}`
+          }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to load releases');
+
+        const releases = data.releases || [];
+
+        // Update Active Release Card
+        if (releases.length > 0) {
+          const active = releases[0];
+          document.getElementById('activeReleaseBadge').textContent = 'Live';
+          document.getElementById('activeReleaseBadge').className = 'badge badge-incoming';
+          document.getElementById('arVersion').textContent = `v${active.version_name}`;
+          document.getElementById('arCode').textContent = `Code: ${active.version_code}`;
+          document.getElementById('arSize').textContent = `${(active.file_size / (1024 * 1024)).toFixed(2)} MB`;
+          document.getElementById('arDate').textContent = new Date(active.created_at).toLocaleDateString();
+          document.getElementById('arAuthor').textContent = active.uploaded_by || 'admin';
+          document.getElementById('arNotes').textContent = active.release_notes || 'No release notes provided.';
+
+          const fullDownloadUrl = `${window.location.origin}${active.download_url}`;
+          document.getElementById('arDownloadBtn').href = active.download_url;
+          document.getElementById('arDownloadBtn').style.display = 'inline-flex';
+          document.getElementById('btnCopyDownloadUrl').onclick = () => copyText(fullDownloadUrl, 'Download URL');
+          document.getElementById('btnCopyDownloadUrl').style.display = 'inline-flex';
+        } else {
+          document.getElementById('activeReleaseBadge').textContent = 'Inactive';
+          document.getElementById('activeReleaseBadge').className = 'badge badge-neutral';
+          document.getElementById('arVersion').textContent = 'No active release';
+          document.getElementById('arCode').textContent = 'Code: -';
+          document.getElementById('arSize').textContent = '-';
+          document.getElementById('arDate').textContent = '-';
+          document.getElementById('arAuthor').textContent = '-';
+          document.getElementById('arNotes').textContent = 'Publish a release using the form on the left.';
+          document.getElementById('arDownloadBtn').style.display = 'none';
+          document.getElementById('btnCopyDownloadUrl').style.display = 'none';
+        }
+
+        // Populate Table
+        if (releases.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No releases uploaded yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = releases.map((r, idx) => {
+          const sizeMb = (r.file_size / (1024 * 1024)).toFixed(2);
+          const dateStr = r.created_at ? new Date(r.created_at).toLocaleString() : '-';
+          const isLatest = idx === 0;
+
+          return `
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <strong style="font-family: 'JetBrains Mono', monospace;">v${escapeHtml(r.version_name)}</strong>
+                  ${isLatest ? '<span class="badge badge-incoming" style="font-size: 10px;">Latest</span>' : ''}
+                </div>
+              </td>
+              <td class="cell-mono">${r.version_code}</td>
+              <td class="cell-mono">${sizeMb} MB</td>
+              <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(r.release_notes)}">
+                ${escapeHtml(r.release_notes || '-')}
+              </td>
+              <td style="font-size: 12px; color: var(--text-secondary);">${dateStr}</td>
+              <td style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(r.uploaded_by || 'admin')}</td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 6px;">
+                  <a href="${r.download_url}" download class="btn btn-secondary btn-sm" style="text-decoration:none;">Download</a>
+                  <button class="btn btn-danger btn-sm" onclick="handleDeleteRelease(${r.id}, 'v${escapeHtml(r.version_name)}')">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color:var(--negative);">${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    document.getElementById('btnRefreshReleases').addEventListener('click', () => {
+      loadReleases();
+      showToast('Releases refreshed');
+    });
+
+    // Upload APK Release
+    const releaseUploadForm = document.getElementById('releaseUploadForm');
+    const releaseUploadAlert = document.getElementById('releaseUploadAlert');
+    const uploadProgressBarContainer = document.getElementById('uploadProgressBarContainer');
+    const uploadProgressBar = document.getElementById('uploadProgressBar');
+    const uploadProgressText = document.getElementById('uploadProgressText');
+    const btnUploadRelease = document.getElementById('btnUploadRelease');
+
+    releaseUploadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      releaseUploadAlert.style.display = 'none';
+
+      const fileInput = document.getElementById('releaseApkFile');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        releaseUploadAlert.textContent = 'Please choose an .apk file';
+        releaseUploadAlert.style.display = 'block';
+        return;
+      }
+
+      const file = fileInput.files[0];
+      if (!file.name.toLowerCase().endsWith('.apk')) {
+        releaseUploadAlert.textContent = 'Only files with .apk extension are permitted.';
+        releaseUploadAlert.style.display = 'block';
+        return;
+      }
+
+      const versionName = document.getElementById('releaseVersionName').value.trim();
+      const versionCode = document.getElementById('releaseVersionCode').value;
+      const releaseNotes = document.getElementById('releaseNotes').value.trim();
+
+      const formData = new FormData();
+      formData.append('apkFile', file);
+      formData.append('versionName', versionName);
+      formData.append('versionCode', versionCode);
+      formData.append('releaseNotes', releaseNotes);
+
+      uploadProgressBarContainer.style.display = 'block';
+      uploadProgressBar.style.width = '0%';
+      uploadProgressText.textContent = '0%';
+      btnUploadRelease.disabled = true;
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/app/upload');
+      xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
+
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable) {
+          const percent = Math.round((evt.loaded / evt.total) * 100);
+          uploadProgressBar.style.width = `${percent}%`;
+          uploadProgressText.textContent = `${percent}%`;
+        }
+      };
+
+      xhr.onload = () => {
+        btnUploadRelease.disabled = false;
+        uploadProgressBarContainer.style.display = 'none';
+
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300 && res.success) {
+            showToast(res.message || 'Release published successfully!');
+            releaseUploadForm.reset();
+            loadReleases();
+          } else {
+            releaseUploadAlert.textContent = res.error || 'Upload failed.';
+            releaseUploadAlert.style.display = 'block';
+          }
+        } catch {
+          releaseUploadAlert.textContent = 'Unexpected server response.';
+          releaseUploadAlert.style.display = 'block';
+        }
+      };
+
+      xhr.onerror = () => {
+        btnUploadRelease.disabled = false;
+        uploadProgressBarContainer.style.display = 'none';
+        releaseUploadAlert.textContent = 'Network error while uploading APK.';
+        releaseUploadAlert.style.display = 'block';
+      };
+
+      xhr.send(formData);
+    });
+
+    // Delete Release
+    window.handleDeleteRelease = async function(releaseId, label) {
+      if (!confirm(`Are you sure you want to permanently delete release ${label}?`)) return;
+
+      try {
+        const res = await fetch(`/api/app/releases/${releaseId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete release');
+
+        showToast(data.message || 'Release deleted');
+        loadReleases();
+      } catch (err) {
+        showToast('Error: ' + err.message);
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (currentToken) {
+        try {
+          const user = localStorage.getItem('zez_admin_user') || 'admin';
+          await apiRequest('/me');
+          showDashboard(user);
+        } catch {
+          handleLogout();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
