@@ -26,9 +26,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.JsonObject;
 import com.zez.app.adapter.ChatMessageAdapter;
 import com.zez.app.model.ChatMessage;
 import com.zez.app.util.ChatApiClient;
+import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatPreferencesHelper;
 
 import java.io.ByteArrayOutputStream;
@@ -43,9 +45,10 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
-import java.util.TimeZone;
 
 public class ChatActivity extends AppCompatActivity {
+    public static volatile String activeConversationId = null;
+
     private String conversationId;
     private String otherUserId;
     private String otherUserName;
@@ -318,7 +321,10 @@ public class ChatActivity extends AppCompatActivity {
                 btnSend.setVisibility(View.VISIBLE);
                 pbSending.setVisibility(View.GONE);
                 if (sentMessage != null) {
-                    if (sentMessage.getId() != null) loadedMessageIds.add(sentMessage.getId());
+                    if (sentMessage.getId() != null) {
+                        loadedMessageIds.add(sentMessage.getId());
+                        optimisticMsg.setId(sentMessage.getId());
+                    }
                     if (conversationId == null) {
                         conversationId = sentMessage.getConversationId();
                     }
@@ -469,6 +475,23 @@ public class ChatActivity extends AppCompatActivity {
                             }
                         }
 
+                        // Process status updates for sent messages (sent -> delivered -> read)
+                        if (result.statusUpdates != null && !result.statusUpdates.isEmpty()) {
+                            for (JsonObject su : result.statusUpdates) {
+                                if (su.has("id") && su.has("status")) {
+                                    String msgId = su.get("id").getAsString();
+                                    String newStatus = su.get("status").getAsString();
+                                    adapter.updateMessageStatus(msgId, newStatus);
+                                    for (ChatMessage nm : normalMessages) {
+                                        if (msgId.equals(nm.getId())) {
+                                            nm.setStatus(newStatus);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         if (result.incoming != null && !result.incoming.isEmpty()) {
                             boolean hasNew = false;
                             for (ChatMessage msg : result.incoming) {
@@ -519,6 +542,10 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        activeConversationId = conversationId;
+        if (conversationId != null) {
+            ChatNotificationHelper.clearNotification(this, conversationId);
+        }
         isPollingActive = true;
         updateModeUi();
         pollHandler.postDelayed(pollRunnable, 1000);
@@ -527,6 +554,7 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        activeConversationId = null;
         isPollingActive = false;
         pollHandler.removeCallbacks(pollRunnable);
         // Ephemeral Secret Mode rule: Purge all in-memory secret messages when user navigates away or pauses
@@ -539,6 +567,9 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (conversationId != null && conversationId.equals(activeConversationId)) {
+            activeConversationId = null;
+        }
         ephemeralSecretMessages.clear();
     }
 }

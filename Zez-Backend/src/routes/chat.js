@@ -430,8 +430,12 @@ router.get("/conversations", async (req, res) => {
       return res.status(400).json({ error: "userId parameter is required." });
     }
 
-    // Update user's last_seen
+    // Update user's last_seen and mark pending sent messages as delivered
     pool.query("UPDATE public.chat_users SET last_seen = NOW() WHERE id = $1", [userId]).catch(() => {});
+    pool.query(
+      "UPDATE public.chat_messages SET status = 'delivered', updated_at = NOW() WHERE receiver_id = $1 AND status = 'sent'",
+      [userId]
+    ).catch(() => {});
 
     const query = `
       SELECT 
@@ -551,7 +555,7 @@ router.get("/messages", async (req, res) => {
     if (userId) {
       await pool.query(
         `UPDATE public.chat_messages 
-         SET status = 'read' 
+         SET status = 'read', updated_at = NOW() 
          WHERE conversation_id = $1 
            AND receiver_id = $2 
            AND status != 'read'`,
@@ -691,22 +695,45 @@ router.get("/poll", async (req, res) => {
       [userId, sinceDate]
     );
 
-    // If incoming messages found, mark them delivered
+    // If incoming messages found, mark them delivered with updated_at timestamp
     if (incomingRes.rows.length > 0) {
       const msgIds = incomingRes.rows.map(m => m.id);
       await pool.query(
-        `UPDATE public.chat_messages SET status = 'delivered' WHERE id = ANY($1::uuid[]) AND status = 'sent'`,
+        `UPDATE public.chat_messages SET status = 'delivered', updated_at = NOW() WHERE id = ANY($1::uuid[]) AND status = 'sent'`,
         [msgIds]
       );
     }
 
+    // If viewing a specific conversation, auto-mark any messages sent to this user as 'read'
+    if (conversationId && userId) {
+      await pool.query(
+        `UPDATE public.chat_messages 
+         SET status = 'read', updated_at = NOW() 
+         WHERE conversation_id = $1 AND receiver_id = $2 AND status != 'read'`,
+        [conversationId, userId]
+      ).catch(() => {});
+    }
+
     // Status updates on messages sent by user (e.g. they changed from sent -> delivered -> read)
-    const statusRes = await pool.query(
-      `SELECT id, conversation_id, status
-       FROM public.chat_messages
-       WHERE sender_id = $1 AND created_at > $2`,
-      [userId, sinceDate]
-    );
+    let statusQuery = `
+      SELECT id, conversation_id, status
+      FROM public.chat_messages
+      WHERE sender_id = $1 AND (COALESCE(updated_at, created_at) > $2 OR created_at > $2)
+    `;
+    let statusParams = [userId, sinceDate];
+
+    // If conversation is being inspected, return latest status of recent messages in that conversation
+    if (conversationId) {
+      statusQuery = `
+        SELECT id, conversation_id, status
+        FROM public.chat_messages
+        WHERE conversation_id = $1 AND sender_id = $2 AND created_at > (NOW() - INTERVAL '3 days')
+        ORDER BY created_at DESC
+        LIMIT 100
+      `;
+      statusParams = [conversationId, userId];
+    }
+    const statusRes = await pool.query(statusQuery, statusParams);
 
     // If active conversationId is monitored, check its synchronized mode status
     let conversationMode = null;
@@ -751,7 +778,7 @@ router.post("/messages/status", async (req, res) => {
 
     await pool.query(
       `UPDATE public.chat_messages 
-       SET status = $1 
+       SET status = $1, updated_at = NOW() 
        WHERE conversation_id = $2 AND receiver_id = $3 AND status != $1`,
       [status, conversation_id, receiver_id]
     );
