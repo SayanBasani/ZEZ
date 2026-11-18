@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.gradle/
+build/
+app/build/
+ZezAndroid/build/
+ZezAndroid/app/build/
+ZezAndroid/.gradle/
+
+# Environment and Secrets
+.env
+.env.*
+*.jks
+*.keystore
+*.p8
+*.p12
+*.pem
+*.key
+
+# Output & Temp Files
+*.apk
+*.aab
+*.dex
+*.class
+*.log
+tmp/
+temp/
+.idea/
+.vscode/
+
+# Binaries & Media dumps
+*.bin
+*.lock
+*.dat
+*.prof
+*.profm

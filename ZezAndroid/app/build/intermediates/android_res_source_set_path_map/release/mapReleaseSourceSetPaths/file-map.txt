@@ -1,9 +1,0 @@
-com.zez.app-pngs-0 D:\Call Log Mannager\ZezAndroid\app\build\generated\res\pngs\release
-com.zez.app-resValues-1 D:\Call Log Mannager\ZezAndroid\app\build\generated\res\resValues\release
-com.zez.app-updated_navigation_xml-2 D:\Call Log Mannager\ZezAndroid\app\build\generated\updated_navigation_xml\release
-com.zez.app-packageReleaseResources-3 D:\Call Log Mannager\ZezAndroid\app\build\intermediates\incremental\release\packageReleaseResources\merged.dir
-com.zez.app-packageReleaseResources-4 D:\Call Log Mannager\ZezAndroid\app\build\intermediates\incremental\release\packageReleaseResources\stripped.dir
-com.zez.app-release-5 D:\Call Log Mannager\ZezAndroid\app\build\intermediates\merged_res\release\mergeReleaseResources
-com.zez.app-main-6 D:\Call Log Mannager\ZezAndroid\app\src\main\res
-com.zez.app-release-7 D:\Call Log Mannager\ZezAndroid\app\src\release\res
-gradleHome-0 C:\Users\sayan\.gradle
