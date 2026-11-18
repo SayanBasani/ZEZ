@@ -28,6 +28,19 @@ function isValidUuid(val) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val.trim());
 }
 
+function escapeCsv(val) {
+  if (val === null || val === undefined) return '""';
+  const str = String(val).replace(/"/g, '""');
+  return `"${str}"`;
+}
+
+function formatDurationSec(sec) {
+  const s = parseInt(sec, 10) || 0;
+  const m = Math.floor(s / 60);
+  const remaining = s % 60;
+  return `${m}m ${remaining}s`;
+}
+
 function decodeRecord(row) {
   let call = null;
   let decryptionFailed = false;
@@ -466,6 +479,341 @@ router.get("/calls", async (req, res, next) => {
 });
 
 /**
+ * GET /api/admin/calls/export
+ * Export full call records with complete device metadata in CSV or JSON
+ */
+router.get("/calls/export", async (req, res, next) => {
+  try {
+    const format = String(req.query.format || "json").toLowerCase();
+    const deviceId = req.query.deviceId ? String(req.query.deviceId) : null;
+    const from = req.query.from ? String(req.query.from) : null;
+    const to = req.query.to ? String(req.query.to) : null;
+    const year = req.query.year ? parseInt(req.query.year, 10) : null;
+    const month = req.query.month ? parseInt(req.query.month, 10) : null;
+    const search = req.query.q ? String(req.query.q).toLowerCase().trim() : null;
+    const typeFilter = req.query.type ? String(req.query.type).toUpperCase() : null;
+
+    const conditions = [];
+    const params = [];
+
+    if (deviceId && deviceId !== "ALL") {
+      params.push(deviceId);
+      if (isValidUuid(deviceId)) {
+        conditions.push(`cl.device_id = $${params.length}`);
+      } else {
+        conditions.push(`cl.device_id::text = $${params.length}`);
+      }
+    }
+
+    const fromDate = parseIsoDate(from);
+    const toDate = parseIsoDate(to);
+
+    if (fromDate) {
+      params.push(fromDate);
+      conditions.push(`cl.call_timestamp >= $${params.length}::timestamptz`);
+    }
+
+    if (toDate) {
+      params.push(toDate);
+      conditions.push(`cl.call_timestamp <= $${params.length}::timestamptz`);
+    }
+
+    if (year && !isNaN(year) && year >= 1970 && year <= 2100) {
+      params.push(year);
+      conditions.push(`EXTRACT(YEAR FROM cl.call_timestamp) = $${params.length}`);
+    }
+
+    if (month && !isNaN(month) && month >= 1 && month <= 12) {
+      params.push(month);
+      conditions.push(`EXTRACT(MONTH FROM cl.call_timestamp) = $${params.length}`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const query = `
+      SELECT 
+        cl.id, cl.device_id, cl.call_timestamp, cl.encrypted_payload, cl.created_at,
+        d.device_name, d.device_model, d.manufacturer, d.brand, d.platform,
+        d.os_version, d.app_version, d.androidid, d.primary_phone_number,
+        d.sim1_phone_number, d.sim2_phone_number, d.sim1_carrier, d.sim2_carrier,
+        d.last_seen_at AS device_last_seen_at, d.created_at AS device_registered_at
+      FROM public.call_logs cl
+      LEFT JOIN public.devices d ON d.id = cl.device_id
+      ${whereClause}
+      ORDER BY cl.call_timestamp DESC, cl.id DESC
+      LIMIT 50000
+    `;
+
+    const result = await pool.query(query, params);
+    let calls = result.rows.map(row => {
+      const decoded = decodeRecord(row);
+      return {
+        ...decoded,
+        manufacturer: row.manufacturer,
+        brand: row.brand,
+        platform: row.platform,
+        osVersion: row.os_version,
+        appVersion: row.app_version,
+        primaryPhone: row.primary_phone_number,
+        sim1Phone: row.sim1_phone_number,
+        sim2Phone: row.sim2_phone_number,
+        sim1Carrier: row.sim1_carrier,
+        sim2Carrier: row.sim2_carrier,
+        deviceLastSeen: row.device_last_seen_at,
+        deviceRegisteredAt: row.device_registered_at
+      };
+    });
+
+    if (typeFilter && typeFilter !== "ALL") {
+      calls = calls.filter((c) => c.call?.type?.toUpperCase() === typeFilter);
+    }
+
+    if (search) {
+      calls = calls.filter((c) => {
+        const phone = (c.call?.phoneNumber || "").toLowerCase();
+        const name = (c.call?.name || "").toLowerCase();
+        const devName = (c.deviceName || "").toLowerCase();
+        const devModel = (c.deviceModel || "").toLowerCase();
+        const aId = (c.androidId || "").toLowerCase();
+        return phone.includes(search) || name.includes(search) || devName.includes(search) || devModel.includes(search) || aId.includes(search);
+      });
+    }
+
+    const safeFilenamePart = deviceId && deviceId !== "ALL" ? `device-${deviceId.slice(0, 8)}` : "all-devices";
+    const timestampStr = new Date().toISOString().replace(/[:.]/g, "-");
+
+    if (format === "csv") {
+      res.setHeader("Content-Disposition", `attachment; filename="call-records-${safeFilenamePart}-${timestampStr}.csv"`);
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+
+      const headers = [
+        "Call ID", "Contact Name", "Phone Number", "Call Type",
+        "Duration Seconds", "Formatted Duration", "Call Timestamp",
+        "Cipher Status", "Device ID", "Device Name", "Device Model",
+        "Manufacturer", "Android ID", "Primary Phone Number",
+        "SIM 1 Carrier", "SIM 2 Carrier", "Device Last Seen", "Sync Timestamp"
+      ].join(",");
+
+      const rows = calls.map(c => {
+        const d = c.call || {};
+        return [
+          escapeCsv(c.id),
+          escapeCsv(d.name || "Unknown"),
+          escapeCsv(d.phoneNumber || ""),
+          escapeCsv(d.type || "UNKNOWN"),
+          escapeCsv(d.duration || 0),
+          escapeCsv(formatDurationSec(d.duration || 0)),
+          escapeCsv(c.callTimestamp ? new Date(c.callTimestamp).toISOString() : ""),
+          escapeCsv(c.decryptionFailed ? "Decryption Error" : "Verified AES-256"),
+          escapeCsv(c.deviceId),
+          escapeCsv(c.deviceName || ""),
+          escapeCsv(c.deviceModel || ""),
+          escapeCsv(c.manufacturer || ""),
+          escapeCsv(c.androidId || ""),
+          escapeCsv(c.primaryPhone || ""),
+          escapeCsv(c.sim1Carrier || ""),
+          escapeCsv(c.sim2Carrier || ""),
+          escapeCsv(c.deviceLastSeen ? new Date(c.deviceLastSeen).toISOString() : ""),
+          escapeCsv(c.createdAt ? new Date(c.createdAt).toISOString() : "")
+        ].join(",");
+      });
+
+      return res.send([headers, ...rows].join("\r\n"));
+    }
+
+    // Default JSON
+    res.setHeader("Content-Disposition", `attachment; filename="call-records-${safeFilenamePart}-${timestampStr}.json"`);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.send(JSON.stringify({
+      success: true,
+      exportedAt: new Date().toISOString(),
+      filter: { deviceId, type: typeFilter, year, month, from, to, search },
+      totalRecords: calls.length,
+      records: calls.map(c => {
+        const d = c.call || {};
+        return {
+          id: c.id,
+          call: {
+            name: d.name || "Unknown",
+            phoneNumber: d.phoneNumber || "",
+            type: d.type || "UNKNOWN",
+            duration: d.duration || 0,
+            formattedDuration: formatDurationSec(d.duration || 0),
+            timestamp: c.callTimestamp,
+            cipherStatus: c.decryptionFailed ? "failed" : "verified_aes256"
+          },
+          device: {
+            id: c.deviceId,
+            deviceName: c.deviceName,
+            deviceModel: c.deviceModel,
+            manufacturer: c.manufacturer,
+            brand: c.brand,
+            platform: c.platform,
+            osVersion: c.osVersion,
+            appVersion: c.appVersion,
+            androidId: c.androidId,
+            primaryPhoneNumber: c.primaryPhone,
+            sim1Carrier: c.sim1Carrier,
+            sim2Carrier: c.sim2Carrier,
+            lastSeenAt: c.deviceLastSeen,
+            registeredAt: c.deviceRegisteredAt
+          },
+          syncedAt: c.createdAt
+        };
+      })
+    }, null, 2));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/admin/contacts/export
+ * Aggregates unique contacts with calling metadata across devices in CSV or JSON
+ */
+router.get("/contacts/export", async (req, res, next) => {
+  try {
+    const format = String(req.query.format || "json").toLowerCase();
+    const deviceId = req.query.deviceId ? String(req.query.deviceId) : null;
+
+    let whereClause = "";
+    const params = [];
+    if (deviceId && deviceId !== "ALL") {
+      params.push(deviceId);
+      if (isValidUuid(deviceId)) {
+        whereClause = `WHERE cl.device_id = $1`;
+      } else {
+        whereClause = `WHERE cl.device_id::text = $1`;
+      }
+    }
+
+    const query = `
+      SELECT 
+        cl.id, cl.device_id, cl.call_timestamp, cl.encrypted_payload,
+        d.device_name, d.device_model, d.androidid, d.primary_phone_number
+      FROM public.call_logs cl
+      LEFT JOIN public.devices d ON d.id = cl.device_id
+      ${whereClause}
+      ORDER BY cl.call_timestamp DESC
+      LIMIT 50000
+    `;
+
+    const result = await pool.query(query, params);
+    const contactsMap = new Map();
+
+    for (const row of result.rows) {
+      const decoded = decodeRecord(row);
+      const call = decoded.call || {};
+      const rawPhone = String(call.phoneNumber || "Unknown").trim();
+      const normPhone = rawPhone.replace(/\D/g, "");
+      const key = normPhone || rawPhone;
+
+      if (!contactsMap.has(key)) {
+        contactsMap.set(key, {
+          contactName: call.name || "Unknown",
+          phoneNumber: rawPhone,
+          totalCalls: 0,
+          incomingCalls: 0,
+          outgoingCalls: 0,
+          missedCalls: 0,
+          rejectedCalls: 0,
+          totalDurationSeconds: 0,
+          firstCallTimestamp: decoded.callTimestamp,
+          lastCallTimestamp: decoded.callTimestamp,
+          devices: new Set(),
+          deviceModels: new Set()
+        });
+      }
+
+      const entry = contactsMap.get(key);
+      entry.totalCalls++;
+      const type = String(call.type || "").toUpperCase();
+      if (type === "INCOMING") entry.incomingCalls++;
+      else if (type === "OUTGOING") entry.outgoingCalls++;
+      else if (type === "MISSED") entry.missedCalls++;
+      else if (type === "REJECTED") entry.rejectedCalls++;
+
+      entry.totalDurationSeconds += (parseInt(call.duration, 10) || 0);
+
+      if (decoded.deviceName || decoded.deviceModel) {
+        entry.deviceModels.add(decoded.deviceName || decoded.deviceModel);
+      }
+      if (decoded.deviceId) {
+        entry.devices.add(decoded.deviceId);
+      }
+      if (decoded.callTimestamp) {
+        if (!entry.lastCallTimestamp || decoded.callTimestamp > entry.lastCallTimestamp) {
+          entry.lastCallTimestamp = decoded.callTimestamp;
+        }
+        if (!entry.firstCallTimestamp || decoded.callTimestamp < entry.firstCallTimestamp) {
+          entry.firstCallTimestamp = decoded.callTimestamp;
+        }
+      }
+    }
+
+    const contactsList = Array.from(contactsMap.values()).map(c => ({
+      contactName: c.contactName,
+      phoneNumber: c.phoneNumber,
+      totalCalls: c.totalCalls,
+      incomingCalls: c.incomingCalls,
+      outgoingCalls: c.outgoingCalls,
+      missedCalls: c.missedCalls,
+      rejectedCalls: c.rejectedCalls,
+      totalDurationSeconds: c.totalDurationSeconds,
+      formattedTotalDuration: formatDurationSec(c.totalDurationSeconds),
+      firstCallTimestamp: c.firstCallTimestamp,
+      lastCallTimestamp: c.lastCallTimestamp,
+      associatedDevicesCount: c.devices.size,
+      associatedDeviceModels: Array.from(c.deviceModels).join("; ")
+    }));
+
+    const timestampStr = new Date().toISOString().replace(/[:.]/g, "-");
+
+    if (format === "csv") {
+      res.setHeader("Content-Disposition", `attachment; filename="contacts-metadata-${timestampStr}.csv"`);
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+
+      const headers = [
+        "Contact Name", "Phone Number", "Total Calls", "Incoming Calls",
+        "Outgoing Calls", "Missed Calls", "Rejected Calls", "Total Duration Seconds",
+        "Formatted Duration", "First Call Timestamp", "Last Call Timestamp",
+        "Associated Device Count", "Associated Device Models"
+      ].join(",");
+
+      const rows = contactsList.map(c => [
+        escapeCsv(c.contactName),
+        escapeCsv(c.phoneNumber),
+        escapeCsv(c.totalCalls),
+        escapeCsv(c.incomingCalls),
+        escapeCsv(c.outgoingCalls),
+        escapeCsv(c.missedCalls),
+        escapeCsv(c.rejectedCalls),
+        escapeCsv(c.totalDurationSeconds),
+        escapeCsv(c.formattedTotalDuration),
+        escapeCsv(c.firstCallTimestamp ? new Date(c.firstCallTimestamp).toISOString() : ""),
+        escapeCsv(c.lastCallTimestamp ? new Date(c.lastCallTimestamp).toISOString() : ""),
+        escapeCsv(c.associatedDevicesCount),
+        escapeCsv(c.associatedDeviceModels)
+      ].join(","));
+
+      return res.send([headers, ...rows].join("\r\n"));
+    }
+
+    // Default JSON
+    res.setHeader("Content-Disposition", `attachment; filename="contacts-metadata-${timestampStr}.json"`);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.send(JSON.stringify({
+      success: true,
+      exportedAt: new Date().toISOString(),
+      totalContacts: contactsList.length,
+      contacts: contactsList
+    }, null, 2));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * DELETE /api/admin/calls/:callId
  * Delete a single call log by ID.
  */
@@ -797,20 +1145,113 @@ router.delete("/users/:id", async (req, res, next) => {
 });
 
 /**
- * Helper: CSV escape
+ * GET /api/admin/chats/devices-roster
+ * Roster of devices paired with their chat accounts for the Chat Monitor selector
  */
-function escapeCsv(val) {
-  if (val === null || val === undefined) return '""';
-  const str = String(val).replace(/"/g, '""');
-  return `"${str}"`;
-}
+router.get("/chats/devices-roster", async (req, res, next) => {
+  try {
+    const devicesRes = await pool.query(`
+      SELECT 
+        d.id, d.device_name, d.device_model, d.manufacturer, d.androidid,
+        d.primary_phone_number, d.sim1_phone_number, d.sim1_carrier, d.last_seen_at,
+        u.id AS user_id, u.name AS user_name, u.phone_number AS user_phone, u.avatar_url, u.last_seen AS user_last_seen,
+        (SELECT COUNT(*)::int FROM public.call_logs WHERE device_id = d.id) AS calls_count
+      FROM public.devices d
+      LEFT JOIN public.chat_users u ON (
+        d.primary_phone_number IS NOT NULL AND (
+          u.phone_number = d.primary_phone_number OR
+          RIGHT(REGEXP_REPLACE(u.phone_number, '\\D', '', 'g'), 10) = RIGHT(REGEXP_REPLACE(d.primary_phone_number, '\\D', '', 'g'), 10)
+        )
+      )
+      ORDER BY d.last_seen_at DESC NULLS LAST
+    `);
+
+    const usersRes = await pool.query(`
+      SELECT 
+        u.id, u.name, u.phone_number, u.avatar_url, u.last_seen,
+        (
+          SELECT COUNT(*)::int 
+          FROM public.chat_conversations c 
+          WHERE c.user1_id = u.id OR c.user2_id = u.id
+        ) AS conversation_count,
+        (
+          SELECT COUNT(*)::int 
+          FROM public.chat_messages m 
+          WHERE m.sender_id = u.id OR m.receiver_id = u.id
+        ) AS message_count
+      FROM public.chat_users u
+      ORDER BY u.last_seen DESC NULLS LAST
+    `);
+
+    res.json({
+      success: true,
+      devices: devicesRes.rows,
+      users: usersRes.rows
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * GET /api/admin/chats/conversations
- * List all conversations with participant details, message counts, and active mode
+ * List conversations with participant details, message counts, and active mode.
+ * Supports optional ?deviceId=..., ?phone=..., or ?userId=... filtering.
  */
 router.get("/chats/conversations", async (req, res, next) => {
   try {
+    const { deviceId, phone, userId } = req.query;
+
+    let targetUserId = null;
+    let targetDevice = null;
+    let targetUser = null;
+
+    if (userId) {
+      targetUserId = userId;
+      const uRes = await pool.query("SELECT * FROM public.chat_users WHERE id = $1", [userId]);
+      if (uRes.rowCount > 0) targetUser = uRes.rows[0];
+    } else if (phone) {
+      const clean = String(phone).trim();
+      const uRes = await pool.query(
+        "SELECT * FROM public.chat_users WHERE phone_number = $1 OR RIGHT(REGEXP_REPLACE(phone_number, '\\D', '', 'g'), 10) = RIGHT(REGEXP_REPLACE($1, '\\D', '', 'g'), 10)",
+        [clean]
+      );
+      if (uRes.rowCount > 0) {
+        targetUser = uRes.rows[0];
+        targetUserId = targetUser.id;
+      }
+      const dRes = await pool.query(
+        "SELECT * FROM public.devices WHERE primary_phone_number = $1 OR RIGHT(REGEXP_REPLACE(COALESCE(primary_phone_number, ''), '\\D', '', 'g'), 10) = RIGHT(REGEXP_REPLACE($1, '\\D', '', 'g'), 10)",
+        [clean]
+      );
+      if (dRes.rowCount > 0) targetDevice = dRes.rows[0];
+    } else if (deviceId && deviceId !== "ALL") {
+      const dRes = await pool.query("SELECT * FROM public.devices WHERE id::text = $1 OR androidid = $1", [deviceId]);
+      if (dRes.rowCount > 0) {
+        targetDevice = dRes.rows[0];
+        const p = targetDevice.primary_phone_number || targetDevice.sim1_phone_number;
+        if (p) {
+          const uRes = await pool.query(
+            "SELECT * FROM public.chat_users WHERE phone_number = $1 OR RIGHT(REGEXP_REPLACE(phone_number, '\\D', '', 'g'), 10) = RIGHT(REGEXP_REPLACE($1, '\\D', '', 'g'), 10)",
+            [p]
+          );
+          if (uRes.rowCount > 0) {
+            targetUser = uRes.rows[0];
+            targetUserId = targetUser.id;
+          }
+        }
+      }
+    }
+
+    const whereConditions = [];
+    const params = [];
+    if (targetUserId) {
+      params.push(targetUserId);
+      whereConditions.push(`(c.user1_id = $${params.length} OR c.user2_id = $${params.length})`);
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+
     const query = `
       SELECT 
         c.id,
@@ -841,16 +1282,220 @@ router.get("/chats/conversations", async (req, res, next) => {
       JOIN public.chat_users u1 ON c.user1_id = u1.id
       JOIN public.chat_users u2 ON c.user2_id = u2.id
       LEFT JOIN public.chat_messages m ON m.conversation_id = c.id
+      ${whereClause}
       GROUP BY c.id, u1.id, u2.id
       ORDER BY c.last_message_time DESC NULLS LAST;
     `;
 
-    const result = await pool.query(query);
+    const result = await pool.query(query, params);
+
+    const conversations = result.rows.map(row => {
+      let contact = row.user2;
+      let ownUser = row.user1;
+      if (targetUserId && row.user2?.id === targetUserId) {
+        contact = row.user1;
+        ownUser = row.user2;
+      }
+      return {
+        ...row,
+        contact,
+        ownUser
+      };
+    });
+
     res.json({
       success: true,
-      conversations: result.rows,
-      count: result.rowCount
+      targetDevice,
+      targetUser,
+      conversations,
+      count: conversations.length
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/chats/export-device/:idOrPhone
+ * Export all conversations & messages for a specific device or user in TXT, CSV, or JSON
+ */
+router.get("/chats/export-device/:idOrPhone", async (req, res, next) => {
+  try {
+    const { idOrPhone } = req.params;
+    const format = String(req.query.format || "json").toLowerCase();
+
+    let targetUser = null;
+    let targetDevice = null;
+
+    const uRes = await pool.query(
+      `SELECT * FROM public.chat_users 
+       WHERE id::text = $1 OR phone_number = $1 
+          OR RIGHT(REGEXP_REPLACE(phone_number, '\\D', '', 'g'), 10) = RIGHT(REGEXP_REPLACE($1, '\\D', '', 'g'), 10)`,
+      [idOrPhone]
+    );
+
+    if (uRes.rowCount > 0) {
+      targetUser = uRes.rows[0];
+    }
+
+    const dRes = await pool.query(
+      `SELECT * FROM public.devices 
+       WHERE id::text = $1 OR androidid = $1 OR primary_phone_number = $1
+          OR RIGHT(REGEXP_REPLACE(COALESCE(primary_phone_number, ''), '\\D', '', 'g'), 10) = RIGHT(REGEXP_REPLACE($1, '\\D', '', 'g'), 10)`,
+      [idOrPhone]
+    );
+
+    if (dRes.rowCount > 0) {
+      targetDevice = dRes.rows[0];
+      if (!targetUser && targetDevice.primary_phone_number) {
+        const uRes2 = await pool.query(
+          `SELECT * FROM public.chat_users 
+           WHERE phone_number = $1 
+              OR RIGHT(REGEXP_REPLACE(phone_number, '\\D', '', 'g'), 10) = RIGHT(REGEXP_REPLACE($1, '\\D', '', 'g'), 10)`,
+          [targetDevice.primary_phone_number]
+        );
+        if (uRes2.rowCount > 0) targetUser = uRes2.rows[0];
+      }
+    }
+
+    if (!targetUser && !targetDevice) {
+      return res.status(404).json({ success: false, error: "Device or user not found." });
+    }
+
+    const targetUserId = targetUser ? targetUser.id : null;
+    const targetPhone = targetUser ? targetUser.phone_number : (targetDevice ? targetDevice.primary_phone_number : "");
+
+    const msgsRes = await pool.query(`
+      SELECT 
+        m.id, m.conversation_id, m.created_at, COALESCE(m.mode, 'normal') AS mode,
+        m.message_text, m.media_url, m.media_type, m.file_name, m.file_size, m.status,
+        m.sender_id, m.receiver_id,
+        s.name AS sender_name, s.phone_number AS sender_phone,
+        r.name AS receiver_name, r.phone_number AS receiver_phone
+      FROM public.chat_messages m
+      JOIN public.chat_users s ON m.sender_id = s.id
+      JOIN public.chat_users r ON m.receiver_id = r.id
+      WHERE m.sender_id = $1 OR m.receiver_id = $1
+         OR s.phone_number = $2 OR r.phone_number = $2
+      ORDER BY m.created_at ASC
+    `, [targetUserId, targetPhone]);
+
+    const messages = msgsRes.rows;
+    const safeTitle = (targetUser?.name || targetDevice?.device_name || targetPhone || "device").replace(/[^a-zA-Z0-9_-]/g, "");
+    const timestampStr = new Date().toISOString().replace(/[:.]/g, "-");
+
+    if (format === "csv") {
+      res.setHeader("Content-Disposition", `attachment; filename="chats-${safeTitle}-${timestampStr}.csv"`);
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+
+      const headers = [
+        "Timestamp", "Message ID", "Conversation ID", "Mode",
+        "Direction", "Contact Name", "Contact Phone", "Message Text",
+        "Media Type", "Media URL", "File Name", "File Size", "Status"
+      ].join(",");
+
+      const rows = messages.map(m => {
+        const isOutgoing = (targetUserId && m.sender_id === targetUserId) || (m.sender_phone === targetPhone);
+        const contactName = isOutgoing ? m.receiver_name : m.sender_name;
+        const contactPhone = isOutgoing ? m.receiver_phone : m.sender_phone;
+        const direction = isOutgoing ? "SENT" : "RECEIVED";
+
+        return [
+          escapeCsv(new Date(m.created_at).toISOString()),
+          escapeCsv(m.id),
+          escapeCsv(m.conversation_id),
+          escapeCsv(m.mode === "secret" ? "SECRET" : "NORMAL"),
+          escapeCsv(direction),
+          escapeCsv(contactName),
+          escapeCsv(contactPhone),
+          escapeCsv(m.message_text),
+          escapeCsv(m.media_type || ""),
+          escapeCsv(m.media_url || ""),
+          escapeCsv(m.file_name || ""),
+          escapeCsv(m.file_size || 0),
+          escapeCsv(m.status)
+        ].join(",");
+      });
+
+      return res.send([headers, ...rows].join("\r\n"));
+    }
+
+    if (format === "txt") {
+      res.setHeader("Content-Disposition", `attachment; filename="chats-${safeTitle}-${timestampStr}.txt"`);
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+
+      const lines = [
+        "================================================================================",
+        `COMPLETE CHAT TRANSCRIPT FOR DEVICE: ${targetDevice?.device_name || targetDevice?.device_model || 'N/A'}`,
+        `REGISTERED USER: ${targetUser?.name || 'N/A'} (${targetPhone || 'N/A'})`,
+        `EXPORTED AT: ${new Date().toISOString()}`,
+        `TOTAL MESSAGES: ${messages.length}`,
+        "================================================================================",
+        ""
+      ];
+
+      for (const m of messages) {
+        const isOutgoing = (targetUserId && m.sender_id === targetUserId) || (m.sender_phone === targetPhone);
+        const timeStr = new Date(m.created_at).toISOString();
+        const modeBadge = m.mode === "secret" ? "[🔒 SECRET MODE]" : "[NORMAL]";
+        const arrow = isOutgoing ? ">>> [SENT TO" : "<<< [FROM";
+        const contact = isOutgoing ? `${m.receiver_name} (${m.receiver_phone})` : `${m.sender_name} (${m.sender_phone})`;
+        let line = `${timeStr} ${modeBadge} ${arrow} ${contact}]: ${m.message_text}`;
+        if (m.media_url) {
+          line += `\n   -> Attachment: [${m.media_type || 'file'}] ${m.media_url}`;
+          if (m.file_name) line += ` (${m.file_name}, ${m.file_size || 0} bytes)`;
+        }
+        lines.push(line);
+      }
+
+      lines.push("\n============================= END OF TRANSCRIPT ==============================");
+      return res.send(lines.join("\r\n"));
+    }
+
+    // Default JSON
+    res.setHeader("Content-Disposition", `attachment; filename="chats-${safeTitle}-${timestampStr}.json"`);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+    return res.send(JSON.stringify({
+      success: true,
+      exportedAt: new Date().toISOString(),
+      device: targetDevice ? {
+        id: targetDevice.id,
+        name: targetDevice.device_name,
+        model: targetDevice.device_model,
+        androidId: targetDevice.androidid,
+        primaryPhone: targetDevice.primary_phone_number
+      } : null,
+      user: targetUser ? {
+        id: targetUser.id,
+        name: targetUser.name,
+        phone: targetUser.phone_number,
+        avatar: targetUser.avatar_url
+      } : null,
+      totalMessages: messages.length,
+      messages: messages.map(m => {
+        const isOutgoing = (targetUserId && m.sender_id === targetUserId) || (m.sender_phone === targetPhone);
+        return {
+          id: m.id,
+          conversationId: m.conversation_id,
+          timestamp: m.created_at,
+          mode: m.mode,
+          direction: isOutgoing ? "sent" : "received",
+          contact: {
+            name: isOutgoing ? m.receiver_name : m.sender_name,
+            phone: isOutgoing ? m.receiver_phone : m.sender_phone
+          },
+          text: m.message_text,
+          media: m.media_url ? {
+            url: m.media_url,
+            type: m.media_type,
+            fileName: m.file_name,
+            fileSize: m.file_size
+          } : null,
+          status: m.status
+        };
+      })
+    }, null, 2));
   } catch (err) {
     next(err);
   }
