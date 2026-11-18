@@ -10,23 +10,59 @@
     <LinearLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="64dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:background="@color/surface_light"
-        android:elevation="2dp"
+        android:paddingHorizontal="18dp"
+        android:background="@color/theme_surface"
+        android:elevation="3dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/tv_title"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Zez"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary_light" />
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chats"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/theme_text_primary" />
+
+                <TextView
+                    android:id="@+id/tv_top_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Live"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary"
+                    android:background="@drawable/bg_mode_toggle_normal"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Messages &amp; encrypted conversations"
+                android:textSize="11sp"
+                android:textColor="@color/theme_text_muted"
+                android:layout_marginTop="1dp" />
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/btn_sync"
@@ -34,6 +70,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_popup_sync"
+            app:tint="@color/theme_icon_tint"
             android:contentDescription="Sync" />
     </LinearLayout>
 

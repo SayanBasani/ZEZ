@@ -336,6 +336,87 @@ async function getOrCreateConversation(userA, userB) {
   return res.rows[0];
 }
 
+// 4b. Get conversation mode
+// GET /api/chat/conversation/:id/mode
+router.get("/conversation/:id/mode", async (req, res) => {
+  try {
+    const convId = req.params.id;
+    const result = await pool.query(
+      "SELECT id, is_secret_mode, secret_session_id, secret_mode_updated_at, secret_mode_by FROM public.chat_conversations WHERE id = $1",
+      [convId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Conversation not found." });
+    }
+    const row = result.rows[0];
+    return res.json({
+      success: true,
+      conversationId: row.id,
+      isSecretMode: !!row.is_secret_mode,
+      secretSessionId: row.secret_session_id,
+      secretModeUpdatedAt: row.secret_mode_updated_at,
+      secretModeBy: row.secret_mode_by
+    });
+  } catch (err) {
+    console.error("Error in GET /conversation/:id/mode:", err);
+    return res.status(500).json({ error: "Failed to retrieve conversation mode." });
+  }
+});
+
+// 4c. Set / Toggle conversation mode (Normal <-> Secret Mode)
+// POST /api/chat/conversation/:id/mode
+router.post("/conversation/:id/mode", async (req, res) => {
+  try {
+    const convId = req.params.id;
+    const { isSecretMode, userId } = req.body;
+    const modeBool = !!isSecretMode;
+
+    let query;
+    let values;
+    if (modeBool) {
+      // Turning Secret Mode ON: generate a new secret_session_id
+      query = `
+        UPDATE public.chat_conversations 
+        SET is_secret_mode = true,
+            secret_session_id = gen_random_uuid(),
+            secret_mode_updated_at = NOW(),
+            secret_mode_by = $2
+        WHERE id = $1
+        RETURNING id, is_secret_mode, secret_session_id, secret_mode_updated_at, secret_mode_by;
+      `;
+      values = [convId, userId || null];
+    } else {
+      // Turning Secret Mode OFF
+      query = `
+        UPDATE public.chat_conversations 
+        SET is_secret_mode = false,
+            secret_mode_updated_at = NOW(),
+            secret_mode_by = $2
+        WHERE id = $1
+        RETURNING id, is_secret_mode, secret_session_id, secret_mode_updated_at, secret_mode_by;
+      `;
+      values = [convId, userId || null];
+    }
+
+    const result = await pool.query(query, values);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Conversation not found." });
+    }
+    const row = result.rows[0];
+    return res.json({
+      success: true,
+      conversationId: row.id,
+      isSecretMode: !!row.is_secret_mode,
+      secretSessionId: row.secret_session_id,
+      secretModeUpdatedAt: row.secret_mode_updated_at,
+      secretModeBy: row.secret_mode_by
+    });
+  } catch (err) {
+    console.error("Error in POST /conversation/:id/mode:", err);
+    return res.status(500).json({ error: "Failed to toggle conversation mode." });
+  }
+});
+
 // 5. Get conversations for user
 // GET /api/chat/conversations?userId=...
 router.get("/conversations", async (req, res) => {
@@ -354,6 +435,9 @@ router.get("/conversations", async (req, res) => {
         c.last_message_text,
         c.last_message_time,
         c.created_at,
+        c.is_secret_mode,
+        c.secret_session_id,
+        c.secret_mode_updated_at,
         CASE WHEN c.user1_id = $1 THEN u2.id ELSE u1.id END AS other_user_id,
         CASE WHEN c.user1_id = $1 THEN u2.name ELSE u1.name END AS other_user_name,
         CASE WHEN c.user1_id = $1 THEN u2.phone_number ELSE u1.phone_number END AS other_user_phone,
@@ -382,22 +466,52 @@ router.get("/conversations", async (req, res) => {
 });
 
 // 6. Get messages for conversation
-// GET /api/chat/messages?conversationId=...&userId=...&limit=50&before=...
+// GET /api/chat/messages?conversationId=...&userId=...&limit=50&before=...&mode=normal|secret&secretSessionId=...
 router.get("/messages", async (req, res) => {
   try {
-    const { conversationId, userId, otherUserId, limit = 50, before } = req.query;
+    const { conversationId, userId, otherUserId, limit = 50, before, mode = "normal", secretSessionId } = req.query;
 
     let convId = conversationId;
+    let convRow = null;
     if (!convId && userId && otherUserId) {
-      const conv = await getOrCreateConversation(userId, otherUserId);
-      convId = conv.id;
+      convRow = await getOrCreateConversation(userId, otherUserId);
+      convId = convRow.id;
+    } else if (convId) {
+      const cRes = await pool.query(
+        "SELECT id, is_secret_mode, secret_session_id, secret_mode_updated_at FROM public.chat_conversations WHERE id = $1",
+        [convId]
+      );
+      if (cRes.rows.length > 0) {
+        convRow = cRes.rows[0];
+      }
     }
 
     if (!convId) {
       return res.status(400).json({ error: "conversationId or (userId and otherUserId) required." });
     }
 
+    // Ephemeral Secret Mode rule:
+    // If client requests secret mode without a secretSessionId (fresh launch / re-entry),
+    // they get an empty message list (fresh blank screen as requested)
+    if (mode === "secret" && !secretSessionId) {
+      return res.json({
+        success: true,
+        conversation_id: convId,
+        isSecretMode: convRow ? !!convRow.is_secret_mode : false,
+        secretSessionId: convRow ? convRow.secret_session_id : null,
+        messages: []
+      });
+    }
+
     const queryParams = [convId, parseInt(limit, 10) || 50];
+    let modeClause = "";
+    if (mode === "secret") {
+      queryParams.push(secretSessionId);
+      modeClause = `AND m.mode = 'secret' AND m.secret_session_id = $${queryParams.length}`;
+    } else {
+      modeClause = `AND COALESCE(m.mode, 'normal') = 'normal'`;
+    }
+
     let beforeClause = "";
     if (before) {
       queryParams.push(before);
@@ -415,10 +529,13 @@ router.get("/messages", async (req, res) => {
         m.media_type,
         m.file_name,
         m.file_size,
+        m.mode,
+        m.secret_session_id,
         m.status,
         m.created_at
       FROM public.chat_messages m
       WHERE m.conversation_id = $1
+        ${modeClause}
         ${beforeClause}
       ORDER BY m.created_at DESC
       LIMIT $2;
@@ -440,7 +557,13 @@ router.get("/messages", async (req, res) => {
 
     // Return in ascending chronological order for chat view
     const messages = result.rows.reverse();
-    return res.json({ success: true, conversation_id: convId, messages });
+    return res.json({
+      success: true,
+      conversation_id: convId,
+      isSecretMode: convRow ? !!convRow.is_secret_mode : false,
+      secretSessionId: convRow ? convRow.secret_session_id : null,
+      messages
+    });
   } catch (err) {
     console.error("Error in /api/chat/messages:", err);
     return res.status(500).json({ error: "Internal server error fetching messages." });
@@ -451,7 +574,18 @@ router.get("/messages", async (req, res) => {
 // POST /api/chat/messages/send
 router.post("/messages/send", async (req, res) => {
   try {
-    const { sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size } = req.body;
+    const {
+      sender_id,
+      receiver_id,
+      message_text,
+      media_url,
+      media_type,
+      file_name,
+      file_size,
+      mode = "normal",
+      secret_session_id
+    } = req.body;
+
     if (!sender_id || !receiver_id) {
       return res.status(400).json({ error: "sender_id and receiver_id are required." });
     }
@@ -471,11 +605,19 @@ router.post("/messages/send", async (req, res) => {
     // Get or create conversation
     const conversation = await getOrCreateConversation(sender_id, receiver_id);
 
+    const isSecret = mode === "secret" || conversation.is_secret_mode;
+    const finalMode = isSecret ? "secret" : "normal";
+    const sessionUuid = isSecret ? (secret_session_id || conversation.secret_session_id) : null;
+
     // Insert message
     const msgQuery = `
-      INSERT INTO public.chat_messages (conversation_id, sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size, status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'sent')
-      RETURNING id, conversation_id, sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size, status, created_at;
+      INSERT INTO public.chat_messages (
+        conversation_id, sender_id, receiver_id, message_text,
+        media_url, media_type, file_name, file_size, mode, secret_session_id, status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'sent')
+      RETURNING id, conversation_id, sender_id, receiver_id, message_text,
+                media_url, media_type, file_name, file_size, mode, secret_session_id, status, created_at;
     `;
 
     const msgRes = await pool.query(msgQuery, [
@@ -486,18 +628,22 @@ router.post("/messages/send", async (req, res) => {
       media_url || null,
       media_type || null,
       file_name || null,
-      file_size ? parseInt(file_size, 10) : null
+      file_size ? parseInt(file_size, 10) : null,
+      finalMode,
+      sessionUuid
     ]);
 
     const sentMessage = msgRes.rows[0];
 
-    // Update conversation last message info
-    await pool.query(
-      `UPDATE public.chat_conversations 
-       SET last_message_text = $1, last_message_time = $2 
-       WHERE id = $3`,
-      [sentMessage.message_text, sentMessage.created_at, conversation.id]
-    );
+    // For normal messages, update conversation snippet
+    if (finalMode === "normal") {
+      await pool.query(
+        `UPDATE public.chat_conversations 
+         SET last_message_text = $1, last_message_time = $2 
+         WHERE id = $3`,
+        [sentMessage.message_text, sentMessage.created_at, conversation.id]
+      );
+    }
 
     // Update sender last_seen
     pool.query("UPDATE public.chat_users SET last_seen = NOW() WHERE id = $1", [sender_id]).catch(() => {});
@@ -510,10 +656,10 @@ router.post("/messages/send", async (req, res) => {
 });
 
 // 8. Poll for new messages / status updates
-// GET /api/chat/poll?userId=...&since=...
+// GET /api/chat/poll?userId=...&since=...&conversationId=...
 router.get("/poll", async (req, res) => {
   try {
-    const { userId, since } = req.query;
+    const { userId, since, conversationId } = req.query;
     if (!userId) {
       return res.status(400).json({ error: "userId is required." });
     }
@@ -536,7 +682,7 @@ router.get("/poll", async (req, res) => {
 
     // Incoming messages
     const incomingRes = await pool.query(
-      `SELECT id, conversation_id, sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size, status, created_at
+      `SELECT id, conversation_id, sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size, mode, secret_session_id, status, created_at
        FROM public.chat_messages
        WHERE receiver_id = $1 AND created_at > $2
        ORDER BY created_at ASC`,
@@ -560,11 +706,31 @@ router.get("/poll", async (req, res) => {
       [userId, sinceDate]
     );
 
+    // If active conversationId is monitored, check its synchronized mode status
+    let conversationMode = null;
+    if (conversationId) {
+      const modeRes = await pool.query(
+        "SELECT id, is_secret_mode, secret_session_id, secret_mode_updated_at, secret_mode_by FROM public.chat_conversations WHERE id = $1",
+        [conversationId]
+      );
+      if (modeRes.rows.length > 0) {
+        const row = modeRes.rows[0];
+        conversationMode = {
+          conversationId: row.id,
+          isSecretMode: !!row.is_secret_mode,
+          secretSessionId: row.secret_session_id,
+          secretModeUpdatedAt: row.secret_mode_updated_at,
+          secretModeBy: row.secret_mode_by
+        };
+      }
+    }
+
     return res.json({
       success: true,
       timestamp: new Date().toISOString(),
       incoming: incomingRes.rows,
-      status_updates: statusRes.rows
+      status_updates: statusRes.rows,
+      conversation_mode: conversationMode
     });
   } catch (err) {
     console.error("Error in /api/chat/poll:", err);

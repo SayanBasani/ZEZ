@@ -778,4 +778,340 @@ router.delete("/users/:id", async (req, res, next) => {
   }
 });
 
+/**
+ * Helper: CSV escape
+ */
+function escapeCsv(val) {
+  if (val === null || val === undefined) return '""';
+  const str = String(val).replace(/"/g, '""');
+  return `"${str}"`;
+}
+
+/**
+ * GET /api/admin/chats/conversations
+ * List all conversations with participant details, message counts, and active mode
+ */
+router.get("/chats/conversations", async (req, res, next) => {
+  try {
+    const query = `
+      SELECT 
+        c.id,
+        c.is_secret_mode,
+        c.secret_session_id,
+        c.secret_mode_updated_at,
+        c.last_message_text,
+        c.last_message_time,
+        c.created_at,
+        json_build_object(
+          'id', u1.id,
+          'name', u1.name,
+          'phone', u1.phone_number,
+          'avatar', u1.avatar_url,
+          'last_seen', u1.last_seen
+        ) AS user1,
+        json_build_object(
+          'id', u2.id,
+          'name', u2.name,
+          'phone', u2.phone_number,
+          'avatar', u2.avatar_url,
+          'last_seen', u2.last_seen
+        ) AS user2,
+        COUNT(m.id)::int AS total_messages,
+        COUNT(m.id) FILTER (WHERE COALESCE(m.mode, 'normal') = 'normal')::int AS normal_messages,
+        COUNT(m.id) FILTER (WHERE m.mode = 'secret')::int AS secret_messages
+      FROM public.chat_conversations c
+      JOIN public.chat_users u1 ON c.user1_id = u1.id
+      JOIN public.chat_users u2 ON c.user2_id = u2.id
+      LEFT JOIN public.chat_messages m ON m.conversation_id = c.id
+      GROUP BY c.id, u1.id, u2.id
+      ORDER BY c.last_message_time DESC NULLS LAST;
+    `;
+
+    const result = await pool.query(query);
+    res.json({
+      success: true,
+      conversations: result.rows,
+      count: result.rowCount
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/chats/conversations/:id/messages
+ * Full chat inspector: returns all messages with mode badges, sender/receiver info, and media
+ */
+router.get("/chats/conversations/:id/messages", async (req, res, next) => {
+  try {
+    const convId = req.params.id;
+    const { mode, search } = req.query;
+
+    // Verify conversation
+    const convRes = await pool.query(
+      `SELECT 
+         c.id, c.is_secret_mode, c.secret_session_id, c.secret_mode_updated_at, c.created_at,
+         u1.id AS u1_id, u1.name AS u1_name, u1.phone_number AS u1_phone, u1.avatar_url AS u1_avatar,
+         u2.id AS u2_id, u2.name AS u2_name, u2.phone_number AS u2_phone, u2.avatar_url AS u2_avatar
+       FROM public.chat_conversations c
+       JOIN public.chat_users u1 ON c.user1_id = u1.id
+       JOIN public.chat_users u2 ON c.user2_id = u2.id
+       WHERE c.id = $1`,
+      [convId]
+    );
+
+    if (convRes.rowCount === 0) {
+      return res.status(404).json({ success: false, error: "Conversation not found." });
+    }
+
+    const conv = convRes.rows[0];
+
+    const params = [convId];
+    let modeFilter = "";
+    if (mode === "normal") {
+      modeFilter = "AND COALESCE(m.mode, 'normal') = 'normal'";
+    } else if (mode === "secret") {
+      modeFilter = "AND m.mode = 'secret'";
+    }
+
+    let searchFilter = "";
+    if (search && String(search).trim()) {
+      params.push(`%${String(search).trim()}%`);
+      searchFilter = `AND (m.message_text ILIKE $${params.length} OR m.file_name ILIKE $${params.length})`;
+    }
+
+    const msgQuery = `
+      SELECT 
+        m.id,
+        m.conversation_id,
+        m.sender_id,
+        m.receiver_id,
+        m.message_text,
+        m.media_url,
+        m.media_type,
+        m.file_name,
+        m.file_size,
+        COALESCE(m.mode, 'normal') AS mode,
+        m.secret_session_id,
+        m.status,
+        m.created_at,
+        sender.name AS sender_name,
+        sender.phone_number AS sender_phone,
+        sender.avatar_url AS sender_avatar,
+        receiver.name AS receiver_name,
+        receiver.phone_number AS receiver_phone,
+        receiver.avatar_url AS receiver_avatar
+      FROM public.chat_messages m
+      JOIN public.chat_users sender ON m.sender_id = sender.id
+      JOIN public.chat_users receiver ON m.receiver_id = receiver.id
+      WHERE m.conversation_id = $1
+        ${modeFilter}
+        ${searchFilter}
+      ORDER BY m.created_at ASC;
+    `;
+
+    const msgRes = await pool.query(msgQuery, params);
+
+    res.json({
+      success: true,
+      conversation: {
+        id: conv.id,
+        isSecretMode: !!conv.is_secret_mode,
+        secretSessionId: conv.secret_session_id,
+        secretModeUpdatedAt: conv.secret_mode_updated_at,
+        user1: { id: conv.u1_id, name: conv.u1_name, phone: conv.u1_phone, avatar: conv.u1_avatar },
+        user2: { id: conv.u2_id, name: conv.u2_name, phone: conv.u2_phone, avatar: conv.u2_avatar }
+      },
+      messages: msgRes.rows,
+      total: msgRes.rowCount
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/chats/export/:id
+ * Export a single conversation in TXT, CSV, or JSON
+ */
+router.get("/chats/export/:id", async (req, res, next) => {
+  try {
+    const convId = req.params.id;
+    const format = String(req.query.format || "txt").toLowerCase();
+
+    // Fetch conversation info
+    const convRes = await pool.query(
+      `SELECT 
+         c.id, c.is_secret_mode, c.created_at,
+         u1.name AS u1_name, u1.phone_number AS u1_phone,
+         u2.name AS u2_name, u2.phone_number AS u2_phone
+       FROM public.chat_conversations c
+       JOIN public.chat_users u1 ON c.user1_id = u1.id
+       JOIN public.chat_users u2 ON c.user2_id = u2.id
+       WHERE c.id = $1`,
+      [convId]
+    );
+
+    if (convRes.rowCount === 0) {
+      return res.status(404).json({ success: false, error: "Conversation not found." });
+    }
+    const conv = convRes.rows[0];
+
+    // Fetch messages
+    const msgRes = await pool.query(
+      `SELECT 
+        m.id, m.created_at, COALESCE(m.mode, 'normal') AS mode, m.secret_session_id,
+        m.message_text, m.media_url, m.media_type, m.file_name, m.file_size, m.status,
+        sender.name AS sender_name, sender.phone_number AS sender_phone,
+        receiver.name AS receiver_name, receiver.phone_number AS receiver_phone
+       FROM public.chat_messages m
+       JOIN public.chat_users sender ON m.sender_id = sender.id
+       JOIN public.chat_users receiver ON m.receiver_id = receiver.id
+       WHERE m.conversation_id = $1
+       ORDER BY m.created_at ASC`,
+      [convId]
+    );
+    const messages = msgRes.rows;
+
+    const safeTitle = `${conv.u1_phone}_vs_${conv.u2_phone}`.replace(/[^a-zA-Z0-9_-]/g, "");
+
+    if (format === "json") {
+      res.setHeader("Content-Disposition", `attachment; filename="chat-${safeTitle}-${Date.now()}.json"`);
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      return res.send(JSON.stringify({
+        conversationId: conv.id,
+        participants: [
+          { name: conv.u1_name, phone: conv.u1_phone },
+          { name: conv.u2_name, phone: conv.u2_phone }
+        ],
+        exportedAt: new Date().toISOString(),
+        totalMessages: messages.length,
+        messages
+      }, null, 2));
+    }
+
+    if (format === "csv") {
+      res.setHeader("Content-Disposition", `attachment; filename="chat-${safeTitle}-${Date.now()}.csv"`);
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      const headers = [
+        "Timestamp", "MessageId", "Mode", "SenderName", "SenderPhone",
+        "ReceiverName", "ReceiverPhone", "MessageText", "MediaType", "MediaUrl", "FileName", "FileSize", "Status"
+      ].join(",");
+
+      const rows = messages.map(m => [
+        escapeCsv(m.created_at),
+        escapeCsv(m.id),
+        escapeCsv(m.mode),
+        escapeCsv(m.sender_name),
+        escapeCsv(m.sender_phone),
+        escapeCsv(m.receiver_name),
+        escapeCsv(m.receiver_phone),
+        escapeCsv(m.message_text),
+        escapeCsv(m.media_type || ""),
+        escapeCsv(m.media_url || ""),
+        escapeCsv(m.file_name || ""),
+        escapeCsv(m.file_size || 0),
+        escapeCsv(m.status)
+      ].join(","));
+
+      return res.send([headers, ...rows].join("\r\n"));
+    }
+
+    // Default TXT Transcript
+    res.setHeader("Content-Disposition", `attachment; filename="transcript-${safeTitle}-${Date.now()}.txt"`);
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+
+    const lines = [
+      "================================================================================",
+      "ZEZ SYSTEM - OFFICIAL CHAT TRANSCRIPT EXPORT",
+      `Conversation ID: ${conv.id}`,
+      `Participants:    ${conv.u1_name} (${conv.u1_phone}) <---> ${conv.u2_name} (${conv.u2_phone})`,
+      `Total Messages:  ${messages.length}`,
+      `Generated At:    ${new Date().toISOString()}`,
+      "================================================================================",
+      ""
+    ];
+
+    for (const m of messages) {
+      const timeStr = new Date(m.created_at).toISOString();
+      const modeIndicator = m.mode === "secret" ? "[🔒 SECRET MODE]" : "[NORMAL]";
+      let line = `${timeStr} ${modeIndicator} ${m.sender_name} (${m.sender_phone}): ${m.message_text}`;
+      if (m.media_url) {
+        line += `\n   -> Attachment: [${m.media_type || "file"}] ${m.media_url}`;
+        if (m.file_name) line += ` (File: ${m.file_name}, Size: ${m.file_size || 0} bytes)`;
+      }
+      lines.push(line);
+    }
+
+    lines.push("\n============================= END OF TRANSCRIPT ==============================");
+    return res.send(lines.join("\r\n"));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/chats/export-all
+ * Export complete system chat history in JSON or CSV
+ */
+router.get("/chats/export-all", async (req, res, next) => {
+  try {
+    const format = String(req.query.format || "json").toLowerCase();
+
+    const result = await pool.query(`
+      SELECT 
+        m.id, m.conversation_id, m.created_at, COALESCE(m.mode, 'normal') AS mode,
+        m.message_text, m.media_url, m.media_type, m.file_name, m.file_size, m.status,
+        s.name AS sender_name, s.phone_number AS sender_phone,
+        r.name AS receiver_name, r.phone_number AS receiver_phone
+      FROM public.chat_messages m
+      JOIN public.chat_users s ON m.sender_id = s.id
+      JOIN public.chat_users r ON m.receiver_id = r.id
+      ORDER BY m.created_at ASC
+    `);
+
+    const messages = result.rows;
+
+    if (format === "csv") {
+      res.setHeader("Content-Disposition", `attachment; filename="all-chats-${Date.now()}.csv"`);
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      const headers = [
+        "Timestamp", "ConversationId", "MessageId", "Mode",
+        "SenderName", "SenderPhone", "ReceiverName", "ReceiverPhone",
+        "MessageText", "MediaType", "MediaUrl", "FileName", "FileSize", "Status"
+      ].join(",");
+
+      const rows = messages.map(m => [
+        escapeCsv(m.created_at),
+        escapeCsv(m.conversation_id),
+        escapeCsv(m.id),
+        escapeCsv(m.mode),
+        escapeCsv(m.sender_name),
+        escapeCsv(m.sender_phone),
+        escapeCsv(m.receiver_name),
+        escapeCsv(m.receiver_phone),
+        escapeCsv(m.message_text),
+        escapeCsv(m.media_type || ""),
+        escapeCsv(m.media_url || ""),
+        escapeCsv(m.file_name || ""),
+        escapeCsv(m.file_size || 0),
+        escapeCsv(m.status)
+      ].join(","));
+
+      return res.send([headers, ...rows].join("\r\n"));
+    }
+
+    // Default JSON
+    res.setHeader("Content-Disposition", `attachment; filename="all-chats-${Date.now()}.json"`);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.send(JSON.stringify({
+      exportedAt: new Date().toISOString(),
+      totalMessages: messages.length,
+      messages
+    }, null, 2));
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

@@ -430,12 +430,79 @@ public class ChatApiClient {
         });
     }
 
-    // 4. Get Messages
+    public static class ConversationModeInfo {
+        public String conversationId;
+        public boolean isSecretMode;
+        public String secretSessionId;
+        public String secretModeUpdatedAt;
+        public String secretModeBy;
+    }
+
+    public static class MessagesResult {
+        public List<ChatMessage> messages = new ArrayList<>();
+        public boolean isSecretMode = false;
+        public String secretSessionId = null;
+    }
+
+    // 3b. Mode management for Dual-Mode (Normal <-> Ephemeral Secret) chat
+    public static void setConversationMode(Context context, String conversationId, String userId, boolean isSecretMode, ChatCallback<ConversationModeInfo> callback) {
+        String url = getBaseUrl(context) + "/api/chat/conversation/" + conversationId + "/mode";
+        JsonObject body = new JsonObject();
+        body.addProperty("isSecretMode", isSecretMode);
+        if (userId != null) body.addProperty("userId", userId);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Failed to toggle mode: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    postError(callback, "HTTP " + response.code());
+                    return;
+                }
+                try {
+                    String str = response.body().string();
+                    JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                    ConversationModeInfo info = new ConversationModeInfo();
+                    if (json.has("conversationId")) info.conversationId = json.get("conversationId").getAsString();
+                    if (json.has("isSecretMode")) info.isSecretMode = json.get("isSecretMode").getAsBoolean();
+                    if (json.has("secretSessionId") && !json.get("secretSessionId").isJsonNull()) {
+                        info.secretSessionId = json.get("secretSessionId").getAsString();
+                    }
+                    if (json.has("secretModeUpdatedAt") && !json.get("secretModeUpdatedAt").isJsonNull()) {
+                        info.secretModeUpdatedAt = json.get("secretModeUpdatedAt").getAsString();
+                    }
+                    postSuccess(callback, info);
+                } catch (Exception e) {
+                    postError(callback, "Parse error: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    // 4. Get Messages (supporting dual mode filtering)
     public static void getMessages(Context context, String conversationId, String userId, String otherUserId, int limit, ChatCallback<List<ChatMessage>> callback) {
+        getMessages(context, conversationId, userId, otherUserId, limit, "normal", null, new ChatCallback<MessagesResult>() {
+            @Override public void onSuccess(MessagesResult result) { callback.onSuccess(result.messages); }
+            @Override public void onError(String error) { callback.onError(error); }
+        });
+    }
+
+    public static void getMessages(Context context, String conversationId, String userId, String otherUserId, int limit, String mode, String secretSessionId, ChatCallback<MessagesResult> callback) {
         StringBuilder sb = new StringBuilder(getBaseUrl(context)).append("/api/chat/messages?");
         if (conversationId != null) sb.append("conversationId=").append(conversationId).append("&");
         if (userId != null) sb.append("userId=").append(userId).append("&");
         if (otherUserId != null) sb.append("otherUserId=").append(otherUserId).append("&");
+        if (mode != null) sb.append("mode=").append(mode).append("&");
+        if (secretSessionId != null) sb.append("secretSessionId=").append(secretSessionId).append("&");
         sb.append("limit=").append(limit);
 
         Request request = new Request.Builder().url(sb.toString()).get().build();
@@ -454,27 +521,21 @@ public class ChatApiClient {
                 try {
                     String str = response.body().string();
                     JsonObject json = JsonParser.parseString(str).getAsJsonObject();
-                    List<ChatMessage> msgs = new ArrayList<>();
+                    MessagesResult res = new MessagesResult();
+                    if (json.has("isSecretMode")) res.isSecretMode = json.get("isSecretMode").getAsBoolean();
+                    if (json.has("secretSessionId") && !json.get("secretSessionId").isJsonNull()) {
+                        res.secretSessionId = json.get("secretSessionId").getAsString();
+                    }
+
                     if (json.has("messages")) {
                         JsonArray arr = json.getAsJsonArray("messages");
                         for (int i = 0; i < arr.size(); i++) {
                             JsonObject m = arr.get(i).getAsJsonObject();
-                            ChatMessage msg = new ChatMessage();
-                            if (m.has("id")) msg.setId(m.get("id").getAsString());
-                            if (m.has("conversation_id")) msg.setConversationId(m.get("conversation_id").getAsString());
-                            if (m.has("sender_id")) msg.setSenderId(m.get("sender_id").getAsString());
-                            if (m.has("receiver_id")) msg.setReceiverId(m.get("receiver_id").getAsString());
-                            if (m.has("message_text")) msg.setMessageText(m.get("message_text").getAsString());
-                            if (m.has("media_url") && !m.get("media_url").isJsonNull()) msg.setMediaUrl(m.get("media_url").getAsString());
-                            if (m.has("media_type") && !m.get("media_type").isJsonNull()) msg.setMediaType(m.get("media_type").getAsString());
-                            if (m.has("file_name") && !m.get("file_name").isJsonNull()) msg.setFileName(m.get("file_name").getAsString());
-                            if (m.has("file_size") && !m.get("file_size").isJsonNull()) msg.setFileSize(m.get("file_size").getAsLong());
-                            if (m.has("status")) msg.setStatus(m.get("status").getAsString());
-                            if (m.has("created_at")) msg.setCreatedAt(m.get("created_at").getAsString());
-                            msgs.add(msg);
+                            ChatMessage msg = gson.fromJson(m, ChatMessage.class);
+                            res.messages.add(msg);
                         }
                     }
-                    postSuccess(callback, msgs);
+                    postSuccess(callback, res);
                 } catch (Exception e) {
                     postError(callback, "Parse error: " + e.getMessage());
                 }
@@ -482,12 +543,16 @@ public class ChatApiClient {
         });
     }
 
-    // 5. Send Message (with optional media)
+    // 5. Send Message (with optional media & mode)
     public static void sendMessage(Context context, String senderId, String receiverId, String text, String mediaUrl, ChatCallback<ChatMessage> callback) {
-        sendMessage(context, senderId, receiverId, text, mediaUrl, null, null, null, callback);
+        sendMessage(context, senderId, receiverId, text, mediaUrl, null, null, null, "normal", null, callback);
     }
 
     public static void sendMessage(Context context, String senderId, String receiverId, String text, String mediaUrl, String mediaType, String fileName, Long fileSize, ChatCallback<ChatMessage> callback) {
+        sendMessage(context, senderId, receiverId, text, mediaUrl, mediaType, fileName, fileSize, "normal", null, callback);
+    }
+
+    public static void sendMessage(Context context, String senderId, String receiverId, String text, String mediaUrl, String mediaType, String fileName, Long fileSize, String mode, String secretSessionId, ChatCallback<ChatMessage> callback) {
         String url = getBaseUrl(context) + "/api/chat/messages/send";
         JsonObject body = new JsonObject();
         body.addProperty("sender_id", senderId);
@@ -497,6 +562,8 @@ public class ChatApiClient {
         if (mediaType != null) body.addProperty("media_type", mediaType);
         if (fileName != null) body.addProperty("file_name", fileName);
         if (fileSize != null) body.addProperty("file_size", fileSize);
+        if (mode != null) body.addProperty("mode", mode);
+        if (secretSessionId != null) body.addProperty("secret_session_id", secretSessionId);
 
         Request request = new Request.Builder()
                 .url(url)
@@ -520,18 +587,7 @@ public class ChatApiClient {
                     JsonObject json = JsonParser.parseString(str).getAsJsonObject();
                     if (json.has("success") && json.get("success").getAsBoolean() && json.has("message")) {
                         JsonObject m = json.getAsJsonObject("message");
-                        ChatMessage msg = new ChatMessage();
-                        if (m.has("id")) msg.setId(m.get("id").getAsString());
-                        if (m.has("conversation_id")) msg.setConversationId(m.get("conversation_id").getAsString());
-                        if (m.has("sender_id")) msg.setSenderId(m.get("sender_id").getAsString());
-                        if (m.has("receiver_id")) msg.setReceiverId(m.get("receiver_id").getAsString());
-                        if (m.has("message_text")) msg.setMessageText(m.get("message_text").getAsString());
-                        if (m.has("media_url") && !m.get("media_url").isJsonNull()) msg.setMediaUrl(m.get("media_url").getAsString());
-                        if (m.has("media_type") && !m.get("media_type").isJsonNull()) msg.setMediaType(m.get("media_type").getAsString());
-                        if (m.has("file_name") && !m.get("file_name").isJsonNull()) msg.setFileName(m.get("file_name").getAsString());
-                        if (m.has("file_size") && !m.get("file_size").isJsonNull()) msg.setFileSize(m.get("file_size").getAsLong());
-                        if (m.has("status")) msg.setStatus(m.get("status").getAsString());
-                        if (m.has("created_at")) msg.setCreatedAt(m.get("created_at").getAsString());
+                        ChatMessage msg = gson.fromJson(m, ChatMessage.class);
                         postSuccess(callback, msg);
                     } else {
                         postError(callback, "Failed to send message.");
@@ -566,11 +622,17 @@ public class ChatApiClient {
         public String timestamp;
         public List<ChatMessage> incoming = new ArrayList<>();
         public List<JsonObject> statusUpdates = new ArrayList<>();
+        public ConversationModeInfo conversationMode;
     }
 
     public static void pollUpdates(Context context, String userId, String sinceTimestamp, ChatCallback<PollResult> callback) {
+        pollUpdates(context, userId, sinceTimestamp, null, callback);
+    }
+
+    public static void pollUpdates(Context context, String userId, String sinceTimestamp, String conversationId, ChatCallback<PollResult> callback) {
         StringBuilder sb = new StringBuilder(getBaseUrl(context)).append("/api/chat/poll?userId=").append(userId);
         if (sinceTimestamp != null) sb.append("&since=").append(sinceTimestamp);
+        if (conversationId != null) sb.append("&conversationId=").append(conversationId);
 
         Request request = new Request.Builder().url(sb.toString()).get().build();
         client.newCall(request).enqueue(new Callback() {
@@ -601,6 +663,19 @@ public class ChatApiClient {
                         for (int i = 0; i < arr.size(); i++) {
                             pr.statusUpdates.add(arr.get(i).getAsJsonObject());
                         }
+                    }
+                    if (json.has("conversation_mode") && !json.get("conversation_mode").isJsonNull()) {
+                        JsonObject cm = json.getAsJsonObject("conversation_mode");
+                        ConversationModeInfo cmi = new ConversationModeInfo();
+                        if (cm.has("conversationId")) cmi.conversationId = cm.get("conversationId").getAsString();
+                        if (cm.has("isSecretMode")) cmi.isSecretMode = cm.get("isSecretMode").getAsBoolean();
+                        if (cm.has("secretSessionId") && !cm.get("secretSessionId").isJsonNull()) {
+                            cmi.secretSessionId = cm.get("secretSessionId").getAsString();
+                        }
+                        if (cm.has("secretModeUpdatedAt") && !cm.get("secretModeUpdatedAt").isJsonNull()) {
+                            cmi.secretModeUpdatedAt = cm.get("secretModeUpdatedAt").getAsString();
+                        }
+                        pr.conversationMode = cmi;
                     }
                     postSuccess(callback, pr);
                 } catch (Exception e) {

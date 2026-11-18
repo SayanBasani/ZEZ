@@ -59,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQ_CODE = 1001;
 
     private TextView tvTitle;
+    private TextView tvSubtitle;
+    private TextView tvTopBadge;
     private ImageButton btnSync;
 
     private SwipeRefreshLayout swipeCalls;
@@ -206,6 +208,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void initViews() {
         tvTitle = findViewById(R.id.tv_title);
+        tvSubtitle = findViewById(R.id.tv_subtitle);
+        tvTopBadge = findViewById(R.id.tv_top_badge);
         btnSync = findViewById(R.id.btn_sync);
 
         swipeCalls = findViewById(R.id.swipe_refresh_calls);
@@ -515,21 +519,30 @@ public class MainActivity extends AppCompatActivity {
 
         if (tabId == R.id.nav_chats) {
             tvTitle.setText("Chats");
+            if (tvSubtitle != null) tvSubtitle.setText("Messages & encrypted conversations");
+            if (tvTopBadge != null) {
+                tvTopBadge.setVisibility(View.VISIBLE);
+                tvTopBadge.setText("Live");
+            }
             if (viewChatsContainer != null) viewChatsContainer.setVisibility(View.VISIBLE);
             loadChatsData();
             startChatListPolling();
         } else {
             stopChatListPolling();
+            if (tvTopBadge != null) tvTopBadge.setVisibility(View.GONE);
             if (tabId == R.id.nav_alarms) {
                 tvTitle.setText("Alarms");
+                if (tvSubtitle != null) tvSubtitle.setText("Smart wakeups & scheduled timers");
                 layoutAlarmsContainer.setVisibility(View.VISIBLE);
                 loadAlarmsData();
             } else if (tabId == R.id.nav_gallery) {
                 tvTitle.setText("Gallery");
+                if (tvSubtitle != null) tvSubtitle.setText("Protected photos, videos & albums");
                 viewGalleryContainer.setVisibility(View.VISIBLE);
                 loadGalleryData();
             } else if (tabId == R.id.nav_settings) {
                 tvTitle.setText("Settings");
+                if (tvSubtitle != null) tvSubtitle.setText("Preferences & Server controls");
                 scrollSettings.setVisibility(View.VISIBLE);
                 loadSettingsData();
             }
@@ -549,6 +562,8 @@ public class MainActivity extends AppCompatActivity {
         layoutEmpty.setVisibility(View.GONE);
 
         tvTitle.setText("Recycle Bin");
+        if (tvSubtitle != null) tvSubtitle.setText("Items deleted within 30 days");
+        if (tvTopBadge != null) tvTopBadge.setVisibility(View.GONE);
         swipeBin.setVisibility(View.VISIBLE);
         loadBinData();
     }

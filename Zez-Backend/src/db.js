@@ -106,6 +106,15 @@ async function initializeDatabase() {
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS media_type VARCHAR(32);
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS file_size BIGINT;
+
+    ALTER TABLE public.chat_conversations ADD COLUMN IF NOT EXISTS is_secret_mode BOOLEAN DEFAULT FALSE;
+    ALTER TABLE public.chat_conversations ADD COLUMN IF NOT EXISTS secret_session_id UUID DEFAULT gen_random_uuid();
+    ALTER TABLE public.chat_conversations ADD COLUMN IF NOT EXISTS secret_mode_updated_at TIMESTAMPTZ DEFAULT NOW();
+    ALTER TABLE public.chat_conversations ADD COLUMN IF NOT EXISTS secret_mode_by UUID REFERENCES public.chat_users(id);
+
+    ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS mode VARCHAR(16) DEFAULT 'normal';
+    ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS secret_session_id UUID;
+    CREATE INDEX IF NOT EXISTS idx_chat_messages_mode ON public.chat_messages(conversation_id, mode);
   `);
 
   // Seed default admin if table is empty

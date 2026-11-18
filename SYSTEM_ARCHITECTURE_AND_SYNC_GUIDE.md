@@ -367,11 +367,12 @@ No feature or code outside the scope was removed or harmed. All existing modules
 
 ## 7. Current Version & Release Information
 
-- **Release Version**: `v1.0.7` (Version Code `8`)
-- **APK Artifact**: `d:\Call Log Mannager\Zez-Backend\src\public\downloads\zez-app-v1.0.7.apk`
-- **File Size**: `8,657,986 bytes` (~8.26 MB)
-- **SHA-256 Checksum**: `8665df2f63e33ef126ea8d1c840445584e3fb37628c6e9ed6719f9e85f95aeaa`
-- **Update Availability**: Published to `public.app_releases` in PostgreSQL; available through in-app updater and `/api/app/latest`.
+- **Release Version**: `v1.0.9` (Version Code `10`)
+- **APK Artifact**: `d:\Call Log Mannager\Zez-Backend\src\public\downloads\zez-app-v1.0.9.apk`
+- **File Size**: `6,175,473 bytes` (~5.89 MB)
+- **APK Signature**: V2 Full APK Signature Scheme verified (`true`)
+- **Update Availability**: Published to `public.app_releases` in PostgreSQL; distributed via the in-app updater and `/api/app/latest`.
+- **Target OS Compatibility**: Android 8.0 (API 26) through Android 14 (API 34).
 
 ---
 
@@ -421,3 +422,63 @@ A thorough code audit and verification confirm that the **call synchronization s
    - The backend `/api/calls/sync` handles intra-batch duplicates and performs zero-knowledge AES-256-GCM encryption with atomic idempotent storage (`ON CONFLICT DO NOTHING`).
 3. **Automated Backend Regression Status**:
    - All 23 call sync, device auth, and admin management tests continue to report **23 PASSED | 0 FAILED**.
+
+---
+
+## 10. Chat Storage Architecture & Synchronized Dual-Mode Chat
+
+The chat subsystem has been elevated with an enterprise dual-mode architecture: **Normal Mode** (persistent history) and **Secret Mode** (client-ephemeral, session-scoped, synchronized between peers).
+
+### 10.1 Database Schema Extensions
+1. **`public.chat_conversations`**:
+   - `is_secret_mode BOOLEAN DEFAULT FALSE`: Tracks whether Secret Mode is actively turned on for this 1-on-1 pair.
+   - `secret_session_id UUID`: A unique session identifier generated whenever Secret Mode is turned on. Fresh secret sessions isolate new ephemeral exchanges.
+   - `secret_mode_updated_at TIMESTAMPTZ`: Timestamp when the mode was last changed.
+   - `secret_mode_by UUID REFERENCES public.chat_users(id)`: The user who toggled the mode.
+2. **`public.chat_messages`**:
+   - `mode VARCHAR(16) DEFAULT 'normal'`: Flagged as either `'normal'` or `'secret'`.
+   - `secret_session_id UUID`: Foreign identifier tying the message to the specific secret session.
+   - Index `idx_chat_messages_mode (mode)`: Ensures rapid index scans for normal queries vs. audit queries.
+
+### 10.2 Synchronized Dual-Mode Switching Mechanism
+- **Header Toggle Pill (`btn_chat_mode_toggle`)**:
+  - Located in the chat header next to the user name and status indicator.
+  - Tapping toggles between **Normal Mode** (green shield badge) and **Secret Mode** (incognito purple badge).
+- **Two-Way Peer Synchronization**:
+  - When **User A** activates Secret Mode, the client fires `POST /api/chat/conversation/:id/mode` with `{ "secretMode": true }`.
+  - When **User B** polls via `GET /api/chat/poll?conversationId=...`, the response includes a `conversation_mode` payload with `is_secret_mode: true` and the `secret_session_id`.
+  - User B's screen automatically transitions to Secret Mode without any manual click needed.
+  - When either participant toggles back to Normal Mode, both screens synchronously switch back.
+- **Client Ephemerality vs. Backend Audit Persistence**:
+  - **On Client (Users A & B)**: While in Secret mode, a top amber warning banner appears ("Secret Mode Active • Messages disappear when leaving chat"). All incoming and outgoing secret messages are retained in temporary in-memory collections (`ephemeralSecretMessages`). As soon as either user navigates back, switches tabs, or kills the app, `onPause()` / `onDestroy()` purges the in-memory array. Re-entering the chat starts with a clean slate.
+  - **On Backend**: In compliance with admin oversight requirements, secret messages are safely persisted in PostgreSQL with `mode = 'secret'`. Normal conversation snippets and previews are preserved uncorrupted.
+
+---
+
+## 11. Admin Chat Inspector & Multi-Format Data Export System
+
+The Admin Web Portal (`/admin`) features a dedicated **Chat Monitor** section (`#sectionChats`) that empowers system administrators to inspect, review, and export all 1-on-1 communications.
+
+### 11.1 Features of the Chat Monitor
+1. **Split-View Web Layout**:
+   - **Conversation Directory (Left Pane)**: Live search filter, participant names, phone numbers, total messages, normal message counts, secret message counts, and pulsing purple badges indicating active secret sessions.
+   - **Transcript & Audit Inspector (Right Pane)**: Displays chronological message bubbles with sender identity, delivery status, timestamp, attachment media previews, and distinct mode badges (`Normal` in dark grey, `Secret` in neon violet).
+2. **Multi-Format Conversation Export**:
+   - **TXT Export** (`/api/admin/chats/export/:id?format=txt`): Generates a clean, human-readable legal transcript detailing participant profiles, session metadata, timestamps, sender numbers, message content, and attachment paths.
+   - **CSV Export** (`/api/admin/chats/export/:id?format=csv`): Generates structured RFC-4180 compliant CSV tables with escaped strings for Excel/spreadsheet ingest.
+   - **JSON Export** (`/api/admin/chats/export/:id?format=json`): Full JSON payload containing complete database rows, attachments, and session IDs.
+   - **Global System Export** (`/api/admin/chats/export-all?format=json|csv`): High-speed one-click bulk export of every conversation in the entire database.
+
+---
+
+## 12. Modernized Dynamic Top Bar Experience
+
+The top application bar in `MainActivity` and `ChatActivity` was completely redesigned for a sleek, modern visual aesthetic:
+- **Expanded Top Bar**: Upgraded from flat 60dp to a modern 64dp surface with elevated typography.
+- **Dynamic Context Subtitle (`tv_subtitle`)**: Changes dynamically depending on the selected navigation tab:
+  - *Chats*: "Messages & encrypted conversations"
+  - *Alarms*: "Scheduled wake alarms & timers"
+  - *Gallery*: "Device photos, videos & media albums"
+  - *Recycle Bin*: "Soft-deleted media items"
+  - *Settings*: "System preferences & sync configuration"
+- **Status Indicator Badge (`tv_top_badge`)**: Live status pill ("Live", "Active", "Synced") confirming ongoing real-time services.

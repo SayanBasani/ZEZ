@@ -875,6 +875,10 @@
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           Call feed (<span id="callsBadge">0</span>)
         </button>
+        <button class="nav-link" id="tabChatsBtn">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          Chat Monitor (<span id="chatsBadge">0</span>)
+        </button>
         <button class="nav-link" id="tabSettingsBtn">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           Settings
@@ -1316,6 +1320,75 @@ versionName "1.0.1"</pre>
           </div>
         </div>
       </div>
+
+      <!-- ================= SECTION 5: CHAT MONITOR & INSPECTION ================= -->
+      <div id="sectionChats" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div class="search-wrap" style="position: relative; width: 280px;">
+              <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="position:absolute; left:10px; top:10px; opacity:0.6;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="chatSearchInput" class="search-input" placeholder="Filter conversations or text..." style="padding-left: 32px; width: 100%;">
+            </div>
+            <select id="chatModeFilter" class="form-select" style="width: auto; height: 34px;">
+              <option value="all">All Message Modes</option>
+              <option value="normal">Normal Mode Only</option>
+              <option value="secret">Secret Mode (Ephemeral) Only</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" id="btnExportAllChatsJson" title="Export all system chat messages as JSON">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Export All (JSON)
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btnExportAllChatsCsv" title="Export all system chat messages as CSV">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Export All (CSV)
+            </button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 350px 1fr; gap: 16px; min-height: 580px; height: calc(100vh - 240px);">
+          <!-- Left: Conversation Roster -->
+          <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid var(--hairline); font-weight: 600; font-size: 13px; color: var(--text-primary); display: flex; justify-content: space-between; align-items: center;">
+              <span>Conversations</span>
+              <span id="chatConvCountBadge" class="cell-mono" style="background: var(--surface-raised); padding: 2px 8px; border-radius: 10px; font-size: 11px; color: var(--text-secondary);">0</span>
+            </div>
+            <div id="chatConversationsList" style="flex: 1; overflow-y: auto; padding: 6px;">
+              <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">Loading conversations...</div>
+            </div>
+          </div>
+
+          <!-- Right: Chat Inspector & Message Stream -->
+          <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;">
+            <!-- Header -->
+            <div id="chatInspectorHeader" style="padding: 12px 18px; border-bottom: 1px solid var(--hairline); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 54px;">
+              <div id="chatSelectedParticipantInfo" style="display: flex; align-items: center; gap: 12px;">
+                <span style="color: var(--text-muted); font-size: 13px;">Select a conversation on the left to inspect full messages</span>
+              </div>
+              <div id="chatExportActions" style="display: none; align-items: center; gap: 6px;">
+                <button class="btn btn-secondary btn-sm" id="btnExportChatTxt" title="Export formatted transcript (.txt)">
+                  📄 Export TXT
+                </button>
+                <button class="btn btn-secondary btn-sm" id="btnExportChatCsv" title="Export tabular data (.csv)">
+                  📊 Export CSV
+                </button>
+                <button class="btn btn-secondary btn-sm" id="btnExportChatJson" title="Export structured JSON">
+                  📦 Export JSON
+                </button>
+              </div>
+            </div>
+
+            <!-- Messages Container -->
+            <div id="chatMessagesStream" style="flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; background: var(--bg);">
+              <div style="text-align: center; color: var(--text-muted); margin-top: 80px;">
+                <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" style="margin-bottom: 12px; opacity: 0.4;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                <div>Select a conversation on the left to inspect conversation stream and audit ephemeral secret chats.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -1513,21 +1586,25 @@ versionName "1.0.1"</pre>
     // Navigation Tabs
     const tabDevicesBtn = document.getElementById('tabDevicesBtn');
     const tabAllCallsBtn = document.getElementById('tabAllCallsBtn');
+    const tabChatsBtn = document.getElementById('tabChatsBtn');
     const tabSettingsBtn = document.getElementById('tabSettingsBtn');
     const tabReleasesBtn = document.getElementById('tabReleasesBtn');
     const sectionDevices = document.getElementById('sectionDevices');
     const sectionAllCalls = document.getElementById('sectionAllCalls');
+    const sectionChats = document.getElementById('sectionChats');
     const sectionSettings = document.getElementById('sectionSettings');
     const sectionReleases = document.getElementById('sectionReleases');
 
     function setActiveTab(tab) {
       tabDevicesBtn.classList.toggle('active', tab === 'devices');
       tabAllCallsBtn.classList.toggle('active', tab === 'calls');
+      tabChatsBtn.classList.toggle('active', tab === 'chats');
       tabSettingsBtn.classList.toggle('active', tab === 'settings');
       tabReleasesBtn.classList.toggle('active', tab === 'releases');
 
       sectionDevices.style.display = tab === 'devices' ? 'block' : 'none';
       sectionAllCalls.style.display = tab === 'calls' ? 'block' : 'none';
+      sectionChats.style.display = tab === 'chats' ? 'block' : 'none';
       sectionSettings.style.display = tab === 'settings' ? 'block' : 'none';
       sectionReleases.style.display = tab === 'releases' ? 'block' : 'none';
     }
@@ -1540,6 +1617,11 @@ versionName "1.0.1"</pre>
     tabAllCallsBtn.addEventListener('click', () => {
       setActiveTab('calls');
       loadGlobalCalls();
+    });
+
+    tabChatsBtn.addEventListener('click', () => {
+      setActiveTab('chats');
+      loadAdminChats();
     });
 
     tabSettingsBtn.addEventListener('click', () => {
@@ -1559,12 +1641,15 @@ versionName "1.0.1"</pre>
       const icon = document.getElementById('globalRefreshIcon');
       if (icon) icon.style.transform = 'rotate(360deg)';
       try {
-        await Promise.all([loadStats(), loadDevices()]);
+        await Promise.all([loadStats(), loadDevices(), loadAdminChatsBadge()]);
         if (tabAllCallsBtn.classList.contains('active')) {
           await loadGlobalCalls();
         } else {
           const { calls } = await apiRequest('/calls?limit=150');
           renderTelemetryChart(calls);
+        }
+        if (tabChatsBtn.classList.contains('active')) {
+          await loadAdminChats();
         }
         if (tabSettingsBtn.classList.contains('active')) {
           await loadAdminUsers();
@@ -1592,7 +1677,7 @@ versionName "1.0.1"</pre>
 
     async function loadAllData() {
       try {
-        await Promise.all([loadStats(), loadDevices()]);
+        await Promise.all([loadStats(), loadDevices(), loadAdminChatsBadge()]);
         // Also load a slice of calls to draw the telemetry moment
         const { calls } = await apiRequest('/calls?limit=150');
         renderTelemetryChart(calls);
@@ -2305,6 +2390,303 @@ versionName "1.0.1"</pre>
         showToast('Error: ' + err.message);
       }
     };
+
+    // ==========================================
+    // CHAT MONITOR & CONVERSATION INSPECTOR
+    // ==========================================
+    let cachedAdminChats = [];
+    let selectedAdminConvId = null;
+
+    async function loadAdminChatsBadge() {
+      try {
+        const data = await apiRequest('/chats/conversations');
+        const badge = document.getElementById('chatsBadge');
+        if (badge) badge.textContent = data.count || 0;
+      } catch (e) {
+        console.warn('Failed to load chats badge:', e.message);
+      }
+    }
+
+    async function loadAdminChats() {
+      const container = document.getElementById('chatConversationsList');
+      container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-secondary); font-size: 13px;">Loading conversations...</div>';
+      try {
+        const data = await apiRequest('/chats/conversations');
+        cachedAdminChats = data.conversations || [];
+        document.getElementById('chatsBadge').textContent = data.count || 0;
+        document.getElementById('chatConvCountBadge').textContent = data.count || 0;
+        renderAdminChatConversations();
+
+        // If previously selected, refresh messages; otherwise select first if available
+        if (selectedAdminConvId && cachedAdminChats.some(c => c.id === selectedAdminConvId)) {
+          selectAdminConversation(selectedAdminConvId);
+        } else if (cachedAdminChats.length > 0) {
+          selectAdminConversation(cachedAdminChats[0].id);
+        } else {
+          document.getElementById('chatInspectorHeader').style.display = 'flex';
+          document.getElementById('chatSelectedParticipantInfo').innerHTML = '<span style="color: var(--text-muted); font-size: 13px;">No conversations found in system yet.</span>';
+          document.getElementById('chatExportActions').style.display = 'none';
+          document.getElementById('chatMessagesStream').innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 80px;">No message activity found.</div>';
+        }
+      } catch (err) {
+        container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--negative); font-size: 13px;">Error: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderAdminChatConversations() {
+      const container = document.getElementById('chatConversationsList');
+      const search = (document.getElementById('chatSearchInput')?.value || '').toLowerCase().trim();
+
+      const filtered = cachedAdminChats.filter(c => {
+        if (!search) return true;
+        const u1 = (c.user1?.name || '') + ' ' + (c.user1?.phone || '');
+        const u2 = (c.user2?.name || '') + ' ' + (c.user2?.phone || '');
+        const lastMsg = c.last_message_text || '';
+        return u1.toLowerCase().includes(search) || u2.toLowerCase().includes(search) || lastMsg.toLowerCase().includes(search);
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">No matching conversations</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(c => {
+        const isSelected = c.id === selectedAdminConvId;
+        const timeStr = c.last_message_time ? formatRelativeTime(c.last_message_time) : 'Never';
+        const isSecret = !!c.is_secret_mode;
+        
+        return `
+          <div class="chat-conv-item ${isSelected ? 'active-conv' : ''}" 
+               onclick="selectAdminConversation('${c.id}')"
+               style="padding: 10px 12px; margin-bottom: 6px; border-radius: 6px; cursor: pointer; border: 1px solid ${isSelected ? 'var(--accent)' : 'var(--hairline)'}; background: ${isSelected ? 'var(--surface-raised)' : 'var(--card-bg)'}; transition: all 0.15s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+              <div style="font-weight: 600; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px;">
+                ${escapeHtml(c.user1?.name || c.user1?.phone || 'User 1')} 
+                <span style="color: var(--text-muted); font-weight: 400; font-size: 11px;">↔</span> 
+                ${escapeHtml(c.user2?.name || c.user2?.phone || 'User 2')}
+              </div>
+              <span style="font-size: 10px; color: var(--text-muted); white-space: nowrap;">${timeStr}</span>
+            </div>
+            <div style="display: flex; gap: 4px; font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
+              <span>${escapeHtml(c.user1?.phone || '')}</span>
+              <span>•</span>
+              <span>${escapeHtml(c.user2?.phone || '')}</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px;">
+              ${escapeHtml(c.last_message_text || '(No messages yet)')}
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+              <div style="display: flex; gap: 4px;">
+                <span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: var(--surface-deep); color: var(--text-secondary);">
+                  ${c.total_messages || 0} msgs
+                </span>
+                ${c.secret_messages > 0 ? `
+                  <span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(168, 85, 247, 0.15); color: #a855f7; font-weight: 600;">
+                    🔒 ${c.secret_messages} secret
+                  </span>
+                ` : ''}
+              </div>
+              ${isSecret ? `
+                <span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 600;">
+                  ● Secret Active
+                </span>
+              ` : `
+                <span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(34, 197, 94, 0.12); color: #22c55e;">
+                  Normal Mode
+                </span>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.selectAdminConversation = async function(convId) {
+      selectedAdminConvId = convId;
+      renderAdminChatConversations();
+      document.getElementById('chatExportActions').style.display = 'flex';
+      await loadAdminConversationMessages(convId);
+    };
+
+    async function loadAdminConversationMessages(convId) {
+      const stream = document.getElementById('chatMessagesStream');
+      const headerInfo = document.getElementById('chatSelectedParticipantInfo');
+      const modeFilter = document.getElementById('chatModeFilter')?.value || 'all';
+      const search = encodeURIComponent(document.getElementById('chatSearchInput')?.value || '');
+
+      stream.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">Loading message stream...</div>';
+
+      try {
+        const data = await apiRequest(`/chats/conversations/${convId}/messages?mode=${modeFilter}&search=${search}`);
+        const conv = data.conversation;
+        const messages = data.messages || [];
+
+        const modeBadgeHtml = conv.isSecretMode
+          ? `<span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 2px 8px; border-radius: 12px; background: rgba(168, 85, 247, 0.15); color: #a855f7; font-weight: 600; border: 1px solid rgba(168, 85, 247, 0.3);">
+               🔒 Secret Mode Active (Ephemeral to users)
+             </span>`
+          : `<span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 2px 8px; border-radius: 12px; background: rgba(34, 197, 94, 0.12); color: #22c55e; font-weight: 500; border: 1px solid rgba(34, 197, 94, 0.25);">
+               🟢 Normal Mode Active
+             </span>`;
+
+        headerInfo.innerHTML = `
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text-primary); flex-wrap: wrap;">
+              <span>${escapeHtml(conv.user1.name)} (${escapeHtml(conv.user1.phone)})</span>
+              <span style="color: var(--text-muted);">↔</span>
+              <span>${escapeHtml(conv.user2.name)} (${escapeHtml(conv.user2.phone)})</span>
+              ${modeBadgeHtml}
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+              Conversation ID: <span class="cell-mono">${conv.id}</span> • Total messages: <strong>${data.total}</strong>
+            </div>
+          </div>
+        `;
+
+        if (messages.length === 0) {
+          stream.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); margin-top: 60px;">
+              No messages found matching the selected mode/search filter.
+            </div>
+          `;
+          return;
+        }
+
+        stream.innerHTML = messages.map(m => {
+          const isSecret = m.mode === 'secret';
+          const time = new Date(m.created_at).toLocaleString();
+          
+          let mediaHtml = '';
+          if (m.media_url) {
+            if (m.media_type === 'image') {
+              mediaHtml = `
+                <div style="margin-top: 6px;">
+                  <a href="${m.media_url}" target="_blank" title="Click to view full image">
+                    <img src="${m.media_url}" style="max-width: 240px; max-height: 200px; border-radius: 6px; object-fit: cover; border: 1px solid var(--hairline); display: block;" />
+                  </a>
+                </div>
+              `;
+            } else if (m.media_type === 'video') {
+              mediaHtml = `
+                <div style="margin-top: 6px;">
+                  <video src="${m.media_url}" controls style="max-width: 280px; max-height: 200px; border-radius: 6px; display: block; border: 1px solid var(--hairline);"></video>
+                </div>
+              `;
+            } else {
+              mediaHtml = `
+                <div style="margin-top: 6px; padding: 8px 12px; background: var(--surface-deep); border-radius: 6px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--hairline);">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <div style="font-size: 12px;">
+                    <div style="font-weight: 500; color: var(--text-primary);">${escapeHtml(m.file_name || 'Attached File')}</div>
+                    <div style="color: var(--text-muted); font-size: 11px;">${formatBytes(m.file_size || 0)}</div>
+                  </div>
+                  <a href="${m.media_url}" target="_blank" download class="btn btn-secondary btn-sm" style="margin-left: 8px; padding: 2px 8px; font-size: 11px;">Download</a>
+                </div>
+              `;
+            }
+          }
+
+          const badgeTag = isSecret
+            ? `<span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(168, 85, 247, 0.18); color: #c084fc; font-weight: 600; border: 1px solid rgba(168, 85, 247, 0.35);">
+                 🔒 SECRET MODE (Ephemeral to users)
+               </span>`
+            : `<span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(34, 197, 94, 0.12); color: #22c55e; font-weight: 500;">
+                 NORMAL
+               </span>`;
+
+          return `
+            <div style="background: var(--card-bg); border: 1px solid ${isSecret ? 'rgba(168, 85, 247, 0.35)' : 'var(--hairline)'}; border-left: 4px solid ${isSecret ? '#a855f7' : 'var(--accent)'}; border-radius: 8px; padding: 12px 14px; box-shadow: var(--shadow);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <strong style="color: var(--text-primary); font-size: 13px;">${escapeHtml(m.sender_name)}</strong>
+                  <span style="color: var(--text-muted); font-size: 11px;">(${escapeHtml(m.sender_phone)})</span>
+                  <span style="color: var(--text-muted); font-size: 11px;">➔</span>
+                  <span style="color: var(--text-secondary); font-size: 12px;">${escapeHtml(m.receiver_name)}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  ${badgeTag}
+                  <span style="font-size: 11px; color: var(--text-muted);">${time}</span>
+                </div>
+              </div>
+              <div style="font-size: 13px; color: var(--text-primary); line-height: 1.5; white-space: pre-wrap; word-break: break-word;">${escapeHtml(m.message_text)}</div>
+              ${mediaHtml}
+            </div>
+          `;
+        }).join('');
+
+        stream.scrollTop = stream.scrollHeight;
+      } catch (err) {
+        stream.innerHTML = `<div style="text-align: center; color: var(--negative); margin-top: 60px;">Error loading messages: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    // Helper: Authorized File Download for Exports
+    async function downloadAdminFile(url, fallbackFilename) {
+      try {
+        showToast('Preparing export download...');
+        const res = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Download failed with status ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        let filename = fallbackFilename;
+        const disposition = res.headers.get('content-disposition');
+        if (disposition && disposition.includes('filename=')) {
+          const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (match && match[1]) filename = match[1].replace(/['"]/g, '');
+        }
+
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+        showToast('Export downloaded successfully');
+      } catch (err) {
+        showToast('Export error: ' + err.message);
+      }
+    }
+
+    // Export Event Listeners
+    document.getElementById('btnExportChatTxt')?.addEventListener('click', () => {
+      if (!selectedAdminConvId) return showToast('Please select a conversation first');
+      downloadAdminFile(`/api/admin/chats/export/${selectedAdminConvId}?format=txt`, `chat-${selectedAdminConvId}.txt`);
+    });
+
+    document.getElementById('btnExportChatCsv')?.addEventListener('click', () => {
+      if (!selectedAdminConvId) return showToast('Please select a conversation first');
+      downloadAdminFile(`/api/admin/chats/export/${selectedAdminConvId}?format=csv`, `chat-${selectedAdminConvId}.csv`);
+    });
+
+    document.getElementById('btnExportChatJson')?.addEventListener('click', () => {
+      if (!selectedAdminConvId) return showToast('Please select a conversation first');
+      downloadAdminFile(`/api/admin/chats/export/${selectedAdminConvId}?format=json`, `chat-${selectedAdminConvId}.json`);
+    });
+
+    document.getElementById('btnExportAllChatsJson')?.addEventListener('click', () => {
+      downloadAdminFile('/api/admin/chats/export-all?format=json', `all-system-chats-${Date.now()}.json`);
+    });
+
+    document.getElementById('btnExportAllChatsCsv')?.addEventListener('click', () => {
+      downloadAdminFile('/api/admin/chats/export-all?format=csv', `all-system-chats-${Date.now()}.csv`);
+    });
+
+    // Chat search and filter listeners
+    document.getElementById('chatSearchInput')?.addEventListener('input', () => {
+      renderAdminChatConversations();
+      if (selectedAdminConvId) loadAdminConversationMessages(selectedAdminConvId);
+    });
+
+    document.getElementById('chatModeFilter')?.addEventListener('change', () => {
+      if (selectedAdminConvId) loadAdminConversationMessages(selectedAdminConvId);
+    });
 
     // ============================================================================
     // APP RELEASES MANAGEMENT LOGIC
