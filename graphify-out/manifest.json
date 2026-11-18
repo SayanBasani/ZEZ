@@ -1,9 +1,9 @@
 {
   "Zez-Backend/package.json": {
-    "mtime": 1794855137.2011096,
-    "seen": 1795010101.329918,
-    "ast_hash": "551260eb34a170d7baa655801e599be2",
-    "semantic_hash": "551260eb34a170d7baa655801e599be2"
+    "mtime": 1795016947.9379065,
+    "seen": 1795017465.0955167,
+    "ast_hash": "61d8ed94b8c03ca12673c98430571e5d",
+    "semantic_hash": ""
   },
   "Zez-Backend/src/crypto.js": {
     "mtime": 1794408554.6583133,
@@ -30,9 +30,9 @@
     "semantic_hash": "d022968edba56aa1786ef23665d5b95b"
   },
   "Zez-Backend/src/routes/admin.js": {
-    "mtime": 1795013756.810303,
-    "seen": 1795014774.4673321,
-    "ast_hash": "dcee58a7cc26b2db11bae9117ee9ba70",
+    "mtime": 1795016882.5504322,
+    "seen": 1795017465.0955622,
+    "ast_hash": "ed81a712273dee3eb8e439a17f6ed32b",
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/appRelease.js": {
@@ -66,9 +66,9 @@
     "semantic_hash": "4c9d4d23134258900e0bbea66ddd2c0e"
   },
   "Zez-Backend/src/server.js": {
-    "mtime": 1795012129.853434,
-    "seen": 1795013353.8121026,
-    "ast_hash": "479c18b21b4aadc27e571bd5345fc457",
+    "mtime": 1795016855.093783,
+    "seen": 1795017465.095584,
+    "ast_hash": "4358653df0b5c7b2f11a599044fdeeef",
     "semantic_hash": ""
   },
   "Zez-Backend/test_backend_suite.js": {
@@ -84,9 +84,9 @@
     "semantic_hash": "cb85c827499b13b0db4ba8491215823e"
   },
   "ZezAndroid/app/build.gradle": {
-    "mtime": 1795016191.3880725,
-    "seen": 1795016442.8748288,
-    "ast_hash": "8c5bbfbd04415b78be52d59582c900ca",
+    "mtime": 1795017328.333388,
+    "seen": 1795017465.0956008,
+    "ast_hash": "cc67bf58af5e2c51798fcdfaac5cd2d2",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/AlarmFiringActivity.java": {
@@ -126,9 +126,9 @@
     "semantic_hash": "f6a16f56a8345696e0ec5fca013303d8"
   },
   "ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java": {
-    "mtime": 1795016186.8522525,
-    "seen": 1795016442.874844,
-    "ast_hash": "85b37f32e0d2e271378cd4e2ab9ca72e",
+    "mtime": 1795016822.3774304,
+    "seen": 1795017465.0956235,
+    "ast_hash": "76f5a9c52c33638fe694de5bcb67de04",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ZezApplication.java": {
@@ -348,9 +348,9 @@
     "semantic_hash": "ed4cac5d218bafc01457892d77953389"
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/PreferencesHelper.java": {
-    "mtime": 1795016099.0625439,
-    "seen": 1795016442.8749173,
-    "ast_hash": "d907317bcec3009d16127de8f7711afd",
+    "mtime": 1795016808.0428853,
+    "seen": 1795017465.0957363,
+    "ast_hash": "4a1de8ae9cacaa4812f9a01b8cd69b20",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/RecycleBinHelper.java": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/public/admin/index.html": {
-    "mtime": 1795014142.793504,
-    "seen": 1795014774.4674664,
-    "ast_hash": "5e21b7fa3fc9a9b1303e96986ee8c9d8",
+    "mtime": 1795017317.2293043,
+    "seen": 1795017465.0957806,
+    "ast_hash": "59845c70549233b25e6b0710d210dcb4",
     "semantic_hash": ""
   },
   "App Icon/ZEZ Icon.png": {
@@ -515,10 +515,34 @@
     "ast_hash": "cda5bf7f5e04a1bfeb160e5aefe3772f",
     "semantic_hash": ""
   },
+  "Zez-Backend/scripts/register-release.js": {
+    "mtime": 1795017443.6422117,
+    "seen": 1795017465.0955296,
+    "ast_hash": "d94f6dcd78d883a5c4052c21e4dad858",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/src/types/index.d.ts": {
+    "mtime": 1795016940.411216,
+    "seen": 1795017465.0955877,
+    "ast_hash": "f9128a82f50867f8950b52f18cfa8ed0",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/tsconfig.json": {
+    "mtime": 1795016960.4629402,
+    "seen": 1795017465.0955977,
+    "ast_hash": "c94e20928293a648af40e40d1354984b",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/src/public/uploads/avatars/avatar-1795016773208-c9h557.jpg": {
+    "mtime": 1795016773.6379266,
+    "seen": 1795017465.0957866,
+    "ast_hash": "7cbc260a9cf18605191903df9629059e",
+    "semantic_hash": ""
+  },
   "Zez-Backend/package-lock.json": {
-    "mtime": 1794856640.622084,
-    "seen": 1795010778.778546,
-    "ast_hash": "b4e55f2401e02778cb4058c15dd17fbb",
+    "mtime": 1795016787.822336,
+    "seen": 1795017465.095823,
+    "ast_hash": "7887ed83ae134d11089e14c39fb211a0",
     "semantic_hash": ""
   }
 }

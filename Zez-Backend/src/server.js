@@ -61,21 +61,25 @@ app.use((error, _req, res, _next) => {
   if (error?.type === 'entity.too.large') {
     return res.status(413).json({
       success: false,
-      error: { code: 'BODY_TOO_LARGE', message: 'Request body exceeds the limit.' }
+      error: 'Request body exceeds the limit.',
+      code: 'BODY_TOO_LARGE'
     });
   }
 
   if (error instanceof SyntaxError && 'body' in error) {
     return res.status(400).json({
       success: false,
-      error: { code: 'INVALID_JSON', message: 'Request body must contain valid JSON.' }
+      error: 'Request body must contain valid JSON.',
+      code: 'INVALID_JSON'
     });
   }
 
   console.error('Unhandled request error:', error);
+  const msg = error && typeof error.message === 'string' ? error.message : 'Unexpected server error.';
   return res.status(error.statusCode || 500).json({
     success: false,
-    error: { code: error.code || 'INTERNAL_ERROR', message: error.message || 'Unexpected server error.' }
+    error: msg,
+    code: error.code || 'INTERNAL_ERROR'
   });
 });
 

@@ -25,6 +25,9 @@ yarn-error.log*
 *.jks
 *.keystore
 
+# User uploads & runtime media
+Zez-Backend/src/public/uploads/
+
 # Graphify visualization files & reports are kept; cache is excluded
 graphify-out/cache/
 graphify-out/.*.json

@@ -338,7 +338,7 @@
       overflow: visible;
     }
 
-    /* Filter Toolbars */
+    /* Filter Toolbars & Filter Console */
     .toolbar {
       background: var(--card-bg);
       border: 1px solid var(--hairline);
@@ -349,6 +349,78 @@
       flex-wrap: wrap;
       gap: 12px;
       align-items: center;
+    }
+
+    .filter-console {
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    .filter-row-primary {
+      justify-content: space-between;
+    }
+    .filter-row-controls {
+      padding-top: 10px;
+      border-top: 1px solid var(--hairline);
+    }
+    .filter-actions-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .search-clear-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 4px;
+      line-height: 1;
+    }
+    .search-clear-btn:hover { color: var(--text-primary); }
+    .filter-select { min-width: 140px; height: 34px; }
+    .filter-select-sm { min-width: 80px; height: 34px; }
+    .filter-date { width: 130px; height: 34px; padding: 0 8px; font-size: 12px; }
+    .date-sep { color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+    .btn-clear-date {
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+      color: var(--text-muted);
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .btn-clear-date:hover { color: var(--negative); border-color: var(--negative); }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--hairline);
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover {
+      background: var(--surface-raised);
+      color: var(--text-primary);
     }
 
     .search-wrap {
@@ -370,7 +442,7 @@
       background: var(--surface-deep);
       border: 1px solid var(--hairline);
       border-radius: 6px;
-      padding: 0 12px 0 32px;
+      padding: 0 28px 0 32px;
       font-size: 13px;
       color: var(--text-primary);
       font-family: inherit;
@@ -389,12 +461,13 @@
     .table-container {
       background: var(--card-bg);
       border: 1px solid var(--hairline);
-      border-radius: 8px;
-      overflow: hidden;
+      border-radius: 10px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       margin-bottom: 24px;
     }
 
-    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 13px; text-align: left; }
     thead th {
       background: var(--surface-deep);
       color: var(--text-secondary);
@@ -979,68 +1052,84 @@
 
       <!-- ================= SECTION 2: ALL CALLS VIEW ================= -->
       <div id="sectionAllCalls" style="display: none;">
-        <div class="toolbar">
-          <div class="search-wrap">
-            <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="text" id="callSearchInput" class="search-input" placeholder="Search phone number or contact...">
-          </div>
+        <div class="filter-console">
+          <!-- Top Row: Search & Actions -->
+          <div class="filter-row filter-row-primary">
+            <div class="search-wrap">
+              <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="callSearchInput" class="search-input" placeholder="Search phone number, contact name, or device...">
+              <button type="button" class="search-clear-btn" id="btnClearCallSearch" title="Clear search" style="display: none;">✕</button>
+            </div>
 
-          <div class="control-item">
-            <span class="control-label">Device</span>
-            <select id="filterCallDevice" class="form-select" style="width: 160px; height: 34px;">
-              <option value="ALL">All devices</option>
-            </select>
-          </div>
-
-          <div class="control-item">
-            <span class="control-label">Type</span>
-            <select id="filterCallType" class="form-select" style="width: 120px; height: 34px;">
-              <option value="ALL">All types</option>
-              <option value="INCOMING">Incoming</option>
-              <option value="OUTGOING">Outgoing</option>
-              <option value="MISSED">Missed</option>
-              <option value="REJECTED">Rejected</option>
-            </select>
-          </div>
-
-          <div class="control-item">
-            <span class="control-label">Year</span>
-            <select id="filterCallYear" class="form-select" style="width: 86px; height: 34px;">
-              <option value="">All</option>
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-            </select>
-          </div>
-
-          <div class="control-item">
-            <span class="control-label">Month</span>
-            <select id="filterCallMonth" class="form-select" style="width: 86px; height: 34px;">
-              <option value="">All</option>
-              <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
-              <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
-              <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
-              <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
-            </select>
-          </div>
-
-          <div class="control-item control-item-dates">
-            <span class="control-label">Date Range</span>
-            <div class="date-inputs-row">
-              <input type="date" id="filterCallFromDate" class="form-input" style="height: 34px; padding: 0 6px;">
-              <span style="color:var(--text-muted);">-</span>
-              <input type="date" id="filterCallToDate" class="form-input" style="height: 34px; padding: 0 6px;">
+            <div class="filter-actions-group">
+              <button class="btn btn-secondary btn-sm" id="btnRefreshCalls" title="Refresh call feed">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                <span>Refresh calls</span>
+              </button>
+              <button class="btn btn-secondary btn-sm" id="btnExportAllCallsCsv" title="Export matching calls to CSV">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                <span>Export CSV</span>
+              </button>
+              <button class="btn btn-ghost btn-sm" id="btnResetAllFilters" title="Clear all active filters">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span>Reset</span>
+              </button>
+              <button class="btn btn-danger btn-sm" id="btnDeleteSelectedCalls" style="display: none;">
+                Delete selected (<span id="selectedCallsCount">0</span>)
+              </button>
             </div>
           </div>
 
-          <div style="margin-left: auto; display: flex; gap: 8px;">
-            <button class="btn btn-secondary btn-sm" id="btnRefreshCalls" title="Refresh call feed">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              Refresh calls
-            </button>
-            <button class="btn btn-secondary btn-sm" id="btnExportAllCallsCsv">Export CSV</button>
-            <button class="btn btn-danger btn-sm" id="btnDeleteSelectedCalls" style="display: none;">
-              Delete selected (<span id="selectedCallsCount">0</span>)
-            </button>
+          <!-- Bottom Row: Filter Dropdowns & Date Controls -->
+          <div class="filter-row filter-row-controls">
+            <div class="control-item">
+              <span class="control-label">Device</span>
+              <select id="filterCallDevice" class="form-select filter-select">
+                <option value="ALL">All devices</option>
+              </select>
+            </div>
+
+            <div class="control-item">
+              <span class="control-label">Type</span>
+              <select id="filterCallType" class="form-select filter-select">
+                <option value="ALL">All types</option>
+                <option value="INCOMING">Incoming</option>
+                <option value="OUTGOING">Outgoing</option>
+                <option value="MISSED">Missed</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
+
+            <div class="control-item">
+              <span class="control-label">Year</span>
+              <select id="filterCallYear" class="form-select filter-select-sm">
+                <option value="">All</option>
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+              </select>
+            </div>
+
+            <div class="control-item">
+              <span class="control-label">Month</span>
+              <select id="filterCallMonth" class="form-select filter-select-sm">
+                <option value="">All</option>
+                <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+                <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+                <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+                <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+              </select>
+            </div>
+
+            <div class="control-item control-item-dates">
+              <span class="control-label">Date Range</span>
+              <div class="date-inputs-row">
+                <input type="date" id="filterCallFromDate" class="form-input filter-date" placeholder="From">
+                <span class="date-sep">to</span>
+                <input type="date" id="filterCallToDate" class="form-input filter-date" placeholder="To">
+                <button type="button" class="btn-clear-date" id="btnClearCallDates" title="Clear date range">✕</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1521,15 +1610,35 @@ versionName "1.0.1"</pre>
       const headers = { 'Content-Type': 'application/json', ...options.headers };
       if (currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
 
-      const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-      if (res.status === 401) {
-        handleLogout();
-        throw new Error('Session expired');
+      let res;
+      try {
+        res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+      } catch (netErr) {
+        throw new Error('Network error: Unable to reach server. Please check your connection.');
       }
 
-      const data = await res.json();
+      if (res.status === 401) {
+        handleLogout();
+        throw new Error('Session expired. Please log in again.');
+      }
+
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(`Server returned unexpected response (HTTP ${res.status})`);
+      }
+
       if (!res.ok || data.success === false) {
-        throw new Error(data.error || 'Request failed');
+        let msg = `Request failed (HTTP ${res.status})`;
+        if (typeof data.error === 'string') {
+          msg = data.error;
+        } else if (data.error && typeof data.error === 'object') {
+          msg = data.error.message || data.error.code || JSON.stringify(data.error);
+        } else if (typeof data.message === 'string') {
+          msg = data.message;
+        }
+        throw new Error(msg);
       }
       return data;
     }
@@ -1752,7 +1861,11 @@ versionName "1.0.1"</pre>
       select.innerHTML = '<option value="ALL">All devices</option>' + devices.map(d => 
         `<option value="${d.id}">${escapeHtml(d.device_name || d.device_model || d.androidid)}</option>`
       ).join('');
-      select.value = curVal || 'ALL';
+      if (curVal && devices.some(d => d.id === curVal)) {
+        select.value = curVal;
+      } else {
+        select.value = 'ALL';
+      }
 
       selectedDeviceIds.clear();
       updateSelectedDevicesBar();
@@ -2037,6 +2150,11 @@ versionName "1.0.1"</pre>
       const from = document.getElementById('filterCallFromDate').value;
       const to = document.getElementById('filterCallToDate').value;
 
+      const clearSearchBtn = document.getElementById('btnClearCallSearch');
+      if (clearSearchBtn) {
+        clearSearchBtn.style.display = q ? 'block' : 'none';
+      }
+
       let url = `/calls?limit=300`;
       if (q) url += `&q=${encodeURIComponent(q)}`;
       if (deviceId && deviceId !== 'ALL') url += `&deviceId=${encodeURIComponent(deviceId)}`;
@@ -2053,7 +2171,20 @@ versionName "1.0.1"</pre>
         renderGlobalCallsTable(calls);
         renderTelemetryChart(calls);
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="9" class="empty-state">${err.message}</td></tr>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9">
+              <div style="padding: 36px 16px; text-align: center; color: var(--text-secondary);">
+                <svg width="28" height="28" fill="none" stroke="var(--negative)" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 10px; display: block;">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <div style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">Unable to fetch call records</div>
+                <div style="font-size: 12px; margin-bottom: 14px; max-width: 440px; margin-left: auto; margin-right: auto; word-break: break-word;">${escapeHtml(err.message)}</div>
+                <button class="btn btn-secondary btn-sm" onclick="loadGlobalCalls()">Try again</button>
+              </div>
+            </td>
+          </tr>
+        `;
       }
     }
 
@@ -2064,7 +2195,22 @@ versionName "1.0.1"</pre>
       document.getElementById('selectAllCalls').checked = false;
 
       if (calls.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No call logs match criteria</td></tr>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9">
+              <div style="padding: 44px 16px; text-align: center; color: var(--text-secondary);">
+                <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" style="margin: 0 auto 10px; opacity: 0.5; display: block;">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+                <div style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">No call records match criteria</div>
+                <div style="font-size: 12px; margin-bottom: 16px; max-width: 380px; margin-left: auto; margin-right: auto;">
+                  No call logs match your current filter selection. Try clearing filters or selecting another year or date range.
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="window.resetCallFilters()">Reset all filters</button>
+              </div>
+            </td>
+          </tr>
+        `;
         return;
       }
 
@@ -2100,6 +2246,44 @@ versionName "1.0.1"</pre>
           </tr>
         `;
       }).join('');
+    }
+
+    window.resetCallFilters = function() {
+      document.getElementById('callSearchInput').value = '';
+      const clearSearchBtn = document.getElementById('btnClearCallSearch');
+      if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+      document.getElementById('filterCallDevice').value = 'ALL';
+      document.getElementById('filterCallType').value = 'ALL';
+      document.getElementById('filterCallYear').value = '';
+      document.getElementById('filterCallMonth').value = '';
+      document.getElementById('filterCallFromDate').value = '';
+      document.getElementById('filterCallToDate').value = '';
+      loadGlobalCalls();
+    };
+
+    const clearCallSearchBtn = document.getElementById('btnClearCallSearch');
+    if (clearCallSearchBtn) {
+      clearCallSearchBtn.addEventListener('click', () => {
+        document.getElementById('callSearchInput').value = '';
+        clearCallSearchBtn.style.display = 'none';
+        loadGlobalCalls();
+      });
+    }
+
+    const clearCallDatesBtn = document.getElementById('btnClearCallDates');
+    if (clearCallDatesBtn) {
+      clearCallDatesBtn.addEventListener('click', () => {
+        document.getElementById('filterCallFromDate').value = '';
+        document.getElementById('filterCallToDate').value = '';
+        loadGlobalCalls();
+      });
+    }
+
+    const resetFiltersBtn = document.getElementById('btnResetAllFilters');
+    if (resetFiltersBtn) {
+      resetFiltersBtn.addEventListener('click', () => {
+        window.resetCallFilters();
+      });
     }
 
     ['callSearchInput'].forEach(id => {
