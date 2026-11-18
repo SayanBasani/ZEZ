@@ -90,6 +90,20 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         notifyItemInserted(rowItems.size() - 1);
     }
 
+    public void updateMessageStatus(String messageId, String newStatus) {
+        if (messageId == null || newStatus == null) return;
+        for (int i = 0; i < rowItems.size(); i++) {
+            ChatRowItem row = rowItems.get(i);
+            if (!row.isHeader && row.message != null && messageId.equals(row.message.getId())) {
+                if (!newStatus.equalsIgnoreCase(row.message.getStatus())) {
+                    row.message.setStatus(newStatus);
+                    notifyItemChanged(i);
+                }
+                break;
+            }
+        }
+    }
+
     private String getDayString(String rawTime) {
         if (rawTime == null || rawTime.isEmpty()) return "Today";
         try {
@@ -201,13 +215,13 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             String status = msg.getStatus();
             if (ChatMessage.STATUS_READ.equalsIgnoreCase(status)) {
                 ivTick.setImageResource(R.drawable.ic_check_double);
-                ivTick.setColorFilter(Color.parseColor("#93C5FD")); // WhatsApp blue double tick
+                ivTick.setColorFilter(Color.parseColor("#34B7F1")); // WhatsApp vibrant blue double tick
             } else if (ChatMessage.STATUS_DELIVERED.equalsIgnoreCase(status)) {
                 ivTick.setImageResource(R.drawable.ic_check_double);
-                ivTick.setColorFilter(Color.parseColor("#D1D5DB"));
+                ivTick.setColorFilter(Color.parseColor("#94A3B8")); // Ash double tick
             } else {
                 ivTick.setImageResource(R.drawable.ic_check_single);
-                ivTick.setColorFilter(Color.parseColor("#D1D5DB"));
+                ivTick.setColorFilter(Color.parseColor("#94A3B8")); // Ash single tick
             }
         }
     }

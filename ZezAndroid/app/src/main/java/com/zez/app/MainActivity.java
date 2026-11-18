@@ -46,6 +46,7 @@ import com.zez.app.receiver.BootReceiver;
 import com.zez.app.util.ApiClient;
 import com.zez.app.util.CallLogHelper;
 import com.zez.app.util.ChatApiClient;
+import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatPreferencesHelper;
 import com.zez.app.util.DeviceHelper;
 import com.zez.app.util.MediaHelper;
@@ -53,6 +54,9 @@ import com.zez.app.util.PreferencesHelper;
 import com.zez.app.util.RecycleBinHelper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -173,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Chat Extra & Settings UI
     private ImageButton btnChatSettingsMenu;
+    private final Map<String, String> lastNotifiedMsgTimeMap = new HashMap<>();
     private ActivityResultLauncher<String> avatarPickerLauncher;
     private ImageView currentProfileDialogAvatar;
     private final android.os.Handler chatListPollHandler = new android.os.Handler(android.os.Looper.getMainLooper());
@@ -545,7 +550,6 @@ public class MainActivity extends AppCompatActivity {
             loadChatsData();
             startChatListPolling();
         } else {
-            stopChatListPolling();
             if (tvTopBadge != null) tvTopBadge.setVisibility(View.GONE);
             if (tabId == R.id.nav_alarms) {
                 tvTitle.setText("Alarms");
@@ -591,8 +595,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (currentTab == R.id.nav_chats && ChatPreferencesHelper.isChatRegistered(this)) {
-            loadChatsData();
+        if (ChatPreferencesHelper.isChatRegistered(this)) {
+            if (currentTab == R.id.nav_chats) {
+                loadChatsData();
+            }
             startChatListPolling();
         }
     }
@@ -696,10 +702,51 @@ public class MainActivity extends AppCompatActivity {
         conversationsAdapter.setConversations(filtered);
     }
 
+    private void checkIncomingChatNotifications(List<ChatConversation> conversations) {
+        if (conversations == null || conversations.isEmpty()) return;
+        int totalUnread = 0;
+        for (ChatConversation conv : conversations) {
+            int unread = conv.getUnreadCount();
+            if (unread > 0) {
+                totalUnread += unread;
+                if (conv.getConversationId() != null) {
+                    // Skip if the user is currently chatting in this exact conversation screen
+                    if (ChatActivity.activeConversationId != null && conv.getConversationId().equals(ChatActivity.activeConversationId)) {
+                        continue;
+                    }
+                    String lastTime = conv.getLastMessageTime();
+                    String prevTime = lastNotifiedMsgTimeMap.get(conv.getConversationId());
+                    if (lastTime != null && !lastTime.equals(prevTime)) {
+                        lastNotifiedMsgTimeMap.put(conv.getConversationId(), lastTime);
+                        ChatNotificationHelper.showChatNotification(
+                                this,
+                                conv.getConversationId(),
+                                conv.getOtherUserId(),
+                                conv.getOtherUserName(),
+                                conv.getOtherUserPhone(),
+                                conv.getLastMessageText(),
+                                null
+                        );
+                    }
+                }
+            }
+        }
+
+        if (bottomNav != null) {
+            if (totalUnread > 0) {
+                com.google.android.material.badge.BadgeDrawable badge = bottomNav.getOrCreateBadge(R.id.nav_chats);
+                badge.setNumber(totalUnread);
+                badge.setVisible(true);
+            } else {
+                bottomNav.removeBadge(R.id.nav_chats);
+            }
+        }
+    }
+
     private final Runnable chatListPollRunnable = new Runnable() {
         @Override
         public void run() {
-            if (!isChatListPolling || currentTab != R.id.nav_chats || !ChatPreferencesHelper.isChatRegistered(MainActivity.this)) {
+            if (!isChatListPolling || !ChatPreferencesHelper.isChatRegistered(MainActivity.this)) {
                 return;
             }
             String userId = ChatPreferencesHelper.getUserId(MainActivity.this);
@@ -707,30 +754,33 @@ public class MainActivity extends AppCompatActivity {
                 ChatApiClient.getConversations(MainActivity.this, userId, new ChatApiClient.ChatCallback<List<ChatConversation>>() {
                     @Override
                     public void onSuccess(List<ChatConversation> conversations) {
-                        if (conversations != null && isChatListPolling && currentTab == R.id.nav_chats) {
-                            allLoadedConversations.clear();
-                            allLoadedConversations.addAll(conversations);
-                            if (layoutChatsEmpty != null) {
-                                layoutChatsEmpty.setVisibility(allLoadedConversations.isEmpty() ? View.VISIBLE : View.GONE);
-                            }
-                            if (conversationsAdapter != null) {
-                                conversationsAdapter.setConversations(allLoadedConversations);
+                        if (conversations != null && isChatListPolling) {
+                            checkIncomingChatNotifications(conversations);
+                            if (currentTab == R.id.nav_chats) {
+                                allLoadedConversations.clear();
+                                allLoadedConversations.addAll(conversations);
+                                if (layoutChatsEmpty != null) {
+                                    layoutChatsEmpty.setVisibility(allLoadedConversations.isEmpty() ? View.VISIBLE : View.GONE);
+                                }
+                                if (conversationsAdapter != null) {
+                                    conversationsAdapter.setConversations(allLoadedConversations);
+                                }
                             }
                         }
-                        if (isChatListPolling && currentTab == R.id.nav_chats) {
+                        if (isChatListPolling) {
                             chatListPollHandler.postDelayed(chatListPollRunnable, 2500);
                         }
                     }
 
                     @Override
                     public void onError(String errorMessage) {
-                        if (isChatListPolling && currentTab == R.id.nav_chats) {
+                        if (isChatListPolling) {
                             chatListPollHandler.postDelayed(chatListPollRunnable, 4000);
                         }
                     }
                 });
             } else {
-                if (isChatListPolling && currentTab == R.id.nav_chats) {
+                if (isChatListPolling) {
                     chatListPollHandler.postDelayed(chatListPollRunnable, 3000);
                 }
             }
@@ -1328,6 +1378,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         dialog.show();
+        if (dialog.getWindow() != null) {
+            int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.94);
+            dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     private void showThemeDialog() {

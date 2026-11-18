@@ -1,10 +1,107 @@
 const express = require("express");
 const crypto = require("node:crypto");
+const os = require("node:os");
+const fs = require("node:fs");
+const path = require("node:path");
 const { pool, hashPassword, verifyPassword } = require("../db");
 const { adminAuth, createAdminToken } = require("../middleware/adminAuth");
 const { decryptStoredPayload } = require("../crypto");
 
 const router = express.Router();
+
+const PUBLIC_DIR = path.resolve(__dirname, "..", "public");
+const DOWNLOADS_DIR = path.join(PUBLIC_DIR, "downloads");
+const UPLOADS_DIR = path.join(PUBLIC_DIR, "uploads");
+const AVATARS_DIR = path.join(UPLOADS_DIR, "avatars");
+const CHAT_MEDIA_DIR = path.join(UPLOADS_DIR, "chat_media");
+
+// Ensure required public directories exist
+for (const dir of [PUBLIC_DIR, DOWNLOADS_DIR, UPLOADS_DIR, AVATARS_DIR, CHAT_MEDIA_DIR]) {
+  if (!fs.existsSync(dir)) {
+    try { fs.mkdirSync(dir, { recursive: true }); } catch (_) {}
+  }
+}
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
+
+function scanDirectoryFiles(dirPath, category, categoryLabel, urlPrefix) {
+  const items = [];
+  if (!fs.existsSync(dirPath)) return items;
+
+  try {
+    const files = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const f of files) {
+      if (f.isFile()) {
+        const fullPath = path.join(dirPath, f.name);
+        try {
+          const stat = fs.statSync(fullPath);
+          const ext = path.extname(f.name).toLowerCase();
+          const relPath = path.relative(PUBLIC_DIR, fullPath).replace(/\\/g, "/");
+          items.push({
+            id: Buffer.from(relPath).toString("base64url"),
+            name: f.name,
+            ext: ext.replace(".", ""),
+            category,
+            categoryLabel,
+            relPath,
+            url: `/${relPath}`,
+            size: stat.size,
+            sizeFormatted: formatBytes(stat.size),
+            createdAt: stat.birthtime || stat.ctime,
+            modifiedAt: stat.mtime
+          });
+        } catch (_) {}
+      }
+    }
+  } catch (_) {}
+  return items;
+}
+
+function isSafePublicFilePath(targetPath) {
+  if (!targetPath || typeof targetPath !== "string") {
+    return { valid: false, reason: "Missing or invalid path parameter." };
+  }
+  let clean = targetPath.trim().replace(/^[/\\]+/, "");
+  if (clean.startsWith("downloads/")) {
+    clean = clean.substring("downloads/".length);
+    const resolved = path.resolve(DOWNLOADS_DIR, clean);
+    if (!resolved.startsWith(DOWNLOADS_DIR)) {
+      return { valid: false, reason: "Directory traversal detected." };
+    }
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+      return { valid: false, reason: "File not found." };
+    }
+    const relPath = path.relative(PUBLIC_DIR, resolved).replace(/\\/g, "/");
+    return { valid: true, resolved, relPath };
+  } else if (clean.startsWith("uploads/")) {
+    clean = clean.substring("uploads/".length);
+    const resolved = path.resolve(UPLOADS_DIR, clean);
+    if (!resolved.startsWith(UPLOADS_DIR)) {
+      return { valid: false, reason: "Directory traversal detected." };
+    }
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+      return { valid: false, reason: "File not found." };
+    }
+    const relPath = path.relative(PUBLIC_DIR, resolved).replace(/\\/g, "/");
+    return { valid: true, resolved, relPath };
+  }
+
+  const resolved = path.resolve(PUBLIC_DIR, clean);
+  const inDownloads = resolved.startsWith(DOWNLOADS_DIR + path.sep);
+  const inUploads = resolved.startsWith(UPLOADS_DIR + path.sep);
+  if ((inDownloads || inUploads) && fs.existsSync(resolved) && fs.statSync(resolved).isFile()) {
+    const relPath = path.relative(PUBLIC_DIR, resolved).replace(/\\/g, "/");
+    return { valid: true, resolved, relPath };
+  }
+
+  return { valid: false, reason: "File is not in a manageable public folder (downloads or uploads)." };
+}
 
 function safeCompare(a, b) {
   if (typeof a !== "string" || typeof b !== "string") return false;
@@ -1774,6 +1871,311 @@ router.get("/chats/export-all", async (req, res, next) => {
       totalMessages: messages.length,
       messages
     }, null, 2));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/system/environment
+ * Telemetry endpoint providing OS, CPU, RAM, Node process, Postgres DB and storage breakdown.
+ */
+router.get("/system/environment", adminAuth, async (req, res, next) => {
+  try {
+    const cpus = os.cpus() || [];
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+    const memUsage = process.memoryUsage();
+
+    let dbInfo = { db: "unknown", size: "0 MB", bytes: 0, tables: [] };
+    try {
+      const dbSizeRes = await pool.query(
+        "SELECT pg_size_pretty(pg_database_size(current_database())) as size, pg_database_size(current_database())::bigint as bytes, current_database() as db"
+      );
+      if (dbSizeRes.rows.length > 0) {
+        dbInfo.db = dbSizeRes.rows[0].db;
+        dbInfo.size = dbSizeRes.rows[0].size;
+        dbInfo.bytes = Number(dbSizeRes.rows[0].bytes);
+      }
+      const tblRes = await pool.query(
+        "SELECT io.relname as table_name, stat.n_live_tup::bigint as row_count, pg_size_pretty(pg_total_relation_size(io.relid)) as total_size, pg_total_relation_size(io.relid)::bigint as bytes FROM pg_catalog.pg_statio_user_tables io JOIN pg_catalog.pg_stat_user_tables stat ON io.relid = stat.relid ORDER BY pg_total_relation_size(io.relid) DESC LIMIT 15"
+      );
+      dbInfo.tables = tblRes.rows.map(r => ({
+        tableName: r.table_name,
+        rowCount: Number(r.row_count || 0),
+        size: r.total_size,
+        bytes: Number(r.bytes || 0)
+      }));
+    } catch (e) {
+      console.warn("DB environment metrics error:", e.message);
+    }
+
+    const downloadFiles = scanDirectoryFiles(DOWNLOADS_DIR, "downloads", "App Release APK", "/downloads");
+    const avatarFiles = scanDirectoryFiles(AVATARS_DIR, "avatars", "User Avatar", "/uploads/avatars");
+    const chatMediaFiles = scanDirectoryFiles(CHAT_MEDIA_DIR, "chat_media", "Chat Media", "/uploads/chat_media");
+
+    const sumBytes = list => list.reduce((acc, f) => acc + (f.size || 0), 0);
+    const downloadsBytes = sumBytes(downloadFiles);
+    const avatarsBytes = sumBytes(avatarFiles);
+    const chatMediaBytes = sumBytes(chatMediaFiles);
+    const totalFilesCount = downloadFiles.length + avatarFiles.length + chatMediaFiles.length;
+    const totalStorageBytes = downloadsBytes + avatarsBytes + chatMediaBytes;
+
+    const formatUptime = sec => {
+      const s = Math.floor(sec || 0);
+      const d = Math.floor(s / 86400);
+      const h = Math.floor((s % 86400) / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const parts = [];
+      if (d > 0) parts.push(`${d}d`);
+      if (h > 0 || d > 0) parts.push(`${h}h`);
+      parts.push(`${m}m`);
+      return parts.join(" ") || "0m";
+    };
+
+    return res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      environment: {
+        os: {
+          platform: os.platform(),
+          release: os.release(),
+          arch: os.arch(),
+          hostname: os.hostname(),
+          uptimeSec: Math.floor(os.uptime()),
+          uptimeFormatted: formatUptime(os.uptime())
+        },
+        cpu: {
+          model: cpus[0]?.model || "Unknown CPU",
+          cores: cpus.length,
+          speedMHz: cpus[0]?.speed || 0,
+          loadAvg: os.loadavg ? os.loadavg().map(v => Number(v.toFixed(2))) : [0, 0, 0]
+        },
+        memory: {
+          totalBytes: totalMem,
+          freeBytes: freeMem,
+          usedBytes: usedMem,
+          usedPercent: Number(((usedMem / (totalMem || 1)) * 100).toFixed(1)),
+          totalFormatted: formatBytes(totalMem),
+          freeFormatted: formatBytes(freeMem),
+          usedFormatted: formatBytes(usedMem)
+        },
+        process: {
+          pid: process.pid,
+          nodeVersion: process.version,
+          v8Version: process.versions.v8,
+          uptimeSec: Math.floor(process.uptime()),
+          uptimeFormatted: formatUptime(process.uptime()),
+          memoryUsage: {
+            rss: memUsage.rss,
+            rssFormatted: formatBytes(memUsage.rss),
+            heapTotal: memUsage.heapTotal,
+            heapTotalFormatted: formatBytes(memUsage.heapTotal),
+            heapUsed: memUsage.heapUsed,
+            heapUsedFormatted: formatBytes(memUsage.heapUsed),
+            external: memUsage.external,
+            externalFormatted: formatBytes(memUsage.external)
+          }
+        },
+        database: dbInfo,
+        storage: {
+          totalFilesCount,
+          totalStorageBytes,
+          totalStorageFormatted: formatBytes(totalStorageBytes),
+          categories: {
+            downloads: {
+              count: downloadFiles.length,
+              bytes: downloadsBytes,
+              formatted: formatBytes(downloadsBytes)
+            },
+            avatars: {
+              count: avatarFiles.length,
+              bytes: avatarsBytes,
+              formatted: formatBytes(avatarsBytes)
+            },
+            chatMedia: {
+              count: chatMediaFiles.length,
+              bytes: chatMediaBytes,
+              formatted: formatBytes(chatMediaBytes)
+            }
+          }
+        }
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/system/files
+ * Scans managed directories (downloads, avatars, chat media) and returns file list.
+ */
+router.get("/system/files", adminAuth, async (req, res, next) => {
+  try {
+    const { category = "all", search = "" } = req.query;
+    let allFiles = [];
+
+    if (category === "all" || category === "downloads") {
+      allFiles.push(...scanDirectoryFiles(DOWNLOADS_DIR, "downloads", "App Release APK", "/downloads"));
+    }
+    if (category === "all" || category === "avatars") {
+      allFiles.push(...scanDirectoryFiles(AVATARS_DIR, "avatars", "User Avatar", "/uploads/avatars"));
+    }
+    if (category === "all" || category === "chat_media") {
+      allFiles.push(...scanDirectoryFiles(CHAT_MEDIA_DIR, "chat_media", "Chat Media", "/uploads/chat_media"));
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim().toLowerCase();
+      allFiles = allFiles.filter(f => f.name.toLowerCase().includes(q) || f.categoryLabel.toLowerCase().includes(q));
+    }
+
+    allFiles.sort((a, b) => new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime());
+    const totalBytes = allFiles.reduce((acc, f) => acc + (f.size || 0), 0);
+
+    return res.json({
+      success: true,
+      count: allFiles.length,
+      totalBytes,
+      totalFormatted: formatBytes(totalBytes),
+      files: allFiles
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * DELETE /api/admin/system/files
+ * Safely deletes a file from downloads or uploads.
+ */
+router.delete("/system/files", adminAuth, async (req, res, next) => {
+  try {
+    const targetPath = req.query.path || req.body?.path || req.body?.relPath;
+    if (!targetPath) {
+      return res.status(400).json({ success: false, error: "Path parameter is required." });
+    }
+
+    const safe = isSafePublicFilePath(targetPath);
+    if (!safe.valid) {
+      return res.status(400).json({ success: false, error: safe.reason || "Invalid or restricted file path." });
+    }
+
+    const stat = fs.statSync(safe.resolved);
+    const freedBytes = stat.size;
+    fs.unlinkSync(safe.resolved);
+
+    return res.json({
+      success: true,
+      deletedPath: safe.relPath,
+      freedBytes,
+      freedFormatted: formatBytes(freedBytes),
+      message: `File ${path.basename(safe.resolved)} deleted successfully.`
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/admin/system/files/batch-delete
+ * Safely deletes multiple files in a single call.
+ */
+router.post("/system/files/batch-delete", adminAuth, async (req, res, next) => {
+  try {
+    const { paths = [] } = req.body || {};
+    if (!Array.isArray(paths) || paths.length === 0) {
+      return res.status(400).json({ success: false, error: "An array of paths is required." });
+    }
+
+    let deletedCount = 0;
+    let freedBytes = 0;
+    const errors = [];
+
+    for (const p of paths) {
+      const safe = isSafePublicFilePath(p);
+      if (safe.valid) {
+        try {
+          const stat = fs.statSync(safe.resolved);
+          freedBytes += stat.size;
+          fs.unlinkSync(safe.resolved);
+          deletedCount++;
+        } catch (e) {
+          errors.push({ path: p, error: e.message });
+        }
+      } else {
+        errors.push({ path: p, error: safe.reason });
+      }
+    }
+
+    return res.json({
+      success: true,
+      deletedCount,
+      freedBytes,
+      freedFormatted: formatBytes(freedBytes),
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/admin/system/storage/clean
+ * Maintenance routine to clean old APKs, keeping the latest 2 releases.
+ */
+router.post("/system/storage/clean", adminAuth, async (req, res, next) => {
+  try {
+    const { target = "old_releases" } = req.body || {};
+    if (target === "old_releases") {
+      const files = scanDirectoryFiles(DOWNLOADS_DIR, "downloads", "App Release APK", "/downloads")
+        .filter(f => f.name.toLowerCase().endsWith(".apk"));
+
+      files.sort((a, b) => new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime());
+
+      const toKeep = new Set();
+      const genericRelease = files.find(f => f.name.toLowerCase() === "app-release.apk");
+      if (genericRelease) toKeep.add(genericRelease.name);
+
+      let keptVersioned = 0;
+      for (const f of files) {
+        if (f.name.toLowerCase() !== "app-release.apk" && keptVersioned < 2) {
+          toKeep.add(f.name);
+          keptVersioned++;
+        }
+      }
+
+      let deletedCount = 0;
+      let freedBytes = 0;
+      const deletedFiles = [];
+
+      for (const f of files) {
+        if (!toKeep.has(f.name)) {
+          const fullPath = path.join(DOWNLOADS_DIR, f.name);
+          try {
+            const stat = fs.statSync(fullPath);
+            freedBytes += stat.size;
+            fs.unlinkSync(fullPath);
+            deletedCount++;
+            deletedFiles.push(f.name);
+          } catch (_) {}
+        }
+      }
+
+      return res.json({
+        success: true,
+        target,
+        deletedCount,
+        freedBytes,
+        freedFormatted: formatBytes(freedBytes),
+        deletedFiles,
+        keptFiles: Array.from(toKeep)
+      });
+    }
+
+    return res.status(400).json({ success: false, error: `Unsupported clean target: ${target}` });
   } catch (err) {
     next(err);
   }

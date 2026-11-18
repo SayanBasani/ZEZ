@@ -1141,6 +1141,10 @@
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
           App Releases
         </button>
+        <button class="nav-link" id="tabSystemBtn">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          System &amp; Storage
+        </button>
       </nav>
     </header>
 
@@ -1716,6 +1720,166 @@ versionName "1.0.1"</pre>
           </div>
         </div>
       </div>
+
+      <!-- Section: System & Storage -->
+      <div id="sectionSystem" style="display: none;">
+        <!-- Telemetry Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <!-- Card 1: Host Platform & OS -->
+          <div class="admin-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                Host &amp; Platform
+              </span>
+              <span class="badge" id="sysOsBadge" style="background: var(--surface-raised); border: 1px solid var(--hairline); font-size: 11px;">Loading...</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">OS / Release:</span> <span id="sysOsRelease" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Architecture:</span> <span id="sysArch" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Hostname:</span> <span id="sysHostname" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">System Uptime:</span> <span id="sysUptime" style="color: var(--positive); font-weight: 500;">--</span></div>
+            </div>
+          </div>
+
+          <!-- Card 2: CPU Telemetry -->
+          <div class="admin-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+                CPU Engine
+              </span>
+              <span id="sysCpuCores" class="badge" style="background: var(--surface-raised); border: 1px solid var(--hairline); font-size: 11px;">-- Cores</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+              <div style="color: var(--text-primary); font-weight: 500; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" id="sysCpuModel">--</div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Clock Speed:</span> <span id="sysCpuSpeed" class="cell-mono" style="color: var(--text-primary);">-- MHz</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Load (1m, 5m, 15m):</span> <span id="sysCpuLoad" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+            </div>
+          </div>
+
+          <!-- Card 3: Memory & Node Runtime -->
+          <div class="admin-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Memory &amp; Process
+              </span>
+              <span id="sysMemPct" class="badge" style="background: var(--surface-raised); border: 1px solid var(--hairline); font-size: 11px;">--% Used</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Total RAM:</span> <span id="sysMemTotal" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Free RAM:</span> <span id="sysMemFree" class="cell-mono" style="color: var(--positive);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Node Process RSS:</span> <span id="sysProcRss" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Node / V8:</span> <span id="sysNodeVer" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+            </div>
+          </div>
+
+          <!-- Card 4: Database Telemetry -->
+          <div class="admin-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                PostgreSQL Database
+              </span>
+              <span id="sysDbBadge" class="badge" style="background: var(--surface-raised); border: 1px solid var(--hairline); font-size: 11px;">Connected</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Database Name:</span> <span id="sysDbName" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Total DB Size:</span> <span id="sysDbSize" class="cell-mono" style="color: var(--positive); font-weight: 600;">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Call Logs Table:</span> <span id="sysDbCallsSize" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Chat Messages:</span> <span id="sysDbChatSize" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Storage Management Container -->
+        <div class="admin-card" style="margin-bottom: 24px;">
+          <!-- Storage Header & Action Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Disk Storage &amp; File Manager</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                Inspect, retrieve, download, clean old APK versions, or delete media and release files.
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" id="btnCleanOldApks" title="Clean older APK builds, keeping the latest 2 versions">
+                🧹 Clean Old APKs
+              </button>
+              <button class="btn btn-danger btn-sm" id="btnDeleteSelectedFiles" disabled title="Delete selected files">
+                🗑️ Delete Selected (<span id="selectedFilesCount">0</span>)
+              </button>
+              <button class="btn btn-secondary btn-sm" id="btnRefreshSystem" title="Refresh system metrics and files">
+                🔄 Refresh
+              </button>
+            </div>
+          </div>
+
+          <!-- Storage Category Breakdown Badges -->
+          <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+            <div class="stat-row-card" style="flex: 1; min-width: 180px; padding: 10px 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">Total Stored Files</div>
+                <div id="storageTotalStats" style="font-size: 15px; font-weight: 600; color: var(--text-primary);">0 files (0 B)</div>
+              </div>
+            </div>
+            <div class="stat-row-card" style="flex: 1; min-width: 180px; padding: 10px 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">App Releases (APKs)</div>
+                <div id="storageDownloadsStats" style="font-size: 15px; font-weight: 600; color: var(--text-primary);">0 (0 B)</div>
+              </div>
+            </div>
+            <div class="stat-row-card" style="flex: 1; min-width: 180px; padding: 10px 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">User Avatars</div>
+                <div id="storageAvatarsStats" style="font-size: 15px; font-weight: 600; color: var(--text-primary);">0 (0 B)</div>
+              </div>
+            </div>
+            <div class="stat-row-card" style="flex: 1; min-width: 180px; padding: 10px 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">Chat Media Files</div>
+                <div id="storageChatMediaStats" style="font-size: 15px; font-weight: 600; color: var(--text-primary);">0 (0 B)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- File Filter Toolbar -->
+          <div class="toolbar" style="margin-bottom: 16px;">
+            <div class="search-wrap">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="sysFileSearch" class="search-input" placeholder="Search file name...">
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <select id="sysCategoryFilter" class="form-select" style="width: auto; height: 34px;">
+                <option value="all">All Categories</option>
+                <option value="downloads">App Releases (APKs)</option>
+                <option value="avatars">User Avatars</option>
+                <option value="chat_media">Chat Media</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Files Table Container -->
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 38px; text-align: center;"><input type="checkbox" id="selectAllSysFiles"></th>
+                  <th>File Name</th>
+                  <th>Category</th>
+                  <th>Size</th>
+                  <th>Last Modified</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sysFilesTableBody">
+                <tr><td colspan="6" class="empty-state">Loading files...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -1936,11 +2100,13 @@ versionName "1.0.1"</pre>
     const tabChatsBtn = document.getElementById('tabChatsBtn');
     const tabSettingsBtn = document.getElementById('tabSettingsBtn');
     const tabReleasesBtn = document.getElementById('tabReleasesBtn');
+    const tabSystemBtn = document.getElementById('tabSystemBtn');
     const sectionDevices = document.getElementById('sectionDevices');
     const sectionAllCalls = document.getElementById('sectionAllCalls');
     const sectionChats = document.getElementById('sectionChats');
     const sectionSettings = document.getElementById('sectionSettings');
     const sectionReleases = document.getElementById('sectionReleases');
+    const sectionSystem = document.getElementById('sectionSystem');
 
     function setActiveTab(tab) {
       tabDevicesBtn.classList.toggle('active', tab === 'devices');
@@ -1948,12 +2114,14 @@ versionName "1.0.1"</pre>
       tabChatsBtn.classList.toggle('active', tab === 'chats');
       tabSettingsBtn.classList.toggle('active', tab === 'settings');
       tabReleasesBtn.classList.toggle('active', tab === 'releases');
+      tabSystemBtn.classList.toggle('active', tab === 'system');
 
       sectionDevices.style.display = tab === 'devices' ? 'block' : 'none';
       sectionAllCalls.style.display = tab === 'calls' ? 'block' : 'none';
       sectionChats.style.display = tab === 'chats' ? 'block' : 'none';
       sectionSettings.style.display = tab === 'settings' ? 'block' : 'none';
       sectionReleases.style.display = tab === 'releases' ? 'block' : 'none';
+      sectionSystem.style.display = tab === 'system' ? 'block' : 'none';
     }
 
     tabDevicesBtn.addEventListener('click', () => {
@@ -1984,6 +2152,12 @@ versionName "1.0.1"</pre>
       loadReleases();
     });
 
+    tabSystemBtn.addEventListener('click', () => {
+      setActiveTab('system');
+      loadSystemDashboard();
+      loadSystemFiles();
+    });
+
     // Refresh Handlers
     async function triggerFullRefresh(sourceName) {
       const icon = document.getElementById('globalRefreshIcon');
@@ -2001,6 +2175,9 @@ versionName "1.0.1"</pre>
         }
         if (tabSettingsBtn.classList.contains('active')) {
           await loadAdminUsers();
+        }
+        if (tabSystemBtn.classList.contains('active')) {
+          await Promise.all([loadSystemDashboard(), loadSystemFiles()]);
         }
         showToast(`${sourceName || 'Data'} refreshed`);
       } catch (err) {
@@ -3586,6 +3763,250 @@ versionName "1.0.1"</pre>
         showToast('Error: ' + err.message);
       }
     };
+
+    // ============================================================================
+    // SYSTEM ENVIRONMENT & STORAGE MANAGEMENT LOGIC
+    // ============================================================================
+    let cachedSysFiles = [];
+    let selectedSysFiles = new Set();
+
+    async function loadSystemDashboard() {
+      try {
+        const res = await apiRequest('/system/environment');
+        if (!res.success || !res.environment) return;
+        const env = res.environment;
+
+        // OS Telemetry
+        const osBadge = document.getElementById('sysOsBadge');
+        if (osBadge) osBadge.textContent = env.os.platform;
+        const osRel = document.getElementById('sysOsRelease');
+        if (osRel) osRel.textContent = `${env.os.platform} (${env.os.release})`;
+        const arch = document.getElementById('sysArch');
+        if (arch) arch.textContent = env.os.arch;
+        const host = document.getElementById('sysHostname');
+        if (host) host.textContent = env.os.hostname;
+        const uptime = document.getElementById('sysUptime');
+        if (uptime) uptime.textContent = env.os.uptimeFormatted;
+
+        // CPU Telemetry
+        const cpuCores = document.getElementById('sysCpuCores');
+        if (cpuCores) cpuCores.textContent = `${env.cpu.cores} Cores`;
+        const cpuModel = document.getElementById('sysCpuModel');
+        if (cpuModel) cpuModel.textContent = env.cpu.model;
+        const cpuSpeed = document.getElementById('sysCpuSpeed');
+        if (cpuSpeed) cpuSpeed.textContent = `${env.cpu.speedMHz} MHz`;
+        const cpuLoad = document.getElementById('sysCpuLoad');
+        if (cpuLoad) cpuLoad.textContent = env.cpu.loadAvg.join(', ');
+
+        // Memory & Process Telemetry
+        const memPct = document.getElementById('sysMemPct');
+        if (memPct) memPct.textContent = `${env.memory.usedPercent}% Used`;
+        const memTotal = document.getElementById('sysMemTotal');
+        if (memTotal) memTotal.textContent = env.memory.totalFormatted;
+        const memFree = document.getElementById('sysMemFree');
+        if (memFree) memFree.textContent = env.memory.freeFormatted;
+        const procRss = document.getElementById('sysProcRss');
+        if (procRss) procRss.textContent = env.process.memoryUsage.rssFormatted;
+        const nodeVer = document.getElementById('sysNodeVer');
+        if (nodeVer) nodeVer.textContent = `${env.process.nodeVersion} (v8 ${env.process.v8Version})`;
+
+        // Database Telemetry
+        const dbName = document.getElementById('sysDbName');
+        if (dbName) dbName.textContent = env.database.db;
+        const dbSize = document.getElementById('sysDbSize');
+        if (dbSize) dbSize.textContent = env.database.size;
+        const callsTbl = env.database.tables?.find(t => t.tableName === 'call_logs');
+        const chatTbl = env.database.tables?.find(t => t.tableName === 'chat_messages');
+        const dbCalls = document.getElementById('sysDbCallsSize');
+        if (dbCalls) dbCalls.textContent = callsTbl ? `${callsTbl.size} (${callsTbl.rowCount} rows)` : '--';
+        const dbChat = document.getElementById('sysDbChatSize');
+        if (dbChat) dbChat.textContent = chatTbl ? `${chatTbl.size} (${chatTbl.rowCount} rows)` : '--';
+
+        // Storage Breakdown
+        const sTotal = document.getElementById('storageTotalStats');
+        if (sTotal) sTotal.textContent = `${env.storage.totalFilesCount} files (${env.storage.totalStorageFormatted})`;
+        const sDl = document.getElementById('storageDownloadsStats');
+        if (sDl) sDl.textContent = `${env.storage.categories.downloads.count} (${env.storage.categories.downloads.formatted})`;
+        const sAv = document.getElementById('storageAvatarsStats');
+        if (sAv) sAv.textContent = `${env.storage.categories.avatars.count} (${env.storage.categories.avatars.formatted})`;
+        const sChat = document.getElementById('storageChatMediaStats');
+        if (sChat) sChat.textContent = `${env.storage.categories.chatMedia.count} (${env.storage.categories.chatMedia.formatted})`;
+      } catch (err) {
+        showToast('Error loading environment telemetry: ' + err.message);
+      }
+    }
+
+    async function loadSystemFiles() {
+      const tbody = document.getElementById('sysFilesTableBody');
+      const category = document.getElementById('sysCategoryFilter')?.value || 'all';
+      const search = document.getElementById('sysFileSearch')?.value || '';
+
+      try {
+        const query = new URLSearchParams();
+        if (category && category !== 'all') query.append('category', category);
+        if (search && search.trim()) query.append('search', search.trim());
+
+        const res = await apiRequest(`/system/files?${query.toString()}`);
+        cachedSysFiles = res.files || [];
+        selectedSysFiles.clear();
+        updateSelectedFilesUi();
+
+        if (cachedSysFiles.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No stored files found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = cachedSysFiles.map(f => {
+          const modDate = f.modifiedAt ? new Date(f.modifiedAt).toLocaleString() : '--';
+          let categoryBadgeColor = 'var(--text-secondary)';
+          if (f.category === 'downloads') categoryBadgeColor = 'var(--primary)';
+          else if (f.category === 'avatars') categoryBadgeColor = '#10b981';
+          else if (f.category === 'chat_media') categoryBadgeColor = '#8b5cf6';
+
+          return `
+            <tr>
+              <td style="text-align: center;">
+                <input type="checkbox" class="sys-file-checkbox" data-relpath="${escapeHtml(f.relPath)}" onchange="toggleSelectSysFile('${escapeHtml(f.relPath)}')">
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 16px;">${getFileIcon(f.ext)}</span>
+                  <div style="font-weight: 500; word-break: break-all;">
+                    <a href="${escapeHtml(f.url)}" target="_blank" style="color: var(--text-primary); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                      ${escapeHtml(f.name)}
+                    </a>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge" style="border: 1px solid var(--hairline); color: ${categoryBadgeColor};">
+                  ${escapeHtml(f.categoryLabel)}
+                </span>
+              </td>
+              <td class="cell-mono">${escapeHtml(f.sizeFormatted)}</td>
+              <td style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(modDate)}</td>
+              <td style="text-align: right; white-space: nowrap;">
+                <div style="display: inline-flex; gap: 6px;">
+                  <a href="${escapeHtml(f.url)}" download="${escapeHtml(f.name)}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 12px;" title="Download file">
+                    ⬇️
+                  </a>
+                  <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 12px; color: var(--negative);" onclick="deleteSingleSystemFile('${escapeHtml(f.relPath)}', '${escapeHtml(f.name)}')" title="Delete file">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color: var(--negative);">Failed to load files: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    function getFileIcon(ext) {
+      ext = (ext || '').toLowerCase();
+      if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) return '🖼️';
+      if (['mp4', 'mov', 'webm', 'mkv'].includes(ext)) return '🎬';
+      if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return '🎵';
+      if (ext === 'apk') return '📦';
+      if (ext === 'pdf') return '📕';
+      if (['zip', 'tar', 'gz'].includes(ext)) return '🗜️';
+      return '📄';
+    }
+
+    window.toggleSelectSysFile = function(relPath) {
+      if (selectedSysFiles.has(relPath)) {
+        selectedSysFiles.delete(relPath);
+      } else {
+        selectedSysFiles.add(relPath);
+      }
+      updateSelectedFilesUi();
+    };
+
+    function updateSelectedFilesUi() {
+      const countEl = document.getElementById('selectedFilesCount');
+      const delBtn = document.getElementById('btnDeleteSelectedFiles');
+      const selectAll = document.getElementById('selectAllSysFiles');
+
+      const count = selectedSysFiles.size;
+      if (countEl) countEl.textContent = count;
+      if (delBtn) delBtn.disabled = (count === 0);
+      if (selectAll && cachedSysFiles.length > 0) {
+        selectAll.checked = (count === cachedSysFiles.length);
+      }
+    }
+
+    document.getElementById('selectAllSysFiles')?.addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      selectedSysFiles.clear();
+      if (checked) {
+        for (const f of cachedSysFiles) {
+          selectedSysFiles.add(f.relPath);
+        }
+      }
+      document.querySelectorAll('.sys-file-checkbox').forEach(cb => cb.checked = checked);
+      updateSelectedFilesUi();
+    });
+
+    window.deleteSingleSystemFile = async function(relPath, fileName) {
+      if (!confirm(`Are you sure you want to permanently delete "${fileName}"?`)) return;
+
+      try {
+        const res = await apiRequest(`/system/files?path=${encodeURIComponent(relPath)}`, { method: 'DELETE' });
+        showToast(res.message || 'File deleted successfully');
+        loadSystemDashboard();
+        loadSystemFiles();
+      } catch (err) {
+        showToast('Error deleting file: ' + err.message);
+      }
+    };
+
+    document.getElementById('btnDeleteSelectedFiles')?.addEventListener('click', async () => {
+      if (selectedSysFiles.size === 0) return;
+      if (!confirm(`Permanently delete ${selectedSysFiles.size} selected file(s)?`)) return;
+
+      try {
+        const paths = Array.from(selectedSysFiles);
+        const res = await apiRequest('/system/files/batch-delete', {
+          method: 'POST',
+          body: JSON.stringify({ paths })
+        });
+        showToast(`Deleted ${res.deletedCount} file(s), freed ${res.freedFormatted}`);
+        loadSystemDashboard();
+        loadSystemFiles();
+      } catch (err) {
+        showToast('Batch delete error: ' + err.message);
+      }
+    });
+
+    document.getElementById('btnCleanOldApks')?.addEventListener('click', async () => {
+      if (!confirm('This will clean older APK builds from storage, preserving the latest 2 versions and app-release.apk. Continue?')) return;
+
+      try {
+        const res = await apiRequest('/system/storage/clean', {
+          method: 'POST',
+          body: JSON.stringify({ target: 'old_releases' })
+        });
+        showToast(`Clean complete: Removed ${res.deletedCount} old build(s), freed ${res.freedFormatted}`);
+        loadSystemDashboard();
+        loadSystemFiles();
+      } catch (err) {
+        showToast('Clean error: ' + err.message);
+      }
+    });
+
+    document.getElementById('btnRefreshSystem')?.addEventListener('click', () => {
+      loadSystemDashboard();
+      loadSystemFiles();
+    });
+
+    document.getElementById('sysCategoryFilter')?.addEventListener('change', () => {
+      loadSystemFiles();
+    });
+
+    document.getElementById('sysFileSearch')?.addEventListener('input', () => {
+      loadSystemFiles();
+    });
 
     window.addEventListener('DOMContentLoaded', async () => {
       if (currentToken) {

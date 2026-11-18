@@ -14,7 +14,8 @@
         android:layout_height="match_parent"
         android:paddingTop="12dp"
         android:paddingBottom="88dp"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        android:scrollbars="vertical" />
 
     <!-- Empty Alarms State -->
     <LinearLayout
