@@ -367,43 +367,44 @@ No feature or code outside the scope was removed or harmed. All existing modules
 
 ## 7. Current Version & Release Information
 
-- **Release Version**: `v1.0.9` (Version Code `10`)
-- **APK Artifact**: `d:\Call Log Mannager\Zez-Backend\src\public\downloads\zez-app-v1.0.9.apk`
-- **File Size**: `6,175,473 bytes` (~5.89 MB)
+- **Release Version**: `v1.0.10` (Version Code `11`)
+- **APK Artifact**: `d:\Call Log Mannager\Zez-Backend\src\public\downloads\zez-app-v1.0.10.apk`
+- **File Size**: `6,176,135 bytes` (~5.89 MB)
 - **APK Signature**: V2 Full APK Signature Scheme verified (`true`)
+- **Production Backend URL**: `https://zez-chat-backend.onrender.com`
 - **Update Availability**: Published to `public.app_releases` in PostgreSQL; distributed via the in-app updater and `/api/app/latest`.
 - **Target OS Compatibility**: Android 8.0 (API 26) through Android 14 (API 34).
 
 ---
 
-## 8. How to Change or Swap the Hosted Backend URL
+## 8. Hosted Backend URL & Protected Developer Mode Access
 
-To make hosting and server swapping completely frictionless without requiring you to reopen Android Studio or recompile every time, **two flexible methods** are provided:
+The production mobile app is configured to connect directly to the hosted cloud backend:
+**`https://zez-chat-backend.onrender.com`**
 
-### Method A: Directly Inside the Mobile App (Runtime — No Rebuild Needed)
-You can change the backend URL directly on any physical device or emulator while the app is running:
-1. Open the **Zez Mobile** app.
-2. Tap the **Settings** tab (the 4th icon in the bottom navigation bar).
-3. Under the **PREFERENCES & SYSTEM** card, tap **Backend Server URL** (it displays the currently active URL, e.g. `http://10.0.2.2:3000` or `https://zez-backend.onrender.com`).
-4. In the dialog that appears, enter or paste your new hosted backend address (e.g. `https://your-custom-backend.onrender.com`, `https://your-server.railway.app`, or `https://api.yourdomain.com`).
-5. Tap **SAVE & CONNECT**:
-   - The app automatically verifies and formats the URL with `https://`.
-   - The new URL is instantly saved into private app storage (`zez_prefs`).
-   - A background heartbeat ping is triggered to verify connectivity.
-   - All app modules (**Call Log Sync**, **WorkManager Background Sync**, **WhatsApp 1-on-1 Chat**, and **App Updates**) immediately start communicating with your new hosted backend.
-6. If you ever want to revert back to the project default, simply tap the **RESET DEFAULT** button in the same dialog.
+### 8.1 Security & Anti-Tamper Protection (Hidden from Normal Users)
+To ensure regular users cannot accidentally, easily, or maliciously tamper with or change the backend server URL:
+1. **Removed from Daily Chat Menus**: The 3-dot overflow menu in the Chats section contains only user-level options (*Profile & Settings*, *Refresh Chats*). Server controls have been completely removed.
+2. **Invisible in Settings by Default**: In the Settings tab under *PREFERENCES & SYSTEM*, the "Backend Server URL" row is hidden (`View.GONE`). Normal users only see Theme Mode, Font Size, and Storage diagnostics.
+3. **Protected Developer Mode (5-Tap Unlock + Admin PIN)**:
+   - To unlock the Server Configuration panel as an administrator:
+     1. Open **Settings**.
+     2. Rapidly tap on the **Installed Version** line (or footer version text) **5 times** consecutively.
+     3. An Admin authorization dialog appears: *"Enter Admin PIN to unlock Backend Server Configuration"*.
+     4. Enter the Admin PIN: **`7788`** and tap **UNLOCK**.
+     5. The **Backend Server URL** row is revealed and the developer configuration dialog opens.
+4. **Dialog Options**:
+   - **Save & Connect**: Enter a custom server URL if hosting on a different provider.
+   - **Reset Default**: Restores the production address: `https://zez-chat-backend.onrender.com`.
+   - **Cancel**: Closes dialog without modifying preferences.
 
-### Method B: Pre-Configuring the Default Hosted URL at Build Time (Mobile `.env` File)
-If you are generating an APK to distribute to family, clients, or test devices, you can set the default backend address in a single configuration file that functions just like a `.env` file:
-1. Open the configuration file:
-   [`d:\Call Log Mannager\ZezAndroid\app\src\main\assets\backend_config.properties`](file:///d:/Call%20Log%20Mannager/ZezAndroid/app/src/main/assets/backend_config.properties)
-2. Change the `BACKEND_URL` entry:
-   ```properties
-   # ZEZ MOBILE APP - BACKEND CONFIGURATION
-   BACKEND_URL=https://your-hosted-backend.com
-   ```
-3. Run `gradlew assembleDebug` or `gradlew assembleRelease`.
-4. Any device running this newly built APK will automatically connect to your hosted URL by default on first launch without requiring any manual entry.
+### 8.2 Build-Time Default Configuration (Mobile `.env` File)
+The production URL is embedded in:
+[`d:\Call Log Mannager\ZezAndroid\app\src\main\assets\backend_config.properties`](file:///d:/Call%20Log%20Mannager/ZezAndroid/app/src/main/assets/backend_config.properties)
+```properties
+BACKEND_URL=https://zez-chat-backend.onrender.com
+```
+Any freshly installed device or newly built APK connects out-of-the-box to `https://zez-chat-backend.onrender.com`. Existing installs automatically migrate away from legacy URLs.
 
 ---
 

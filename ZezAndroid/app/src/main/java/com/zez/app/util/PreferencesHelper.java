@@ -25,7 +25,7 @@ public class PreferencesHelper {
     public static final int THEME_DARK = androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES; // 2
 
     // Default API URL from user configuration
-    public static final String DEFAULT_API_URL = "https://zez-backend.onrender.com";
+    public static final String DEFAULT_API_URL = "https://zez-chat-backend.onrender.com";
     public static final String EMULATOR_API_URL = "http://10.0.2.2:3000";
 
     private static SharedPreferences getPrefs(Context context) {
@@ -74,10 +74,12 @@ public class PreferencesHelper {
     public static String getApiUrl(Context context) {
         String saved = getPrefs(context).getString(KEY_API_URL, null);
         if (saved != null && !saved.trim().isEmpty()) {
+            if ("https://zez-backend.onrender.com".equalsIgnoreCase(saved.trim())
+                    || "http://10.0.2.2:3000".equalsIgnoreCase(saved.trim())) {
+                setApiUrl(context, DEFAULT_API_URL);
+                return DEFAULT_API_URL;
+            }
             return saved.trim();
-        }
-        if (isEmulator()) {
-            return EMULATOR_API_URL;
         }
         String assetUrl = getAssetConfigUrl(context);
         if (assetUrl != null && !assetUrl.trim().isEmpty()) {

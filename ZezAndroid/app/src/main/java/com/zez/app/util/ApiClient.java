@@ -42,7 +42,8 @@ public class ApiClient {
                             Log.w(TAG, "DNS lookup failed for " + hostname + ", using cached addresses: " + cached);
                             return cached;
                         }
-                        if ("zez-backend.onrender.com".equalsIgnoreCase(hostname)) {
+                        if ("zez-backend.onrender.com".equalsIgnoreCase(hostname)
+                                || "zez-chat-backend.onrender.com".equalsIgnoreCase(hostname)) {
                             try {
                                 List<java.net.InetAddress> fallback = new java.util.ArrayList<>();
                                 fallback.add(java.net.InetAddress.getByAddress(hostname, new byte[]{(byte) 216, 24, 57, 18}));
