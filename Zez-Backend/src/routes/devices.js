@@ -77,7 +77,7 @@ router.post("/register", async (req, res, next) => {
              sim2_carrier = $14,
              sim1_country_iso = $15,
              sim2_country_iso = $16,
-             primary_phone_number = $17,
+             primary_phone_number = COALESCE($17, primary_phone_number),
              token_hash = $18,
              device_details = COALESCE(device_details, '{}'::jsonb) || $19::jsonb,
              registration_status = 'active',
@@ -101,7 +101,7 @@ router.post("/register", async (req, res, next) => {
           body.sim2Carrier ?? null,
           body.sim1CountryIso ?? null,
           body.sim2CountryIso ?? null,
-          body.primaryPhoneNumber ?? null,
+          body.primaryPhoneNumber || body.primary_phone_number || body.phoneNumber || body.phone || null,
           tokenHash,
           JSON.stringify(details),
         ]
@@ -140,7 +140,7 @@ router.post("/register", async (req, res, next) => {
           body.sim2Carrier ?? null,
           body.sim1CountryIso ?? null,
           body.sim2CountryIso ?? null,
-          body.primaryPhoneNumber ?? null,
+          body.primaryPhoneNumber || body.primary_phone_number || body.phoneNumber || body.phone || null,
           tokenHash,
           JSON.stringify(details),
         ]
