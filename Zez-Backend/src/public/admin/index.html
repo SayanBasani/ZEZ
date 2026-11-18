@@ -2613,7 +2613,16 @@ versionName "1.0.1"</pre>
           document.getElementById('chatMessagesStream').innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 80px;">No message activity found.</div>';
         }
       } catch (err) {
-        container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--negative); font-size: 13px;">Error: ${escapeHtml(err.message)}</div>`;
+        const errorMsg = (err && typeof err.message === 'string' && err.message !== '[object Object]')
+          ? err.message
+          : (typeof err === 'string' && err !== '[object Object]' ? err : 'Unable to load conversations. Please verify your connection or login again.');
+        container.innerHTML = `
+          <div style="padding: 24px 16px; text-align: center; color: var(--text-secondary);">
+            <div style="color: var(--negative); font-size: 13px; font-weight: 500; margin-bottom: 6px;">Failed to load conversations</div>
+            <div style="font-size: 12px; margin-bottom: 12px; word-break: break-word;">${escapeHtml(errorMsg)}</div>
+            <button class="btn btn-secondary btn-sm" onclick="loadAdminChats()">Retry</button>
+          </div>
+        `;
       }
     }
 
@@ -2800,7 +2809,16 @@ versionName "1.0.1"</pre>
 
         stream.scrollTop = stream.scrollHeight;
       } catch (err) {
-        stream.innerHTML = `<div style="text-align: center; color: var(--negative); margin-top: 60px;">Error loading messages: ${escapeHtml(err.message)}</div>`;
+        const errorMsg = (err && typeof err.message === 'string' && err.message !== '[object Object]')
+          ? err.message
+          : (typeof err === 'string' && err !== '[object Object]' ? err : 'Unable to load message stream.');
+        stream.innerHTML = `
+          <div style="padding: 40px 16px; text-align: center; color: var(--text-secondary);">
+            <div style="color: var(--negative); font-size: 13px; font-weight: 500; margin-bottom: 6px;">Failed to load messages</div>
+            <div style="font-size: 12px; margin-bottom: 12px;">${escapeHtml(errorMsg)}</div>
+            <button class="btn btn-secondary btn-sm" onclick="loadAdminConversationMessages('${convId}')">Retry</button>
+          </div>
+        `;
       }
     }
 

