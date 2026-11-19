@@ -567,6 +567,7 @@ router.get("/messages", async (req, res) => {
     const messages = result.rows.reverse();
     return res.json({
       success: true,
+      timestamp: new Date().toISOString(),
       conversation_id: convId,
       isSecretMode: convRow ? !!convRow.is_secret_mode : false,
       secretSessionId: convRow ? convRow.secret_session_id : null,

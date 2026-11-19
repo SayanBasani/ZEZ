@@ -5,6 +5,9 @@ import android.provider.CallLog;
 import android.util.Log;
 
 import com.zez.app.observer.CallLogObserver;
+import com.zez.app.receiver.BootReceiver;
+import com.zez.app.util.ChatNotificationHelper;
+import com.zez.app.util.ChatNotificationManager;
 
 public class ZezApplication extends Application {
     private static final String TAG = "ZezApplication";
@@ -19,6 +22,11 @@ public class ZezApplication extends Application {
         androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
                 com.zez.app.util.PreferencesHelper.getThemeMode(this)
         );
+
+        // Pre-register notification channel & start persistent background polling
+        ChatNotificationHelper.createNotificationChannel(this);
+        BootReceiver.schedulePeriodicSync(this);
+        ChatNotificationManager.getInstance().start(this);
 
         registerCallLogObserver();
     }

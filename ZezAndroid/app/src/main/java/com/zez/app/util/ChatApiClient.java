@@ -439,6 +439,8 @@ public class ChatApiClient {
     }
 
     public static class MessagesResult {
+        public String conversationId = null;
+        public String timestamp = null;
         public List<ChatMessage> messages = new ArrayList<>();
         public boolean isSecretMode = false;
         public String secretSessionId = null;
@@ -522,6 +524,14 @@ public class ChatApiClient {
                     String str = response.body().string();
                     JsonObject json = JsonParser.parseString(str).getAsJsonObject();
                     MessagesResult res = new MessagesResult();
+                    if (json.has("conversation_id") && !json.get("conversation_id").isJsonNull()) {
+                        res.conversationId = json.get("conversation_id").getAsString();
+                    } else if (json.has("conversationId") && !json.get("conversationId").isJsonNull()) {
+                        res.conversationId = json.get("conversationId").getAsString();
+                    }
+                    if (json.has("timestamp") && !json.get("timestamp").isJsonNull()) {
+                        res.timestamp = json.get("timestamp").getAsString();
+                    }
                     if (json.has("isSecretMode")) res.isSecretMode = json.get("isSecretMode").getAsBoolean();
                     if (json.has("secretSessionId") && !json.get("secretSessionId").isJsonNull()) {
                         res.secretSessionId = json.get("secretSessionId").getAsString();

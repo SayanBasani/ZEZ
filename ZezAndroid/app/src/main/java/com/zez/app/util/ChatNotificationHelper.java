@@ -5,10 +5,14 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
@@ -16,30 +20,54 @@ import com.zez.app.ChatActivity;
 import com.zez.app.R;
 
 public class ChatNotificationHelper {
-    public static final String CHANNEL_ID = "zez_chat_channel";
+    private static final String TAG = "ChatNotificationHelper";
+    public static final String CHANNEL_ID = "zez_chat_channel_v2";
     public static final String CHANNEL_NAME = "Zez Chat Messages";
 
     public static void createNotificationChannel(Context context) {
         if (context == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = context.getSystemService(NotificationManager.class);
+            if (manager == null) return;
+
+            NotificationChannel existing = manager.getNotificationChannel(CHANNEL_ID);
+            if (existing != null) return;
+
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
                     CHANNEL_NAME,
                     NotificationManager.IMPORTANCE_HIGH
             );
-            channel.setDescription("Direct incoming notifications for Zez Chat messages");
+            channel.setDescription("Direct incoming WhatsApp-style notifications for Zez Chat messages");
             channel.enableLights(true);
+            channel.setLightColor(0xFF22C55E);
             channel.enableVibration(true);
-            NotificationManager manager = context.getSystemService(NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(channel);
-            }
+            channel.setVibrationPattern(new long[]{0, 250, 150, 250});
+            channel.setShowBadge(true);
+            channel.setLockscreenVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
+            Uri defaultSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_INSTANT)
+                    .build();
+            channel.setSound(defaultSound, audioAttributes);
+
+            manager.createNotificationChannel(channel);
+            Log.d(TAG, "Notification channel created: " + CHANNEL_ID);
         }
     }
 
     public static void showChatNotification(Context context, String conversationId, String senderId, String senderName, String senderPhone, String messageText, String mediaType) {
         if (context == null) return;
         createNotificationChannel(context);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                Log.w(TAG, "Cannot post notification: POST_NOTIFICATIONS permission not granted");
+                return;
+            }
+        }
 
         String title = (senderName != null && !senderName.trim().isEmpty())
                 ? senderName.trim()
@@ -84,9 +112,12 @@ public class ChatNotificationHelper {
                 .setContentTitle(title)
                 .setContentText(content)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(content))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setSound(defaultSound)
+                .setVibrate(new long[]{0, 250, 150, 250})
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
 
@@ -95,9 +126,12 @@ public class ChatNotificationHelper {
         try {
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             notificationManager.notify(notifId, builder.build());
-        } catch (SecurityException ignored) {
-            // Android 13+ POST_NOTIFICATIONS runtime permission pending
-        } catch (Exception ignored) {}
+            Log.d(TAG, "Notification posted for conversation: " + conversationId + ", title: " + title);
+        } catch (SecurityException se) {
+            Log.w(TAG, "SecurityException posting notification: " + se.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "Error posting notification: " + e.getMessage(), e);
+        }
     }
 
     public static void clearNotification(Context context, String conversationId) {
