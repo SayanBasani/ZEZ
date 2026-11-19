@@ -47,6 +47,7 @@ import com.zez.app.util.ApiClient;
 import com.zez.app.util.CallLogHelper;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatNotificationHelper;
+import com.zez.app.util.ChatNotificationManager;
 import com.zez.app.util.ChatPreferencesHelper;
 import com.zez.app.util.DeviceHelper;
 import com.zez.app.util.MediaHelper;
@@ -596,10 +597,39 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (ChatPreferencesHelper.isChatRegistered(this)) {
+            ChatNotificationManager.getInstance().start(this);
+            ChatNotificationManager.getInstance().setChatsUpdateListener(this::onBackgroundChatsUpdate);
             if (currentTab == R.id.nav_chats) {
                 loadChatsData();
             }
             startChatListPolling();
+        }
+    }
+
+    private void onBackgroundChatsUpdate(List<ChatConversation> conversations) {
+        if (conversations == null) return;
+        int totalUnread = 0;
+        for (ChatConversation conv : conversations) {
+            totalUnread += conv.getUnreadCount();
+        }
+        if (bottomNav != null) {
+            if (totalUnread > 0) {
+                com.google.android.material.badge.BadgeDrawable badge = bottomNav.getOrCreateBadge(R.id.nav_chats);
+                badge.setNumber(totalUnread);
+                badge.setVisible(true);
+            } else {
+                bottomNav.removeBadge(R.id.nav_chats);
+            }
+        }
+        if (currentTab == R.id.nav_chats) {
+            allLoadedConversations.clear();
+            allLoadedConversations.addAll(conversations);
+            if (layoutChatsEmpty != null) {
+                layoutChatsEmpty.setVisibility(allLoadedConversations.isEmpty() ? View.VISIBLE : View.GONE);
+            }
+            if (conversationsAdapter != null) {
+                conversationsAdapter.setConversations(allLoadedConversations);
+            }
         }
     }
 

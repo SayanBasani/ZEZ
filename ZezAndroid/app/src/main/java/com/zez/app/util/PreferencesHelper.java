@@ -81,11 +81,8 @@ public class PreferencesHelper {
             }
             return saved.trim();
         }
-        // In development emulator, default to local hosted backend
-        if (isEmulator()) {
-            return EMULATOR_API_URL;
-        }
-        // For normal users / physical devices, default to production hosted backend
+        // Use BACKEND_URL from assets/backend_config.properties for all devices
+        // so that physical mobile and Android Studio emulator connect to the same backend
         String assetUrl = getAssetConfigUrl(context);
         if (assetUrl != null && !assetUrl.trim().isEmpty()) {
             return assetUrl.trim();

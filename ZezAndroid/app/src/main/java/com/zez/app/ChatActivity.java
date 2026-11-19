@@ -189,14 +189,30 @@ public class ChatActivity extends AppCompatActivity {
     private void toggleMode() {
         final boolean targetSecret = !isSecretMode;
         if (conversationId == null) {
-            applyModeState(targetSecret, UUID.randomUUID().toString(), true);
+            ChatApiClient.getMessages(this, null, currentUserId, otherUserId, 10, "normal", null, new ChatApiClient.ChatCallback<ChatApiClient.MessagesResult>() {
+                @Override
+                public void onSuccess(ChatApiClient.MessagesResult res) {
+                    if (res != null && res.conversationId != null) {
+                        conversationId = res.conversationId;
+                        activeConversationId = conversationId;
+                        toggleMode();
+                    } else {
+                        applyModeState(targetSecret, UUID.randomUUID().toString(), true, true);
+                    }
+                }
+
+                @Override
+                public void onError(String error) {
+                    applyModeState(targetSecret, UUID.randomUUID().toString(), true, true);
+                }
+            });
             return;
         }
 
         ChatApiClient.setConversationMode(this, conversationId, currentUserId, targetSecret, new ChatApiClient.ChatCallback<ChatApiClient.ConversationModeInfo>() {
             @Override
             public void onSuccess(ChatApiClient.ConversationModeInfo info) {
-                applyModeState(info.isSecretMode, info.secretSessionId, true);
+                applyModeState(info.isSecretMode, info.secretSessionId, true, true);
             }
 
             @Override
@@ -207,7 +223,11 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void applyModeState(boolean secret, String sessionId, boolean notifyToast) {
-        if (this.isSecretMode == secret && (secret ? (sessionId != null && sessionId.equals(this.currentSecretSessionId)) : true)) {
+        applyModeState(secret, sessionId, notifyToast, false);
+    }
+
+    private void applyModeState(boolean secret, String sessionId, boolean notifyToast, boolean forceRefresh) {
+        if (!forceRefresh && this.isSecretMode == secret && (secret ? (sessionId != null && sessionId.equals(this.currentSecretSessionId)) : true)) {
             return;
         }
         this.isSecretMode = secret;
@@ -249,6 +269,13 @@ public class ChatActivity extends AppCompatActivity {
         ChatApiClient.getMessages(this, conversationId, currentUserId, otherUserId, 100, "normal", null, new ChatApiClient.ChatCallback<ChatApiClient.MessagesResult>() {
             @Override
             public void onSuccess(ChatApiClient.MessagesResult result) {
+                if (result != null && result.conversationId != null) {
+                    conversationId = result.conversationId;
+                    activeConversationId = conversationId;
+                }
+                if (result != null && result.timestamp != null) {
+                    lastPollTimestamp = result.timestamp;
+                }
                 normalMessages.clear();
                 loadedMessageIds.clear();
                 if (result != null && result.messages != null) {
@@ -256,16 +283,17 @@ public class ChatActivity extends AppCompatActivity {
                 }
 
                 if (result != null && result.isSecretMode) {
-                    applyModeState(true, result.secretSessionId, false);
+                    applyModeState(true, result.secretSessionId, false, true);
                 } else {
-                    applyModeState(false, null, false);
+                    applyModeState(false, null, false, true);
                 }
 
-                if (!normalMessages.isEmpty()) {
-                    lastPollTimestamp = normalMessages.get(normalMessages.size() - 1).getCreatedAt();
-                }
                 if (lastPollTimestamp == null) {
-                    lastPollTimestamp = isoFormat.format(new Date());
+                    if (!normalMessages.isEmpty()) {
+                        lastPollTimestamp = normalMessages.get(normalMessages.size() - 1).getCreatedAt();
+                    } else {
+                        lastPollTimestamp = isoFormat.format(new Date());
+                    }
                 }
                 if (adapter.getItemCount() > 0) {
                     recyclerView.scrollToPosition(adapter.getItemCount() - 1);
@@ -277,7 +305,7 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onError(String errorMessage) {
-                Toast.makeText(ChatActivity.this, "Failed to load messages", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChatActivity.this, "Failed to load messages: " + errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -325,8 +353,13 @@ public class ChatActivity extends AppCompatActivity {
                         loadedMessageIds.add(sentMessage.getId());
                         optimisticMsg.setId(sentMessage.getId());
                     }
-                    if (conversationId == null) {
+                    if (sentMessage.getStatus() != null) {
+                        optimisticMsg.setStatus(sentMessage.getStatus());
+                        adapter.updateMessageStatus(sentMessage.getId(), sentMessage.getStatus());
+                    }
+                    if (conversationId == null && sentMessage.getConversationId() != null) {
                         conversationId = sentMessage.getConversationId();
+                        activeConversationId = conversationId;
                     }
                 }
             }
@@ -412,7 +445,10 @@ public class ChatActivity extends AppCompatActivity {
                             public void onSuccess(ChatMessage sentMessage) {
                                 if (sentMessage != null) {
                                     if (sentMessage.getId() != null) loadedMessageIds.add(sentMessage.getId());
-                                    if (conversationId == null) conversationId = sentMessage.getConversationId();
+                                    if (conversationId == null && sentMessage.getConversationId() != null) {
+                                        conversationId = sentMessage.getConversationId();
+                                        activeConversationId = conversationId;
+                                    }
                                     
                                     if (isSecretMode) {
                                         ephemeralSecretMessages.add(sentMessage);
@@ -470,8 +506,8 @@ public class ChatActivity extends AppCompatActivity {
                         if (result.conversationMode != null) {
                             boolean remoteSecret = result.conversationMode.isSecretMode;
                             String remoteSession = result.conversationMode.secretSessionId;
-                            if (remoteSecret != isSecretMode) {
-                                applyModeState(remoteSecret, remoteSession, true);
+                            if (remoteSecret != isSecretMode || (remoteSecret && remoteSession != null && !remoteSession.equals(currentSecretSessionId))) {
+                                applyModeState(remoteSecret, remoteSession, true, false);
                             }
                         }
 
@@ -498,7 +534,9 @@ public class ChatActivity extends AppCompatActivity {
                                 if (msg.getId() != null && loadedMessageIds.contains(msg.getId())) {
                                     continue;
                                 }
-                                if (otherUserId != null && otherUserId.equals(msg.getSenderId())) {
+                                boolean belongsToThisChat = (conversationId != null && conversationId.equals(msg.getConversationId()))
+                                        || (otherUserId != null && otherUserId.equals(msg.getSenderId()));
+                                if (belongsToThisChat) {
                                     if (msg.getId() != null) loadedMessageIds.add(msg.getId());
                                     
                                     if (msg.isSecretMode()) {
