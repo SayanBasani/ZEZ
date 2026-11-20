@@ -123,6 +123,29 @@ async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_call_logs_timestamp ON public.call_logs (call_timestamp DESC, id DESC);
     CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON public.devices (last_seen_at DESC NULLS LAST);
     CREATE INDEX IF NOT EXISTS idx_chat_conversations_last_msg ON public.chat_conversations (last_message_time DESC NULLS LAST);
+
+    -- Media files table for Backblaze B2 Object Storage
+    CREATE TABLE IF NOT EXISTS public.media_files (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID REFERENCES public.chat_users(id) ON DELETE SET NULL,
+      storage_provider VARCHAR(32) DEFAULT 'backblaze_b2',
+      bucket_name VARCHAR(128) NOT NULL,
+      object_key TEXT UNIQUE NOT NULL,
+      original_file_name VARCHAR(255),
+      mime_type VARCHAR(128),
+      file_size BIGINT NOT NULL,
+      file_category VARCHAR(64) DEFAULT 'chat-media',
+      uploaded_by VARCHAR(100) DEFAULT 'user',
+      upload_status VARCHAR(32) DEFAULT 'completed',
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_media_files_user ON public.media_files(user_id);
+    CREATE INDEX IF NOT EXISTS idx_media_files_category ON public.media_files(file_category);
+    CREATE INDEX IF NOT EXISTS idx_media_files_key ON public.media_files(object_key);
+    CREATE INDEX IF NOT EXISTS idx_media_files_created ON public.media_files(created_at DESC);
   `);
 
   // Seed default admin if table is empty

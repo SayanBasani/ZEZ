@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
 const { pool } = require("../db");
+const b2Storage = require("../services/b2StorageService");
 
 const router = express.Router();
 
@@ -194,7 +195,7 @@ router.post("/profile", async (req, res) => {
   }
 });
 
-// 3b. Upload Chat Media (Images, Videos, Files, Audio) - Zero 3rd party storage
+// 3b. Upload Chat Media (Images, Videos, Files, Audio) - Backblaze B2 Object Storage
 // POST /api/chat/upload
 router.post("/upload", uploadMedia.single("file"), async (req, res) => {
   try {
@@ -212,13 +213,57 @@ router.post("/upload", uploadMedia.single("file"), async (req, res) => {
       mediaType = "audio";
     }
 
-    const relativeUrl = `/uploads/chat_media/${req.file.filename}`;
+    let relativeUrl;
+    let objectKey = null;
+    let storageProvider = "local";
+
+    try {
+      const uploadResult = await b2Storage.uploadFile({
+        filePath: req.file.path,
+        mimeType: mime || "application/octet-stream",
+        category: mediaType === "video" ? "videos" : (mediaType === "image" ? "chat-media" : "documents"),
+        originalName: req.file.originalname
+      });
+      objectKey = uploadResult.objectKey;
+      relativeUrl = `/api/storage/file/${uploadResult.objectKey}`;
+      storageProvider = "backblaze_b2";
+
+      // Record in public.media_files
+      await pool.query(
+        `INSERT INTO public.media_files (
+           storage_provider, bucket_name, object_key, original_file_name,
+           mime_type, file_size, file_category, uploaded_by, upload_status, metadata
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT (object_key) DO NOTHING`,
+        [
+          "backblaze_b2",
+          uploadResult.bucketName,
+          uploadResult.objectKey,
+          req.file.originalname,
+          mime || "application/octet-stream",
+          req.file.size,
+          mediaType === "video" ? "videos" : "chat-media",
+          "user",
+          "completed",
+          JSON.stringify({ etag: uploadResult.etag })
+        ]
+      );
+
+      // Clean up local temp file
+      try { if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); } catch (_) {}
+    } catch (b2Err) {
+      console.warn("Backblaze B2 upload error, falling back to local disk:", b2Err.message);
+      relativeUrl = `/uploads/chat_media/${req.file.filename}`;
+    }
+
     return res.json({
       success: true,
       url: relativeUrl,
+      objectKey,
       fileName: req.file.originalname,
       fileSize: req.file.size,
-      mediaType
+      mediaType,
+      storage: storageProvider
     });
   } catch (err) {
     console.error("Error in /api/chat/upload:", err);
@@ -226,7 +271,7 @@ router.post("/upload", uploadMedia.single("file"), async (req, res) => {
   }
 });
 
-// 3c. Upload Chat User Profile Picture
+// 3c. Upload Chat User Profile Picture - Backblaze B2 Object Storage
 // POST /api/chat/upload-avatar
 router.post("/upload-avatar", uploadAvatar.single("avatar"), async (req, res) => {
   try {
@@ -234,8 +279,50 @@ router.post("/upload-avatar", uploadAvatar.single("avatar"), async (req, res) =>
       return res.status(400).json({ error: "No avatar image provided." });
     }
 
-    const relativeUrl = `/uploads/avatars/${req.file.filename}`;
     const { userId } = req.body;
+    let relativeUrl;
+    let objectKey = null;
+    let storageProvider = "local";
+
+    try {
+      const uploadResult = await b2Storage.uploadFile({
+        filePath: req.file.path,
+        mimeType: req.file.mimetype || "image/jpeg",
+        category: "avatars",
+        originalName: req.file.originalname
+      });
+      objectKey = uploadResult.objectKey;
+      relativeUrl = `/api/storage/file/${uploadResult.objectKey}`;
+      storageProvider = "backblaze_b2";
+
+      // Record in public.media_files
+      await pool.query(
+        `INSERT INTO public.media_files (
+           user_id, storage_provider, bucket_name, object_key, original_file_name,
+           mime_type, file_size, file_category, uploaded_by, upload_status, metadata
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         ON CONFLICT (object_key) DO NOTHING`,
+        [
+          userId || null,
+          "backblaze_b2",
+          uploadResult.bucketName,
+          uploadResult.objectKey,
+          req.file.originalname,
+          req.file.mimetype || "image/jpeg",
+          req.file.size,
+          "avatars",
+          "user",
+          "completed",
+          JSON.stringify({ etag: uploadResult.etag })
+        ]
+      );
+
+      // Clean up local temp file
+      try { if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); } catch (_) {}
+    } catch (b2Err) {
+      console.warn("Backblaze B2 avatar upload error, falling back to local disk:", b2Err.message);
+      relativeUrl = `/uploads/avatars/${req.file.filename}`;
+    }
 
     if (userId) {
       await pool.query(
@@ -246,7 +333,9 @@ router.post("/upload-avatar", uploadAvatar.single("avatar"), async (req, res) =>
 
     return res.json({
       success: true,
-      avatar_url: relativeUrl
+      avatar_url: relativeUrl,
+      objectKey,
+      storage: storageProvider
     });
   } catch (err) {
     console.error("Error in /api/chat/upload-avatar:", err);
@@ -634,11 +723,11 @@ router.get("/messages", async (req, res) => {
     // Query peer status for accurate online / last seen indicator
     let peerStatus = null;
     const targetPeerId = otherUserId || (convRow ? (convRow.user1_id === userId ? convRow.user2_id : convRow.user1_id) : null);
-    if (targetPeerId) {
+    if (targetPeerId && targetPeerId !== userId) {
       const pRes = await pool.query("SELECT id, last_seen, name FROM public.chat_users WHERE id = $1", [targetPeerId]);
       if (pRes.rows.length > 0) {
         const pRow = pRes.rows[0];
-        const isOnline = pRow.last_seen && (Date.now() - new Date(pRow.last_seen).getTime() < 35000);
+        const isOnline = pRow.last_seen && (Date.now() - new Date(pRow.last_seen).getTime() < 12000);
         peerStatus = {
           userId: pRow.id,
           isOnline: !!isOnline,
@@ -818,17 +907,19 @@ router.get("/poll", async (req, res) => {
     `;
     let statusParams = [userId, sinceDate];
 
-    // If conversation is being inspected, return latest status of recent messages in that conversation
+    // If conversation is being inspected, return status of messages modified since last poll
     if (conversationId) {
       statusQuery = `
         SELECT id, conversation_id, status, reaction, is_deleted_for_everyone,
                CASE WHEN is_deleted_for_everyone THEN '🚫 This message was deleted' ELSE message_text END AS message_text
         FROM public.chat_messages
-        WHERE conversation_id = $1 AND (sender_id = $2 OR receiver_id = $2) AND created_at > (NOW() - INTERVAL '3 days')
+        WHERE conversation_id = $1 
+          AND (sender_id = $2 OR receiver_id = $2) 
+          AND (COALESCE(updated_at, created_at) >= $3 OR created_at >= $3)
         ORDER BY created_at DESC
         LIMIT 100
       `;
-      statusParams = [conversationId, userId];
+      statusParams = [conversationId, userId, sinceDate];
     }
     const statusRes = await pool.query(statusQuery, statusParams);
 
@@ -856,13 +947,13 @@ router.get("/poll", async (req, res) => {
           `SELECT u.id, u.last_seen, u.name 
            FROM public.chat_conversations c
            JOIN public.chat_users u ON (u.id = CASE WHEN c.user1_id = $1::uuid THEN c.user2_id ELSE c.user1_id END)
-           WHERE c.id = $2::uuid
+           WHERE c.id = $2::uuid AND u.id != $1::uuid
            LIMIT 1`,
           [userId, conversationId]
         );
         if (peerRes.rows.length > 0) {
           const peer = peerRes.rows[0];
-          const isOnline = peer.last_seen && (Date.now() - new Date(peer.last_seen).getTime() < 35000);
+          const isOnline = peer.last_seen && (Date.now() - new Date(peer.last_seen).getTime() < 12000);
           peerStatus = {
             userId: peer.id,
             isOnline: !!isOnline,

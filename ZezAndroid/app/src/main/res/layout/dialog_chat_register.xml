@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:text="Welcome to Zez Chat"
+        android:text="Welcome to TWING Chat"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/theme_text_primary" />

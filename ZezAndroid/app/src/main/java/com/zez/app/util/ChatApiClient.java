@@ -115,6 +115,45 @@ public class ChatApiClient {
         });
     }
 
+    public static void getUserProfile(Context context, String idOrPhone, ChatCallback<ChatUser> callback) {
+        if (idOrPhone == null || idOrPhone.trim().isEmpty()) {
+            postError(callback, "idOrPhone required");
+            return;
+        }
+        String url = getBaseUrl(context) + "/api/chat/profile/" + Uri.encode(idOrPhone.trim());
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Profile fetch failed: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    postError(callback, "Profile fetch HTTP " + response.code());
+                    return;
+                }
+                try {
+                    String str = response.body().string();
+                    JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                    if (json.has("success") && json.get("success").getAsBoolean() && json.has("user")) {
+                        ChatUser user = gson.fromJson(json.get("user"), ChatUser.class);
+                        postSuccess(callback, user);
+                    } else {
+                        postError(callback, json.has("error") ? json.get("error").getAsString() : "Profile not found.");
+                    }
+                } catch (Exception e) {
+                    postError(callback, "Parse error: " + e.getMessage());
+                }
+            }
+        });
+    }
+
     public static void uploadChatMedia(Context context, Uri fileUri, String fileName, String mimeType, ChatCallback<MediaUploadResult> callback) {
         new Thread(() -> {
             try {

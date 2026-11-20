@@ -205,6 +205,10 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
         db.delete(TABLE_MESSAGES, COL_CONV_ID + " = ?", new String[]{conversationId});
     }
 
+    public synchronized void deleteConversation(String conversationId) {
+        clearConversation(conversationId);
+    }
+
     private ContentValues toContentValues(ChatMessage msg) {
         ContentValues cv = new ContentValues();
         cv.put(COL_ID, msg.getId());

@@ -411,6 +411,15 @@
                 android:ellipsize="end" />
         </LinearLayout>
 
+        <ImageView
+            android:id="@+id/iv_reply_preview_image"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:scaleType="centerCrop"
+            android:background="@drawable/bg_pill_badge"
+            android:visibility="gone" />
+
         <ImageButton
             android:id="@+id/btn_cancel_reply"
             android:layout_width="32dp"

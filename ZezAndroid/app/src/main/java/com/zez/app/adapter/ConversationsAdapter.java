@@ -1,5 +1,6 @@
 package com.zez.app.adapter;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,16 +16,25 @@ import com.zez.app.model.ChatConversation;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdapter.ViewHolder> {
     public interface OnConversationClickListener {
         void onConversationClick(ChatConversation conversation);
     }
 
+    public interface OnSelectionListener {
+        void onSelectionChanged(int count);
+    }
+
     private final List<ChatConversation> conversations = new ArrayList<>();
+    private final Set<String> selectedConversationIds = new HashSet<>();
+    private boolean isSelectionMode = false;
     private final OnConversationClickListener listener;
+    private OnSelectionListener selectionListener;
     private final SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy", Locale.getDefault());
@@ -32,6 +42,66 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     public ConversationsAdapter(OnConversationClickListener listener) {
         this.listener = listener;
         setHasStableIds(true);
+    }
+
+    public void setOnSelectionListener(OnSelectionListener selectionListener) {
+        this.selectionListener = selectionListener;
+    }
+
+    public boolean isSelectionMode() {
+        return isSelectionMode;
+    }
+
+    public int getSelectedCount() {
+        return selectedConversationIds.size();
+    }
+
+    public List<ChatConversation> getSelectedConversations() {
+        List<ChatConversation> selected = new ArrayList<>();
+        for (ChatConversation c : conversations) {
+            if (c.getConversationId() != null && selectedConversationIds.contains(c.getConversationId())) {
+                selected.add(c);
+            }
+        }
+        return selected;
+    }
+
+    public void selectAll() {
+        selectedConversationIds.clear();
+        for (ChatConversation c : conversations) {
+            if (c.getConversationId() != null) {
+                selectedConversationIds.add(c.getConversationId());
+            }
+        }
+        isSelectionMode = !selectedConversationIds.isEmpty();
+        notifyDataSetChanged();
+        if (selectionListener != null) {
+            selectionListener.onSelectionChanged(selectedConversationIds.size());
+        }
+    }
+
+    public void clearSelection() {
+        selectedConversationIds.clear();
+        isSelectionMode = false;
+        notifyDataSetChanged();
+        if (selectionListener != null) {
+            selectionListener.onSelectionChanged(0);
+        }
+    }
+
+    public void toggleSelection(ChatConversation conv) {
+        if (conv == null || conv.getConversationId() == null) return;
+        String id = conv.getConversationId();
+        if (selectedConversationIds.contains(id)) {
+            selectedConversationIds.remove(id);
+        } else {
+            selectedConversationIds.add(id);
+        }
+        isSelectionMode = !selectedConversationIds.isEmpty();
+        notifyDataSetChanged();
+        if (selectionListener != null) {
+            selectionListener.onSelectionChanged(selectedConversationIds.size());
+        }
     }
 
     @Override
@@ -56,7 +126,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
                 }
             }
             if (identical) {
-                return; // Nothing changed: skip notifyDataSetChanged to eliminate flickering
+                return;
             }
         }
         conversations.clear();
@@ -87,7 +157,8 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatConversation item = conversations.get(position);
-        holder.bind(item, listener, isoFormat, timeFormat, dateFormat);
+        boolean isSelected = item.getConversationId() != null && selectedConversationIds.contains(item.getConversationId());
+        holder.bind(item, isSelected, this, listener, isoFormat, timeFormat, dateFormat);
     }
 
     @Override
@@ -96,8 +167,10 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
+        View layoutRoot;
         ImageView ivAvatar;
         TextView tvInitials;
+        ImageView ivCheckBadge;
         TextView tvName;
         TextView tvTime;
         ImageView ivTick;
@@ -106,8 +179,10 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+            layoutRoot = itemView.findViewById(R.id.layout_conv_root);
             ivAvatar = itemView.findViewById(R.id.iv_conv_avatar);
             tvInitials = itemView.findViewById(R.id.tv_conv_avatar_initials);
+            ivCheckBadge = itemView.findViewById(R.id.iv_conv_check_badge);
             tvName = itemView.findViewById(R.id.tv_conv_name);
             tvTime = itemView.findViewById(R.id.tv_conv_time);
             ivTick = itemView.findViewById(R.id.iv_conv_tick);
@@ -115,7 +190,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             tvUnreadBadge = itemView.findViewById(R.id.tv_conv_unread_badge);
         }
 
-        void bind(ChatConversation item, OnConversationClickListener listener, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt, SimpleDateFormat dateFmt) {
+        void bind(ChatConversation item, boolean isSelected, ConversationsAdapter adapter, OnConversationClickListener listener, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt, SimpleDateFormat dateFmt) {
             String myUserId = com.zez.app.util.ChatPreferencesHelper.getUserId(itemView.getContext());
             String displayName;
             if (item.getOtherUserId() != null && item.getOtherUserId().equals(myUserId)) {
@@ -125,9 +200,25 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             }
             tvName.setText(displayName);
 
+            // Selection state: row background and green checkmark badge
+            if (isSelected) {
+                if (layoutRoot != null) layoutRoot.setBackgroundColor(Color.parseColor("#1B2E24")); // WhatsApp selection green
+                if (ivCheckBadge != null) ivCheckBadge.setVisibility(View.VISIBLE);
+            } else {
+                if (layoutRoot != null) layoutRoot.setBackgroundColor(Color.TRANSPARENT);
+                if (ivCheckBadge != null) ivCheckBadge.setVisibility(View.GONE);
+            }
+
             String avatarUrl = item.getOtherUserAvatar();
+            if (item.getOtherUserId() != null && item.getOtherUserId().equals(myUserId)) {
+                if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
+                    avatarUrl = com.zez.app.util.ChatPreferencesHelper.getUserAvatar(itemView.getContext());
+                }
+            }
             if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
                 String fullUrl = com.zez.app.util.ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), avatarUrl);
+                ivAvatar.setImageTintList(null);
+                ivAvatar.setPadding(0, 0, 0, 0);
                 com.bumptech.glide.Glide.with(itemView.getContext())
                         .load(fullUrl)
                         .circleCrop()
@@ -136,7 +227,10 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
                         .into(ivAvatar);
                 if (tvInitials != null) tvInitials.setVisibility(View.GONE);
             } else {
-                ivAvatar.setImageResource(R.drawable.bg_circle_glass);
+                int p = (int) (10 * itemView.getContext().getResources().getDisplayMetrics().density);
+                ivAvatar.setPadding(p, p, p, p);
+                ivAvatar.setImageTintList(androidx.core.content.ContextCompat.getColorStateList(itemView.getContext(), R.color.theme_text_secondary));
+                ivAvatar.setImageResource(R.drawable.ic_person);
                 if (tvInitials != null) {
                     tvInitials.setVisibility(View.VISIBLE);
                     tvInitials.setText(displayName != null && !displayName.isEmpty() ? String.valueOf(displayName.charAt(0)).toUpperCase(java.util.Locale.ROOT) : "?");
@@ -183,8 +277,18 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
                 tvLastMessage.setTextColor(itemView.getContext().getResources().getColor(R.color.theme_text_secondary));
             }
 
+            itemView.setOnLongClickListener(v -> {
+                v.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                adapter.toggleSelection(item);
+                return true;
+            });
+
             itemView.setOnClickListener(v -> {
-                if (listener != null) listener.onConversationClick(item);
+                if (adapter.isSelectionMode()) {
+                    adapter.toggleSelection(item);
+                } else if (listener != null) {
+                    listener.onConversationClick(item);
+                }
             });
         }
     }

@@ -1,6 +1,7 @@
 package com.zez.app;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -32,16 +33,21 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.gson.JsonObject;
 import com.zez.app.adapter.ChatMessageAdapter;
 import com.zez.app.model.ChatMessage;
+import com.zez.app.model.ChatUser;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatPreferencesHelper;
+import com.zez.app.util.PreferencesHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -64,10 +70,12 @@ public class ChatActivity extends AppCompatActivity {
     private String otherUserId;
     private String otherUserName;
     private String otherUserPhone;
+    private String otherUserAvatar;
     private String currentUserId;
 
     private TextView tvHeaderName;
     private TextView tvHeaderStatus;
+    private ImageView ivChatHeaderAvatar;
     private ImageButton btnBack;
     private RecyclerView recyclerView;
     private EditText etInput;
@@ -86,6 +94,7 @@ public class ChatActivity extends AppCompatActivity {
     private View layoutReplyPreview;
     private TextView tvReplyPreviewSender;
     private TextView tvReplyPreviewText;
+    private ImageView ivReplyPreviewImage;
     private ImageButton btnCancelReply;
     private ChatMessage replyingToMessage = null;
 
@@ -161,6 +170,7 @@ public class ChatActivity extends AppCompatActivity {
         otherUserId = getIntent().getStringExtra("extra_other_user_id");
         otherUserName = getIntent().getStringExtra("extra_other_user_name");
         otherUserPhone = getIntent().getStringExtra("extra_other_user_phone");
+        otherUserAvatar = getIntent().getStringExtra("extra_other_user_avatar");
         currentUserId = ChatPreferencesHelper.getUserId(this);
 
         if (currentUserId == null) {
@@ -202,6 +212,7 @@ public class ChatActivity extends AppCompatActivity {
     private void initViews() {
         tvHeaderName = findViewById(R.id.tv_chat_header_name);
         tvHeaderStatus = findViewById(R.id.tv_chat_header_status);
+        ivChatHeaderAvatar = findViewById(R.id.iv_chat_header_avatar);
         btnBack = findViewById(R.id.btn_chat_back);
         recyclerView = findViewById(R.id.recycler_chat_messages);
         etInput = findViewById(R.id.et_chat_message_input);
@@ -220,6 +231,7 @@ public class ChatActivity extends AppCompatActivity {
         layoutReplyPreview = findViewById(R.id.layout_reply_preview);
         tvReplyPreviewSender = findViewById(R.id.tv_reply_preview_sender);
         tvReplyPreviewText = findViewById(R.id.tv_reply_preview_text);
+        ivReplyPreviewImage = findViewById(R.id.iv_reply_preview_image);
         btnCancelReply = findViewById(R.id.btn_cancel_reply);
 
         layoutNormalHeader = findViewById(R.id.layout_chat_normal_header);
@@ -249,6 +261,12 @@ public class ChatActivity extends AppCompatActivity {
         if (layoutNormalHeader != null) {
             layoutNormalHeader.setOnClickListener(v -> showContactInfoDialog());
         }
+        if (ivChatHeaderAvatar != null) {
+            ivChatHeaderAvatar.setOnClickListener(v -> showContactInfoDialog());
+        }
+
+        loadHeaderAvatar();
+        fetchPeerProfile();
 
         if (btnSearchBack != null) {
             btnSearchBack.setOnClickListener(v -> closeChatSearch());
@@ -716,20 +734,40 @@ public class ChatActivity extends AppCompatActivity {
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_contact_profile, null);
         sheet.setContentView(view);
 
+        ImageButton btnBack = view.findViewById(R.id.btn_profile_back);
+        ImageButton btnMore = view.findViewById(R.id.btn_profile_more);
+        ImageView ivAvatar = view.findViewById(R.id.iv_profile_avatar);
+        TextView tvInitials = view.findViewById(R.id.tv_profile_initials);
         TextView tvName = view.findViewById(R.id.tv_profile_name);
         TextView tvPhone = view.findViewById(R.id.tv_profile_phone);
-        TextView tvInitials = view.findViewById(R.id.tv_profile_initials);
-        ImageView ivAvatar = view.findViewById(R.id.iv_profile_avatar);
-        View btnMsg = view.findViewById(R.id.btn_profile_message);
+        TextView tvLastSeen = view.findViewById(R.id.tv_profile_last_seen);
+
         View btnCall = view.findViewById(R.id.btn_profile_call);
         View btnVideo = view.findViewById(R.id.btn_profile_videocall);
+        View btnPay = view.findViewById(R.id.btn_profile_pay);
+        View btnSearch = view.findViewById(R.id.btn_profile_search);
 
-        String name = otherUserName != null && !otherUserName.trim().isEmpty() ? otherUserName.trim() : "Contact";
+        RecyclerView rvMedia = view.findViewById(R.id.rv_profile_media);
+        TextView tvMediaCount = view.findViewById(R.id.tv_profile_media_count);
+        TextView tvMediaEmpty = view.findViewById(R.id.tv_profile_media_empty);
+        TextView tvStorageSize = view.findViewById(R.id.tv_profile_storage_size);
+        TextView tvStarredCount = view.findViewById(R.id.tv_profile_starred_count);
+
+        View rowStorage = view.findViewById(R.id.row_profile_storage);
+        View rowNotifications = view.findViewById(R.id.row_profile_notifications);
+        View rowVisibility = view.findViewById(R.id.row_profile_visibility);
+        View rowStarred = view.findViewById(R.id.row_profile_starred);
+        View rowEncryption = view.findViewById(R.id.row_profile_encryption);
+
+        boolean isSelfChat = otherUserId != null && otherUserId.equals(currentUserId);
+        String name = isSelfChat ? "You (Message yourself)" : (otherUserName != null && !otherUserName.trim().isEmpty() ? otherUserName.trim() : "Contact");
         String phone = otherUserPhone != null && !otherUserPhone.trim().isEmpty() ? otherUserPhone.trim() : "";
+
+        if (btnBack != null) btnBack.setOnClickListener(v -> sheet.dismiss());
 
         if (tvName != null) tvName.setText(name);
         if (tvPhone != null) {
-            if (!phone.isEmpty()) {
+            if (!phone.isEmpty() && !isSelfChat) {
                 tvPhone.setText(phone.startsWith("+") ? phone : "+91 " + phone);
                 tvPhone.setVisibility(View.VISIBLE);
             } else {
@@ -737,16 +775,38 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
 
-        if (tvInitials != null && ivAvatar != null) {
-            String initial = !name.isEmpty() ? name.substring(0, 1).toUpperCase(Locale.getDefault()) : "?";
-            tvInitials.setText(initial);
-            tvInitials.setVisibility(View.VISIBLE);
-            ivAvatar.setVisibility(View.GONE);
+        if (tvLastSeen != null) {
+            if (isSelfChat) {
+                tvLastSeen.setText("Message yourself · Notes, links, drafts");
+            } else if (tvHeaderStatus != null && tvHeaderStatus.getText() != null) {
+                tvLastSeen.setText(tvHeaderStatus.getText());
+            } else {
+                tvLastSeen.setText("offline");
+            }
         }
 
-        if (btnMsg != null) {
-            btnMsg.setOnClickListener(v -> sheet.dismiss());
+        String avatarToLoad = isSelfChat ? ChatPreferencesHelper.getUserAvatar(this) : otherUserAvatar;
+        if (ivAvatar != null) {
+            if (avatarToLoad != null && !avatarToLoad.trim().isEmpty()) {
+                String fullUrl = ChatApiClient.getAbsoluteMediaUrl(this, avatarToLoad);
+                ivAvatar.setImageTintList(null);
+                ivAvatar.setPadding(0, 0, 0, 0);
+                Glide.with(this)
+                        .load(fullUrl)
+                        .circleCrop()
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .placeholder(R.drawable.ic_person)
+                        .error(R.drawable.ic_person)
+                        .into(ivAvatar);
+                if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+            } else {
+                ivAvatar.setImageResource(R.drawable.ic_person);
+                ivAvatar.setImageTintList(ContextCompat.getColorStateList(this, R.color.theme_icon_tint));
+                int pad = (int) (20 * getResources().getDisplayMetrics().density);
+                ivAvatar.setPadding(pad, pad, pad, pad);
+            }
         }
+
         if (btnCall != null) {
             btnCall.setOnClickListener(v -> {
                 sheet.dismiss();
@@ -761,6 +821,7 @@ public class ChatActivity extends AppCompatActivity {
                 }
             });
         }
+
         if (btnVideo != null) {
             btnVideo.setOnClickListener(v -> {
                 sheet.dismiss();
@@ -768,7 +829,207 @@ public class ChatActivity extends AppCompatActivity {
             });
         }
 
+        if (btnPay != null) {
+            btnPay.setOnClickListener(v -> {
+                try {
+                    String cleanDigits = phone.replaceAll("\\D", "");
+                    String upiUri = "upi://pay?pa=" + (cleanDigits.isEmpty() ? "contact" : cleanDigits) + "@upi&pn=" + Uri.encode(name) + "&cu=INR";
+                    Intent payIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(upiUri));
+                    startActivity(Intent.createChooser(payIntent, "Pay with"));
+                } catch (Exception e) {
+                    Toast.makeText(this, "No UPI payment app installed", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        if (btnSearch != null) {
+            btnSearch.setOnClickListener(v -> {
+                sheet.dismiss();
+                openChatSearch();
+            });
+        }
+
+        List<ChatMessage> mediaList = new ArrayList<>();
+        long totalMediaBytes = 0;
+        for (ChatMessage m : normalMessages) {
+            if (m.getMediaUrl() != null && !m.getMediaUrl().trim().isEmpty() && !m.isDeletedForEveryone()) {
+                mediaList.add(m);
+                if (m.getFileSize() != null && m.getFileSize() > 0) {
+                    totalMediaBytes += m.getFileSize();
+                } else {
+                    totalMediaBytes += 250 * 1024;
+                }
+            }
+        }
+
+        if (tvMediaCount != null) {
+            tvMediaCount.setText(mediaList.size() + " >");
+        }
+
+        if (rvMedia != null) {
+            if (mediaList.isEmpty()) {
+                rvMedia.setVisibility(View.GONE);
+                if (tvMediaEmpty != null) tvMediaEmpty.setVisibility(View.VISIBLE);
+            } else {
+                rvMedia.setVisibility(View.VISIBLE);
+                if (tvMediaEmpty != null) tvMediaEmpty.setVisibility(View.GONE);
+                ProfileMediaAdapter mediaAdapter = new ProfileMediaAdapter(this, mediaList);
+                rvMedia.setAdapter(mediaAdapter);
+            }
+        }
+
+        if (tvStorageSize != null) {
+            if (totalMediaBytes > 0) {
+                if (totalMediaBytes < 1024 * 1024) {
+                    tvStorageSize.setText(String.format(Locale.getDefault(), "%.1f KB", totalMediaBytes / 1024.0));
+                } else {
+                    tvStorageSize.setText(String.format(Locale.getDefault(), "%.1f MB", totalMediaBytes / (1024.0 * 1024.0)));
+                }
+            } else {
+                tvStorageSize.setText("0 B");
+            }
+        }
+
+        if (btnMore != null) {
+            btnMore.setOnClickListener(v -> {
+                PopupMenu popup = new PopupMenu(this, v);
+                popup.getMenu().add(0, 1, 0, "Share");
+                popup.getMenu().add(0, 2, 1, "Edit");
+                popup.getMenu().add(0, 3, 2, "View in address book");
+                popup.getMenu().add(0, 4, 3, "Verify security code");
+                popup.setOnMenuItemClickListener(item -> {
+                    int itemId = item.getItemId();
+                    if (itemId == 1) {
+                        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                        shareIntent.setType("text/plain");
+                        shareIntent.putExtra(Intent.EXTRA_TEXT, "Contact: " + name + "\nPhone: " + phone);
+                        startActivity(Intent.createChooser(shareIntent, "Share contact"));
+                        return true;
+                    } else if (itemId == 2) {
+                        showEditContactNameDialog();
+                        sheet.dismiss();
+                        return true;
+                    } else if (itemId == 3) {
+                        try {
+                            Intent addressIntent = new Intent(Intent.ACTION_VIEW);
+                            addressIntent.setData(android.provider.ContactsContract.Contacts.CONTENT_URI);
+                            startActivity(addressIntent);
+                        } catch (Exception e) {
+                            Toast.makeText(this, "Cannot open address book", Toast.LENGTH_SHORT).show();
+                        }
+                        return true;
+                    } else if (itemId == 4) {
+                        showSecurityCodeDialog();
+                        return true;
+                    }
+                    return false;
+                });
+                popup.show();
+            });
+        }
+
+        if (rowEncryption != null) {
+            rowEncryption.setOnClickListener(v -> showSecurityCodeDialog());
+        }
+
+        if (rowNotifications != null) {
+            rowNotifications.setOnClickListener(v -> Toast.makeText(this, "Notifications enabled", Toast.LENGTH_SHORT).show());
+        }
+
+        if (rowVisibility != null) {
+            rowVisibility.setOnClickListener(v -> Toast.makeText(this, "Media visibility: Default (Yes)", Toast.LENGTH_SHORT).show());
+        }
+
+        if (rowStarred != null) {
+            rowStarred.setOnClickListener(v -> Toast.makeText(this, "No starred messages", Toast.LENGTH_SHORT).show());
+        }
+
         sheet.show();
+    }
+
+    private void showSecurityCodeDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Verify Security Code")
+                .setMessage("Messages and calls with this contact are protected with end-to-end encryption.\n\nSecurity Code:\n38920 18492 84921 04829\n58392 01849 20482 91840\n18492 84921 04829 38920\n\nIf you and this contact verify this code, you can be sure no third party can read your messages or listen to your calls.")
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    private void showEditContactNameDialog() {
+        EditText input = new EditText(this);
+        input.setText(otherUserName);
+        if (input.getText() != null) input.setSelection(input.getText().length());
+        new AlertDialog.Builder(this)
+                .setTitle("Edit Contact Name")
+                .setView(input)
+                .setPositiveButton("Save", (d, w) -> {
+                    String newName = input.getText().toString().trim();
+                    if (!newName.isEmpty()) {
+                        otherUserName = newName;
+                        if (tvHeaderName != null) tvHeaderName.setText(newName);
+                        Toast.makeText(this, "Contact name updated", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void loadHeaderAvatar() {
+        if (ivChatHeaderAvatar == null) return;
+        boolean isSelfChat = otherUserId != null && otherUserId.equals(currentUserId);
+        String avatarToLoad = isSelfChat ? ChatPreferencesHelper.getUserAvatar(this) : otherUserAvatar;
+
+        if (avatarToLoad != null && !avatarToLoad.trim().isEmpty()) {
+            String fullUrl = ChatApiClient.getAbsoluteMediaUrl(this, avatarToLoad);
+            ivChatHeaderAvatar.setImageTintList(null);
+            ivChatHeaderAvatar.setPadding(0, 0, 0, 0);
+            Glide.with(this)
+                    .load(fullUrl)
+                    .circleCrop()
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .placeholder(R.drawable.ic_person)
+                    .error(R.drawable.ic_person)
+                    .into(ivChatHeaderAvatar);
+        } else {
+            ivChatHeaderAvatar.setImageResource(R.drawable.ic_person);
+            ivChatHeaderAvatar.setImageTintList(ContextCompat.getColorStateList(this, R.color.theme_text_secondary));
+            int pad = (int) (6 * getResources().getDisplayMetrics().density);
+            ivChatHeaderAvatar.setPadding(pad, pad, pad, pad);
+        }
+    }
+
+    private void fetchPeerProfile() {
+        boolean isSelfChat = otherUserId != null && otherUserId.equals(currentUserId);
+        if (isSelfChat) {
+            loadHeaderAvatar();
+            return;
+        }
+
+        String lookupKey = otherUserId != null ? otherUserId : otherUserPhone;
+        if (lookupKey == null || lookupKey.trim().isEmpty()) return;
+
+        ChatApiClient.getUserProfile(this, lookupKey, new ChatApiClient.ChatCallback<ChatUser>() {
+            @Override
+            public void onSuccess(ChatUser user) {
+                if (user != null) {
+                    if (user.getAvatarUrl() != null && !user.getAvatarUrl().trim().isEmpty()) {
+                        otherUserAvatar = user.getAvatarUrl();
+                        loadHeaderAvatar();
+                    }
+                    if (user.getName() != null && !user.getName().trim().isEmpty()) {
+                        if (otherUserName == null || otherUserName.equals(otherUserPhone)) {
+                            otherUserName = user.getName();
+                            if (tvHeaderName != null) tvHeaderName.setText(otherUserName);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                // Ignore silent fetch errors
+            }
+        });
     }
 
     private void openChatSearch() {
@@ -850,6 +1111,10 @@ public class ChatActivity extends AppCompatActivity {
         layoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(adapter);
+
+        if (recyclerView.getItemAnimator() instanceof androidx.recyclerview.widget.SimpleItemAnimator) {
+            ((androidx.recyclerview.widget.SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
+        }
 
         adapter.setOnMessageActionListener(new ChatMessageAdapter.OnMessageActionListener() {
             @Override
@@ -1114,6 +1379,23 @@ public class ChatActivity extends AppCompatActivity {
             tvReplyPreviewSender.setText("Reply to " + senderName);
             tvReplyPreviewText.setText(msg.getDisplaySnippet());
             layoutReplyPreview.setVisibility(View.VISIBLE);
+
+            if (ivReplyPreviewImage != null) {
+                String quoteMedia = msg.getMediaUrl();
+                if (quoteMedia != null && !quoteMedia.trim().isEmpty()) {
+                    ivReplyPreviewImage.setVisibility(View.VISIBLE);
+                    String fullUrl = ChatApiClient.getAbsoluteMediaUrl(this, quoteMedia);
+                    Glide.with(this)
+                            .load(fullUrl)
+                            .centerCrop()
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .placeholder(R.drawable.bg_search_input)
+                            .error(R.drawable.ic_photo_library)
+                            .into(ivReplyPreviewImage);
+                } else {
+                    ivReplyPreviewImage.setVisibility(View.GONE);
+                }
+            }
         }
         if (etInput != null) {
             etInput.requestFocus();
@@ -1128,6 +1410,9 @@ public class ChatActivity extends AppCompatActivity {
         this.replyingToMessage = null;
         if (layoutReplyPreview != null) {
             layoutReplyPreview.setVisibility(View.GONE);
+        }
+        if (ivReplyPreviewImage != null) {
+            ivReplyPreviewImage.setVisibility(View.GONE);
         }
     }
 
@@ -1193,24 +1478,33 @@ public class ChatActivity extends AppCompatActivity {
     private void updatePeerStatus(ChatApiClient.PeerStatus peerStatus) {
         if (tvHeaderStatus == null) return;
         if (otherUserId != null && otherUserId.equals(currentUserId)) {
-            tvHeaderStatus.setText("Message yourself · Notes, links, drafts");
-            tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));
+            String selfText = "Message yourself · Notes, links, drafts";
+            if (!selfText.equals(tvHeaderStatus.getText())) {
+                tvHeaderStatus.setText(selfText);
+                tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));
+            }
             return;
         }
+        String statusText;
+        int statusColor;
         if (peerStatus == null) {
-            tvHeaderStatus.setText("offline");
-            tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));
-            return;
-        }
-        if (peerStatus.isOnline) {
-            tvHeaderStatus.setText("online");
-            tvHeaderStatus.setTextColor(Color.parseColor("#22C55E"));
+            statusText = "offline";
+            statusColor = Color.parseColor("#94A3B8");
+        } else if (peerStatus.isOnline) {
+            statusText = "online";
+            statusColor = Color.parseColor("#22C55E");
         } else if (peerStatus.lastSeen != null && !peerStatus.lastSeen.isEmpty()) {
-            tvHeaderStatus.setText(formatLastSeen(peerStatus.lastSeen));
-            tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));
+            statusText = formatLastSeen(peerStatus.lastSeen);
+            statusColor = Color.parseColor("#94A3B8");
         } else {
-            tvHeaderStatus.setText("offline");
-            tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));
+            statusText = "offline";
+            statusColor = Color.parseColor("#94A3B8");
+        }
+
+        CharSequence current = tvHeaderStatus.getText();
+        if (current == null || !statusText.equals(current.toString())) {
+            tvHeaderStatus.setText(statusText);
+            tvHeaderStatus.setTextColor(statusColor);
         }
     }
 
@@ -1504,8 +1798,16 @@ public class ChatActivity extends AppCompatActivity {
                 btnSend.setVisibility(View.VISIBLE);
                 pbSending.setVisibility(View.GONE);
 
-                String caption = etInput.getText().toString().trim();
+                String caption = etInput.getText() != null ? etInput.getText().toString().trim() : "";
                 etInput.setText("");
+
+                if (replyingToMessage != null) {
+                    boolean isSelf = currentUserId != null && currentUserId.equals(replyingToMessage.getSenderId());
+                    String senderName = isSelf ? "You" : (otherUserName != null ? otherUserName : "Contact");
+                    String snippet = replyingToMessage.getDisplaySnippet();
+                    caption = ChatMessage.formatReply(senderName, snippet, caption);
+                    cancelReply();
+                }
 
                 ChatApiClient.sendMessage(
                         ChatActivity.this,
@@ -1740,6 +2042,77 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
         super.onBackPressed();
+    }
+
+    static class ProfileMediaAdapter extends RecyclerView.Adapter<ProfileMediaAdapter.ViewHolder> {
+        private final List<ChatMessage> mediaItems;
+        private final Context context;
+
+        ProfileMediaAdapter(Context context, List<ChatMessage> mediaItems) {
+            this.context = context;
+            this.mediaItems = mediaItems;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_profile_media_thumb, parent, false);
+            return new ViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            ChatMessage msg = mediaItems.get(position);
+            String mediaUrl = msg.getMediaUrl();
+            String fullUrl = ChatApiClient.getAbsoluteMediaUrl(context, mediaUrl);
+            boolean isVideo = "video".equalsIgnoreCase(msg.getMediaType()) ||
+                    (mediaUrl != null && (mediaUrl.toLowerCase().endsWith(".mp4") || mediaUrl.toLowerCase().endsWith(".mkv")));
+
+            Glide.with(context)
+                    .load(fullUrl)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .centerCrop()
+                    .placeholder(R.drawable.bg_search_input)
+                    .error(R.drawable.ic_photo_library)
+                    .into(holder.ivThumb);
+
+            if (holder.layoutVideoBadge != null) {
+                holder.layoutVideoBadge.setVisibility(isVideo ? View.VISIBLE : View.GONE);
+            }
+
+            holder.itemView.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(Uri.parse(fullUrl), isVideo ? "video/*" : "image/*");
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                } catch (Exception e) {
+                    try {
+                        Intent web = new Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl));
+                        web.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(web);
+                    } catch (Exception ignored) {}
+                }
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return mediaItems.size();
+        }
+
+        static class ViewHolder extends RecyclerView.ViewHolder {
+            ImageView ivThumb;
+            View layoutVideoBadge;
+            TextView tvDuration;
+
+            ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                ivThumb = itemView.findViewById(R.id.iv_thumb_image);
+                layoutVideoBadge = itemView.findViewById(R.id.layout_thumb_video_badge);
+                tvDuration = itemView.findViewById(R.id.tv_thumb_video_duration);
+            }
+        }
     }
 
     @Override

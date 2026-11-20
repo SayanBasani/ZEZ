@@ -132,6 +132,8 @@ public class ContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             String avatarUrl = contact.getAvatarUrl();
             if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
                 String fullUrl = com.zez.app.util.ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), avatarUrl);
+                ivAvatar.setImageTintList(null);
+                ivAvatar.setPadding(0, 0, 0, 0);
                 com.bumptech.glide.Glide.with(itemView.getContext())
                         .load(fullUrl)
                         .circleCrop()
@@ -140,6 +142,9 @@ public class ContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                         .into(ivAvatar);
                 if (tvInitials != null) tvInitials.setVisibility(View.GONE);
             } else {
+                int p = (int) (8 * itemView.getContext().getResources().getDisplayMetrics().density);
+                ivAvatar.setPadding(p, p, p, p);
+                ivAvatar.setImageTintList(androidx.core.content.ContextCompat.getColorStateList(itemView.getContext(), R.color.theme_text_secondary));
                 ivAvatar.setImageResource(R.drawable.ic_person);
                 ivAvatar.setBackgroundResource(R.drawable.bg_circle_glass);
                 if (tvInitials != null) tvInitials.setVisibility(View.GONE);
@@ -147,7 +152,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
             if (contact.isRegistered()) {
                 String status = contact.getStatusMessage();
-                tvDetail.setText(status != null && !status.isEmpty() ? status : "Hey there! I am using Zez.");
+                tvDetail.setText(status != null && !status.isEmpty() ? status : "Hey there! I am using TWING.");
                 btnInvite.setVisibility(View.GONE);
                 itemView.setOnClickListener(v -> {
                     if (listener != null) listener.onContactClick(contact);

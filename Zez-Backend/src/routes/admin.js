@@ -6,6 +6,7 @@ const path = require("node:path");
 const { pool, hashPassword, verifyPassword } = require("../db");
 const { adminAuth, createAdminToken } = require("../middleware/adminAuth");
 const { decryptStoredPayload } = require("../crypto");
+const b2Storage = require("../services/b2StorageService");
 
 const router = express.Router();
 
@@ -1999,7 +2000,14 @@ router.get("/system/environment", adminAuth, async (req, res, next) => {
               bytes: chatMediaBytes,
               formatted: formatBytes(chatMediaBytes)
             }
-          }
+          },
+          b2Cloud: await (async () => {
+            try {
+              return await b2Storage.getStorageStats();
+            } catch (b2Err) {
+              return { isConfigured: false, status: "error", error: b2Err.message };
+            }
+          })()
         }
       }
     });
@@ -2176,6 +2184,96 @@ router.post("/system/storage/clean", adminAuth, async (req, res, next) => {
     }
 
     return res.status(400).json({ success: false, error: `Unsupported clean target: ${target}` });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/b2/stats
+ * Real-time telemetry and metrics for Backblaze B2 Object Storage.
+ */
+router.get("/b2/stats", adminAuth, async (_req, res, next) => {
+  try {
+    const stats = await b2Storage.getStorageStats();
+    return res.json({ success: true, stats });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/b2/files
+ * Lists files stored in Backblaze B2 and tracked in public.media_files.
+ */
+router.get("/b2/files", adminAuth, async (req, res, next) => {
+  try {
+    const { category = "all", search = "", limit = 100, offset = 0 } = req.query;
+
+    let query = `
+      SELECT id, user_id, storage_provider, bucket_name, object_key, original_file_name,
+             mime_type, file_size, file_category, uploaded_by, upload_status, metadata,
+             created_at, updated_at
+      FROM public.media_files
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (category && category !== "all") {
+      params.push(category);
+      query += ` AND file_category = $${params.length}`;
+    }
+
+    if (search && search.trim()) {
+      params.push(`%${search.trim()}%`);
+      query += ` AND (original_file_name ILIKE $${params.length} OR object_key ILIKE $${params.length})`;
+    }
+
+    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(Math.min(Number(limit) || 100, 200), Math.max(Number(offset) || 0, 0));
+
+    const rowsRes = await pool.query(query, params);
+
+    const files = rowsRes.rows.map(row => ({
+      ...row,
+      fileSizeFormatted: formatBytes(Number(row.file_size || 0)),
+      accessUrl: `/api/storage/file/${row.object_key}`
+    }));
+
+    return res.json({
+      success: true,
+      count: files.length,
+      files
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * DELETE /api/admin/b2/file
+ * Permanently deletes a file from Backblaze B2 and removes its database record.
+ */
+router.delete("/b2/file", adminAuth, async (req, res, next) => {
+  try {
+    const { objectKey } = req.body;
+    if (!objectKey) {
+      return res.status(400).json({ success: false, error: "objectKey is required." });
+    }
+
+    const safeKey = b2Storage.sanitizeKey(objectKey);
+
+    // Delete from Backblaze B2
+    await b2Storage.deleteFile(safeKey);
+
+    // Delete from database
+    const dbRes = await pool.query("DELETE FROM public.media_files WHERE object_key = $1 RETURNING id", [safeKey]);
+
+    return res.json({
+      success: true,
+      message: `File '${safeKey}' successfully deleted from Backblaze B2 and database.`,
+      deletedDbRecords: dbRes.rowCount
+    });
   } catch (err) {
     next(err);
   }

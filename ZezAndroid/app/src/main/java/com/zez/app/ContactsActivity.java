@@ -385,6 +385,7 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
                     intent.putExtra("extra_other_user_id", user.getId());
                     intent.putExtra("extra_other_user_name", (name.isEmpty() ? user.getName() : name));
                     intent.putExtra("extra_other_user_phone", user.getPhoneNumber());
+                    intent.putExtra("extra_other_user_avatar", user.getAvatarUrl());
                     startActivity(intent);
                     finish();
                 }
@@ -416,6 +417,7 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
             intent.putExtra("extra_other_user_id", contact.getChatUserId());
             intent.putExtra("extra_other_user_name", contact.getDisplayName());
             intent.putExtra("extra_other_user_phone", contact.getPhoneNumber());
+            intent.putExtra("extra_other_user_avatar", contact.getAvatarUrl());
             startActivity(intent);
             finish();
         }
@@ -425,7 +427,7 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
     public void onInviteClick(ChatContactItem contact) {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, "Hey " + contact.getDisplayName() + "! Let's chat on Zez: https://zez-chat-backend.onrender.com");
-        startActivity(Intent.createChooser(shareIntent, "Invite " + contact.getDisplayName() + " to Zez"));
+        shareIntent.putExtra(Intent.EXTRA_TEXT, "Hey " + contact.getDisplayName() + "! Let's chat on TWING: https://zez-chat-backend.onrender.com");
+        startActivity(Intent.createChooser(shareIntent, "Invite " + contact.getDisplayName() + " to TWING"));
     }
 }

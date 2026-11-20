@@ -18,7 +18,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.net.Uri;
@@ -78,6 +80,18 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton fabNewChat;
     private View layoutChatsEmpty;
     private EditText etSearchChats;
+
+    // Contextual Multi-Select Bar for Chats
+    private View layoutChatsSelectionBar;
+    private View layoutAppBar;
+    private ImageButton btnChatsSelectionClose;
+    private TextView tvChatsSelectionCount;
+    private ImageButton btnChatsSelectionPin;
+    private ImageButton btnChatsSelectionDelete;
+    private ImageButton btnChatsSelectionMute;
+    private ImageButton btnChatsSelectionArchive;
+    private ImageButton btnChatsSelectionMore;
+
     private androidx.core.widget.NestedScrollView scrollSettings;
     private BottomNavigationView bottomNav;
 
@@ -560,6 +574,63 @@ public class MainActivity extends AppCompatActivity {
             recyclerChats.setLayoutManager(new LinearLayoutManager(this));
             recyclerChats.setAdapter(conversationsAdapter);
         }
+
+        layoutAppBar = findViewById(R.id.app_bar);
+        layoutChatsSelectionBar = findViewById(R.id.layout_chats_selection_bar);
+        btnChatsSelectionClose = findViewById(R.id.btn_chats_selection_close);
+        tvChatsSelectionCount = findViewById(R.id.tv_chats_selection_count);
+        btnChatsSelectionPin = findViewById(R.id.btn_chats_selection_pin);
+        btnChatsSelectionDelete = findViewById(R.id.btn_chats_selection_delete);
+        btnChatsSelectionMute = findViewById(R.id.btn_chats_selection_mute);
+        btnChatsSelectionArchive = findViewById(R.id.btn_chats_selection_archive);
+        btnChatsSelectionMore = findViewById(R.id.btn_chats_selection_more);
+
+        conversationsAdapter.setOnSelectionListener(count -> {
+            if (count > 0) {
+                if (layoutAppBar != null) layoutAppBar.setVisibility(View.GONE);
+                if (layoutChatsSelectionBar != null) layoutChatsSelectionBar.setVisibility(View.VISIBLE);
+                if (tvChatsSelectionCount != null) tvChatsSelectionCount.setText(String.valueOf(count));
+            } else {
+                if (layoutChatsSelectionBar != null) layoutChatsSelectionBar.setVisibility(View.GONE);
+                if (layoutAppBar != null) layoutAppBar.setVisibility(View.VISIBLE);
+            }
+        });
+
+        if (btnChatsSelectionClose != null) {
+            btnChatsSelectionClose.setOnClickListener(v -> {
+                if (conversationsAdapter != null) conversationsAdapter.clearSelection();
+            });
+        }
+        if (btnChatsSelectionPin != null) {
+            btnChatsSelectionPin.setOnClickListener(v -> {
+                if (conversationsAdapter != null) {
+                    Toast.makeText(this, "Pinned " + conversationsAdapter.getSelectedCount() + " chat(s)", Toast.LENGTH_SHORT).show();
+                    conversationsAdapter.clearSelection();
+                }
+            });
+        }
+        if (btnChatsSelectionMute != null) {
+            btnChatsSelectionMute.setOnClickListener(v -> {
+                if (conversationsAdapter != null) {
+                    Toast.makeText(this, "Muted notifications for selected chat(s)", Toast.LENGTH_SHORT).show();
+                    conversationsAdapter.clearSelection();
+                }
+            });
+        }
+        if (btnChatsSelectionArchive != null) {
+            btnChatsSelectionArchive.setOnClickListener(v -> {
+                if (conversationsAdapter != null) {
+                    Toast.makeText(this, "Archived " + conversationsAdapter.getSelectedCount() + " chat(s)", Toast.LENGTH_SHORT).show();
+                    conversationsAdapter.clearSelection();
+                }
+            });
+        }
+        if (btnChatsSelectionDelete != null) {
+            btnChatsSelectionDelete.setOnClickListener(v -> showDeleteConversationsDialog());
+        }
+        if (btnChatsSelectionMore != null) {
+            btnChatsSelectionMore.setOnClickListener(this::showChatsSelectionOverflowMenu);
+        }
         if (swipeChats != null) {
             swipeChats.setOnRefreshListener(this::loadChatsData);
         }
@@ -609,6 +680,9 @@ public class MainActivity extends AppCompatActivity {
         // Exit gallery select mode when switching away
         if (galleryAdapter != null && galleryAdapter.isSelectMode()) {
             galleryAdapter.exitSelectMode();
+        }
+        if (conversationsAdapter != null && conversationsAdapter.isSelectionMode()) {
+            conversationsAdapter.clearSelection();
         }
 
         if (tabId == R.id.nav_chats) {
@@ -732,7 +806,70 @@ public class MainActivity extends AppCompatActivity {
         }
         intent.putExtra("extra_other_user_name", resolvedName);
         intent.putExtra("extra_other_user_phone", conv.getOtherUserPhone());
+        intent.putExtra("extra_other_user_avatar", conv.getOtherUserAvatar());
         startActivity(intent);
+    }
+
+    private void showDeleteConversationsDialog() {
+        if (conversationsAdapter == null) return;
+        List<ChatConversation> selected = conversationsAdapter.getSelectedConversations();
+        if (selected.isEmpty()) return;
+
+        new AlertDialog.Builder(this)
+                .setTitle("Delete " + selected.size() + " chat" + (selected.size() > 1 ? "s" : "") + "?")
+                .setMessage("Messages will be removed from your device.")
+                .setPositiveButton("Delete", (d, w) -> {
+                    com.zez.app.util.ChatLocalDbHelper db = com.zez.app.util.ChatLocalDbHelper.getInstance(this);
+                    for (ChatConversation c : selected) {
+                        if (c.getConversationId() != null) {
+                            db.deleteConversation(c.getConversationId());
+                            allLoadedConversations.remove(c);
+                        }
+                    }
+                    conversationsAdapter.clearSelection();
+                    conversationsAdapter.setConversations(allLoadedConversations);
+                    Toast.makeText(this, "Deleted " + selected.size() + " chat(s)", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showChatsSelectionOverflowMenu(View anchor) {
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenu().add(0, 1, 0, "Add chat shortcut");
+        popup.getMenu().add(0, 2, 1, "View contact");
+        popup.getMenu().add(0, 3, 2, "Mark as unread");
+        popup.getMenu().add(0, 4, 3, "Select all");
+        popup.getMenu().add(0, 5, 4, "Lock chat");
+        popup.getMenu().add(0, 6, 5, "Add to Favorites");
+        popup.getMenu().add(0, 7, 6, "Add to list");
+        popup.getMenu().add(0, 8, 7, "Clear chat");
+        popup.getMenu().add(0, 9, 8, "Block");
+
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == 4) {
+                if (conversationsAdapter != null) conversationsAdapter.selectAll();
+                return true;
+            } else if (id == 2) {
+                if (conversationsAdapter != null) {
+                    List<ChatConversation> selected = conversationsAdapter.getSelectedConversations();
+                    if (!selected.isEmpty()) {
+                        openChatConversation(selected.get(0));
+                    }
+                    conversationsAdapter.clearSelection();
+                }
+                return true;
+            } else if (id == 8) {
+                showDeleteConversationsDialog();
+                return true;
+            } else {
+                Toast.makeText(this, item.getTitle() + " applied", Toast.LENGTH_SHORT).show();
+                if (conversationsAdapter != null) conversationsAdapter.clearSelection();
+                return true;
+            }
+        });
+        popup.show();
     }
 
     private void loadChatsData() {
@@ -742,7 +879,7 @@ public class MainActivity extends AppCompatActivity {
                 TextView tvTitle = layoutChatsEmpty.findViewById(R.id.tv_chats_empty_title);
                 TextView tvSubtitle = layoutChatsEmpty.findViewById(R.id.tv_chats_empty_subtitle);
                 View btnSetup = layoutChatsEmpty.findViewById(R.id.btn_chats_setup);
-                if (tvTitle != null) tvTitle.setText("Welcome to Zez Chat");
+                if (tvTitle != null) tvTitle.setText("Welcome to TWING Chat");
                 if (tvSubtitle != null) tvSubtitle.setText("Register with your phone number to chat with your contacts.");
                 if (btnSetup != null) {
                     btnSetup.setVisibility(View.VISIBLE);
@@ -1783,7 +1920,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Footer version & device details
         if (tvFooterAppVersion != null) {
-            tvFooterAppVersion.setText("Zez Mobile v" + verName + " (Build " + verCode + ")");
+            tvFooterAppVersion.setText("TWING v" + verName + " (Build " + verCode + ")");
         }
         String deviceId = PreferencesHelper.getDeviceId(this);
         actualDeviceId = (deviceId != null ? deviceId : PreferencesHelper.getPersistentUuid(this));
@@ -2149,6 +2286,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        if (conversationsAdapter != null && conversationsAdapter.isSelectionMode()) {
+            conversationsAdapter.clearSelection();
+            return;
+        }
         if (viewFontPage != null && viewFontPage.getVisibility() == View.VISIBLE) {
             closeSubPages();
             return;

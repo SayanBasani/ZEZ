@@ -74,6 +74,85 @@
             android:contentDescription="Sync" />
     </LinearLayout>
 
+    <!-- Contextual Multi-Select Bar for Chats (WhatsApp Style) -->
+    <LinearLayout
+        android:id="@+id/layout_chats_selection_bar"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp"
+        android:background="@color/theme_surface"
+        android:elevation="4dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/btn_chats_selection_close"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Cancel selection" />
+
+        <TextView
+            android:id="@+id/tv_chats_selection_count"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:text="1"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/theme_text_primary" />
+
+        <ImageButton
+            android:id="@+id/btn_chats_selection_pin"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_pin"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Pin chat" />
+
+        <ImageButton
+            android:id="@+id/btn_chats_selection_delete"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_delete"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Delete chat" />
+
+        <ImageButton
+            android:id="@+id/btn_chats_selection_mute"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_volume_off"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Mute notifications" />
+
+        <ImageButton
+            android:id="@+id/btn_chats_selection_archive"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_archive"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Archive chat" />
+
+        <ImageButton
+            android:id="@+id/btn_chats_selection_more"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_more_vert"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="More options" />
+    </LinearLayout>
+
     <!-- Main Content Container -->
     <FrameLayout
         android:id="@+id/content_container"
