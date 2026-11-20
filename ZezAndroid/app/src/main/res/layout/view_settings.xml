@@ -496,14 +496,32 @@
                 android:textStyle="bold"
                 android:textColor="@color/theme_text_secondary" />
 
-            <TextView
-                android:id="@+id/tv_footer_device_id"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Device ID: 91c27f3d-3e01-48b9-aac6-d6f1c9dec38b"
-                android:textSize="11sp"
-                android:textColor="@color/theme_text_muted"
-                android:layout_marginTop="4dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/tv_footer_device_id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Device ID: ••••••••••••••••"
+                    android:textSize="11sp"
+                    android:textColor="@color/theme_text_muted" />
+
+                <ImageButton
+                    android:id="@+id/btn_toggle_device_id_mask"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_visibility"
+                    app:tint="@color/theme_icon_tint"
+                    android:padding="2dp"
+                    android:layout_marginStart="6dp"
+                    android:contentDescription="Toggle Device ID Visibility" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tv_footer_phone_number"

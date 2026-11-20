@@ -38,7 +38,7 @@ public class DeviceHelper {
         JsonObject app = new JsonObject();
         app.addProperty("applicationId", context.getPackageName());
         app.addProperty("appName", "Zez");
-        app.addProperty("appVersion", "1.0.0");
+        app.addProperty("appVersion", AppUpdateHelper.getCurrentVersionName(context));
         details.add("application", app);
 
         JsonObject sim = new JsonObject();

@@ -11,6 +11,7 @@ public class ChatPreferencesHelper {
     private static final String KEY_AVATAR = "chat_user_avatar";
     private static final String KEY_STATUS = "chat_status_message";
     private static final String KEY_REGISTERED = "is_chat_registered";
+    private static final String KEY_CHAT_THEME = "chat_wallpaper_theme";
 
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -65,5 +66,13 @@ public class ChatPreferencesHelper {
 
     public static void saveStatusMessage(Context context, String status) {
         getPrefs(context).edit().putString(KEY_STATUS, status).apply();
+    }
+
+    public static String getChatTheme(Context context) {
+        return getPrefs(context).getString(KEY_CHAT_THEME, "default");
+    }
+
+    public static void saveChatTheme(Context context, String theme) {
+        getPrefs(context).edit().putString(KEY_CHAT_THEME, theme).apply();
     }
 }

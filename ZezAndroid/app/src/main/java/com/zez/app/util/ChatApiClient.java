@@ -438,12 +438,19 @@ public class ChatApiClient {
         public String secretModeBy;
     }
 
+    public static class PeerStatus {
+        public String userId;
+        public boolean isOnline;
+        public String lastSeen;
+    }
+
     public static class MessagesResult {
         public String conversationId = null;
         public String timestamp = null;
         public List<ChatMessage> messages = new ArrayList<>();
         public boolean isSecretMode = false;
         public String secretSessionId = null;
+        public PeerStatus peerStatus = null;
     }
 
     // 3b. Mode management for Dual-Mode (Normal <-> Ephemeral Secret) chat
@@ -535,6 +542,15 @@ public class ChatApiClient {
                     if (json.has("isSecretMode")) res.isSecretMode = json.get("isSecretMode").getAsBoolean();
                     if (json.has("secretSessionId") && !json.get("secretSessionId").isJsonNull()) {
                         res.secretSessionId = json.get("secretSessionId").getAsString();
+                    }
+
+                    if (json.has("peer_status") && !json.get("peer_status").isJsonNull()) {
+                        JsonObject ps = json.getAsJsonObject("peer_status");
+                        PeerStatus peerStatus = new PeerStatus();
+                        if (ps.has("userId")) peerStatus.userId = ps.get("userId").getAsString();
+                        if (ps.has("isOnline")) peerStatus.isOnline = ps.get("isOnline").getAsBoolean();
+                        if (ps.has("lastSeen") && !ps.get("lastSeen").isJsonNull()) peerStatus.lastSeen = ps.get("lastSeen").getAsString();
+                        res.peerStatus = peerStatus;
                     }
 
                     if (json.has("messages")) {
@@ -633,6 +649,7 @@ public class ChatApiClient {
         public List<ChatMessage> incoming = new ArrayList<>();
         public List<JsonObject> statusUpdates = new ArrayList<>();
         public ConversationModeInfo conversationMode;
+        public PeerStatus peerStatus;
     }
 
     public static void pollUpdates(Context context, String userId, String sinceTimestamp, ChatCallback<PollResult> callback) {
@@ -687,10 +704,76 @@ public class ChatApiClient {
                         }
                         pr.conversationMode = cmi;
                     }
+                    if (json.has("peer_status") && !json.get("peer_status").isJsonNull()) {
+                        JsonObject ps = json.getAsJsonObject("peer_status");
+                        PeerStatus peerStatus = new PeerStatus();
+                        if (ps.has("userId")) peerStatus.userId = ps.get("userId").getAsString();
+                        if (ps.has("isOnline")) peerStatus.isOnline = ps.get("isOnline").getAsBoolean();
+                        if (ps.has("lastSeen") && !ps.get("lastSeen").isJsonNull()) peerStatus.lastSeen = ps.get("lastSeen").getAsString();
+                        pr.peerStatus = peerStatus;
+                    }
                     postSuccess(callback, pr);
                 } catch (Exception e) {
                     postError(callback, "Poll parse error: " + e.getMessage());
                 }
+            }
+        });
+    }
+
+    // 7. React with emoji to a message
+    public static void reactToMessage(Context context, String messageId, String reaction, String userId, ChatCallback<Void> callback) {
+        String url = getBaseUrl(context) + "/api/chat/messages/" + messageId + "/react";
+        JsonObject body = new JsonObject();
+        body.addProperty("reaction", reaction);
+        body.addProperty("userId", userId);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Failed to react: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    postError(callback, "HTTP " + response.code());
+                    return;
+                }
+                postSuccess(callback, null);
+            }
+        });
+    }
+
+    // 8. Delete message (for_me or for_everyone)
+    public static void deleteMessage(Context context, String messageId, String userId, String type, ChatCallback<Void> callback) {
+        String url = getBaseUrl(context) + "/api/chat/messages/" + messageId + "/delete";
+        JsonObject body = new JsonObject();
+        body.addProperty("userId", userId);
+        body.addProperty("type", type);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Failed to delete: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    postError(callback, "HTTP " + response.code());
+                    return;
+                }
+                postSuccess(callback, null);
             }
         });
     }

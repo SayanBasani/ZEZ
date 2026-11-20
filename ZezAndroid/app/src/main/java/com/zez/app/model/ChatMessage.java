@@ -49,6 +49,12 @@ public class ChatMessage implements Serializable {
     @SerializedName("status")
     private String status;
 
+    @SerializedName("reaction")
+    private String reaction;
+
+    @SerializedName("is_deleted_for_everyone")
+    private Boolean isDeletedForEveryone;
+
     @SerializedName("created_at")
     private String createdAt;
 
@@ -109,6 +115,73 @@ public class ChatMessage implements Serializable {
     public String getStatus() { return status != null ? status : STATUS_SENT; }
     public void setStatus(String status) { this.status = status; }
 
+    public String getReaction() { return reaction; }
+    public void setReaction(String reaction) { this.reaction = reaction; }
+
+    public boolean isDeletedForEveryone() { return Boolean.TRUE.equals(isDeletedForEveryone); }
+    public void setDeletedForEveryone(Boolean deletedForEveryone) { this.isDeletedForEveryone = deletedForEveryone; }
+
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public static String formatReply(String sender, String quotedSnippet, String actualText) {
+        String cleanSender = sender != null ? sender.replace("|", "/").replace("]", ")").trim() : "Contact";
+        String cleanSnippet = quotedSnippet != null ? quotedSnippet.replace("\n", " ").replace("|", "/").replace("]", ")").trim() : "";
+        if (cleanSnippet.length() > 100) {
+            cleanSnippet = cleanSnippet.substring(0, 97) + "...";
+        }
+        return "[reply:" + cleanSender + "|" + cleanSnippet + "]\n" + (actualText != null ? actualText : "");
+    }
+
+    public boolean hasQuotedReply() {
+        return messageText != null && messageText.startsWith("[reply:") && messageText.contains("]\n");
+    }
+
+    public String getQuotedSender() {
+        if (!hasQuotedReply()) return null;
+        try {
+            int pipeIdx = messageText.indexOf('|');
+            if (pipeIdx > 7) {
+                return messageText.substring(7, pipeIdx).trim();
+            }
+        } catch (Exception ignored) {}
+        return "Reply";
+    }
+
+    public String getQuotedText() {
+        if (!hasQuotedReply()) return null;
+        try {
+            int pipeIdx = messageText.indexOf('|');
+            int closeIdx = messageText.indexOf("]\n");
+            if (pipeIdx != -1 && closeIdx > pipeIdx) {
+                return messageText.substring(pipeIdx + 1, closeIdx).trim();
+            }
+        } catch (Exception ignored) {}
+        return "";
+    }
+
+    public String getCleanMessageText() {
+        if (!hasQuotedReply()) return messageText != null ? messageText : "";
+        try {
+            int closeIdx = messageText.indexOf("]\n");
+            if (closeIdx != -1) {
+                return messageText.substring(closeIdx + 2);
+            }
+        } catch (Exception ignored) {}
+        return messageText != null ? messageText : "";
+    }
+
+    public String getDisplaySnippet() {
+        String clean = getCleanMessageText();
+        if (clean != null && !clean.trim().isEmpty()) {
+            return clean.replace("\n", " ").trim();
+        }
+        if (mediaType != null) {
+            if ("image".equalsIgnoreCase(mediaType)) return "📷 Photo";
+            if ("video".equalsIgnoreCase(mediaType)) return "🎥 Video";
+            return "📎 File";
+        }
+        if (fileName != null && !fileName.isEmpty()) return "📄 " + fileName;
+        return "Message";
+    }
 }

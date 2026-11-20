@@ -54,9 +54,100 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private final String currentUserId;
     private final List<ChatRowItem> rowItems = new ArrayList<>();
+    private final java.util.Set<String> selectedMessageIds = new java.util.HashSet<>();
+    private boolean isSelectionMode = false;
     private final SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
     private final SimpleDateFormat dayFormat = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
+
+    public interface OnMessageActionListener {
+        void onSelectionChanged(int selectedCount);
+        void onMessageLongClick(ChatMessage message, View anchorView);
+    }
+
+    private OnMessageActionListener actionListener;
+
+    public void setOnMessageActionListener(OnMessageActionListener listener) {
+        this.actionListener = listener;
+    }
+
+    public boolean isSelectionMode() {
+        return isSelectionMode;
+    }
+
+    public void toggleSelection(ChatMessage msg) {
+        if (msg == null || msg.getId() == null) return;
+        if (selectedMessageIds.contains(msg.getId())) {
+            selectedMessageIds.remove(msg.getId());
+        } else {
+            selectedMessageIds.add(msg.getId());
+        }
+        isSelectionMode = !selectedMessageIds.isEmpty();
+        notifyDataSetChanged();
+        if (actionListener != null) {
+            actionListener.onSelectionChanged(selectedMessageIds.size());
+        }
+    }
+
+    public void clearSelection() {
+        selectedMessageIds.clear();
+        isSelectionMode = false;
+        notifyDataSetChanged();
+        if (actionListener != null) {
+            actionListener.onSelectionChanged(0);
+        }
+    }
+
+    public List<ChatMessage> getSelectedMessages() {
+        List<ChatMessage> list = new ArrayList<>();
+        for (ChatRowItem row : rowItems) {
+            if (!row.isHeader && row.message != null && selectedMessageIds.contains(row.message.getId())) {
+                list.add(row.message);
+            }
+        }
+        return list;
+    }
+
+    public void updateMessageReaction(String messageId, String reaction) {
+        if (messageId == null) return;
+        for (int i = 0; i < rowItems.size(); i++) {
+            ChatRowItem row = rowItems.get(i);
+            if (!row.isHeader && row.message != null && messageId.equals(row.message.getId())) {
+                row.message.setReaction(reaction);
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
+    public void markMessageDeleted(String messageId) {
+        if (messageId == null) return;
+        for (int i = 0; i < rowItems.size(); i++) {
+            ChatRowItem row = rowItems.get(i);
+            if (!row.isHeader && row.message != null && messageId.equals(row.message.getId())) {
+                row.message.setDeletedForEveryone(true);
+                row.message.setMessageText("🚫 This message was deleted");
+                row.message.setMediaUrl(null);
+                row.message.setReaction(null);
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
+    public void removeMessages(List<String> messageIds) {
+        if (messageIds == null || messageIds.isEmpty()) return;
+        for (String id : messageIds) {
+            for (int i = rowItems.size() - 1; i >= 0; i--) {
+                ChatRowItem row = rowItems.get(i);
+                if (!row.isHeader && row.message != null && id.equals(row.message.getId())) {
+                    rowItems.remove(i);
+                    notifyItemRemoved(i);
+                    break;
+                }
+            }
+        }
+    }
 
     public ChatMessageAdapter(String currentUserId) {
         this.currentUserId = currentUserId;
@@ -90,16 +181,38 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         notifyItemInserted(rowItems.size() - 1);
     }
 
+    public ChatMessage getMessageAt(int position) {
+        if (position >= 0 && position < rowItems.size()) {
+            ChatRowItem row = rowItems.get(position);
+            if (!row.isHeader) {
+                return row.message;
+            }
+        }
+        return null;
+    }
+
     public void updateMessageStatus(String messageId, String newStatus) {
         if (messageId == null || newStatus == null) return;
         for (int i = 0; i < rowItems.size(); i++) {
             ChatRowItem row = rowItems.get(i);
             if (!row.isHeader && row.message != null && messageId.equals(row.message.getId())) {
-                if (!newStatus.equalsIgnoreCase(row.message.getStatus())) {
-                    row.message.setStatus(newStatus);
-                    notifyItemChanged(i);
-                }
+                row.message.setStatus(newStatus);
+                notifyItemChanged(i);
                 break;
+            }
+        }
+    }
+
+    public void updateTempMessage(String tempId, String realId, String newStatus) {
+        for (int i = 0; i < rowItems.size(); i++) {
+            ChatRowItem row = rowItems.get(i);
+            if (!row.isHeader && row.message != null) {
+                if ((tempId != null && tempId.equals(row.message.getId())) || (realId != null && realId.equals(row.message.getId()))) {
+                    if (realId != null) row.message.setId(realId);
+                    if (newStatus != null) row.message.setStatus(newStatus);
+                    notifyItemChanged(i);
+                    return;
+                }
             }
         }
     }
@@ -152,11 +265,47 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ChatRowItem item = rowItems.get(position);
         if (holder instanceof DateHeaderViewHolder) {
             ((DateHeaderViewHolder) holder).tvHeader.setText(item.headerDate);
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+            holder.itemView.setOnLongClickListener(null);
+            holder.itemView.setOnClickListener(null);
         } else if (holder instanceof OutgoingViewHolder) {
-            ((OutgoingViewHolder) holder).bind(item.message, isoFormat, timeFormat);
+            OutgoingViewHolder vh = (OutgoingViewHolder) holder;
+            vh.bind(item.message, isoFormat, timeFormat);
+            bindSelectionAndClicks(holder, item);
         } else if (holder instanceof IncomingViewHolder) {
-            ((IncomingViewHolder) holder).bind(item.message, isoFormat, timeFormat);
+            IncomingViewHolder vh = (IncomingViewHolder) holder;
+            vh.bind(item.message, isoFormat, timeFormat);
+            bindSelectionAndClicks(holder, item);
         }
+    }
+
+    private void bindSelectionAndClicks(RecyclerView.ViewHolder holder, ChatRowItem item) {
+        if (item == null || item.message == null) return;
+        ChatMessage msg = item.message;
+
+        if (selectedMessageIds.contains(msg.getId())) {
+            holder.itemView.setBackgroundColor(Color.parseColor("#3322C55E"));
+        } else {
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (msg.isDeletedForEveryone()) return false;
+            v.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+            if (!selectedMessageIds.contains(msg.getId())) {
+                toggleSelection(msg);
+            }
+            if (actionListener != null) {
+                actionListener.onMessageLongClick(msg, holder.itemView);
+            }
+            return true;
+        });
+
+        holder.itemView.setOnClickListener(v -> {
+            if (isSelectionMode) {
+                toggleSelection(msg);
+            }
+        });
     }
 
     @Override
@@ -164,7 +313,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         return rowItems.size();
     }
 
-    static class DateHeaderViewHolder extends RecyclerView.ViewHolder {
+    public static class DateHeaderViewHolder extends RecyclerView.ViewHolder {
         TextView tvHeader;
         DateHeaderViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -182,6 +331,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         LinearLayout layoutFile;
         TextView tvFileName;
         TextView tvFileSize;
+        LinearLayout layoutQuote;
+        TextView tvQuoteSender;
+        TextView tvQuoteText;
+        LinearLayout layoutReaction;
+        TextView tvReaction;
 
         OutgoingViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -194,12 +348,45 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutFile = itemView.findViewById(R.id.layout_msg_outgoing_file);
             tvFileName = itemView.findViewById(R.id.tv_msg_outgoing_filename);
             tvFileSize = itemView.findViewById(R.id.tv_msg_outgoing_filesize);
+            layoutQuote = itemView.findViewById(R.id.layout_msg_outgoing_quote);
+            tvQuoteSender = itemView.findViewById(R.id.tv_msg_outgoing_quote_sender);
+            tvQuoteText = itemView.findViewById(R.id.tv_msg_outgoing_quote_text);
+            layoutReaction = itemView.findViewById(R.id.layout_msg_outgoing_reaction);
+            tvReaction = itemView.findViewById(R.id.tv_msg_outgoing_reaction);
         }
 
         void bind(ChatMessage msg, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
+            if (msg.isDeletedForEveryone()) {
+                tvText.setVisibility(View.VISIBLE);
+                tvText.setText("🚫 This message was deleted");
+                tvText.setTypeface(null, android.graphics.Typeface.ITALIC);
+                tvText.setTextColor(Color.parseColor("#94A3B8"));
+                if (layoutMedia != null) layoutMedia.setVisibility(View.GONE);
+                if (layoutFile != null) layoutFile.setVisibility(View.GONE);
+                if (layoutQuote != null) layoutQuote.setVisibility(View.GONE);
+                if (layoutReaction != null) layoutReaction.setVisibility(View.GONE);
+                if (ivTick != null) ivTick.setVisibility(View.GONE);
+                tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
+                return;
+            }
+
+            tvText.setTypeface(null, android.graphics.Typeface.NORMAL);
+            tvText.setTextColor(Color.WHITE);
+            if (ivTick != null) ivTick.setVisibility(View.VISIBLE);
+
             bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
 
-            String text = msg.getMessageText();
+            if (layoutQuote != null) {
+                if (msg.hasQuotedReply()) {
+                    layoutQuote.setVisibility(View.VISIBLE);
+                    if (tvQuoteSender != null) tvQuoteSender.setText(msg.getQuotedSender());
+                    if (tvQuoteText != null) tvQuoteText.setText(msg.getQuotedText());
+                } else {
+                    layoutQuote.setVisibility(View.GONE);
+                }
+            }
+
+            String text = msg.getCleanMessageText();
             if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
                 tvText.setVisibility(View.VISIBLE);
                 tvText.setText(text);
@@ -211,6 +398,16 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
+
+            if (layoutReaction != null && tvReaction != null) {
+                String react = msg.getReaction();
+                if (react != null && !react.trim().isEmpty()) {
+                    layoutReaction.setVisibility(View.VISIBLE);
+                    tvReaction.setText(react.trim());
+                } else {
+                    layoutReaction.setVisibility(View.GONE);
+                }
+            }
 
             String status = msg.getStatus();
             if (ChatMessage.STATUS_READ.equalsIgnoreCase(status)) {
@@ -241,6 +438,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         LinearLayout layoutFile;
         TextView tvFileName;
         TextView tvFileSize;
+        LinearLayout layoutQuote;
+        TextView tvQuoteSender;
+        TextView tvQuoteText;
+        LinearLayout layoutReaction;
+        TextView tvReaction;
 
         IncomingViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -252,12 +454,43 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutFile = itemView.findViewById(R.id.layout_msg_incoming_file);
             tvFileName = itemView.findViewById(R.id.tv_msg_incoming_filename);
             tvFileSize = itemView.findViewById(R.id.tv_msg_incoming_filesize);
+            layoutQuote = itemView.findViewById(R.id.layout_msg_incoming_quote);
+            tvQuoteSender = itemView.findViewById(R.id.tv_msg_incoming_quote_sender);
+            tvQuoteText = itemView.findViewById(R.id.tv_msg_incoming_quote_text);
+            layoutReaction = itemView.findViewById(R.id.layout_msg_incoming_reaction);
+            tvReaction = itemView.findViewById(R.id.tv_msg_incoming_reaction);
         }
 
         void bind(ChatMessage msg, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
+            if (msg.isDeletedForEveryone()) {
+                tvText.setVisibility(View.VISIBLE);
+                tvText.setText("🚫 This message was deleted");
+                tvText.setTypeface(null, android.graphics.Typeface.ITALIC);
+                tvText.setTextColor(Color.parseColor("#94A3B8"));
+                if (layoutMedia != null) layoutMedia.setVisibility(View.GONE);
+                if (layoutFile != null) layoutFile.setVisibility(View.GONE);
+                if (layoutQuote != null) layoutQuote.setVisibility(View.GONE);
+                if (layoutReaction != null) layoutReaction.setVisibility(View.GONE);
+                tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
+                return;
+            }
+
+            tvText.setTypeface(null, android.graphics.Typeface.NORMAL);
+            tvText.setTextColor(Color.parseColor("#E2E8F0"));
+
             bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
 
-            String text = msg.getMessageText();
+            if (layoutQuote != null) {
+                if (msg.hasQuotedReply()) {
+                    layoutQuote.setVisibility(View.VISIBLE);
+                    if (tvQuoteSender != null) tvQuoteSender.setText(msg.getQuotedSender());
+                    if (tvQuoteText != null) tvQuoteText.setText(msg.getQuotedText());
+                } else {
+                    layoutQuote.setVisibility(View.GONE);
+                }
+            }
+
+            String text = msg.getCleanMessageText();
             if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
                 tvText.setVisibility(View.VISIBLE);
                 tvText.setText(text);
@@ -269,6 +502,16 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
+
+            if (layoutReaction != null && tvReaction != null) {
+                String react = msg.getReaction();
+                if (react != null && !react.trim().isEmpty()) {
+                    layoutReaction.setVisibility(View.VISIBLE);
+                    tvReaction.setText(react.trim());
+                } else {
+                    layoutReaction.setVisibility(View.GONE);
+                }
+            }
         }
     }
 

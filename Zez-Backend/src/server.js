@@ -9,6 +9,7 @@ const adminRouter = require("./routes/admin");
 const appReleaseRouter = require("./routes/appRelease");
 const chatRouter = require("./routes/chat");
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -47,6 +48,29 @@ app.post('/api/ping', (req, res) => {
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
 app.use('/downloads', express.static(path.join(__dirname, 'public/downloads')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// Downloads fallback for APK aliases or missing specific filenames
+app.get('/downloads/:filename', async (req, res, next) => {
+  const reqFile = req.params.filename;
+  if (!reqFile.endsWith('.apk')) return next();
+
+  try {
+    const { pool } = require('./db');
+    const result = await pool.query(
+      `SELECT file_name FROM public.app_releases WHERE is_active = TRUE ORDER BY version_code DESC LIMIT 1`
+    );
+    if (result.rows.length > 0) {
+      const activeFile = result.rows[0].file_name;
+      const activePath = path.join(__dirname, 'public/downloads', activeFile);
+      if (fs.existsSync(activePath)) {
+        return res.sendFile(activePath);
+      }
+    }
+  } catch (err) {
+    console.error('Downloads fallback error:', err.message);
+  }
+  next();
+});
 app.get('/', (_req, res) => res.redirect('/admin'));
 
 // API Routes
