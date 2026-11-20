@@ -14,6 +14,7 @@
         android:maxWidth="300dp"
         android:orientation="vertical"
         android:background="@drawable/bg_bubble_incoming"
+        android:elevation="1dp"
         android:paddingHorizontal="10dp"
         android:paddingTop="8dp"
         android:paddingBottom="6dp">
@@ -95,6 +96,51 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Quoted Reply Box -->
+        <LinearLayout
+            android:id="@+id/layout_msg_incoming_quote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#15000000"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingVertical="4dp"
+            android:layout_marginBottom="4dp"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:background="#22C55E"
+                android:layout_marginEnd="6dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_msg_incoming_quote_sender"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Contact"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="#22C55E" />
+
+                <TextView
+                    android:id="@+id/tv_msg_incoming_quote_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Quoted text"
+                    android:textSize="12sp"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:textColor="@color/theme_text_secondary" />
+            </LinearLayout>
+        </LinearLayout>
+
         <TextView
             android:id="@+id/tv_msg_incoming_text"
             android:layout_width="wrap_content"
@@ -112,6 +158,26 @@
             android:text="10:30 AM"
             android:textSize="10sp"
             android:textColor="@color/theme_text_muted" />
+
+        <!-- Reaction Badge (Incoming: bottom-left) -->
+        <LinearLayout
+            android:id="@+id/layout_msg_incoming_reaction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_marginTop="2dp"
+            android:background="@drawable/bg_reaction_badge"
+            android:elevation="2dp"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tv_msg_incoming_reaction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:text="❤️" />
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

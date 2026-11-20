@@ -96,6 +96,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvFooterAppVersion;
     private TextView tvFooterDeviceId;
     private TextView tvFooterPhoneNumber;
+    private ImageButton btnToggleDeviceIdMask;
+    private boolean isDeviceIdMasked = true;
+    private String actualDeviceId = "";
 
     // Protected Developer / Admin Controls
     private View rowSettingServer;
@@ -112,6 +115,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton btnBackFont;
     private TextView tvFontPreviewHeading;
     private TextView tvFontPreviewBody;
+    private com.google.android.material.textfield.TextInputEditText etCustomFontSize;
+    private com.google.android.material.button.MaterialButton btnResetFontDefault;
     private android.widget.RadioGroup rgFontScaleOptions;
     private android.widget.RadioButton rbFontSmall;
     private android.widget.RadioButton rbFontDefault;
@@ -249,6 +254,13 @@ public class MainActivity extends AppCompatActivity {
         tvFooterAppVersion = findViewById(R.id.tv_footer_app_version);
         tvFooterDeviceId = findViewById(R.id.tv_footer_device_id);
         tvFooterPhoneNumber = findViewById(R.id.tv_footer_phone_number);
+        btnToggleDeviceIdMask = findViewById(R.id.btn_toggle_device_id_mask);
+        if (btnToggleDeviceIdMask != null) {
+            btnToggleDeviceIdMask.setOnClickListener(v -> {
+                isDeviceIdMasked = !isDeviceIdMasked;
+                updateDeviceIdDisplay();
+            });
+        }
 
         // Sub-pages
         viewFontPage = findViewById(R.id.view_font_page);
@@ -256,8 +268,8 @@ public class MainActivity extends AppCompatActivity {
 
         // Font Page
         btnBackFont = findViewById(R.id.btn_back_font);
-        tvFontPreviewHeading = findViewById(R.id.tv_font_preview_heading);
-        tvFontPreviewBody = findViewById(R.id.tv_font_preview_body);
+        etCustomFontSize = findViewById(R.id.et_custom_font_size);
+        btnResetFontDefault = findViewById(R.id.btn_reset_font_default);
         rgFontScaleOptions = findViewById(R.id.rg_font_scale_options);
         rbFontSmall = findViewById(R.id.rb_font_small);
         rbFontDefault = findViewById(R.id.rb_font_default);
@@ -268,6 +280,16 @@ public class MainActivity extends AppCompatActivity {
         btnBackFont.setOnClickListener(v -> closeSubPages());
         findViewById(R.id.row_setting_font).setOnClickListener(v -> openFontPage());
         btnApplyFont.setOnClickListener(v -> applySelectedFontScale());
+
+        if (btnResetFontDefault != null) {
+            btnResetFontDefault.setOnClickListener(v -> {
+                if (etCustomFontSize != null) etCustomFontSize.setText("14");
+                if (rbFontDefault != null) rbFontDefault.setChecked(true);
+                PreferencesHelper.setFontScale(this, PreferencesHelper.FONT_SCALE_DEFAULT);
+                Toast.makeText(this, "Font size reset to default (14px)", Toast.LENGTH_SHORT).show();
+                recreate();
+            });
+        }
 
         // Hardware Page
         btnBackHardware = findViewById(R.id.btn_back_hardware);
@@ -311,6 +333,32 @@ public class MainActivity extends AppCompatActivity {
         }
         if (tvFooterAppVersion != null) {
             tvFooterAppVersion.setOnClickListener(devTapListener);
+        }
+
+        View tvDiagnosticHint = findViewById(R.id.tv_hardware_diagnostic_hint);
+        View cardServerConfig = findViewById(R.id.card_hardware_server_config);
+        if (tvDiagnosticHint != null && cardServerConfig != null) {
+            final int[] diagTapCount = {0};
+            final long[] lastDiagTap = {0};
+            tvDiagnosticHint.setOnClickListener(v -> {
+                long now = System.currentTimeMillis();
+                if (now - lastDiagTap[0] > 3000) {
+                    diagTapCount[0] = 1;
+                } else {
+                    diagTapCount[0]++;
+                }
+                lastDiagTap[0] = now;
+                if (diagTapCount[0] >= 5) {
+                    diagTapCount[0] = 0;
+                    if (cardServerConfig.getVisibility() == View.VISIBLE) {
+                        cardServerConfig.setVisibility(View.GONE);
+                        Toast.makeText(this, "Endpoint settings hidden", Toast.LENGTH_SHORT).show();
+                    } else {
+                        cardServerConfig.setVisibility(View.VISIBLE);
+                        Toast.makeText(this, "Developer endpoint settings unlocked", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
         }
 
         initThemeSpinner();
@@ -1546,6 +1594,10 @@ public class MainActivity extends AppCompatActivity {
             rbFontDefault.setChecked(true);
         }
 
+        if (etCustomFontSize != null) {
+            etCustomFontSize.setText(String.valueOf(Math.round(14f * currentScale)));
+        }
+
         updateFontPreview(currentScale);
 
         rgFontScaleOptions.setOnCheckedChangeListener((group, checkedId) -> {
@@ -1553,21 +1605,36 @@ public class MainActivity extends AppCompatActivity {
             if (checkedId == R.id.rb_font_small) previewScale = PreferencesHelper.FONT_SCALE_SMALL;
             else if (checkedId == R.id.rb_font_large) previewScale = PreferencesHelper.FONT_SCALE_LARGE;
             else if (checkedId == R.id.rb_font_huge) previewScale = PreferencesHelper.FONT_SCALE_HUGE;
+            if (etCustomFontSize != null) {
+                etCustomFontSize.setText(String.valueOf(Math.round(14f * previewScale)));
+            }
             updateFontPreview(previewScale);
         });
     }
 
     private void updateFontPreview(float scale) {
-        tvFontPreviewHeading.setTextSize(18f * scale);
-        tvFontPreviewBody.setTextSize(14f * scale);
+        if (tvFontPreviewHeading != null) tvFontPreviewHeading.setTextSize(18f * scale);
+        if (tvFontPreviewBody != null) tvFontPreviewBody.setTextSize(14f * scale);
     }
 
     private void applySelectedFontScale() {
         float selectedScale = PreferencesHelper.FONT_SCALE_DEFAULT;
-        int checkedId = rgFontScaleOptions.getCheckedRadioButtonId();
-        if (checkedId == R.id.rb_font_small) selectedScale = PreferencesHelper.FONT_SCALE_SMALL;
-        else if (checkedId == R.id.rb_font_large) selectedScale = PreferencesHelper.FONT_SCALE_LARGE;
-        else if (checkedId == R.id.rb_font_huge) selectedScale = PreferencesHelper.FONT_SCALE_HUGE;
+        if (etCustomFontSize != null && etCustomFontSize.getText() != null) {
+            String valStr = etCustomFontSize.getText().toString().trim();
+            if (!valStr.isEmpty()) {
+                try {
+                    float sp = Float.parseFloat(valStr);
+                    if (sp < 8f) sp = 8f;
+                    if (sp > 32f) sp = 32f;
+                    selectedScale = sp / 14f;
+                } catch (Exception ignored) {}
+            }
+        } else {
+            int checkedId = rgFontScaleOptions.getCheckedRadioButtonId();
+            if (checkedId == R.id.rb_font_small) selectedScale = PreferencesHelper.FONT_SCALE_SMALL;
+            else if (checkedId == R.id.rb_font_large) selectedScale = PreferencesHelper.FONT_SCALE_LARGE;
+            else if (checkedId == R.id.rb_font_huge) selectedScale = PreferencesHelper.FONT_SCALE_HUGE;
+        }
 
         PreferencesHelper.setFontScale(this, selectedScale);
         Toast.makeText(this, "Font size updated!", Toast.LENGTH_SHORT).show();
@@ -1701,12 +1768,27 @@ public class MainActivity extends AppCompatActivity {
             tvFooterAppVersion.setText("Zez Mobile v" + verName + " (Build " + verCode + ")");
         }
         String deviceId = PreferencesHelper.getDeviceId(this);
-        if (tvFooterDeviceId != null) {
-            tvFooterDeviceId.setText("Device ID: " + (deviceId != null ? deviceId : PreferencesHelper.getPersistentUuid(this)));
-        }
+        actualDeviceId = (deviceId != null ? deviceId : PreferencesHelper.getPersistentUuid(this));
+        updateDeviceIdDisplay();
+
         if (tvFooterPhoneNumber != null) {
             String phone = PreferencesHelper.getDeviceToken(this);
             tvFooterPhoneNumber.setText(phone != null && !phone.isEmpty() ? "Token: " + phone : "Status: Active & Registered");
+        }
+    }
+
+    private void updateDeviceIdDisplay() {
+        if (tvFooterDeviceId == null) return;
+        if (isDeviceIdMasked) {
+            tvFooterDeviceId.setText("Device ID: ••••••••••••••••");
+            if (btnToggleDeviceIdMask != null) {
+                btnToggleDeviceIdMask.setImageResource(R.drawable.ic_visibility);
+            }
+        } else {
+            tvFooterDeviceId.setText("Device ID: " + actualDeviceId);
+            if (btnToggleDeviceIdMask != null) {
+                btnToggleDeviceIdMask.setImageResource(R.drawable.ic_visibility_off);
+            }
         }
     }
 

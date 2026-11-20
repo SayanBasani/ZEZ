@@ -556,6 +556,13 @@ router.get("/messages", async (req, res) => {
     }
 
     const queryParams = [convId, parseInt(limit, 10) || 50];
+
+    let userDeleteClause = "";
+    if (userId) {
+      queryParams.push(userId);
+      userDeleteClause = `AND NOT (COALESCE(m.deleted_for_users, '[]'::jsonb) ? $${queryParams.length}::text)`;
+    }
+
     let modeClause = "";
     if (mode === "secret") {
       queryParams.push(secretSessionId);
@@ -576,17 +583,20 @@ router.get("/messages", async (req, res) => {
         m.conversation_id,
         m.sender_id,
         m.receiver_id,
-        m.message_text,
-        m.media_url,
+        CASE WHEN m.is_deleted_for_everyone THEN '🚫 This message was deleted' ELSE m.message_text END AS message_text,
+        CASE WHEN m.is_deleted_for_everyone THEN NULL ELSE m.media_url END AS media_url,
         m.media_type,
         m.file_name,
         m.file_size,
         m.mode,
         m.secret_session_id,
         m.status,
+        CASE WHEN m.is_deleted_for_everyone THEN NULL ELSE m.reaction END AS reaction,
+        m.is_deleted_for_everyone,
         m.created_at
       FROM public.chat_messages m
       WHERE m.conversation_id = $1
+        ${userDeleteClause}
         ${modeClause}
         ${beforeClause}
       ORDER BY m.created_at DESC
@@ -609,12 +619,30 @@ router.get("/messages", async (req, res) => {
 
     // Return in ascending chronological order for chat view
     const messages = result.rows.reverse();
+
+    // Query peer status for accurate online / last seen indicator
+    let peerStatus = null;
+    const targetPeerId = otherUserId || (convRow ? (convRow.user1_id === userId ? convRow.user2_id : convRow.user1_id) : null);
+    if (targetPeerId) {
+      const pRes = await pool.query("SELECT id, last_seen, name FROM public.chat_users WHERE id = $1", [targetPeerId]);
+      if (pRes.rows.length > 0) {
+        const pRow = pRes.rows[0];
+        const isOnline = pRow.last_seen && (Date.now() - new Date(pRow.last_seen).getTime() < 35000);
+        peerStatus = {
+          userId: pRow.id,
+          isOnline: !!isOnline,
+          lastSeen: pRow.last_seen
+        };
+      }
+    }
+
     return res.json({
       success: true,
       timestamp: new Date().toISOString(),
       conversation_id: convId,
       isSecretMode: convRow ? !!convRow.is_secret_mode : false,
       secretSessionId: convRow ? convRow.secret_session_id : null,
+      peer_status: peerStatus,
       messages
     });
   } catch (err) {
@@ -734,9 +762,17 @@ router.get("/poll", async (req, res) => {
 
     // Incoming messages
     const incomingRes = await pool.query(
-      `SELECT id, conversation_id, sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size, mode, secret_session_id, status, created_at
+      `SELECT id, conversation_id, sender_id, receiver_id, 
+              CASE WHEN is_deleted_for_everyone THEN '🚫 This message was deleted' ELSE message_text END AS message_text,
+              CASE WHEN is_deleted_for_everyone THEN NULL ELSE media_url END AS media_url,
+              media_type, file_name, file_size, mode, secret_session_id, status,
+              CASE WHEN is_deleted_for_everyone THEN NULL ELSE reaction END AS reaction,
+              is_deleted_for_everyone,
+              created_at
        FROM public.chat_messages
-       WHERE receiver_id = $1 AND (created_at >= $2 OR updated_at >= $2)
+       WHERE receiver_id = $1 
+         AND NOT (COALESCE(deleted_for_users, '[]'::jsonb) ? $1::text)
+         AND (created_at >= $2 OR updated_at >= $2)
        ORDER BY created_at ASC`,
       [userId, sinceDate]
     );
@@ -760,20 +796,22 @@ router.get("/poll", async (req, res) => {
       ).catch(() => {});
     }
 
-    // Status updates on messages sent by user (e.g. they changed from sent -> delivered -> read)
+    // Status & reaction & delete updates on messages in conversation
     let statusQuery = `
-      SELECT id, conversation_id, status
+      SELECT id, conversation_id, status, reaction, is_deleted_for_everyone,
+             CASE WHEN is_deleted_for_everyone THEN '🚫 This message was deleted' ELSE message_text END AS message_text
       FROM public.chat_messages
-      WHERE sender_id = $1 AND (COALESCE(updated_at, created_at) > $2 OR created_at > $2)
+      WHERE (sender_id = $1 OR receiver_id = $1) AND (COALESCE(updated_at, created_at) > $2 OR created_at > $2)
     `;
     let statusParams = [userId, sinceDate];
 
     // If conversation is being inspected, return latest status of recent messages in that conversation
     if (conversationId) {
       statusQuery = `
-        SELECT id, conversation_id, status
+        SELECT id, conversation_id, status, reaction, is_deleted_for_everyone,
+               CASE WHEN is_deleted_for_everyone THEN '🚫 This message was deleted' ELSE message_text END AS message_text
         FROM public.chat_messages
-        WHERE conversation_id = $1 AND sender_id = $2 AND created_at > (NOW() - INTERVAL '3 days')
+        WHERE conversation_id = $1 AND (sender_id = $2 OR receiver_id = $2) AND created_at > (NOW() - INTERVAL '3 days')
         ORDER BY created_at DESC
         LIMIT 100
       `;
@@ -781,8 +819,9 @@ router.get("/poll", async (req, res) => {
     }
     const statusRes = await pool.query(statusQuery, statusParams);
 
-    // If active conversationId is monitored, check its synchronized mode status
+    // If active conversationId is monitored, check its synchronized mode status and peer online status
     let conversationMode = null;
+    let peerStatus = null;
     if (conversationId) {
       const modeRes = await pool.query(
         "SELECT id, is_secret_mode, secret_session_id, secret_mode_updated_at, secret_mode_by FROM public.chat_conversations WHERE id = $1",
@@ -798,6 +837,26 @@ router.get("/poll", async (req, res) => {
           secretModeBy: row.secret_mode_by
         };
       }
+
+      if (userId) {
+        const peerRes = await pool.query(
+          `SELECT u.id, u.last_seen, u.name 
+           FROM public.chat_conversations c
+           JOIN public.chat_users u ON (u.id = CASE WHEN c.user1_id = $1::uuid THEN c.user2_id ELSE c.user1_id END)
+           WHERE c.id = $2::uuid
+           LIMIT 1`,
+          [userId, conversationId]
+        );
+        if (peerRes.rows.length > 0) {
+          const peer = peerRes.rows[0];
+          const isOnline = peer.last_seen && (Date.now() - new Date(peer.last_seen).getTime() < 35000);
+          peerStatus = {
+            userId: peer.id,
+            isOnline: !!isOnline,
+            lastSeen: peer.last_seen
+          };
+        }
+      }
     }
 
     return res.json({
@@ -805,7 +864,8 @@ router.get("/poll", async (req, res) => {
       timestamp: new Date().toISOString(),
       incoming: incomingRes.rows,
       status_updates: statusRes.rows,
-      conversation_mode: conversationMode
+      conversation_mode: conversationMode,
+      peer_status: peerStatus
     });
   } catch (err) {
     console.error("Error in /api/chat/poll:", err);
@@ -833,6 +893,82 @@ router.post("/messages/status", async (req, res) => {
   } catch (err) {
     console.error("Error updating message status:", err);
     return res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+// 10. React with emoji to a message
+// POST /api/chat/messages/:id/react
+router.post("/messages/:id/react", async (req, res) => {
+  try {
+    const messageId = req.params.id;
+    const { reaction, userId } = req.body;
+    const cleanReaction = reaction ? String(reaction).trim() : null;
+
+    const result = await pool.query(
+      `UPDATE public.chat_messages 
+       SET reaction = $1, updated_at = NOW() 
+       WHERE id = $2 
+       RETURNING id, conversation_id, sender_id, receiver_id, reaction, updated_at`,
+      [cleanReaction, messageId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+
+    return res.json({ success: true, message: result.rows[0] });
+  } catch (err) {
+    console.error("Error in /api/chat/messages/:id/react:", err);
+    return res.status(500).json({ error: "Failed to set reaction." });
+  }
+});
+
+// 11. Delete message (Delete for me / Delete for everyone)
+// POST /api/chat/messages/:id/delete
+router.post("/messages/:id/delete", async (req, res) => {
+  try {
+    const messageId = req.params.id;
+    const { userId, type } = req.body; // type: "for_everyone" or "for_me"
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required." });
+    }
+
+    const checkRes = await pool.query("SELECT id, sender_id, receiver_id, conversation_id FROM public.chat_messages WHERE id = $1", [messageId]);
+    if (checkRes.rows.length === 0) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+    const msg = checkRes.rows[0];
+
+    if (type === "for_everyone") {
+      // Only sender can delete for everyone
+      if (msg.sender_id !== userId) {
+        return res.status(403).json({ error: "Only the sender can delete a message for everyone." });
+      }
+      await pool.query(
+        `UPDATE public.chat_messages 
+         SET is_deleted_for_everyone = TRUE, 
+             message_text = '🚫 This message was deleted', 
+             media_url = NULL, 
+             reaction = NULL, 
+             updated_at = NOW() 
+         WHERE id = $1`,
+        [messageId]
+      );
+      return res.json({ success: true, type: "for_everyone", id: messageId });
+    } else {
+      // Delete for me
+      await pool.query(
+        `UPDATE public.chat_messages 
+         SET deleted_for_users = COALESCE(deleted_for_users, '[]'::jsonb) || jsonb_build_array($1::text),
+             updated_at = NOW()
+         WHERE id = $2`,
+        [userId, messageId]
+      );
+      return res.json({ success: true, type: "for_me", id: messageId });
+    }
+  } catch (err) {
+    console.error("Error in /api/chat/messages/:id/delete:", err);
+    return res.status(500).json({ error: "Failed to delete message." });
   }
 });
 

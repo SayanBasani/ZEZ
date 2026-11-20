@@ -80,14 +80,27 @@ router.post("/sync", deviceAuth, async (req, res, next) => {
       await client.query("BEGIN");
 
       if (details !== undefined) {
-        await client.query(
-          `UPDATE public.devices
-           SET device_details = COALESCE(device_details, '{}'::jsonb) || $2::jsonb,
-               last_seen_at = NOW(),
-               updated_at = NOW()
-           WHERE id = $1`,
-          [req.deviceId, JSON.stringify(details)]
-        );
+        const appVersion = details && details.application && details.application.appVersion ? details.application.appVersion : null;
+        if (appVersion) {
+          await client.query(
+            `UPDATE public.devices
+             SET device_details = COALESCE(device_details, '{}'::jsonb) || $2::jsonb,
+                 app_version = $3,
+                 last_seen_at = NOW(),
+                 updated_at = NOW()
+             WHERE id = $1`,
+            [req.deviceId, JSON.stringify(details), appVersion]
+          );
+        } else {
+          await client.query(
+            `UPDATE public.devices
+             SET device_details = COALESCE(device_details, '{}'::jsonb) || $2::jsonb,
+                 last_seen_at = NOW(),
+                 updated_at = NOW()
+             WHERE id = $1`,
+            [req.deviceId, JSON.stringify(details)]
+          );
+        }
       } else {
         await client.query(
           `UPDATE public.devices

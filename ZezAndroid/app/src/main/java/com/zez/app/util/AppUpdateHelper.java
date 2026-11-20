@@ -205,6 +205,11 @@ public class AppUpdateHelper {
 
     public static void launchInstaller(Activity activity, File apkFile) {
         try {
+            if (apkFile == null || !apkFile.exists()) {
+                Log.e(TAG, "APK file does not exist");
+                return;
+            }
+            apkFile.setReadable(true, false);
             Uri apkUri = FileProvider.getUriForFile(
                     activity,
                     activity.getPackageName() + ".provider",

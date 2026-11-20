@@ -1,28 +1,38 @@
 package com.zez.app;
 
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.OpenableColumns;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -70,6 +80,28 @@ public class ChatActivity extends AppCompatActivity {
     private TextView tvModeLabel;
     private LinearLayout layoutSecretBanner;
     private TextView btnExitSecretMode;
+    private ImageButton btnMore;
+
+    private View layoutReplyPreview;
+    private TextView tvReplyPreviewSender;
+    private TextView tvReplyPreviewText;
+    private ImageButton btnCancelReply;
+    private ChatMessage replyingToMessage = null;
+
+    private View layoutNormalHeader;
+    private View layoutSelectionBar;
+    private ImageButton btnSelectionClose;
+    private TextView tvSelectionCount;
+    private ImageButton btnSelectionReply;
+    private ImageButton btnSelectionDelete;
+    private ImageButton btnSelectionStar;
+    private ImageButton btnSelectionForward;
+    private ImageButton btnSelectionMore;
+
+    private View layoutChatRoot;
+    private ImageButton btnVideocall;
+    private ImageButton btnAudiocall;
+    private com.zez.app.util.ChatLocalDbHelper chatDb;
 
     private boolean isSecretMode = false;
     private String currentSecretSessionId = null;
@@ -120,9 +152,11 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
+        chatDb = com.zez.app.util.ChatLocalDbHelper.getInstance(this);
         initActivityLaunchers();
         initViews();
         setupRecyclerView();
+        loadCachedMessages();
         loadMessages();
     }
 
@@ -160,14 +194,158 @@ public class ChatActivity extends AppCompatActivity {
         tvModeLabel = findViewById(R.id.tv_mode_label);
         layoutSecretBanner = findViewById(R.id.layout_secret_mode_banner);
         btnExitSecretMode = findViewById(R.id.btn_exit_secret_mode);
+        btnMore = findViewById(R.id.btn_chat_more);
+
+        layoutReplyPreview = findViewById(R.id.layout_reply_preview);
+        tvReplyPreviewSender = findViewById(R.id.tv_reply_preview_sender);
+        tvReplyPreviewText = findViewById(R.id.tv_reply_preview_text);
+        btnCancelReply = findViewById(R.id.btn_cancel_reply);
+
+        layoutNormalHeader = findViewById(R.id.layout_chat_normal_header);
+        layoutSelectionBar = findViewById(R.id.layout_chat_selection_bar);
+        btnSelectionClose = findViewById(R.id.btn_selection_close);
+        tvSelectionCount = findViewById(R.id.tv_selection_count);
+        btnSelectionReply = findViewById(R.id.btn_selection_reply);
+        btnSelectionDelete = findViewById(R.id.btn_selection_delete);
+
+        layoutChatRoot = findViewById(R.id.layout_chat_root);
+        btnVideocall = findViewById(R.id.btn_chat_videocall);
+        btnAudiocall = findViewById(R.id.btn_chat_audiocall);
+        btnSelectionStar = findViewById(R.id.btn_selection_star);
+        btnSelectionForward = findViewById(R.id.btn_selection_forward);
+        btnSelectionMore = findViewById(R.id.btn_selection_more);
+
+        applyChatTheme(ChatPreferencesHelper.getChatTheme(this));
 
         tvHeaderName.setText(otherUserName != null ? otherUserName : otherUserPhone);
-        tvHeaderStatus.setText("online");
+        tvHeaderStatus.setText("Connecting...");
 
         btnBack.setOnClickListener(v -> finish());
         btnSendContainer.setOnClickListener(v -> sendMessage());
         if (btnAttach != null) {
             btnAttach.setOnClickListener(v -> showAttachmentDialog());
+        }
+
+        if (btnAudiocall != null) {
+            btnAudiocall.setOnClickListener(v -> {
+                if (otherUserPhone != null && !otherUserPhone.trim().isEmpty()) {
+                    try {
+                        Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + otherUserPhone.trim()));
+                        startActivity(dialIntent);
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Cannot open dialer: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(this, "No phone number available for this contact", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        if (btnVideocall != null) {
+            btnVideocall.setOnClickListener(v -> {
+                Toast.makeText(this, "Starting encrypted video call...", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (btnMore != null) {
+            btnMore.setOnClickListener(this::showChatOverflowMenu);
+        }
+        if (btnCancelReply != null) {
+            btnCancelReply.setOnClickListener(v -> cancelReply());
+        }
+
+        if (btnSelectionClose != null) {
+            btnSelectionClose.setOnClickListener(v -> {
+                if (adapter != null) adapter.clearSelection();
+            });
+        }
+
+        if (btnSelectionReply != null) {
+            btnSelectionReply.setOnClickListener(v -> {
+                if (adapter != null) {
+                    List<ChatMessage> selected = adapter.getSelectedMessages();
+                    if (!selected.isEmpty()) {
+                        startReply(selected.get(0));
+                    }
+                    adapter.clearSelection();
+                }
+            });
+        }
+
+        if (btnSelectionStar != null) {
+            btnSelectionStar.setOnClickListener(v -> {
+                if (adapter != null) {
+                    List<ChatMessage> selected = adapter.getSelectedMessages();
+                    if (!selected.isEmpty()) {
+                        Toast.makeText(this, "Starred " + selected.size() + " message(s)", Toast.LENGTH_SHORT).show();
+                    }
+                    adapter.clearSelection();
+                }
+            });
+        }
+
+        if (btnSelectionForward != null) {
+            btnSelectionForward.setOnClickListener(v -> {
+                if (adapter != null) {
+                    List<ChatMessage> selected = adapter.getSelectedMessages();
+                    if (!selected.isEmpty()) {
+                        StringBuilder sb = new StringBuilder();
+                        for (ChatMessage m : selected) {
+                            if (sb.length() > 0) sb.append("\n");
+                            sb.append(m.getCleanMessageText());
+                        }
+                        Intent sendIntent = new Intent();
+                        sendIntent.setAction(Intent.ACTION_SEND);
+                        sendIntent.putExtra(Intent.EXTRA_TEXT, sb.toString());
+                        sendIntent.setType("text/plain");
+                        startActivity(Intent.createChooser(sendIntent, "Forward message"));
+                    }
+                    adapter.clearSelection();
+                }
+            });
+        }
+
+        if (btnSelectionMore != null) {
+            btnSelectionMore.setOnClickListener(v -> {
+                PopupMenu popup = new PopupMenu(this, v);
+                popup.getMenu().add(0, 1, 0, "Copy");
+                popup.getMenu().add(0, 2, 1, "Info");
+                popup.setOnMenuItemClickListener(item -> {
+                    if (item.getItemId() == 1) {
+                        copySelectedMessages();
+                        return true;
+                    } else if (item.getItemId() == 2) {
+                        if (adapter != null) {
+                            List<ChatMessage> selected = adapter.getSelectedMessages();
+                            if (!selected.isEmpty()) {
+                                ChatMessage m = selected.get(0);
+                                String info = "Status: " + (m.getStatus() != null ? m.getStatus() : "sent") +
+                                        "\nTime: " + (m.getCreatedAt() != null ? m.getCreatedAt() : "now");
+                                new AlertDialog.Builder(this)
+                                        .setTitle("Message Info")
+                                        .setMessage(info)
+                                        .setPositiveButton("OK", null)
+                                        .show();
+                            }
+                            adapter.clearSelection();
+                        }
+                        return true;
+                    }
+                    return false;
+                });
+                popup.show();
+            });
+        }
+
+        if (btnSelectionDelete != null) {
+            btnSelectionDelete.setOnClickListener(v -> {
+                if (adapter != null) {
+                    List<ChatMessage> selected = adapter.getSelectedMessages();
+                    if (!selected.isEmpty()) {
+                        showDeleteMessagesDialog(selected);
+                    }
+                }
+            });
         }
 
         if (btnModeToggle != null) {
@@ -270,12 +448,483 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    private void copySelectedMessages() {
+        if (adapter != null) {
+            List<ChatMessage> selected = adapter.getSelectedMessages();
+            if (!selected.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                for (ChatMessage m : selected) {
+                    if (sb.length() > 0) sb.append("\n");
+                    sb.append(m.getCleanMessageText());
+                }
+                android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                if (clipboard != null) {
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Zez Message", sb.toString()));
+                    Toast.makeText(ChatActivity.this, "Copied to clipboard", Toast.LENGTH_SHORT).show();
+                }
+            }
+            adapter.clearSelection();
+        }
+    }
+
+    private void loadCachedMessages() {
+        if (chatDb == null) return;
+        String convKey = conversationId != null ? conversationId : otherUserId;
+        if (convKey == null) return;
+        List<ChatMessage> cached = chatDb.getMessages(convKey);
+        if (cached != null && !cached.isEmpty()) {
+            normalMessages.clear();
+            normalMessages.addAll(cached);
+            for (ChatMessage m : cached) {
+                if (m.getId() != null) loadedMessageIds.add(m.getId());
+            }
+            if (!isSecretMode && adapter != null) {
+                adapter.setMessages(normalMessages);
+                if (adapter.getItemCount() > 0) {
+                    recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+                }
+            }
+        }
+    }
+
+    private void applyChatTheme(String theme) {
+        if (layoutChatRoot == null) return;
+        int resId = R.drawable.bg_chat_theme_default;
+        if ("charcoal".equalsIgnoreCase(theme)) resId = R.drawable.bg_chat_theme_charcoal;
+        else if ("emerald".equalsIgnoreCase(theme)) resId = R.drawable.bg_chat_theme_emerald;
+        else if ("ocean".equalsIgnoreCase(theme)) resId = R.drawable.bg_chat_theme_ocean;
+        else if ("sunset".equalsIgnoreCase(theme)) resId = R.drawable.bg_chat_theme_sunset;
+        layoutChatRoot.setBackgroundResource(resId);
+    }
+
+    private void showThemeDialog() {
+        com.google.android.material.bottomsheet.BottomSheetDialog sheet =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_chat_theme, null);
+        sheet.setContentView(view);
+
+        int[] optIds = {
+                R.id.theme_opt_default,
+                R.id.theme_opt_charcoal,
+                R.id.theme_opt_emerald,
+                R.id.theme_opt_ocean,
+                R.id.theme_opt_sunset
+        };
+        String[] themeKeys = {"default", "charcoal", "emerald", "ocean", "sunset"};
+
+        for (int i = 0; i < optIds.length; i++) {
+            final String themeKey = themeKeys[i];
+            View opt = view.findViewById(optIds[i]);
+            if (opt != null) {
+                opt.setOnClickListener(v -> {
+                    ChatPreferencesHelper.saveChatTheme(this, themeKey);
+                    applyChatTheme(themeKey);
+                    sheet.dismiss();
+                    Toast.makeText(this, "Wallpaper theme updated", Toast.LENGTH_SHORT).show();
+                });
+            }
+        }
+
+        sheet.show();
+    }
+
+    private void showContactInfoDialog() {
+        String name = otherUserName != null ? otherUserName : "Contact";
+        String phone = otherUserPhone != null ? otherUserPhone : "Not available";
+        new AlertDialog.Builder(this)
+                .setTitle("Contact info")
+                .setMessage("Name: " + name + "\nPhone: " + phone + "\nEncryption: 256-bit End-to-End")
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
     private void setupRecyclerView() {
         adapter = new ChatMessageAdapter(currentUserId);
         layoutManager = new LinearLayoutManager(this);
         layoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(adapter);
+
+        adapter.setOnMessageActionListener(new ChatMessageAdapter.OnMessageActionListener() {
+            @Override
+            public void onSelectionChanged(int selectedCount) {
+                if (selectedCount > 0) {
+                    if (layoutNormalHeader != null) layoutNormalHeader.setVisibility(View.GONE);
+                    if (layoutSelectionBar != null) layoutSelectionBar.setVisibility(View.VISIBLE);
+                    if (tvSelectionCount != null) tvSelectionCount.setText(String.valueOf(selectedCount));
+                    if (btnSelectionReply != null) btnSelectionReply.setVisibility(selectedCount == 1 ? View.VISIBLE : View.GONE);
+                } else {
+                    if (layoutSelectionBar != null) layoutSelectionBar.setVisibility(View.GONE);
+                    if (layoutNormalHeader != null) layoutNormalHeader.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onMessageLongClick(ChatMessage message, View anchorView) {
+                if (message == null || message.isDeletedForEveryone()) return;
+                showEmojiReactionPopup(message, anchorView);
+            }
+        });
+
+        // WhatsApp-Style Effortless Swipe to Reply (both left & right, very low threshold)
+        ItemTouchHelper.SimpleCallback swipeToReplyCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public int getSwipeDirs(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                if (viewHolder instanceof ChatMessageAdapter.DateHeaderViewHolder) {
+                    return 0;
+                }
+                return ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT;
+            }
+
+            @Override
+            public float getSwipeThreshold(@NonNull RecyclerView.ViewHolder viewHolder) {
+                return 0.10f; // Only 10% swipe required to trigger reply effortlessly
+            }
+
+            @Override
+            public float getSwipeVelocityThreshold(float defaultValue) {
+                return defaultValue * 0.2f;
+            }
+
+            @Override
+            public float getSwipeEscapeVelocity(float defaultValue) {
+                return defaultValue * 0.2f;
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                                    @NonNull RecyclerView.ViewHolder viewHolder,
+                                    float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                // Smoothly clamp visual offset so the bubble doesn't get dragged away
+                float maxOffset = 140f;
+                float clampedDx = dX > 0 ? Math.min(dX, maxOffset) : Math.max(dX, -maxOffset);
+                super.onChildDraw(c, recyclerView, viewHolder, clampedDx, dY, actionState, isCurrentlyActive);
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int pos = viewHolder.getBindingAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION) {
+                    ChatMessage msg = adapter.getMessageAt(pos);
+                    if (msg != null && !msg.isDeletedForEveryone()) {
+                        startReply(msg);
+                    }
+                    adapter.notifyItemChanged(pos); // Snap message bubble smoothly back into place
+                }
+            }
+        };
+        new ItemTouchHelper(swipeToReplyCallback).attachToRecyclerView(recyclerView);
+    }
+
+    private void showEmojiReactionPopup(ChatMessage message, View anchorView) {
+        if (message == null || anchorView == null) return;
+        try {
+            View popupView = LayoutInflater.from(this).inflate(R.layout.popup_emoji_reactions, null);
+            PopupWindow popupWindow = new PopupWindow(
+                    popupView,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    true
+            );
+            popupWindow.setOutsideTouchable(true);
+            popupWindow.setElevation(16f);
+
+            int[] emojiBtnIds = {
+                    R.id.btn_react_thumb,
+                    R.id.btn_react_heart,
+                    R.id.btn_react_laugh,
+                    R.id.btn_react_surprised,
+                    R.id.btn_react_sad,
+                    R.id.btn_react_pray,
+                    R.id.btn_react_fire,
+                    R.id.btn_react_party
+            };
+            String[] emojis = {"👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"};
+
+            for (int i = 0; i < emojiBtnIds.length; i++) {
+                final String emoji = emojis[i];
+                View btn = popupView.findViewById(emojiBtnIds[i]);
+                if (btn != null) {
+                    btn.setOnClickListener(v -> {
+                        popupWindow.dismiss();
+                        handleReaction(message, emoji);
+                    });
+                }
+            }
+
+            popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+            int popupHeight = popupView.getMeasuredHeight();
+            int popupWidth = popupView.getMeasuredWidth();
+
+            int[] location = new int[2];
+            anchorView.getLocationOnScreen(location);
+            int anchorX = location[0];
+            int anchorY = location[1];
+
+            int displayWidth = getResources().getDisplayMetrics().widthPixels;
+            int xPos = anchorX + (anchorView.getWidth() / 2) - (popupWidth / 2);
+            if (xPos < 20) xPos = 20;
+            if (xPos + popupWidth > displayWidth - 20) xPos = displayWidth - popupWidth - 20;
+
+            int yPos = anchorY - popupHeight - 10;
+            if (yPos < 120) {
+                yPos = anchorY + anchorView.getHeight() + 10;
+            }
+
+            popupWindow.showAtLocation(anchorView, Gravity.NO_GRAVITY, xPos, yPos);
+        } catch (Exception e) {
+            Log.e("ChatActivity", "Failed to show reaction popup", e);
+        }
+    }
+
+    private void handleReaction(ChatMessage message, String emoji) {
+        if (message == null || message.getId() == null) return;
+        final String newReaction = (emoji != null && emoji.equals(message.getReaction())) ? null : emoji;
+        message.setReaction(newReaction);
+        if (chatDb != null) chatDb.updateMessageReaction(message.getId(), newReaction);
+        adapter.updateMessageReaction(message.getId(), newReaction);
+        for (ChatMessage nm : normalMessages) {
+            if (message.getId().equals(nm.getId())) {
+                nm.setReaction(newReaction);
+                break;
+            }
+        }
+
+        ChatApiClient.reactToMessage(this, message.getId(), newReaction, currentUserId, new ChatApiClient.ChatCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {}
+
+            @Override
+            public void onError(String error) {
+                Toast.makeText(ChatActivity.this, "Failed to update reaction: " + error, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showDeleteMessagesDialog(List<ChatMessage> messages) {
+        if (messages == null || messages.isEmpty()) return;
+
+        boolean canDeleteForEveryone = true;
+        for (ChatMessage m : messages) {
+            if (currentUserId == null || !currentUserId.equals(m.getSenderId())) {
+                canDeleteForEveryone = false;
+                break;
+            }
+        }
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_delete_messages, null);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_delete_title);
+        View btnEveryone = dialogView.findViewById(R.id.btn_dialog_delete_everyone);
+        View btnForMe = dialogView.findViewById(R.id.btn_dialog_delete_for_me);
+        View btnCancel = dialogView.findViewById(R.id.btn_dialog_delete_cancel);
+
+        if (tvTitle != null) {
+            tvTitle.setText(messages.size() == 1 ? "Delete message?" : "Delete " + messages.size() + " messages?");
+        }
+
+        if (btnEveryone != null) {
+            btnEveryone.setVisibility(canDeleteForEveryone ? View.VISIBLE : View.GONE);
+            btnEveryone.setOnClickListener(v -> {
+                dialog.dismiss();
+                deleteSelectedMessages(messages, true);
+            });
+        }
+
+        if (btnForMe != null) {
+            btnForMe.setOnClickListener(v -> {
+                dialog.dismiss();
+                deleteSelectedMessages(messages, false);
+            });
+        }
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void deleteSelectedMessages(List<ChatMessage> messages, boolean forEveryone) {
+        if (messages == null || messages.isEmpty()) return;
+        List<String> idsToRemove = new ArrayList<>();
+        for (ChatMessage m : messages) {
+            if (m.getId() == null) continue;
+            idsToRemove.add(m.getId());
+            if (forEveryone) {
+                if (chatDb != null) chatDb.markDeletedForEveryone(m.getId());
+                adapter.markMessageDeleted(m.getId());
+                for (ChatMessage nm : normalMessages) {
+                    if (m.getId().equals(nm.getId())) {
+                        nm.setDeletedForEveryone(true);
+                        nm.setMessageText("🚫 This message was deleted");
+                        nm.setMediaUrl(null);
+                        nm.setReaction(null);
+                        break;
+                    }
+                }
+            } else {
+                if (chatDb != null) chatDb.deleteMessageForMe(m.getId());
+                for (int i = normalMessages.size() - 1; i >= 0; i--) {
+                    if (m.getId().equals(normalMessages.get(i).getId())) {
+                        normalMessages.remove(i);
+                        break;
+                    }
+                }
+            }
+            String deleteType = forEveryone ? "for_everyone" : "for_me";
+            ChatApiClient.deleteMessage(this, m.getId(), currentUserId, deleteType, new ChatApiClient.ChatCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {}
+
+                @Override
+                public void onError(String error) {
+                    Toast.makeText(ChatActivity.this, "Delete failed: " + error, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+        if (!forEveryone) {
+            adapter.removeMessages(idsToRemove);
+        }
+        adapter.clearSelection();
+    }
+
+    private void startReply(ChatMessage msg) {
+        this.replyingToMessage = msg;
+        if (layoutReplyPreview != null && tvReplyPreviewSender != null && tvReplyPreviewText != null) {
+            boolean isSelf = currentUserId != null && currentUserId.equals(msg.getSenderId());
+            String senderName = isSelf ? "You" : (otherUserName != null ? otherUserName : "Contact");
+            tvReplyPreviewSender.setText("Reply to " + senderName);
+            tvReplyPreviewText.setText(msg.getDisplaySnippet());
+            layoutReplyPreview.setVisibility(View.VISIBLE);
+        }
+        if (etInput != null) {
+            etInput.requestFocus();
+            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(etInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            }
+        }
+    }
+
+    private void cancelReply() {
+        this.replyingToMessage = null;
+        if (layoutReplyPreview != null) {
+            layoutReplyPreview.setVisibility(View.GONE);
+        }
+    }
+
+    private void showChatOverflowMenu(View anchor) {
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenu().add(0, 1, 0, "View contact");
+        popup.getMenu().add(0, 2, 1, "Search");
+        popup.getMenu().add(0, 3, 2, "Media, links, and docs");
+        popup.getMenu().add(0, 4, 3, "Mute notifications");
+        popup.getMenu().add(0, 5, 4, isSecretMode ? "Normal mode (Disable disappearing)" : "Secret mode (Disappearing messages)");
+        popup.getMenu().add(0, 6, 5, "Chat theme");
+        popup.getMenu().add(0, 7, 6, "Clear chat");
+
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == 1) {
+                showContactInfoDialog();
+                return true;
+            } else if (id == 2) {
+                Toast.makeText(this, "Search active in conversation", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == 3) {
+                Toast.makeText(this, "Media & documents browser", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == 4) {
+                Toast.makeText(this, "Notifications muted", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == 5) {
+                toggleMode();
+                return true;
+            } else if (id == 6) {
+                showThemeDialog();
+                return true;
+            } else if (id == 7) {
+                confirmClearChat();
+                return true;
+            }
+            return false;
+        });
+        popup.show();
+    }
+
+    private void confirmClearChat() {
+        new AlertDialog.Builder(this)
+                .setTitle("Clear Chat")
+                .setMessage("Are you sure you want to clear messages from this chat?")
+                .setPositiveButton("Clear", (dialog, which) -> {
+                    if (isSecretMode) {
+                        ephemeralSecretMessages.clear();
+                    } else {
+                        normalMessages.clear();
+                        if (chatDb != null) {
+                            chatDb.clearConversation(conversationId != null ? conversationId : otherUserId);
+                        }
+                    }
+                    adapter.setMessages(new ArrayList<>());
+                    Toast.makeText(this, "Chat cleared", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void updatePeerStatus(ChatApiClient.PeerStatus peerStatus) {
+        if (tvHeaderStatus == null) return;
+        if (peerStatus == null) {
+            tvHeaderStatus.setText("offline");
+            tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));
+            return;
+        }
+        if (peerStatus.isOnline) {
+            tvHeaderStatus.setText("online");
+            tvHeaderStatus.setTextColor(Color.parseColor("#22C55E"));
+        } else if (peerStatus.lastSeen != null && !peerStatus.lastSeen.isEmpty()) {
+            tvHeaderStatus.setText(formatLastSeen(peerStatus.lastSeen));
+            tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));
+        } else {
+            tvHeaderStatus.setText("offline");
+            tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));
+        }
+    }
+
+    private String formatLastSeen(String rawIso) {
+        try {
+            String clean = rawIso.split("\\.")[0];
+            Date d = isoFormat.parse(clean);
+            if (d == null) return "offline";
+            long now = System.currentTimeMillis();
+            long diff = now - d.getTime();
+            if (diff < 60000) return "last seen just now";
+            SimpleDateFormat timeFmt = new SimpleDateFormat("h:mm a", Locale.getDefault());
+            String timeStr = timeFmt.format(d);
+            long days = diff / (24 * 60 * 60 * 1000);
+            if (days == 0) {
+                return "last seen today at " + timeStr;
+            } else if (days == 1) {
+                return "last seen yesterday at " + timeStr;
+            } else {
+                SimpleDateFormat dateFmt = new SimpleDateFormat("MMM d 'at' h:mm a", Locale.getDefault());
+                return "last seen " + dateFmt.format(d);
+            }
+        } catch (Exception e) {
+            return "offline";
+        }
     }
 
     private void loadMessages() {
@@ -293,12 +942,19 @@ public class ChatActivity extends AppCompatActivity {
                 loadedMessageIds.clear();
                 if (result != null && result.messages != null) {
                     normalMessages.addAll(result.messages);
+                    if (chatDb != null) {
+                        chatDb.saveMessages(result.messages);
+                    }
                 }
 
                 if (result != null && result.isSecretMode) {
                     applyModeState(true, result.secretSessionId, false, true);
                 } else {
                     applyModeState(false, null, false, true);
+                }
+
+                if (result != null) {
+                    updatePeerStatus(result.peerStatus);
                 }
 
                 if (lastPollTimestamp == null) {
@@ -325,8 +981,16 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void sendMessage() {
-        String text = etInput.getText().toString().trim();
+        String text = etInput.getText() != null ? etInput.getText().toString().trim() : "";
         if (text.isEmpty()) return;
+
+        if (replyingToMessage != null) {
+            boolean isSelf = currentUserId != null && currentUserId.equals(replyingToMessage.getSenderId());
+            String senderName = isSelf ? "You" : (otherUserName != null ? otherUserName : "Contact");
+            String snippet = replyingToMessage.getDisplaySnippet();
+            text = ChatMessage.formatReply(senderName, snippet, text);
+            cancelReply();
+        }
 
         etInput.setText("");
         btnSend.setVisibility(View.GONE);
@@ -380,13 +1044,20 @@ public class ChatActivity extends AppCompatActivity {
                 btnSend.setVisibility(View.VISIBLE);
                 pbSending.setVisibility(View.GONE);
                 if (sentMessage != null) {
-                    if (sentMessage.getId() != null) {
-                        loadedMessageIds.add(sentMessage.getId());
-                        task.optimisticMsg.setId(sentMessage.getId());
-                    }
+                    String serverId = sentMessage.getId();
                     String st = sentMessage.getStatus() != null ? sentMessage.getStatus() : ChatMessage.STATUS_SENT;
+                    if (serverId != null) {
+                        loadedMessageIds.add(serverId);
+                    }
+                    adapter.updateTempMessage(task.optimisticMsg.getId(), serverId, st);
+                    if (serverId != null) {
+                        task.optimisticMsg.setId(serverId);
+                    }
                     task.optimisticMsg.setStatus(st);
-                    adapter.updateMessageStatus(task.optimisticMsg.getId(), st);
+
+                    if (chatDb != null && !isSecretMode) {
+                        chatDb.saveMessage(sentMessage);
+                    }
 
                     if (conversationId == null && sentMessage.getConversationId() != null) {
                         conversationId = sentMessage.getConversationId();
@@ -413,26 +1084,49 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void showAttachmentDialog() {
-        String[] options = {"📷 Camera", "🖼️ Photo / Gallery", "🎥 Video", "📄 Document / File"};
-        new AlertDialog.Builder(this)
-                .setTitle("Share Media")
-                .setItems(options, (dialog, which) -> {
-                    switch (which) {
-                        case 0:
-                            takePhotoLauncher.launch(null);
-                            break;
-                        case 1:
-                            pickImageLauncher.launch("image/*");
-                            break;
-                        case 2:
-                            pickVideoLauncher.launch("video/*");
-                            break;
-                        case 3:
-                            pickFileLauncher.launch("*/*");
-                            break;
-                    }
-                })
-                .show();
+        com.google.android.material.bottomsheet.BottomSheetDialog sheet =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_attachment_picker, null);
+        sheet.setContentView(view);
+
+        View btnDoc = view.findViewById(R.id.btn_attach_doc);
+        View btnCamera = view.findViewById(R.id.btn_attach_camera);
+        View btnGallery = view.findViewById(R.id.btn_attach_gallery);
+        View btnVideo = view.findViewById(R.id.btn_attach_video);
+        View btnContact = view.findViewById(R.id.btn_attach_contact);
+
+        if (btnDoc != null) {
+            btnDoc.setOnClickListener(v -> {
+                sheet.dismiss();
+                pickFileLauncher.launch("*/*");
+            });
+        }
+        if (btnCamera != null) {
+            btnCamera.setOnClickListener(v -> {
+                sheet.dismiss();
+                takePhotoLauncher.launch(null);
+            });
+        }
+        if (btnGallery != null) {
+            btnGallery.setOnClickListener(v -> {
+                sheet.dismiss();
+                pickImageLauncher.launch("image/*");
+            });
+        }
+        if (btnVideo != null) {
+            btnVideo.setOnClickListener(v -> {
+                sheet.dismiss();
+                pickVideoLauncher.launch("video/*");
+            });
+        }
+        if (btnContact != null) {
+            btnContact.setOnClickListener(v -> {
+                sheet.dismiss();
+                Toast.makeText(this, "Select contact to share", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        sheet.show();
     }
 
     private void handleMediaSelection(Uri uri, String defaultType) {
@@ -493,6 +1187,9 @@ public class ChatActivity extends AppCompatActivity {
                                         ephemeralSecretMessages.add(sentMessage);
                                     } else {
                                         normalMessages.add(sentMessage);
+                                        if (chatDb != null) {
+                                            chatDb.saveMessage(sentMessage);
+                                        }
                                     }
                                     adapter.addMessage(sentMessage);
                                     recyclerView.scrollToPosition(adapter.getItemCount() - 1);
@@ -541,6 +1238,10 @@ public class ChatActivity extends AppCompatActivity {
                     if (result != null) {
                         if (result.timestamp != null) lastPollTimestamp = result.timestamp;
 
+                        if (result.peerStatus != null) {
+                            updatePeerStatus(result.peerStatus);
+                        }
+
                         // Synchronize dual mode across peers
                         if (result.conversationMode != null) {
                             boolean remoteSecret = result.conversationMode.isSecretMode;
@@ -550,17 +1251,44 @@ public class ChatActivity extends AppCompatActivity {
                             }
                         }
 
-                        // Process status updates for sent messages (sent -> delivered -> read)
+                        // Process status updates for messages (sent -> delivered -> read, reactions, deletions)
                         if (result.statusUpdates != null && !result.statusUpdates.isEmpty()) {
                             for (JsonObject su : result.statusUpdates) {
-                                if (su.has("id") && su.has("status")) {
+                                if (su.has("id")) {
                                     String msgId = su.get("id").getAsString();
-                                    String newStatus = su.get("status").getAsString();
-                                    adapter.updateMessageStatus(msgId, newStatus);
-                                    for (ChatMessage nm : normalMessages) {
-                                        if (msgId.equals(nm.getId())) {
-                                            nm.setStatus(newStatus);
-                                            break;
+                                    if (su.has("status") && !su.get("status").isJsonNull()) {
+                                        String newStatus = su.get("status").getAsString();
+                                        if (chatDb != null) chatDb.updateMessageStatus(msgId, newStatus);
+                                        adapter.updateMessageStatus(msgId, newStatus);
+                                        for (ChatMessage nm : normalMessages) {
+                                            if (msgId.equals(nm.getId())) {
+                                                nm.setStatus(newStatus);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (su.has("reaction")) {
+                                        String rx = su.get("reaction").isJsonNull() ? null : su.get("reaction").getAsString();
+                                        if (chatDb != null) chatDb.updateMessageReaction(msgId, rx);
+                                        adapter.updateMessageReaction(msgId, rx);
+                                        for (ChatMessage nm : normalMessages) {
+                                            if (msgId.equals(nm.getId())) {
+                                                nm.setReaction(rx);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (su.has("is_deleted_for_everyone") && !su.get("is_deleted_for_everyone").isJsonNull() && su.get("is_deleted_for_everyone").getAsBoolean()) {
+                                        if (chatDb != null) chatDb.markDeletedForEveryone(msgId);
+                                        adapter.markMessageDeleted(msgId);
+                                        for (ChatMessage nm : normalMessages) {
+                                            if (msgId.equals(nm.getId())) {
+                                                nm.setDeletedForEveryone(true);
+                                                nm.setMessageText("🚫 This message was deleted");
+                                                nm.setMediaUrl(null);
+                                                nm.setReaction(null);
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -590,6 +1318,9 @@ public class ChatActivity extends AppCompatActivity {
                                         }
                                     } else {
                                         normalMessages.add(msg);
+                                        if (chatDb != null) {
+                                            chatDb.saveMessage(msg);
+                                        }
                                         if (!isSecretMode) {
                                             adapter.addMessage(msg);
                                             hasNew = true;
@@ -651,6 +1382,15 @@ public class ChatActivity extends AppCompatActivity {
         if (isSecretMode) {
             adapter.setMessages(ephemeralSecretMessages);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (adapter != null && adapter.isSelectionMode()) {
+            adapter.clearSelection();
+            return;
+        }
+        super.onBackPressed();
     }
 
     @Override

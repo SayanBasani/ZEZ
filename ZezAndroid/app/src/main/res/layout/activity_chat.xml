@@ -2,124 +2,227 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_chat_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/theme_background">
+    android:background="@drawable/bg_chat_theme_default">
 
-    <!-- Top WhatsApp-Style Action Bar -->
-    <LinearLayout
+    <!-- Top WhatsApp-Style Action Bar & Selection Action Bar -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="4dp"
-        android:background="@color/theme_surface"
         android:elevation="2dp">
 
-        <ImageButton
-            android:id="@+id/btn_chat_back"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="@color/theme_icon_tint"
-            android:contentDescription="Back" />
-
-        <FrameLayout
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:layout_marginEnd="10dp">
-
-            <ImageView
-                android:id="@+id/iv_chat_header_avatar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_person"
-                app:tint="@color/theme_text_secondary"
-                android:background="@drawable/bg_circle_glass"
-                android:padding="6dp" />
-
-            <TextView
-                android:id="@+id/tv_chat_header_initials"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:textColor="@android:color/white"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
-        </FrameLayout>
-
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tv_chat_header_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Contact Name"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:textColor="@color/theme_text_primary" />
-
-            <TextView
-                android:id="@+id/tv_chat_header_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="online"
-                android:textSize="11sp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:textColor="@color/primary" />
-        </LinearLayout>
-
-        <!-- Mode Toggle Pill Button (Normal <-> Secret Mode) -->
-        <LinearLayout
-            android:id="@+id/btn_chat_mode_toggle"
-            android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:layout_marginEnd="6dp"
+            android:id="@+id/layout_chat_normal_header"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:background="@drawable/bg_mode_toggle_normal"
-            android:paddingHorizontal="10dp"
-            android:clickable="true"
-            android:focusable="true">
+            android:paddingHorizontal="4dp"
+            android:background="@color/theme_surface">
 
-            <ImageView
-                android:id="@+id/iv_mode_icon"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_shield_check"
-                app:tint="#22C55E" />
+            <ImageButton
+                android:id="@+id/btn_chat_back"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Back" />
 
-            <TextView
-                android:id="@+id/tv_mode_label"
-                android:layout_width="wrap_content"
+            <FrameLayout
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginEnd="10dp">
+
+                <ImageView
+                    android:id="@+id/iv_chat_header_avatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_person"
+                    app:tint="@color/theme_text_secondary"
+                    android:background="@drawable/bg_circle_glass"
+                    android:padding="6dp" />
+
+                <TextView
+                    android:id="@+id/tv_chat_header_initials"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:text="Normal"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="#22C55E" />
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_chat_header_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Contact Name"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="@color/theme_text_primary" />
+
+                <TextView
+                    android:id="@+id/tv_chat_header_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="online"
+                    android:textSize="11sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="@color/primary" />
+            </LinearLayout>
+
+            <!-- Mode Toggle Pill Button (Moved to Three-Dot Menu, hidden from header) -->
+            <LinearLayout
+                android:id="@+id/btn_chat_mode_toggle"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_marginEnd="6dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_mode_toggle_normal"
+                android:paddingHorizontal="10dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/iv_mode_icon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_shield_check"
+                    app:tint="#22C55E" />
+
+                <TextView
+                    android:id="@+id/tv_mode_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="Normal"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#22C55E" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btn_chat_videocall"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_videocall"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Video Call" />
+
+            <ImageButton
+                android:id="@+id/btn_chat_audiocall"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_call"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Audio Call" />
+
+            <ImageButton
+                android:id="@+id/btn_chat_more"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Options" />
         </LinearLayout>
 
-        <ImageButton
-            android:id="@+id/btn_chat_more"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_more_vert"
-            app:tint="@color/theme_icon_tint"
-            android:contentDescription="Options" />
-    </LinearLayout>
+        <!-- Contextual Message Selection Action Bar (WhatsApp Style) -->
+        <LinearLayout
+            android:id="@+id/layout_chat_selection_bar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="4dp"
+            android:background="@color/theme_surface"
+            android:visibility="gone">
+
+            <ImageButton
+                android:id="@+id/btn_selection_close"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Close Selection" />
+
+            <TextView
+                android:id="@+id/tv_selection_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="1"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/theme_text_primary" />
+
+            <ImageButton
+                android:id="@+id/btn_selection_reply"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_reply"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Reply" />
+
+            <ImageButton
+                android:id="@+id/btn_selection_star"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_star_filled"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Star" />
+
+            <ImageButton
+                android:id="@+id/btn_selection_delete"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_delete"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Delete" />
+
+            <ImageButton
+                android:id="@+id/btn_selection_forward"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_forward"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="Forward" />
+
+            <ImageButton
+                android:id="@+id/btn_selection_more"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                app:tint="@color/theme_icon_tint"
+                android:contentDescription="More Options" />
+        </LinearLayout>
+    </FrameLayout>
 
     <!-- Secret Mode Ephemeral Warning Banner -->
     <LinearLayout
@@ -168,6 +271,63 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:paddingVertical="8dp" />
+
+    <!-- Quoted Reply Preview Bar (WhatsApp Style) -->
+    <LinearLayout
+        android:id="@+id/layout_reply_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_reply_preview"
+        android:paddingStart="12dp"
+        android:paddingEnd="8dp"
+        android:paddingVertical="8dp"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginBottom="4dp"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="4dp"
+            android:layout_height="match_parent"
+            android:background="#22C55E"
+            android:layout_marginEnd="8dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_reply_preview_sender"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reply to"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#22C55E" />
+
+            <TextView
+                android:id="@+id/tv_reply_preview_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quoted message snippet"
+                android:textSize="13sp"
+                android:textColor="@color/theme_text_secondary"
+                android:maxLines="2"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_cancel_reply"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_close"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Cancel reply" />
+    </LinearLayout>
 
     <!-- Bottom Message Input Bar (WhatsApp Style) -->
     <LinearLayout
@@ -218,8 +378,10 @@
             android:id="@+id/btn_chat_send_container"
             android:layout_width="46dp"
             android:layout_height="46dp"
-            android:background="@drawable/bg_circle_glass"
-            android:backgroundTint="@color/primary">
+            android:background="@drawable/bg_chat_send_button"
+            android:elevation="3dp"
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
                 android:id="@+id/btn_chat_send"
@@ -235,6 +397,7 @@
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:layout_gravity="center"
+                android:indeterminateTint="@android:color/white"
                 android:visibility="gone" />
         </FrameLayout>
 

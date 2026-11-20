@@ -114,6 +114,9 @@ async function initializeDatabase() {
 
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS mode VARCHAR(16) DEFAULT 'normal';
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS secret_session_id UUID;
+    ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS reaction VARCHAR(32);
+    ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS is_deleted_for_everyone BOOLEAN DEFAULT FALSE;
+    ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS deleted_for_users JSONB DEFAULT '[]'::jsonb;
     CREATE INDEX IF NOT EXISTS idx_chat_messages_mode ON public.chat_messages(conversation_id, mode);
 
     -- High performance query indexes

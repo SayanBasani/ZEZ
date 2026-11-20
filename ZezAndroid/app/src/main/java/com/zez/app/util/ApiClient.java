@@ -84,7 +84,7 @@ public class ApiClient {
         body.addProperty("brand", Build.BRAND);
         body.addProperty("platform", "Android");
         body.addProperty("osVersion", Build.VERSION.RELEASE);
-        body.addProperty("appVersion", "1.0.0");
+        body.addProperty("appVersion", AppUpdateHelper.getCurrentVersionName(context));
         body.add("deviceDetails", DeviceHelper.getDeviceDetails(context));
 
         Request request = new Request.Builder()

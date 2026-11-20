@@ -95,6 +95,51 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Quoted Reply Box -->
+        <LinearLayout
+            android:id="@+id/layout_msg_outgoing_quote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#25FFFFFF"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingVertical="4dp"
+            android:layout_marginBottom="4dp"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:background="#A7F3D0"
+                android:layout_marginEnd="6dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_msg_outgoing_quote_sender"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="You"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="#A7F3D0" />
+
+                <TextView
+                    android:id="@+id/tv_msg_outgoing_quote_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Quoted text"
+                    android:textSize="12sp"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:textColor="#EEFFFFFF" />
+            </LinearLayout>
+        </LinearLayout>
+
         <TextView
             android:id="@+id/tv_msg_outgoing_text"
             android:layout_width="wrap_content"
@@ -126,6 +171,26 @@
                 android:layout_marginStart="4dp"
                 android:src="@drawable/ic_check_double"
                 app:tint="#CCFFFFFF" />
+        </LinearLayout>
+
+        <!-- Reaction Badge (Outgoing: bottom-right) -->
+        <LinearLayout
+            android:id="@+id/layout_msg_outgoing_reaction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="2dp"
+            android:background="@drawable/bg_reaction_badge"
+            android:elevation="2dp"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tv_msg_outgoing_reaction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:text="❤️" />
         </LinearLayout>
     </LinearLayout>
 

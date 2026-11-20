@@ -74,18 +74,13 @@ public class PreferencesHelper {
     public static String getApiUrl(Context context) {
         String saved = getPrefs(context).getString(KEY_API_URL, null);
         if (saved != null && !saved.trim().isEmpty()) {
-            // Only migrate the old inactive legacy Render URL
-            if ("https://zez-backend.onrender.com".equalsIgnoreCase(saved.trim())) {
+            String trimmed = saved.trim();
+            // Automatically clean up old inactive legacy Render URL
+            if ("https://zez-backend.onrender.com".equalsIgnoreCase(trimmed)) {
                 setApiUrl(context, DEFAULT_API_URL);
                 return DEFAULT_API_URL;
             }
-            return saved.trim();
-        }
-        // Use BACKEND_URL from assets/backend_config.properties for all devices
-        // so that physical mobile and Android Studio emulator connect to the same backend
-        String assetUrl = getAssetConfigUrl(context);
-        if (assetUrl != null && !assetUrl.trim().isEmpty()) {
-            return assetUrl.trim();
+            return trimmed;
         }
         return DEFAULT_API_URL;
     }
@@ -111,7 +106,7 @@ public class PreferencesHelper {
     }
 
     public static void resetApiUrl(Context context) {
-        getPrefs(context).edit().remove(KEY_API_URL).apply();
+        setApiUrl(context, DEFAULT_API_URL);
     }
 
     public static long getLastSyncTime(Context context) {
