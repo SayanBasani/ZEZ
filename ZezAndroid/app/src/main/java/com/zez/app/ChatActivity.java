@@ -84,6 +84,19 @@ public class ChatActivity extends AppCompatActivity {
     private final SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
     private final Set<String> loadedMessageIds = new HashSet<>();
 
+    private static class PendingMessage {
+        ChatMessage optimisticMsg;
+        String text;
+        String activeMode;
+        String sessionUuid;
+        String mediaUrl;
+        String mediaType;
+        String fileName;
+        Long fileSize;
+    }
+    private final List<PendingMessage> pendingMessagesQueue = new ArrayList<>();
+    private boolean isDrainingQueue = false;
+
     private ActivityResultLauncher<String> pickImageLauncher;
     private ActivityResultLauncher<String> pickVideoLauncher;
     private ActivityResultLauncher<String> pickFileLauncher;
@@ -292,7 +305,8 @@ public class ChatActivity extends AppCompatActivity {
                     if (!normalMessages.isEmpty()) {
                         lastPollTimestamp = normalMessages.get(normalMessages.size() - 1).getCreatedAt();
                     } else {
-                        lastPollTimestamp = isoFormat.format(new Date());
+                        // Do not use local client clock which can be ahead of server! Leave null so first poll uses server lookback
+                        lastPollTimestamp = null;
                     }
                 }
                 if (adapter.getItemCount() > 0) {
@@ -329,7 +343,7 @@ public class ChatActivity extends AppCompatActivity {
                 otherUserId,
                 text,
                 null,
-                ChatMessage.STATUS_SENT,
+                ChatMessage.STATUS_PENDING,
                 isoFormat.format(new Date())
         );
         optimisticMsg.setMode(activeMode);
@@ -343,32 +357,57 @@ public class ChatActivity extends AppCompatActivity {
         adapter.addMessage(optimisticMsg);
         recyclerView.scrollToPosition(adapter.getItemCount() - 1);
 
-        ChatApiClient.sendMessage(this, currentUserId, otherUserId, text, null, null, null, null, activeMode, sessionUuid, new ChatApiClient.ChatCallback<ChatMessage>() {
+        PendingMessage task = new PendingMessage();
+        task.optimisticMsg = optimisticMsg;
+        task.text = text;
+        task.activeMode = activeMode;
+        task.sessionUuid = sessionUuid;
+        pendingMessagesQueue.add(task);
+
+        drainPendingQueue();
+    }
+
+    private void drainPendingQueue() {
+        if (isDrainingQueue || pendingMessagesQueue.isEmpty()) return;
+        final PendingMessage task = pendingMessagesQueue.get(0);
+        isDrainingQueue = true;
+
+        ChatApiClient.sendMessage(this, currentUserId, otherUserId, task.text, task.mediaUrl, task.mediaType, task.fileName, task.fileSize, task.activeMode, task.sessionUuid, new ChatApiClient.ChatCallback<ChatMessage>() {
             @Override
             public void onSuccess(ChatMessage sentMessage) {
+                isDrainingQueue = false;
+                pendingMessagesQueue.remove(task);
                 btnSend.setVisibility(View.VISIBLE);
                 pbSending.setVisibility(View.GONE);
                 if (sentMessage != null) {
                     if (sentMessage.getId() != null) {
                         loadedMessageIds.add(sentMessage.getId());
-                        optimisticMsg.setId(sentMessage.getId());
+                        task.optimisticMsg.setId(sentMessage.getId());
                     }
-                    if (sentMessage.getStatus() != null) {
-                        optimisticMsg.setStatus(sentMessage.getStatus());
-                        adapter.updateMessageStatus(sentMessage.getId(), sentMessage.getStatus());
-                    }
+                    String st = sentMessage.getStatus() != null ? sentMessage.getStatus() : ChatMessage.STATUS_SENT;
+                    task.optimisticMsg.setStatus(st);
+                    adapter.updateMessageStatus(task.optimisticMsg.getId(), st);
+
                     if (conversationId == null && sentMessage.getConversationId() != null) {
                         conversationId = sentMessage.getConversationId();
                         activeConversationId = conversationId;
                     }
                 }
+                if (!pendingMessagesQueue.isEmpty()) {
+                    drainPendingQueue();
+                }
             }
 
             @Override
             public void onError(String errorMessage) {
+                isDrainingQueue = false;
                 btnSend.setVisibility(View.VISIBLE);
                 pbSending.setVisibility(View.GONE);
-                Toast.makeText(ChatActivity.this, "Failed to send: " + errorMessage, Toast.LENGTH_SHORT).show();
+                // Retain in pending queue to auto-retry as soon as network returns
+                if (task.optimisticMsg != null) {
+                    task.optimisticMsg.setStatus(ChatMessage.STATUS_PENDING);
+                    adapter.updateMessageStatus(task.optimisticMsg.getId(), ChatMessage.STATUS_PENDING);
+                }
             }
         });
     }
@@ -537,6 +576,10 @@ public class ChatActivity extends AppCompatActivity {
                                 boolean belongsToThisChat = (conversationId != null && conversationId.equals(msg.getConversationId()))
                                         || (otherUserId != null && otherUserId.equals(msg.getSenderId()));
                                 if (belongsToThisChat) {
+                                    if (conversationId == null && msg.getConversationId() != null) {
+                                        conversationId = msg.getConversationId();
+                                        activeConversationId = conversationId;
+                                    }
                                     if (msg.getId() != null) loadedMessageIds.add(msg.getId());
                                     
                                     if (msg.isSecretMode()) {
@@ -560,6 +603,11 @@ public class ChatActivity extends AppCompatActivity {
                                     ChatApiClient.markMessagesAsRead(ChatActivity.this, conversationId, currentUserId);
                                 }
                             }
+                        }
+
+                        // Resilient offline auto-retry: if messages were queued while offline, retry now that connection is active!
+                        if (!pendingMessagesQueue.isEmpty()) {
+                            drainPendingQueue();
                         }
                     }
                     if (isPollingActive) {
@@ -587,6 +635,9 @@ public class ChatActivity extends AppCompatActivity {
         isPollingActive = true;
         updateModeUi();
         pollHandler.postDelayed(pollRunnable, 1000);
+        if (!pendingMessagesQueue.isEmpty()) {
+            drainPendingQueue();
+        }
     }
 
     @Override

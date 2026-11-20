@@ -88,6 +88,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvSettingVersionInfo;
     private TextView tvSettingHardwareSummary;
     private TextView tvSettingServerCurrent;
+    private com.google.android.material.textfield.TextInputEditText etSettingBackendUrl;
+    private com.google.android.material.button.MaterialButton btnSettingSaveUrl;
+    private com.google.android.material.button.MaterialButton btnSettingResetUrl;
     private android.widget.Button btnSettingUpdate;
 
     private TextView tvFooterAppVersion;
@@ -237,6 +240,9 @@ public class MainActivity extends AppCompatActivity {
         tvSettingFontCurrent = findViewById(R.id.tv_setting_font_current);
         tvSettingHardwareSummary = findViewById(R.id.tv_setting_hardware_summary);
         tvSettingServerCurrent = findViewById(R.id.tv_setting_server_current);
+        etSettingBackendUrl = findViewById(R.id.et_setting_backend_url);
+        btnSettingSaveUrl = findViewById(R.id.btn_setting_save_url);
+        btnSettingResetUrl = findViewById(R.id.btn_setting_reset_url);
         tvSettingVersionInfo = findViewById(R.id.tv_setting_version_info);
         btnSettingUpdate = findViewById(R.id.btn_setting_update);
 
@@ -289,6 +295,13 @@ public class MainActivity extends AppCompatActivity {
         dividerSettingServer = findViewById(R.id.divider_setting_server);
         if (rowSettingServer != null) {
             rowSettingServer.setOnClickListener(v -> showServerConfigDialog());
+        }
+
+        if (btnSettingSaveUrl != null) {
+            btnSettingSaveUrl.setOnClickListener(v -> saveBackendUrlFromInput());
+        }
+        if (btnSettingResetUrl != null) {
+            btnSettingResetUrl.setOnClickListener(v -> resetBackendUrlToDefault());
         }
 
         // Tap listener for developer / admin unlock (5 taps within 3 seconds)
@@ -723,9 +736,9 @@ public class MainActivity extends AppCompatActivity {
         String lower = query.toLowerCase(java.util.Locale.ROOT).trim();
         List<ChatConversation> filtered = new ArrayList<>();
         for (ChatConversation c : allLoadedConversations) {
-            if ((c.getOtherUserName() != null && c.getOtherUserName().toLowerCase(java.util.Locale.ROOT).contains(lower)) ||
-                (c.getLastMessageText() != null && c.getLastMessageText().toLowerCase(java.util.Locale.ROOT).contains(lower)) ||
-                (c.getOtherUserPhone() != null && c.getOtherUserPhone().contains(lower))) {
+            boolean matchesText = (c.getLastMessageText() != null && c.getLastMessageText().toLowerCase(java.util.Locale.ROOT).contains(lower));
+            boolean matchesUser = com.zez.app.util.PhoneHelper.matchesSearch(query, c.getOtherUserName(), c.getOtherUserPhone());
+            if (matchesText || matchesUser) {
                 filtered.add(c);
             }
         }
@@ -972,7 +985,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         btnRegister.setOnClickListener(v -> {
-            String phone = etPhone.getText() != null ? etPhone.getText().toString().trim() : "";
+            String rawPhone = etPhone.getText() != null ? etPhone.getText().toString().trim() : "";
+            String phone = com.zez.app.util.PhoneHelper.normalize(rawPhone);
             String name = etName.getText() != null ? etName.getText().toString().trim() : "";
 
             if (phone.isEmpty()) {
@@ -996,7 +1010,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                     ChatPreferencesHelper.saveChatUser(MainActivity.this, user.getId(), user.getPhoneNumber(), user.getName(), user.getAvatarUrl(), user.getStatusMessage());
                     Toast.makeText(MainActivity.this, "Welcome to Zez Chat, " + user.getName() + "!", Toast.LENGTH_SHORT).show();
+                    ChatNotificationManager.getInstance().start(MainActivity.this);
                     loadChatsData();
+                    startChatListPolling();
                 }
 
                 @Override
@@ -1667,8 +1683,12 @@ public class MainActivity extends AppCompatActivity {
         tvSettingHardwareSummary.setText("Storage " + storage.usedPercent + "% used · RAM " + ram.usedPercent + "% used");
 
         // Current Backend Server URL
+        String activeApiUrl = PreferencesHelper.getApiUrl(this);
+        if (etSettingBackendUrl != null && (etSettingBackendUrl.getText() == null || etSettingBackendUrl.getText().toString().isEmpty() || !etSettingBackendUrl.hasFocus())) {
+            etSettingBackendUrl.setText(activeApiUrl);
+        }
         if (tvSettingServerCurrent != null) {
-            tvSettingServerCurrent.setText(PreferencesHelper.getApiUrl(this));
+            tvSettingServerCurrent.setText("Active: " + activeApiUrl);
         }
 
         // Version info
@@ -1743,6 +1763,39 @@ public class MainActivity extends AppCompatActivity {
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
         builder.show();
+    }
+
+    private void saveBackendUrlFromInput() {
+        if (etSettingBackendUrl == null) return;
+        String newUrl = etSettingBackendUrl.getText() != null ? etSettingBackendUrl.getText().toString().trim() : "";
+        if (newUrl.isEmpty()) {
+            etSettingBackendUrl.setError("URL cannot be empty");
+            return;
+        }
+        if (!newUrl.startsWith("http://") && !newUrl.startsWith("https://")) {
+            newUrl = "https://" + newUrl;
+        }
+        if (newUrl.endsWith("/")) {
+            newUrl = newUrl.substring(0, newUrl.length() - 1);
+        }
+        PreferencesHelper.setApiUrl(this, newUrl);
+        Toast.makeText(this, "Backend URL saved: " + newUrl, Toast.LENGTH_SHORT).show();
+        loadSettingsData();
+
+        // Asynchronously ping the new backend URL
+        new Thread(() -> {
+            ApiClient.ping(getApplicationContext());
+        }).start();
+    }
+
+    private void resetBackendUrlToDefault() {
+        PreferencesHelper.resetApiUrl(this);
+        Toast.makeText(this, "Backend URL reset to default", Toast.LENGTH_SHORT).show();
+        loadSettingsData();
+
+        new Thread(() -> {
+            ApiClient.ping(getApplicationContext());
+        }).start();
     }
 
     private void showServerConfigDialog() {

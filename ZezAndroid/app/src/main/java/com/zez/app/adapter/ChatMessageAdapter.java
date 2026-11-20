@@ -219,6 +219,12 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             } else if (ChatMessage.STATUS_DELIVERED.equalsIgnoreCase(status)) {
                 ivTick.setImageResource(R.drawable.ic_check_double);
                 ivTick.setColorFilter(Color.parseColor("#94A3B8")); // Ash double tick
+            } else if (ChatMessage.STATUS_PENDING.equalsIgnoreCase(status)) {
+                ivTick.setImageResource(R.drawable.ic_clock);
+                ivTick.setColorFilter(Color.parseColor("#94A3B8")); // Pending clock icon
+            } else if (ChatMessage.STATUS_FAILED.equalsIgnoreCase(status)) {
+                ivTick.setImageResource(R.drawable.ic_refresh);
+                ivTick.setColorFilter(Color.parseColor("#EF4444")); // Red retry icon
             } else {
                 ivTick.setImageResource(R.drawable.ic_check_single);
                 ivTick.setColorFilter(Color.parseColor("#94A3B8")); // Ash single tick

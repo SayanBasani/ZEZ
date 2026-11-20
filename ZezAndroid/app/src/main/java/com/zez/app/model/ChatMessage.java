@@ -4,9 +4,11 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 public class ChatMessage implements Serializable {
+    public static final String STATUS_PENDING = "pending";
     public static final String STATUS_SENT = "sent";
     public static final String STATUS_DELIVERED = "delivered";
     public static final String STATUS_READ = "read";
+    public static final String STATUS_FAILED = "failed";
 
     public static final String MODE_NORMAL = "normal";
     public static final String MODE_SECRET = "secret";
