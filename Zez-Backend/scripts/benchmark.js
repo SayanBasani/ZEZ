@@ -5,7 +5,7 @@ async function benchmark() {
   const loginRes = await fetch(`${base}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: 'admin', password: 'your_secure_admin_password' })
+    body: JSON.stringify({ username: 'admin', password: process.env.ADMIN_PASSWORD || 'your_admin_password' })
   });
   const loginTime = Date.now() - t0;
   const { token } = await loginRes.json();

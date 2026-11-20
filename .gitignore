@@ -18,6 +18,12 @@ yarn-error.log*
 
 # Environment and sensitive files
 .env
+.env.*
+*.env
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
 .env.local
 .env.*.local
 *.key
