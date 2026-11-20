@@ -31,14 +31,50 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
 
     public ConversationsAdapter(OnConversationClickListener listener) {
         this.listener = listener;
+        setHasStableIds(true);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        if (position >= 0 && position < conversations.size()) {
+            String id = conversations.get(position).getConversationId();
+            if (id != null) return id.hashCode();
+        }
+        return position;
     }
 
     public void setConversations(List<ChatConversation> list) {
+        if (list == null && conversations.isEmpty()) return;
+        if (list != null && list.size() == conversations.size()) {
+            boolean identical = true;
+            for (int i = 0; i < list.size(); i++) {
+                ChatConversation a = list.get(i);
+                ChatConversation b = conversations.get(i);
+                if (!isSameConversation(a, b)) {
+                    identical = false;
+                    break;
+                }
+            }
+            if (identical) {
+                return; // Nothing changed: skip notifyDataSetChanged to eliminate flickering
+            }
+        }
         conversations.clear();
         if (list != null) {
             conversations.addAll(list);
         }
         notifyDataSetChanged();
+    }
+
+    private boolean isSameConversation(ChatConversation a, ChatConversation b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        return java.util.Objects.equals(a.getConversationId(), b.getConversationId())
+                && java.util.Objects.equals(a.getLastMessageText(), b.getLastMessageText())
+                && java.util.Objects.equals(a.getLastMessageTime(), b.getLastMessageTime())
+                && a.getUnreadCount() == b.getUnreadCount()
+                && java.util.Objects.equals(a.getOtherUserName(), b.getOtherUserName())
+                && java.util.Objects.equals(a.getOtherUserAvatar(), b.getOtherUserAvatar());
     }
 
     @NonNull
@@ -80,7 +116,14 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
         }
 
         void bind(ChatConversation item, OnConversationClickListener listener, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt, SimpleDateFormat dateFmt) {
-            tvName.setText(item.getOtherUserName());
+            String myUserId = com.zez.app.util.ChatPreferencesHelper.getUserId(itemView.getContext());
+            String displayName;
+            if (item.getOtherUserId() != null && item.getOtherUserId().equals(myUserId)) {
+                displayName = "You (Message yourself)";
+            } else {
+                displayName = com.zez.app.util.PhoneHelper.resolveContactName(itemView.getContext(), item.getOtherUserPhone(), item.getOtherUserName());
+            }
+            tvName.setText(displayName);
 
             String avatarUrl = item.getOtherUserAvatar();
             if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
@@ -96,8 +139,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
                 ivAvatar.setImageResource(R.drawable.bg_circle_glass);
                 if (tvInitials != null) {
                     tvInitials.setVisibility(View.VISIBLE);
-                    String name = item.getOtherUserName();
-                    tvInitials.setText(name != null && !name.isEmpty() ? String.valueOf(name.charAt(0)).toUpperCase(java.util.Locale.ROOT) : "?");
+                    tvInitials.setText(displayName != null && !displayName.isEmpty() ? String.valueOf(displayName.charAt(0)).toUpperCase(java.util.Locale.ROOT) : "?");
                 }
             }
 
@@ -131,6 +173,10 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             if (item.getUnreadCount() > 0) {
                 tvUnreadBadge.setVisibility(View.VISIBLE);
                 tvUnreadBadge.setText(String.valueOf(item.getUnreadCount()));
+                int accentColor = com.zez.app.util.PreferencesHelper.getAccentColorInt(itemView.getContext());
+                if (tvUnreadBadge.getBackground() != null) {
+                    tvUnreadBadge.getBackground().mutate().setTint(accentColor);
+                }
                 tvLastMessage.setTextColor(itemView.getContext().getResources().getColor(R.color.theme_text_primary));
             } else {
                 tvUnreadBadge.setVisibility(View.GONE);

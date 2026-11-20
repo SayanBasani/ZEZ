@@ -114,6 +114,8 @@ public class ChatActivity extends AppCompatActivity {
     private ActivityResultLauncher<String> pickWallpaperLauncher;
 
     private View layoutChatRoot;
+    private ImageView ivChatWallpaper;
+    private View viewChatWallpaperDim;
     private ImageButton btnVideocall;
     private ImageButton btnAudiocall;
     private com.zez.app.util.ChatLocalDbHelper chatDb;
@@ -228,6 +230,8 @@ public class ChatActivity extends AppCompatActivity {
         btnSelectionDelete = findViewById(R.id.btn_selection_delete);
 
         layoutChatRoot = findViewById(R.id.layout_chat_root);
+        ivChatWallpaper = findViewById(R.id.iv_chat_wallpaper);
+        viewChatWallpaperDim = findViewById(R.id.view_chat_wallpaper_dim);
         btnVideocall = findViewById(R.id.btn_chat_videocall);
         btnAudiocall = findViewById(R.id.btn_chat_audiocall);
         btnSelectionStar = findViewById(R.id.btn_selection_star);
@@ -275,8 +279,23 @@ public class ChatActivity extends AppCompatActivity {
 
         applyChatTheme(ChatPreferencesHelper.getChatTheme(this));
 
-        tvHeaderName.setText(otherUserName != null ? otherUserName : otherUserPhone);
-        tvHeaderStatus.setText("Connecting...");
+        boolean isSelfChat = otherUserId != null && otherUserId.equals(currentUserId);
+        if (isSelfChat) {
+            otherUserName = "You (Message yourself)";
+            tvHeaderName.setText("You (Message yourself)");
+            tvHeaderStatus.setText("Message yourself · Notes, links, drafts");
+            if (btnAudiocall != null) btnAudiocall.setVisibility(View.GONE);
+            if (btnVideocall != null) btnVideocall.setVisibility(View.GONE);
+        } else {
+            otherUserName = com.zez.app.util.PhoneHelper.resolveContactName(this, otherUserPhone, otherUserName);
+            tvHeaderName.setText(otherUserName != null ? otherUserName : otherUserPhone);
+            tvHeaderStatus.setText("Connecting...");
+        }
+
+        int accentColor = com.zez.app.util.PreferencesHelper.getAccentColorInt(this);
+        if (btnSend != null && btnSend.getBackground() != null) {
+            btnSend.getBackground().mutate().setTint(accentColor);
+        }
 
         btnBack.setOnClickListener(v -> finish());
         btnSendContainer.setOnClickListener(v -> sendMessage());
@@ -569,16 +588,35 @@ public class ChatActivity extends AppCompatActivity {
 
     private void applyChatTheme(String theme) {
         if (layoutChatRoot == null) return;
+        float savedDim = ChatPreferencesHelper.getWallpaperDim(this);
+
         if ("custom".equalsIgnoreCase(theme)) {
             File wallpaperFile = new File(getFilesDir(), "custom_chat_wallpaper.jpg");
             if (wallpaperFile.exists()) {
-                android.graphics.drawable.Drawable d = android.graphics.drawable.Drawable.createFromPath(wallpaperFile.getAbsolutePath());
-                if (d != null) {
-                    layoutChatRoot.setBackground(d);
-                    return;
+                if (ivChatWallpaper != null) {
+                    ivChatWallpaper.setVisibility(View.VISIBLE);
+                    com.bumptech.glide.Glide.with(this)
+                            .load(wallpaperFile)
+                            .centerCrop()
+                            .into(ivChatWallpaper);
                 }
+                if (viewChatWallpaperDim != null) {
+                    viewChatWallpaperDim.setVisibility(savedDim > 0.001f ? View.VISIBLE : View.GONE);
+                    viewChatWallpaperDim.setAlpha(savedDim);
+                }
+                layoutChatRoot.setBackground(null);
+                return;
             }
         }
+
+        if (ivChatWallpaper != null) {
+            ivChatWallpaper.setVisibility(View.GONE);
+        }
+        if (viewChatWallpaperDim != null) {
+            viewChatWallpaperDim.setVisibility(savedDim > 0.001f ? View.VISIBLE : View.GONE);
+            viewChatWallpaperDim.setAlpha(savedDim);
+        }
+
         int resId = R.drawable.bg_chat_theme_default;
         if ("charcoal".equalsIgnoreCase(theme)) resId = R.drawable.bg_chat_theme_charcoal;
         else if ("emerald".equalsIgnoreCase(theme)) resId = R.drawable.bg_chat_theme_emerald;
@@ -622,6 +660,50 @@ public class ChatActivity extends AppCompatActivity {
                 if (pickWallpaperLauncher != null) {
                     pickWallpaperLauncher.launch("image/*");
                 }
+            });
+        }
+
+        // WhatsApp-style Wallpaper Dimming Slider
+        android.widget.SeekBar seekDim = view.findViewById(R.id.seek_wallpaper_dim);
+        TextView tvDimValue = view.findViewById(R.id.tv_wallpaper_dim_value);
+        float currentDim = ChatPreferencesHelper.getWallpaperDim(this);
+        int currentProgress = Math.round(currentDim * 100f);
+        if (seekDim != null) {
+            seekDim.setProgress(currentProgress);
+            if (tvDimValue != null) tvDimValue.setText(currentProgress + "%");
+            seekDim.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+                    if (tvDimValue != null) tvDimValue.setText(progress + "%");
+                    float alpha = progress / 100f;
+                    ChatPreferencesHelper.setWallpaperDim(ChatActivity.this, alpha);
+                    if (viewChatWallpaperDim != null) {
+                        viewChatWallpaperDim.setVisibility(alpha > 0.001f ? View.VISIBLE : View.GONE);
+                        viewChatWallpaperDim.setAlpha(alpha);
+                    }
+                }
+
+                @Override
+                public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+
+                @Override
+                public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+            });
+        }
+
+        // Reset to Default Wallpaper button
+        View optResetDefault = view.findViewById(R.id.theme_opt_reset_default);
+        if (optResetDefault != null) {
+            optResetDefault.setOnClickListener(v -> {
+                ChatPreferencesHelper.saveChatTheme(this, "default");
+                ChatPreferencesHelper.setWallpaperDim(this, 0.0f);
+                if (ivChatWallpaper != null) ivChatWallpaper.setVisibility(View.GONE);
+                if (viewChatWallpaperDim != null) viewChatWallpaperDim.setVisibility(View.GONE);
+                if (seekDim != null) seekDim.setProgress(0);
+                if (tvDimValue != null) tvDimValue.setText("0%");
+                applyChatTheme("default");
+                sheet.dismiss();
+                Toast.makeText(this, "Reset to default wallpaper", Toast.LENGTH_SHORT).show();
             });
         }
 
@@ -1110,6 +1192,11 @@ public class ChatActivity extends AppCompatActivity {
 
     private void updatePeerStatus(ChatApiClient.PeerStatus peerStatus) {
         if (tvHeaderStatus == null) return;
+        if (otherUserId != null && otherUserId.equals(currentUserId)) {
+            tvHeaderStatus.setText("Message yourself · Notes, links, drafts");
+            tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));
+            return;
+        }
         if (peerStatus == null) {
             tvHeaderStatus.setText("offline");
             tvHeaderStatus.setTextColor(Color.parseColor("#94A3B8"));

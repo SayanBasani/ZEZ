@@ -14,6 +14,25 @@ public class PreferencesHelper {
     private static final String KEY_LAST_SYNC = "last_sync_time";
     public static final String KEY_THEME_MODE = "theme_mode";
     public static final String KEY_FONT_SCALE = "font_scale";
+    public static final String KEY_ACCENT_COLOR = "accent_color";
+
+    public static final String DEFAULT_ACCENT_COLOR = "#2563EB";
+    public static final String COLOR_EMERALD = "#10B981";
+    public static final String COLOR_CRIMSON = "#EF4444";
+    public static final String COLOR_PINK = "#EC4899";
+    public static final String COLOR_VIOLET = "#8B5CF6";
+    public static final String COLOR_AMBER = "#F59E0B";
+    public static final String COLOR_CYAN = "#06B6D4";
+
+    public static final String[] ACCENT_PALETTE = {
+            DEFAULT_ACCENT_COLOR,
+            COLOR_EMERALD,
+            COLOR_CRIMSON,
+            COLOR_PINK,
+            COLOR_VIOLET,
+            COLOR_AMBER,
+            COLOR_CYAN
+    };
 
     public static final float FONT_SCALE_SMALL = 0.85f;
     public static final float FONT_SCALE_DEFAULT = 1.0f;
@@ -131,5 +150,24 @@ public class PreferencesHelper {
 
     public static void setFontScale(Context context, float scale) {
         getPrefs(context).edit().putFloat(KEY_FONT_SCALE, scale).apply();
+    }
+
+    public static String getAccentColor(Context context) {
+        return getPrefs(context).getString(KEY_ACCENT_COLOR, DEFAULT_ACCENT_COLOR);
+    }
+
+    public static int getAccentColorInt(Context context) {
+        String hex = getAccentColor(context);
+        try {
+            return android.graphics.Color.parseColor(hex);
+        } catch (Exception e) {
+            return android.graphics.Color.parseColor(DEFAULT_ACCENT_COLOR);
+        }
+    }
+
+    public static void setAccentColor(Context context, String colorHex) {
+        if (colorHex != null) {
+            getPrefs(context).edit().putString(KEY_ACCENT_COLOR, colorHex).apply();
+        }
     }
 }

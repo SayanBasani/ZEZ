@@ -359,9 +359,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView tvQuoteText;
         LinearLayout layoutReaction;
         TextView tvReaction;
+        View layoutBubble;
 
         OutgoingViewHolder(@NonNull View itemView) {
             super(itemView);
+            layoutBubble = itemView.findViewById(R.id.layout_bubble_outgoing);
             tvText = itemView.findViewById(R.id.tv_msg_outgoing_text);
             tvTime = itemView.findViewById(R.id.tv_msg_outgoing_time);
             ivTick = itemView.findViewById(R.id.iv_msg_status_tick);
@@ -379,6 +381,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         void bind(ChatMessage msg, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
+            if (layoutBubble != null && layoutBubble.getBackground() != null) {
+                int accentColor = com.zez.app.util.PreferencesHelper.getAccentColorInt(itemView.getContext());
+                layoutBubble.getBackground().mutate().setTint(accentColor);
+            }
+
             if (msg.isDeletedForEveryone()) {
                 tvText.setVisibility(View.VISIBLE);
                 tvText.setText("🚫 This message was deleted");

@@ -490,16 +490,27 @@ router.get("/conversations", async (req, res) => {
         c.is_secret_mode,
         c.secret_session_id,
         c.secret_mode_updated_at,
-        CASE WHEN c.user1_id = $1 THEN u2.id ELSE u1.id END AS other_user_id,
-        CASE WHEN c.user1_id = $1 THEN u2.name ELSE u1.name END AS other_user_name,
-        CASE WHEN c.user1_id = $1 THEN u2.phone_number ELSE u1.phone_number END AS other_user_phone,
-        CASE WHEN c.user1_id = $1 THEN u2.avatar_url ELSE u1.avatar_url END AS other_user_avatar,
-        CASE WHEN c.user1_id = $1 THEN u2.last_seen ELSE u1.last_seen END AS other_user_last_seen,
+        CASE WHEN c.user1_id = $1 AND c.user2_id = $1 THEN $1
+             WHEN c.user1_id = $1 THEN u2.id
+             ELSE u1.id END AS other_user_id,
+        CASE WHEN c.user1_id = $1 AND c.user2_id = $1 THEN 'You (Message yourself)'
+             WHEN c.user1_id = $1 THEN u2.name
+             ELSE u1.name END AS other_user_name,
+        CASE WHEN c.user1_id = $1 AND c.user2_id = $1 THEN u1.phone_number
+             WHEN c.user1_id = $1 THEN u2.phone_number
+             ELSE u1.phone_number END AS other_user_phone,
+        CASE WHEN c.user1_id = $1 AND c.user2_id = $1 THEN u1.avatar_url
+             WHEN c.user1_id = $1 THEN u2.avatar_url
+             ELSE u1.avatar_url END AS other_user_avatar,
+        CASE WHEN c.user1_id = $1 AND c.user2_id = $1 THEN u1.last_seen
+             WHEN c.user1_id = $1 THEN u2.last_seen
+             ELSE u1.last_seen END AS other_user_last_seen,
         COALESCE((
           SELECT COUNT(*)::int 
           FROM public.chat_messages m 
           WHERE m.conversation_id = c.id 
             AND m.receiver_id = $1 
+            AND m.sender_id != $1
             AND m.status != 'read'
         ), 0) AS unread_count
       FROM public.chat_conversations c
@@ -687,6 +698,7 @@ router.post(["/messages/send", "/messages"], async (req, res) => {
     const isSecret = mode === "secret" || conversation.is_secret_mode;
     const finalMode = isSecret ? "secret" : "normal";
     const sessionUuid = isSecret ? (secret_session_id || conversation.secret_session_id) : null;
+    const initialStatus = (sender_id === receiver_id) ? 'read' : 'sent';
 
     // Insert message
     const msgQuery = `
@@ -694,7 +706,7 @@ router.post(["/messages/send", "/messages"], async (req, res) => {
         conversation_id, sender_id, receiver_id, message_text,
         media_url, media_type, file_name, file_size, mode, secret_session_id, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'sent')
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING id, conversation_id, sender_id, receiver_id, message_text,
                 media_url, media_type, file_name, file_size, mode, secret_session_id, status, created_at;
     `;
@@ -709,7 +721,8 @@ router.post(["/messages/send", "/messages"], async (req, res) => {
       file_name || null,
       file_size ? parseInt(file_size, 10) : null,
       finalMode,
-      sessionUuid
+      sessionUuid,
+      initialStatus
     ]);
 
     const sentMessage = msgRes.rows[0];

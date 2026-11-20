@@ -1,12 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/layout_chat_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/bg_chat_theme_default">
+    android:layout_height="match_parent">
+
+    <!-- Custom Wallpaper ImageView with scaleType="centerCrop" preserving natural aspect ratio -->
+    <ImageView
+        android:id="@+id/iv_chat_wallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
+    <!-- Dimming & Contrast control overlay (WhatsApp-style dimming) -->
+    <View
+        android:id="@+id/view_chat_wallpaper_dim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/layout_chat_root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/bg_chat_theme_default">
 
     <!-- Top WhatsApp-Style Action Bar & Selection Action Bar -->
     <FrameLayout
@@ -476,3 +496,4 @@
     </LinearLayout>
 
 </LinearLayout>
+</FrameLayout>
