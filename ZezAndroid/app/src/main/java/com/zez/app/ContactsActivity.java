@@ -160,7 +160,7 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
                         String name = nameIdx >= 0 ? cursor.getString(nameIdx) : "Unknown";
                         String number = numIdx >= 0 ? cursor.getString(numIdx) : "";
                         if (number != null && !number.trim().isEmpty()) {
-                            String clean = number.replaceAll("[^\\d+]", "");
+                            String clean = com.zez.app.util.PhoneHelper.normalize(number);
                             if (!clean.isEmpty() && !phoneToNameMap.containsKey(clean)) {
                                 phoneToNameMap.put(clean, name);
                             }
@@ -199,9 +199,11 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
                         if (result != null && result.registered != null) {
                             for (ChatUser u : result.registered) {
                                 if (u != null && u.getPhoneNumber() != null) {
+                                    String norm = com.zez.app.util.PhoneHelper.normalize(u.getPhoneNumber());
+                                    regMap.put(norm, u);
                                     regMap.put(u.getPhoneNumber(), u);
-                                    if (u.getPhoneNumber().length() >= 10) {
-                                        regMap.put(u.getPhoneNumber().substring(u.getPhoneNumber().length() - 10), u);
+                                    if (norm.length() >= 10) {
+                                        regMap.put(norm.substring(norm.length() - 10), u);
                                     }
                                 }
                             }
@@ -210,9 +212,11 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
                         for (Map.Entry<String, String> entry : phoneToNameMap.entrySet()) {
                             String num = entry.getKey();
                             String name = entry.getValue();
-                            String last10 = num.length() >= 10 ? num.substring(num.length() - 10) : num;
+                            String norm = com.zez.app.util.PhoneHelper.normalize(num);
+                            String last10 = norm.length() >= 10 ? norm.substring(norm.length() - 10) : norm;
 
-                            ChatUser matched = regMap.get(num);
+                            ChatUser matched = regMap.get(norm);
+                            if (matched == null) matched = regMap.get(num);
                             if (matched == null && last10 != null) matched = regMap.get(last10);
 
                             if (matched != null) {
@@ -258,17 +262,16 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
             return;
         }
 
-        String lower = query.toLowerCase(Locale.ROOT).trim();
         List<ChatContactItem> filteredReg = new ArrayList<>();
         for (ChatContactItem c : allRegistered) {
-            if (c.getDisplayName().toLowerCase(Locale.ROOT).contains(lower) || c.getPhoneNumber().contains(lower)) {
+            if (com.zez.app.util.PhoneHelper.matchesSearch(query, c.getDisplayName(), c.getPhoneNumber())) {
                 filteredReg.add(c);
             }
         }
 
         List<ChatContactItem> filteredNotReg = new ArrayList<>();
         for (ChatContactItem c : allNotRegistered) {
-            if (c.getDisplayName().toLowerCase(Locale.ROOT).contains(lower) || c.getPhoneNumber().contains(lower)) {
+            if (com.zez.app.util.PhoneHelper.matchesSearch(query, c.getDisplayName(), c.getPhoneNumber())) {
                 filteredNotReg.add(c);
             }
         }

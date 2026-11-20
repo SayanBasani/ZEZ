@@ -44,10 +44,14 @@ const uploadAvatar = multer({
 
 function normalizePhone(raw) {
   if (!raw) return "";
-  let digits = raw.replace(/[^\d+]/g, "");
-  // If starts with 00, replace with +
-  if (digits.startsWith("00")) {
-    digits = "+" + digits.substring(2);
+  let digits = String(raw).replace(/\D/g, "");
+  // Indian phone number normalization: handle +91, 0091, 91, and leading 0
+  if (digits.startsWith("0091")) {
+    digits = digits.substring(4);
+  } else if (digits.length === 12 && digits.startsWith("91")) {
+    digits = digits.substring(2);
+  } else if (digits.length === 11 && digits.startsWith("0")) {
+    digits = digits.substring(1);
   }
   return digits;
 }
@@ -70,19 +74,45 @@ router.post("/register", async (req, res) => {
     const avatar = rawAvatar || null;
     const status = rawStatus || "Hey there! I am using Zez.";
 
-    const query = `
-      INSERT INTO public.chat_users (phone_number, name, avatar_url, status_message, last_seen)
-      VALUES ($1, $2, $3, $4, NOW())
-      ON CONFLICT (phone_number) 
-      DO UPDATE SET 
-        name = EXCLUDED.name,
-        avatar_url = COALESCE(EXCLUDED.avatar_url, chat_users.avatar_url),
-        status_message = COALESCE(EXCLUDED.status_message, chat_users.status_message),
-        last_seen = NOW()
-      RETURNING id, phone_number, name, avatar_url, status_message, last_seen, created_at;
-    `;
+    // Check if user already exists by exact phone or matching last 10 digits (to merge +91 vs 10-digit)
+    const existing = await pool.query(
+      `SELECT id FROM public.chat_users 
+       WHERE phone_number = $1 
+          OR RIGHT(REGEXP_REPLACE(phone_number, '\\D', '', 'g'), 10) = RIGHT($1, 10)
+       LIMIT 1`,
+      [cleanPhone]
+    );
 
-    const result = await pool.query(query, [cleanPhone, displayName, avatar, status]);
+    let query;
+    let params;
+    if (existing.rows.length > 0) {
+      query = `
+        UPDATE public.chat_users 
+        SET phone_number = $1,
+            name = $2,
+            avatar_url = COALESCE($3, avatar_url),
+            status_message = COALESCE($4, status_message),
+            last_seen = NOW()
+        WHERE id = $5
+        RETURNING id, phone_number, name, avatar_url, status_message, last_seen, created_at;
+      `;
+      params = [cleanPhone, displayName, avatar, status, existing.rows[0].id];
+    } else {
+      query = `
+        INSERT INTO public.chat_users (phone_number, name, avatar_url, status_message, last_seen)
+        VALUES ($1, $2, $3, $4, NOW())
+        ON CONFLICT (phone_number) 
+        DO UPDATE SET 
+          name = EXCLUDED.name,
+          avatar_url = COALESCE(EXCLUDED.avatar_url, chat_users.avatar_url),
+          status_message = COALESCE(EXCLUDED.status_message, chat_users.status_message),
+          last_seen = NOW()
+        RETURNING id, phone_number, name, avatar_url, status_message, last_seen, created_at;
+      `;
+      params = [cleanPhone, displayName, avatar, status];
+    }
+
+    const result = await pool.query(query, params);
     return res.json({ success: true, user: result.rows[0] });
   } catch (err) {
     console.error("Error in /api/chat/register:", err);
@@ -234,6 +264,20 @@ router.post("/direct-contact", async (req, res) => {
     }
     const cleanPhone = normalizePhone(phone_number);
     const displayName = (name && String(name).trim()) || cleanPhone;
+
+    // Check if user already exists with this phone or last 10 digits
+    const existing = await pool.query(
+      `SELECT id, phone_number, name, avatar_url, status_message, last_seen 
+       FROM public.chat_users 
+       WHERE phone_number = $1 
+          OR RIGHT(REGEXP_REPLACE(phone_number, '\\D', '', 'g'), 10) = RIGHT($1, 10)
+       LIMIT 1`,
+      [cleanPhone]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.json({ success: true, user: existing.rows[0] });
+    }
 
     const query = `
       INSERT INTO public.chat_users (phone_number, name)
@@ -678,7 +722,8 @@ router.get("/poll", async (req, res) => {
       if (isNaN(parsed.getTime()) || parsed.getTime() > (Date.now() + 2000)) {
         sinceDate = new Date(Date.now() - 30000);
       } else {
-        sinceDate = parsed;
+        // Apply a 5-second overlap safety buffer so clock drifts or same-millisecond messages aren't skipped
+        sinceDate = new Date(parsed.getTime() - 5000);
       }
     } else {
       sinceDate = new Date(Date.now() - 30000);
@@ -691,7 +736,7 @@ router.get("/poll", async (req, res) => {
     const incomingRes = await pool.query(
       `SELECT id, conversation_id, sender_id, receiver_id, message_text, media_url, media_type, file_name, file_size, mode, secret_session_id, status, created_at
        FROM public.chat_messages
-       WHERE receiver_id = $1 AND created_at > $2
+       WHERE receiver_id = $1 AND (created_at >= $2 OR updated_at >= $2)
        ORDER BY created_at ASC`,
       [userId, sinceDate]
     );
