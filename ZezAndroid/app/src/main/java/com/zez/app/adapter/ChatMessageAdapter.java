@@ -56,6 +56,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private final List<ChatRowItem> rowItems = new ArrayList<>();
     private final java.util.Set<String> selectedMessageIds = new java.util.HashSet<>();
     private boolean isSelectionMode = false;
+    private String highlightedMessageId = null;
     private final SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
     private final SimpleDateFormat dayFormat = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
@@ -106,6 +107,26 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
         return list;
+    }
+
+    public void setHighlightedMessageId(String messageId) {
+        this.highlightedMessageId = messageId;
+        notifyDataSetChanged();
+    }
+
+    public List<Integer> searchMessagePositions(String query) {
+        List<Integer> matches = new ArrayList<>();
+        if (query == null || query.trim().isEmpty()) return matches;
+        String q = query.trim().toLowerCase(Locale.getDefault());
+        for (int i = 0; i < rowItems.size(); i++) {
+            ChatRowItem item = rowItems.get(i);
+            if (!item.isHeader && item.message != null && item.message.getMessageText() != null) {
+                if (item.message.getMessageText().toLowerCase(Locale.getDefault()).contains(q)) {
+                    matches.add(i);
+                }
+            }
+        }
+        return matches;
     }
 
     public void updateMessageReaction(String messageId, String reaction) {
@@ -285,6 +306,8 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         if (selectedMessageIds.contains(msg.getId())) {
             holder.itemView.setBackgroundColor(Color.parseColor("#3322C55E"));
+        } else if (highlightedMessageId != null && highlightedMessageId.equals(msg.getId())) {
+            holder.itemView.setBackgroundColor(Color.parseColor("#44F59E0B"));
         } else {
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
         }

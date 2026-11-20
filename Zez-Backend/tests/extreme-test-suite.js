@@ -2,8 +2,8 @@ const assert = require('node:assert');
 const crypto = require('node:crypto');
 
 const BASE_URL = 'http://localhost:3000';
-const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'sayanbasanimandiraghoshbasani';
+const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'your_admin_password';
 
 let adminToken = '';
 let testDeviceId = '';

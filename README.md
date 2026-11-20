@@ -123,18 +123,19 @@ HOST=0.0.0.0
 NODE_ENV=development
 
 # PostgreSQL connection string
-DATABASE_URL=postgresql://neondb_owner:...@ep-still-night-b4paxi42-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://username:password@hostname:5432/dbname?sslmode=require
 
 # 32-byte Base64-encoded key for AES-256-GCM encryption
-ENCRYPTION_KEY=ntMwcy4rSU3446+mJE7Pjhqw2gvB6sWRXqxwv92420s=
+ENCRYPTION_KEY=your_base64_32_byte_encryption_key_here=
 
 # 64-character hexadecimal key for portable cross-client crypto
-PORTABLE_ENCRYPTION_KEY=7457a73c31853f81d2c04cf6788caf932fbe75a1b5d60cbd9ed7c3d05479f308
+PORTABLE_ENCRYPTION_KEY=your_64_character_hex_key_here
 
 # Predefined Admin Credentials
+ADMIN_API_PASSWORD=your_secure_admin_password
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=sayanbasanimandiraghoshbasani
-ADMIN_SESSION_SECRET=e7b4c92a18f6d30e55b17a89234fc091
+ADMIN_PASSWORD=your_secure_admin_password
+ADMIN_SESSION_SECRET=your_session_secret_hex
 ```
 
 #### Starting the Backend Server
@@ -167,7 +168,7 @@ Open your web browser:
 http://localhost:3000/admin
 ```
 - **Username**: `admin`
-- **Password**: `sayanbasanimandiraghoshbasani`
+- **Password**: `your_admin_password`
 
 ---
 

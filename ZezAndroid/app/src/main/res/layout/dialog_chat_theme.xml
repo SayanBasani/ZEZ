@@ -180,4 +180,59 @@
 
     </LinearLayout>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/theme_card_border"
+        android:layout_marginVertical="12dp" />
+
+    <!-- Custom Wallpaper from Gallery -->
+    <LinearLayout
+        android:id="@+id/theme_opt_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp"
+        android:background="@drawable/bg_pill_badge"
+        android:backgroundTint="@color/theme_card_border"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/ic_photo_library"
+            app:tint="@color/primary"
+            android:layout_marginEnd="12dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose from Gallery"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/theme_text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Set a custom photo as chat wallpaper"
+                android:textSize="12sp"
+                android:textColor="@color/theme_text_secondary" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="@color/theme_icon_tint" />
+    </LinearLayout>
+
 </LinearLayout>

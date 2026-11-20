@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -97,6 +98,20 @@ public class ChatActivity extends AppCompatActivity {
     private ImageButton btnSelectionStar;
     private ImageButton btnSelectionForward;
     private ImageButton btnSelectionMore;
+
+    // In-Chat Search
+    private View layoutChatSearchBar;
+    private ImageButton btnSearchBack;
+    private EditText etChatSearchQuery;
+    private TextView tvSearchMatchCount;
+    private ImageButton btnSearchPrev;
+    private ImageButton btnSearchNext;
+    private ImageButton btnSearchClear;
+    private final List<Integer> searchMatchPositions = new ArrayList<>();
+    private int currentSearchMatchIndex = -1;
+    private boolean isSearchMode = false;
+
+    private ActivityResultLauncher<String> pickWallpaperLauncher;
 
     private View layoutChatRoot;
     private ImageButton btnVideocall;
@@ -176,6 +191,10 @@ public class ChatActivity extends AppCompatActivity {
         takePhotoLauncher = registerForActivityResult(new ActivityResultContracts.TakePicturePreview(), bitmap -> {
             if (bitmap != null) handleBitmapCapture(bitmap);
         });
+
+        pickWallpaperLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) saveAndApplyCustomWallpaper(uri);
+        });
     }
 
     private void initViews() {
@@ -214,6 +233,45 @@ public class ChatActivity extends AppCompatActivity {
         btnSelectionStar = findViewById(R.id.btn_selection_star);
         btnSelectionForward = findViewById(R.id.btn_selection_forward);
         btnSelectionMore = findViewById(R.id.btn_selection_more);
+
+        layoutChatSearchBar = findViewById(R.id.layout_chat_search_bar);
+        btnSearchBack = findViewById(R.id.btn_search_back);
+        etChatSearchQuery = findViewById(R.id.et_chat_search_query);
+        tvSearchMatchCount = findViewById(R.id.tv_search_match_count);
+        btnSearchPrev = findViewById(R.id.btn_search_prev);
+        btnSearchNext = findViewById(R.id.btn_search_next);
+        btnSearchClear = findViewById(R.id.btn_search_clear);
+
+        if (layoutNormalHeader != null) {
+            layoutNormalHeader.setOnClickListener(v -> showContactInfoDialog());
+        }
+
+        if (btnSearchBack != null) {
+            btnSearchBack.setOnClickListener(v -> closeChatSearch());
+        }
+        if (btnSearchClear != null) {
+            btnSearchClear.setOnClickListener(v -> {
+                if (etChatSearchQuery != null) etChatSearchQuery.setText("");
+            });
+        }
+        if (btnSearchPrev != null) {
+            btnSearchPrev.setOnClickListener(v -> navigateSearchMatch(-1));
+        }
+        if (btnSearchNext != null) {
+            btnSearchNext.setOnClickListener(v -> navigateSearchMatch(1));
+        }
+        if (etChatSearchQuery != null) {
+            etChatSearchQuery.addTextChangedListener(new android.text.TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    performChatSearch(s != null ? s.toString() : "");
+                }
+                @Override
+                public void afterTextChanged(android.text.Editable s) {}
+            });
+        }
 
         applyChatTheme(ChatPreferencesHelper.getChatTheme(this));
 
@@ -487,8 +545,40 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    private void saveAndApplyCustomWallpaper(Uri uri) {
+        try {
+            java.io.InputStream is = getContentResolver().openInputStream(uri);
+            if (is != null) {
+                File wallpaperFile = new File(getFilesDir(), "custom_chat_wallpaper.jpg");
+                java.io.FileOutputStream fos = new java.io.FileOutputStream(wallpaperFile);
+                byte[] buf = new byte[8192];
+                int read;
+                while ((read = is.read(buf)) != -1) {
+                    fos.write(buf, 0, read);
+                }
+                fos.close();
+                is.close();
+                ChatPreferencesHelper.saveChatTheme(this, "custom");
+                applyChatTheme("custom");
+                Toast.makeText(this, "Custom wallpaper applied", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to apply wallpaper: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void applyChatTheme(String theme) {
         if (layoutChatRoot == null) return;
+        if ("custom".equalsIgnoreCase(theme)) {
+            File wallpaperFile = new File(getFilesDir(), "custom_chat_wallpaper.jpg");
+            if (wallpaperFile.exists()) {
+                android.graphics.drawable.Drawable d = android.graphics.drawable.Drawable.createFromPath(wallpaperFile.getAbsolutePath());
+                if (d != null) {
+                    layoutChatRoot.setBackground(d);
+                    return;
+                }
+            }
+        }
         int resId = R.drawable.bg_chat_theme_default;
         if ("charcoal".equalsIgnoreCase(theme)) resId = R.drawable.bg_chat_theme_charcoal;
         else if ("emerald".equalsIgnoreCase(theme)) resId = R.drawable.bg_chat_theme_emerald;
@@ -525,17 +615,151 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
 
+        View optGallery = view.findViewById(R.id.theme_opt_gallery);
+        if (optGallery != null) {
+            optGallery.setOnClickListener(v -> {
+                sheet.dismiss();
+                if (pickWallpaperLauncher != null) {
+                    pickWallpaperLauncher.launch("image/*");
+                }
+            });
+        }
+
         sheet.show();
     }
 
     private void showContactInfoDialog() {
-        String name = otherUserName != null ? otherUserName : "Contact";
-        String phone = otherUserPhone != null ? otherUserPhone : "Not available";
-        new AlertDialog.Builder(this)
-                .setTitle("Contact info")
-                .setMessage("Name: " + name + "\nPhone: " + phone + "\nEncryption: 256-bit End-to-End")
-                .setPositiveButton("OK", null)
-                .show();
+        com.google.android.material.bottomsheet.BottomSheetDialog sheet =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_contact_profile, null);
+        sheet.setContentView(view);
+
+        TextView tvName = view.findViewById(R.id.tv_profile_name);
+        TextView tvPhone = view.findViewById(R.id.tv_profile_phone);
+        TextView tvInitials = view.findViewById(R.id.tv_profile_initials);
+        ImageView ivAvatar = view.findViewById(R.id.iv_profile_avatar);
+        View btnMsg = view.findViewById(R.id.btn_profile_message);
+        View btnCall = view.findViewById(R.id.btn_profile_call);
+        View btnVideo = view.findViewById(R.id.btn_profile_videocall);
+
+        String name = otherUserName != null && !otherUserName.trim().isEmpty() ? otherUserName.trim() : "Contact";
+        String phone = otherUserPhone != null && !otherUserPhone.trim().isEmpty() ? otherUserPhone.trim() : "";
+
+        if (tvName != null) tvName.setText(name);
+        if (tvPhone != null) {
+            if (!phone.isEmpty()) {
+                tvPhone.setText(phone.startsWith("+") ? phone : "+91 " + phone);
+                tvPhone.setVisibility(View.VISIBLE);
+            } else {
+                tvPhone.setVisibility(View.GONE);
+            }
+        }
+
+        if (tvInitials != null && ivAvatar != null) {
+            String initial = !name.isEmpty() ? name.substring(0, 1).toUpperCase(Locale.getDefault()) : "?";
+            tvInitials.setText(initial);
+            tvInitials.setVisibility(View.VISIBLE);
+            ivAvatar.setVisibility(View.GONE);
+        }
+
+        if (btnMsg != null) {
+            btnMsg.setOnClickListener(v -> sheet.dismiss());
+        }
+        if (btnCall != null) {
+            btnCall.setOnClickListener(v -> {
+                sheet.dismiss();
+                if (!phone.isEmpty()) {
+                    try {
+                        startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone)));
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Cannot open dialer: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(this, "No phone number available", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+        if (btnVideo != null) {
+            btnVideo.setOnClickListener(v -> {
+                sheet.dismiss();
+                Toast.makeText(this, "Starting encrypted video call...", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        sheet.show();
+    }
+
+    private void openChatSearch() {
+        isSearchMode = true;
+        if (layoutNormalHeader != null) layoutNormalHeader.setVisibility(View.GONE);
+        if (layoutSelectionBar != null) layoutSelectionBar.setVisibility(View.GONE);
+        if (layoutChatSearchBar != null) layoutChatSearchBar.setVisibility(View.VISIBLE);
+        if (etChatSearchQuery != null) {
+            etChatSearchQuery.requestFocus();
+            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(etChatSearchQuery, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            performChatSearch(etChatSearchQuery.getText() != null ? etChatSearchQuery.getText().toString() : "");
+        }
+    }
+
+    private void closeChatSearch() {
+        isSearchMode = false;
+        if (layoutChatSearchBar != null) layoutChatSearchBar.setVisibility(View.GONE);
+        if (layoutNormalHeader != null) layoutNormalHeader.setVisibility(View.VISIBLE);
+        if (etChatSearchQuery != null) {
+            etChatSearchQuery.setText("");
+            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) imm.hideSoftInputFromWindow(etChatSearchQuery.getWindowToken(), 0);
+        }
+        if (adapter != null) {
+            adapter.setHighlightedMessageId(null);
+        }
+        searchMatchPositions.clear();
+        currentSearchMatchIndex = -1;
+        if (tvSearchMatchCount != null) tvSearchMatchCount.setText("");
+    }
+
+    private void performChatSearch(String query) {
+        if (adapter == null) return;
+        searchMatchPositions.clear();
+        searchMatchPositions.addAll(adapter.searchMessagePositions(query));
+        if (searchMatchPositions.isEmpty()) {
+            currentSearchMatchIndex = -1;
+            adapter.setHighlightedMessageId(null);
+            if (tvSearchMatchCount != null) {
+                tvSearchMatchCount.setText(query.trim().isEmpty() ? "" : "0 of 0");
+            }
+        } else {
+            currentSearchMatchIndex = searchMatchPositions.size() - 1;
+            highlightAndScrollMatch();
+        }
+    }
+
+    private void navigateSearchMatch(int direction) {
+        if (searchMatchPositions.isEmpty()) return;
+        if (direction < 0) {
+            currentSearchMatchIndex--;
+            if (currentSearchMatchIndex < 0) currentSearchMatchIndex = searchMatchPositions.size() - 1;
+        } else {
+            currentSearchMatchIndex++;
+            if (currentSearchMatchIndex >= searchMatchPositions.size()) currentSearchMatchIndex = 0;
+        }
+        highlightAndScrollMatch();
+    }
+
+    private void highlightAndScrollMatch() {
+        if (currentSearchMatchIndex < 0 || currentSearchMatchIndex >= searchMatchPositions.size()) return;
+        int targetPos = searchMatchPositions.get(currentSearchMatchIndex);
+        if (tvSearchMatchCount != null) {
+            tvSearchMatchCount.setText((currentSearchMatchIndex + 1) + " of " + searchMatchPositions.size());
+        }
+        if (adapter != null) {
+            ChatMessage msg = adapter.getMessageAt(targetPos);
+            if (msg != null) adapter.setHighlightedMessageId(msg.getId());
+        }
+        if (recyclerView != null) {
+            recyclerView.smoothScrollToPosition(targetPos);
+        }
     }
 
     private void setupRecyclerView() {
@@ -841,7 +1065,7 @@ public class ChatActivity extends AppCompatActivity {
                 showContactInfoDialog();
                 return true;
             } else if (id == 2) {
-                Toast.makeText(this, "Search active in conversation", Toast.LENGTH_SHORT).show();
+                openChatSearch();
                 return true;
             } else if (id == 3) {
                 Toast.makeText(this, "Media & documents browser", Toast.LENGTH_SHORT).show();
@@ -903,20 +1127,54 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    private Date parseIsoDate(String raw) {
+        if (raw == null || raw.trim().isEmpty()) return null;
+        raw = raw.trim();
+        String[] patterns = {
+                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss"
+        };
+        for (String pattern : patterns) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(pattern, Locale.US);
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                Date d = sdf.parse(raw);
+                if (d != null) return d;
+            } catch (Exception ignored) {}
+        }
+        if (raw.contains(".")) {
+            try {
+                String clean = raw.split("\\.")[0];
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                Date d = sdf.parse(clean);
+                if (d != null) return d;
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
     private String formatLastSeen(String rawIso) {
         try {
-            String clean = rawIso.split("\\.")[0];
-            Date d = isoFormat.parse(clean);
+            Date d = parseIsoDate(rawIso);
             if (d == null) return "offline";
-            long now = System.currentTimeMillis();
-            long diff = now - d.getTime();
-            if (diff < 60000) return "last seen just now";
+
+            Calendar nowCal = Calendar.getInstance();
+            Calendar seenCal = Calendar.getInstance();
+            seenCal.setTime(d);
+
             SimpleDateFormat timeFmt = new SimpleDateFormat("h:mm a", Locale.getDefault());
             String timeStr = timeFmt.format(d);
-            long days = diff / (24 * 60 * 60 * 1000);
-            if (days == 0) {
+
+            boolean sameYear = nowCal.get(Calendar.YEAR) == seenCal.get(Calendar.YEAR);
+            int dayDiff = sameYear ? nowCal.get(Calendar.DAY_OF_YEAR) - seenCal.get(Calendar.DAY_OF_YEAR) : 999;
+
+            if (sameYear && dayDiff == 0) {
                 return "last seen today at " + timeStr;
-            } else if (days == 1) {
+            } else if (sameYear && dayDiff == 1) {
                 return "last seen yesterday at " + timeStr;
             } else {
                 SimpleDateFormat dateFmt = new SimpleDateFormat("MMM d 'at' h:mm a", Locale.getDefault());
@@ -1386,6 +1644,10 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        if (isSearchMode) {
+            closeChatSearch();
+            return;
+        }
         if (adapter != null && adapter.isSelectionMode()) {
             adapter.clearSelection();
             return;

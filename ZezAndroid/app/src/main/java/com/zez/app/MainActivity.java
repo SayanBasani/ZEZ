@@ -94,10 +94,6 @@ public class MainActivity extends AppCompatActivity {
     private android.widget.Button btnSettingUpdate;
 
     private TextView tvFooterAppVersion;
-    private TextView tvFooterDeviceId;
-    private TextView tvFooterPhoneNumber;
-    private ImageButton btnToggleDeviceIdMask;
-    private boolean isDeviceIdMasked = true;
     private String actualDeviceId = "";
 
     // Protected Developer / Admin Controls
@@ -252,15 +248,6 @@ public class MainActivity extends AppCompatActivity {
         btnSettingUpdate = findViewById(R.id.btn_setting_update);
 
         tvFooterAppVersion = findViewById(R.id.tv_footer_app_version);
-        tvFooterDeviceId = findViewById(R.id.tv_footer_device_id);
-        tvFooterPhoneNumber = findViewById(R.id.tv_footer_phone_number);
-        btnToggleDeviceIdMask = findViewById(R.id.btn_toggle_device_id_mask);
-        if (btnToggleDeviceIdMask != null) {
-            btnToggleDeviceIdMask.setOnClickListener(v -> {
-                isDeviceIdMasked = !isDeviceIdMasked;
-                updateDeviceIdDisplay();
-            });
-        }
 
         // Sub-pages
         viewFontPage = findViewById(R.id.view_font_page);
@@ -1769,27 +1756,6 @@ public class MainActivity extends AppCompatActivity {
         }
         String deviceId = PreferencesHelper.getDeviceId(this);
         actualDeviceId = (deviceId != null ? deviceId : PreferencesHelper.getPersistentUuid(this));
-        updateDeviceIdDisplay();
-
-        if (tvFooterPhoneNumber != null) {
-            String phone = PreferencesHelper.getDeviceToken(this);
-            tvFooterPhoneNumber.setText(phone != null && !phone.isEmpty() ? "Token: " + phone : "Status: Active & Registered");
-        }
-    }
-
-    private void updateDeviceIdDisplay() {
-        if (tvFooterDeviceId == null) return;
-        if (isDeviceIdMasked) {
-            tvFooterDeviceId.setText("Device ID: ••••••••••••••••");
-            if (btnToggleDeviceIdMask != null) {
-                btnToggleDeviceIdMask.setImageResource(R.drawable.ic_visibility);
-            }
-        } else {
-            tvFooterDeviceId.setText("Device ID: " + actualDeviceId);
-            if (btnToggleDeviceIdMask != null) {
-                btnToggleDeviceIdMask.setImageResource(R.drawable.ic_visibility_off);
-            }
-        }
     }
 
     private void handleDeveloperTap() {
