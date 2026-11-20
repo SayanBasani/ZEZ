@@ -1,5 +1,10 @@
 package com.zez.app.util;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.ContactsContract;
+
 import java.util.Locale;
 
 public class PhoneHelper {
@@ -75,5 +80,93 @@ public class PhoneHelper {
         }
 
         return false;
+    }
+
+    /**
+     * Resolves the contact name for a given phone number.
+     * Priority:
+     * 1. Local device address book (ContactsContract) - if user saved them as "EFG" or "Dad", show that!
+     * 2. Fallback to registered profile name (e.g. "ABCD")
+     * 3. Clean up any placeholder names like "Physical Device User (...)"
+     */
+    public static String resolveContactName(Context context, String phoneNumber, String fallbackName) {
+        if (context == null) return fallbackName;
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            // Fast lookup via PhoneLookup URI
+            try {
+                Uri lookupUri = Uri.withAppendedPath(
+                        ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                        Uri.encode(phoneNumber.trim())
+                );
+                Cursor cursor = context.getContentResolver().query(
+                        lookupUri,
+                        new String[]{ ContactsContract.PhoneLookup.DISPLAY_NAME },
+                        null,
+                        null,
+                        null
+                );
+                if (cursor != null) {
+                    try {
+                        if (cursor.moveToFirst()) {
+                            int nameIndex = cursor.getColumnIndex(ContactsContract.PhoneLookup.DISPLAY_NAME);
+                            if (nameIndex >= 0) {
+                                String localName = cursor.getString(nameIndex);
+                                if (localName != null && !localName.trim().isEmpty()) {
+                                    return localName.trim();
+                                }
+                            }
+                        }
+                    } finally {
+                        cursor.close();
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            // Fallback: match by last 10 digits in CommonDataKinds.Phone
+            String digits = normalize(phoneNumber);
+            if (digits.length() >= 10) {
+                String last10 = digits.substring(digits.length() - 10);
+                try {
+                    Cursor c2 = context.getContentResolver().query(
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            new String[]{
+                                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                                    ContactsContract.CommonDataKinds.Phone.NUMBER
+                            },
+                            null,
+                            null,
+                            null
+                    );
+                    if (c2 != null) {
+                        try {
+                            int nameIdx = c2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                            int numIdx = c2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                            while (c2.moveToNext()) {
+                                String num = numIdx >= 0 ? c2.getString(numIdx) : null;
+                                if (num != null) {
+                                    String norm = normalize(num);
+                                    if (norm.endsWith(last10)) {
+                                        String localName = nameIdx >= 0 ? c2.getString(nameIdx) : null;
+                                        if (localName != null && !localName.trim().isEmpty()) {
+                                            return localName.trim();
+                                        }
+                                    }
+                                }
+                            }
+                        } finally {
+                            c2.close();
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // Clean fallback
+        if (fallbackName != null && !fallbackName.trim().isEmpty()) {
+            if (!fallbackName.toLowerCase(Locale.ROOT).contains("physical device user")) {
+                return fallbackName.trim();
+            }
+        }
+        return phoneNumber != null ? phoneNumber : "Unknown";
     }
 }

@@ -124,8 +124,25 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
             } else {
                 swipeRefresh.setRefreshing(false);
                 pbLoading.setVisibility(View.GONE);
-                layoutEmpty.setVisibility(View.VISIBLE);
-                tvCount.setText("Permission required");
+                allRegistered.clear();
+                allNotRegistered.clear();
+                String myUserId = ChatPreferencesHelper.getUserId(this);
+                if (myUserId != null) {
+                    allRegistered.add(new ChatContactItem(
+                            "You (Message yourself)",
+                            ChatPreferencesHelper.getUserPhone(this),
+                            ChatPreferencesHelper.getUserAvatar(this),
+                            true,
+                            myUserId,
+                            "Message yourself · Notes, links, drafts"
+                    ));
+                    layoutEmpty.setVisibility(View.GONE);
+                    adapter.setData(allRegistered, allNotRegistered);
+                    tvCount.setText("1 contact (1 on Zez)");
+                } else {
+                    layoutEmpty.setVisibility(View.VISIBLE);
+                    tvCount.setText("Permission required");
+                }
                 Toast.makeText(this, "Contacts permission is required to find friends", Toast.LENGTH_SHORT).show();
             }
         }
@@ -180,8 +197,29 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
                 if (phoneList.isEmpty()) {
                     pbLoading.setVisibility(View.GONE);
                     swipeRefresh.setRefreshing(false);
-                    layoutEmpty.setVisibility(View.VISIBLE);
-                    tvCount.setText("0 contacts");
+                    allRegistered.clear();
+                    allNotRegistered.clear();
+                    String myUserId = ChatPreferencesHelper.getUserId(ContactsActivity.this);
+                    String myPhone = ChatPreferencesHelper.getUserPhone(ContactsActivity.this);
+                    String myAvatar = ChatPreferencesHelper.getUserAvatar(ContactsActivity.this);
+                    if (myUserId != null) {
+                        allRegistered.add(new ChatContactItem(
+                                "You (Message yourself)",
+                                myPhone != null ? myPhone : "",
+                                myAvatar,
+                                true,
+                                myUserId,
+                                "Message yourself · Notes, links, drafts"
+                        ));
+                    }
+                    int total = allRegistered.size() + allNotRegistered.size();
+                    tvCount.setText(total + " contacts (" + allRegistered.size() + " on Zez)");
+                    if (total == 0) {
+                        layoutEmpty.setVisibility(View.VISIBLE);
+                    } else {
+                        layoutEmpty.setVisibility(View.GONE);
+                        adapter.setData(allRegistered, allNotRegistered);
+                    }
                     return;
                 }
 
@@ -226,6 +264,21 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
                             }
                         }
 
+                        // WhatsApp-style: Add "You (Message yourself)" note-to-self at the top of the registered contacts
+                        String myUserId = ChatPreferencesHelper.getUserId(ContactsActivity.this);
+                        String myPhone = ChatPreferencesHelper.getUserPhone(ContactsActivity.this);
+                        String myAvatar = ChatPreferencesHelper.getUserAvatar(ContactsActivity.this);
+                        if (myUserId != null) {
+                            allRegistered.add(0, new ChatContactItem(
+                                    "You (Message yourself)",
+                                    myPhone != null ? myPhone : "",
+                                    myAvatar,
+                                    true,
+                                    myUserId,
+                                    "Message yourself · Notes, links, drafts"
+                            ));
+                        }
+
                         int total = allRegistered.size() + allNotRegistered.size();
                         tvCount.setText(total + " contacts (" + allRegistered.size() + " on Zez)");
 
@@ -243,13 +296,28 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
                         swipeRefresh.setRefreshing(false);
                         Toast.makeText(ContactsActivity.this, "Sync error: " + errorMessage, Toast.LENGTH_SHORT).show();
 
-                        // Fallback show device contacts as invite
+                        // Fallback show device contacts as invite and include self-chat
+                        allRegistered.clear();
                         allNotRegistered.clear();
+                        String myUserId = ChatPreferencesHelper.getUserId(ContactsActivity.this);
+                        String myPhone = ChatPreferencesHelper.getUserPhone(ContactsActivity.this);
+                        String myAvatar = ChatPreferencesHelper.getUserAvatar(ContactsActivity.this);
+                        if (myUserId != null) {
+                            allRegistered.add(new ChatContactItem(
+                                    "You (Message yourself)",
+                                    myPhone != null ? myPhone : "",
+                                    myAvatar,
+                                    true,
+                                    myUserId,
+                                    "Message yourself · Notes, links, drafts"
+                            ));
+                        }
                         for (Map.Entry<String, String> entry : phoneToNameMap.entrySet()) {
                             allNotRegistered.add(new ChatContactItem(entry.getValue(), entry.getKey(), null, false, null, null));
                         }
-                        tvCount.setText(allNotRegistered.size() + " contacts");
-                        adapter.setData(Collections.emptyList(), allNotRegistered);
+                        int total = allRegistered.size() + allNotRegistered.size();
+                        tvCount.setText(total + " contacts (" + allRegistered.size() + " on Zez)");
+                        adapter.setData(allRegistered, allNotRegistered);
                     }
                 });
             });

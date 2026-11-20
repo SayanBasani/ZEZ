@@ -85,6 +85,9 @@ public class MainActivity extends AppCompatActivity {
     private android.widget.Spinner spinnerSettingTheme;
     private TextView tvSettingThemeCurrent;
     private TextView tvSettingFontCurrent;
+    private TextView tvSettingAccentCurrent;
+    private View swatchAccentBlue, swatchAccentEmerald, swatchAccentCrimson, swatchAccentPink, swatchAccentViolet, swatchAccentAmber, swatchAccentCyan;
+    private ImageView swatchCheckBlue, swatchCheckEmerald, swatchCheckCrimson, swatchCheckPink, swatchCheckViolet, swatchCheckAmber, swatchCheckCyan;
     private TextView tvSettingVersionInfo;
     private TextView tvSettingHardwareSummary;
     private TextView tvSettingServerCurrent;
@@ -239,6 +242,26 @@ public class MainActivity extends AppCompatActivity {
         spinnerSettingTheme = findViewById(R.id.spinner_setting_theme);
         tvSettingThemeCurrent = findViewById(R.id.tv_setting_theme_current);
         tvSettingFontCurrent = findViewById(R.id.tv_setting_font_current);
+        tvSettingAccentCurrent = findViewById(R.id.tv_setting_accent_current);
+
+        swatchAccentBlue = findViewById(R.id.swatch_accent_blue);
+        swatchAccentEmerald = findViewById(R.id.swatch_accent_emerald);
+        swatchAccentCrimson = findViewById(R.id.swatch_accent_crimson);
+        swatchAccentPink = findViewById(R.id.swatch_accent_pink);
+        swatchAccentViolet = findViewById(R.id.swatch_accent_violet);
+        swatchAccentAmber = findViewById(R.id.swatch_accent_amber);
+        swatchAccentCyan = findViewById(R.id.swatch_accent_cyan);
+
+        swatchCheckBlue = findViewById(R.id.swatch_check_blue);
+        swatchCheckEmerald = findViewById(R.id.swatch_check_emerald);
+        swatchCheckCrimson = findViewById(R.id.swatch_check_crimson);
+        swatchCheckPink = findViewById(R.id.swatch_check_pink);
+        swatchCheckViolet = findViewById(R.id.swatch_check_violet);
+        swatchCheckAmber = findViewById(R.id.swatch_check_amber);
+        swatchCheckCyan = findViewById(R.id.swatch_check_cyan);
+
+        initAccentColorSwatches();
+        applyAccentColor();
         tvSettingHardwareSummary = findViewById(R.id.tv_setting_hardware_summary);
         tvSettingServerCurrent = findViewById(R.id.tv_setting_server_current);
         etSettingBackendUrl = findViewById(R.id.et_setting_backend_url);
@@ -559,13 +582,13 @@ public class MainActivity extends AppCompatActivity {
         btnSync.setOnClickListener(v -> triggerManualSync());
 
         bottomNav = findViewById(R.id.bottom_navigation);
+        applyAccentColor();
         bottomNav.setOnItemSelectedListener(item -> {
             currentTab = item.getItemId();
             switchTab(currentTab);
             return true;
         });
         bottomNav.setSelectedItemId(R.id.nav_chats);
-        switchTab(R.id.nav_chats);
     }
 
     private void switchTab(int tabId) {
@@ -700,7 +723,14 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ChatActivity.class);
         intent.putExtra("extra_conversation_id", conv.getConversationId());
         intent.putExtra("extra_other_user_id", conv.getOtherUserId());
-        intent.putExtra("extra_other_user_name", conv.getOtherUserName());
+        String myUserId = ChatPreferencesHelper.getUserId(this);
+        String resolvedName;
+        if (conv.getOtherUserId() != null && conv.getOtherUserId().equals(myUserId)) {
+            resolvedName = "You (Message yourself)";
+        } else {
+            resolvedName = com.zez.app.util.PhoneHelper.resolveContactName(this, conv.getOtherUserPhone(), conv.getOtherUserName());
+        }
+        intent.putExtra("extra_other_user_name", resolvedName);
         intent.putExtra("extra_other_user_phone", conv.getOtherUserPhone());
         startActivity(intent);
     }
@@ -846,20 +876,20 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         if (isChatListPolling) {
-                            chatListPollHandler.postDelayed(chatListPollRunnable, 2500);
+                            chatListPollHandler.postDelayed(chatListPollRunnable, 4000);
                         }
                     }
 
                     @Override
                     public void onError(String errorMessage) {
                         if (isChatListPolling) {
-                            chatListPollHandler.postDelayed(chatListPollRunnable, 4000);
+                            chatListPollHandler.postDelayed(chatListPollRunnable, 5000);
                         }
                     }
                 });
             } else {
                 if (isChatListPolling) {
-                    chatListPollHandler.postDelayed(chatListPollRunnable, 3000);
+                    chatListPollHandler.postDelayed(chatListPollRunnable, 4000);
                 }
             }
         }
@@ -875,6 +905,7 @@ public class MainActivity extends AppCompatActivity {
     private void stopChatListPolling() {
         isChatListPolling = false;
         chatListPollHandler.removeCallbacks(chatListPollRunnable);
+        chatListPollHandler.removeCallbacksAndMessages(null);
     }
 
     private void showChatMenu(View anchor) {
@@ -1756,6 +1787,99 @@ public class MainActivity extends AppCompatActivity {
         }
         String deviceId = PreferencesHelper.getDeviceId(this);
         actualDeviceId = (deviceId != null ? deviceId : PreferencesHelper.getPersistentUuid(this));
+
+        // Accent Color
+        updateAccentCheckmarks(PreferencesHelper.getAccentColor(this));
+    }
+
+    private void initAccentColorSwatches() {
+        if (swatchAccentBlue == null) return;
+        String current = PreferencesHelper.getAccentColor(this);
+        updateAccentCheckmarks(current);
+
+        swatchAccentBlue.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.DEFAULT_ACCENT_COLOR, "Classic Blue"));
+        swatchAccentEmerald.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.COLOR_EMERALD, "Emerald Green"));
+        swatchAccentCrimson.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.COLOR_CRIMSON, "Crimson Red"));
+        swatchAccentPink.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.COLOR_PINK, "Vivid Pink"));
+        swatchAccentViolet.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.COLOR_VIOLET, "Violet Purple"));
+        swatchAccentAmber.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.COLOR_AMBER, "Amber Orange"));
+        swatchAccentCyan.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.COLOR_CYAN, "Teal Cyan"));
+    }
+
+    private void setAppAccentColor(String hexColor, String name) {
+        PreferencesHelper.setAccentColor(this, hexColor);
+        if (tvSettingAccentCurrent != null) tvSettingAccentCurrent.setText(name);
+        updateAccentCheckmarks(hexColor);
+        applyAccentColor();
+        Toast.makeText(this, "Accent color set to " + name, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateAccentCheckmarks(String hexColor) {
+        if (swatchCheckBlue == null) return;
+        swatchCheckBlue.setVisibility(View.GONE);
+        swatchCheckEmerald.setVisibility(View.GONE);
+        swatchCheckCrimson.setVisibility(View.GONE);
+        swatchCheckPink.setVisibility(View.GONE);
+        swatchCheckViolet.setVisibility(View.GONE);
+        swatchCheckAmber.setVisibility(View.GONE);
+        swatchCheckCyan.setVisibility(View.GONE);
+
+        if (PreferencesHelper.COLOR_EMERALD.equalsIgnoreCase(hexColor)) {
+            swatchCheckEmerald.setVisibility(View.VISIBLE);
+            if (tvSettingAccentCurrent != null) tvSettingAccentCurrent.setText("Emerald Green");
+        } else if (PreferencesHelper.COLOR_CRIMSON.equalsIgnoreCase(hexColor)) {
+            swatchCheckCrimson.setVisibility(View.VISIBLE);
+            if (tvSettingAccentCurrent != null) tvSettingAccentCurrent.setText("Crimson Red");
+        } else if (PreferencesHelper.COLOR_PINK.equalsIgnoreCase(hexColor)) {
+            swatchCheckPink.setVisibility(View.VISIBLE);
+            if (tvSettingAccentCurrent != null) tvSettingAccentCurrent.setText("Vivid Pink");
+        } else if (PreferencesHelper.COLOR_VIOLET.equalsIgnoreCase(hexColor)) {
+            swatchCheckViolet.setVisibility(View.VISIBLE);
+            if (tvSettingAccentCurrent != null) tvSettingAccentCurrent.setText("Violet Purple");
+        } else if (PreferencesHelper.COLOR_AMBER.equalsIgnoreCase(hexColor)) {
+            swatchCheckAmber.setVisibility(View.VISIBLE);
+            if (tvSettingAccentCurrent != null) tvSettingAccentCurrent.setText("Amber Orange");
+        } else if (PreferencesHelper.COLOR_CYAN.equalsIgnoreCase(hexColor)) {
+            swatchCheckCyan.setVisibility(View.VISIBLE);
+            if (tvSettingAccentCurrent != null) tvSettingAccentCurrent.setText("Teal Cyan");
+        } else {
+            swatchCheckBlue.setVisibility(View.VISIBLE);
+            if (tvSettingAccentCurrent != null) tvSettingAccentCurrent.setText("Classic Blue");
+        }
+    }
+
+    private void applyAccentColor() {
+        int accentColor = PreferencesHelper.getAccentColorInt(this);
+
+        if (bottomNav != null) {
+            int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_checked },
+                    new int[] { -android.R.attr.state_checked }
+            };
+            int[] colors = new int[] {
+                    accentColor,
+                    androidx.core.content.ContextCompat.getColor(this, R.color.theme_text_muted)
+            };
+            android.content.res.ColorStateList colorStateList = new android.content.res.ColorStateList(states, colors);
+            bottomNav.setItemIconTintList(colorStateList);
+            bottomNav.setItemTextColor(colorStateList);
+            bottomNav.setItemActiveIndicatorColor(android.content.res.ColorStateList.valueOf(
+                    androidx.core.graphics.ColorUtils.setAlphaComponent(accentColor, 40)
+            ));
+        }
+
+        if (btnSettingUpdate != null) {
+            btnSettingUpdate.setBackgroundTintList(android.content.res.ColorStateList.valueOf(accentColor));
+        }
+        if (fabNewChat != null) {
+            fabNewChat.setBackgroundTintList(android.content.res.ColorStateList.valueOf(accentColor));
+        }
+        if (fabAddAlarm != null) {
+            fabAddAlarm.setBackgroundTintList(android.content.res.ColorStateList.valueOf(accentColor));
+        }
+        if (conversationsAdapter != null) {
+            conversationsAdapter.notifyDataSetChanged();
+        }
     }
 
     private void handleDeveloperTap() {

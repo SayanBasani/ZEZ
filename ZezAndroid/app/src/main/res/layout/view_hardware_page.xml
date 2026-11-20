@@ -9,15 +9,15 @@
     android:background="@color/theme_background"
     android:visibility="gone">
 
-    <!-- Top Sub-Page Bar -->
+    <!-- Top Futuristic Sub-Page Bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="60dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="12dp"
         android:background="@color/theme_app_bar"
-        android:elevation="1dp">
+        android:elevation="2dp">
 
         <ImageButton
             android:id="@+id/btn_back_hardware"
@@ -28,15 +28,56 @@
             app:tint="@color/theme_icon_tint"
             android:contentDescription="Back" />
 
-        <TextView
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="8dp"
-            android:text="Storage &amp; Hardware"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/theme_text_primary" />
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="System Telemetry"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="@color/theme_text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hardware Diagnostics &amp; Real-time Metrics"
+                android:textSize="11sp"
+                android:textColor="@color/theme_text_muted" />
+        </LinearLayout>
+
+        <!-- Live Status Pill -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_pill_badge"
+            android:backgroundTint="#1510B981"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp">
+
+            <View
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:background="@drawable/bg_circle_primary"
+                android:backgroundTint="#10B981"
+                android:layout_marginEnd="6dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ONLINE"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:textColor="#10B981" />
+        </LinearLayout>
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -50,12 +91,12 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Storage Card -->
+            <!-- 1. Storage Diagnostics Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
-                app:cardCornerRadius="14dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/theme_card_border"
@@ -73,21 +114,41 @@
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
-                        <TextView
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_document"
+                            app:tint="@color/primary"
+                            android:layout_marginEnd="10dp" />
+
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Internal Storage"
-                            android:textSize="15sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/theme_text_primary" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Primary Flash Storage"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/theme_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Internal NVMe / eMMC storage block"
+                                android:textSize="11sp"
+                                android:textColor="@color/theme_text_muted" />
+                        </LinearLayout>
 
                         <TextView
                             android:id="@+id/tv_page_storage_percent"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0%"
-                            android:textSize="15sp"
+                            android:textSize="17sp"
                             android:textStyle="bold"
                             android:textColor="@color/primary" />
                     </LinearLayout>
@@ -97,28 +158,43 @@
                         style="@android:style/Widget.ProgressBar.Horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="8dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="12dp"
                         android:layout_marginBottom="8dp"
                         android:progressDrawable="@android:drawable/progress_horizontal"
                         android:progress="0"
                         android:max="100" />
 
-                    <TextView
-                        android:id="@+id/tv_page_storage_details"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Used: 0 GB / Total: 0 GB"
-                        android:textSize="12sp"
-                        android:textColor="@color/theme_text_secondary" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/tv_page_storage_details"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Used: 0 GB / Total: 0 GB"
+                            android:textSize="12sp"
+                            android:textColor="@color/theme_text_secondary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Health: 100% OK"
+                            android:textSize="11sp"
+                            android:textColor="#10B981" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- RAM Card with Live Graph -->
+            <!-- 2. RAM Diagnostics Card with Live Telemetry Graph -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
-                app:cardCornerRadius="14dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/theme_card_border"
@@ -136,23 +212,43 @@
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
-                        <TextView
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_hardware"
+                            app:tint="#10B981"
+                            android:layout_marginEnd="10dp" />
+
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="RAM Usage"
-                            android:textSize="15sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/theme_text_primary" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="System Memory (RAM)"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/theme_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Physical LPDDR cache &amp; app allocations"
+                                android:textSize="11sp"
+                                android:textColor="@color/theme_text_muted" />
+                        </LinearLayout>
 
                         <TextView
                             android:id="@+id/tv_page_ram_percent"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0%"
-                            android:textSize="15sp"
+                            android:textSize="17sp"
                             android:textStyle="bold"
-                            android:textColor="@color/call_incoming" />
+                            android:textColor="#10B981" />
                     </LinearLayout>
 
                     <ProgressBar
@@ -160,7 +256,7 @@
                         style="@android:style/Widget.ProgressBar.Horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="8dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="12dp"
                         android:layout_marginBottom="8dp"
                         android:progressDrawable="@android:drawable/progress_horizontal"
                         android:progress="0"
@@ -175,31 +271,46 @@
                         android:textColor="@color/theme_text_secondary"
                         android:layout_marginBottom="12dp" />
 
-                    <!-- Live RAM Telemetry Graph -->
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <!-- Live RAM Telemetry Section -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="RAM REALTIME LOAD"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.08"
-                        android:textColor="@color/theme_text_muted"
-                        android:layout_marginBottom="4dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="6dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="REALTIME RAM TELEMETRY"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.08"
+                            android:textColor="@color/theme_text_muted" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="1.5s SAMPLE"
+                            android:textSize="9sp"
+                            android:textColor="@color/theme_text_muted" />
+                    </LinearLayout>
 
                     <com.zez.app.util.TelemetryGraphView
                         android:id="@+id/graph_ram_load"
                         android:layout_width="match_parent"
                         android:layout_height="80dp"
-                        android:background="#08808080" />
+                        android:background="#0A808080" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- CPU & GPU Load Graph Card -->
+            <!-- 3. CPU & GPU Activity Diagnostics Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
-                app:cardCornerRadius="14dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/theme_card_border"
@@ -217,14 +328,34 @@
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
-                        <TextView
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_clock"
+                            app:tint="#8B5CF6"
+                            android:layout_marginEnd="10dp" />
+
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="CPU &amp; GPU Activity"
-                            android:textSize="15sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/theme_text_primary" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Compute &amp; Processing Unit"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/theme_text_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Multi-core processor workload &amp; clocks"
+                                android:textSize="11sp"
+                                android:textColor="@color/theme_text_muted" />
+                        </LinearLayout>
 
                         <TextView
                             android:id="@+id/tv_page_cpu_load_percent"
@@ -233,26 +364,41 @@
                             android:text="18% Active"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            android:textColor="@color/primary" />
+                            android:textColor="#8B5CF6" />
                     </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="DYNAMIC PROCESSOR FREQUENCY &amp; LOAD"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.08"
-                        android:textColor="@color/theme_text_muted"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="4dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="6dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="DYNAMIC CORE WORKLOAD"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.08"
+                            android:textColor="@color/theme_text_muted" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="GOVERNOR: SCHEDUTIL"
+                            android:textSize="9sp"
+                            android:textColor="@color/theme_text_muted" />
+                    </LinearLayout>
 
                     <!-- Live CPU/GPU Telemetry Graph -->
                     <com.zez.app.util.TelemetryGraphView
                         android:id="@+id/graph_cpu_load"
                         android:layout_width="match_parent"
                         android:layout_height="90dp"
-                        android:background="#08808080" />
+                        android:background="#0A808080" />
 
                     <View
                         android:layout_width="match_parent"
@@ -260,7 +406,7 @@
                         android:background="@color/theme_card_border"
                         android:layout_marginVertical="14dp" />
 
-                    <!-- CPU Metrics (Cores, Speed, ABI) -->
+                    <!-- CPU 3-Column Metrics (Cores, Speed, ABI) -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -345,7 +491,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Architecture"
+                                android:text="Instruction Set"
                                 android:textSize="11sp"
                                 android:textColor="@color/theme_text_muted" />
                         </LinearLayout>
@@ -362,7 +508,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Subtle Diagnostic Line (tap 5 times within 3s to unlock Server Configuration) -->
+            <!-- Subtle Diagnostic Line (tap 5 times within 3s to unlock Developer Server Configuration) -->
             <TextView
                 android:id="@+id/tv_hardware_diagnostic_hint"
                 android:layout_width="match_parent"
@@ -383,7 +529,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="24dp"
-                app:cardCornerRadius="14dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/theme_card_border"

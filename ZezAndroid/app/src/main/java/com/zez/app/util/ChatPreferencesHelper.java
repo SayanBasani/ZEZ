@@ -12,6 +12,7 @@ public class ChatPreferencesHelper {
     private static final String KEY_STATUS = "chat_status_message";
     private static final String KEY_REGISTERED = "is_chat_registered";
     private static final String KEY_CHAT_THEME = "chat_wallpaper_theme";
+    private static final String KEY_WALLPAPER_DIM = "chat_wallpaper_dim";
 
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -74,5 +75,13 @@ public class ChatPreferencesHelper {
 
     public static void saveChatTheme(Context context, String theme) {
         getPrefs(context).edit().putString(KEY_CHAT_THEME, theme).apply();
+    }
+
+    public static float getWallpaperDim(Context context) {
+        return getPrefs(context).getFloat(KEY_WALLPAPER_DIM, 0.0f);
+    }
+
+    public static void setWallpaperDim(Context context, float dim) {
+        getPrefs(context).edit().putFloat(KEY_WALLPAPER_DIM, Math.max(0.0f, Math.min(0.85f, dim))).apply();
     }
 }

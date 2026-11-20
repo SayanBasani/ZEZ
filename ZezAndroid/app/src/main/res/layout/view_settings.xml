@@ -107,6 +107,216 @@
                     android:layout_height="1dp"
                     android:background="@color/theme_card_border" />
 
+                <!-- 1b. Accent Color Palette Row -->
+                <LinearLayout
+                    android:id="@+id/row_setting_accent_color"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_theme"
+                            app:tint="@color/theme_icon_tint"
+                            android:layout_marginEnd="14dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Accent Color"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/theme_text_primary" />
+
+                            <TextView
+                                android:id="@+id/tv_setting_accent_current"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Classic Blue"
+                                android:textSize="12sp"
+                                android:textColor="@color/theme_text_secondary" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Horizontal Swatches Container -->
+                    <LinearLayout
+                        android:id="@+id/layout_accent_swatches"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:weightSum="7">
+
+                        <!-- Swatch 1: Blue #2563EB -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_blue"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#2563EB"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_blue"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="visible" />
+                        </FrameLayout>
+
+                        <!-- Swatch 2: Emerald #10B981 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_emerald"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#10B981"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_emerald"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 3: Crimson #EF4444 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_crimson"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#EF4444"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_crimson"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 4: Pink #EC4899 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_pink"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#EC4899"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_pink"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 5: Violet #8B5CF6 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_violet"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#8B5CF6"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_violet"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 6: Amber #F59E0B -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_amber"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#F59E0B"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_amber"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 7: Cyan #06B6D4 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_cyan"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#06B6D4"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_cyan"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/theme_card_border" />
+
                 <!-- 2. Font Size (Navigates to Font Scale Sub-Page) -->
                 <LinearLayout
                     android:id="@+id/row_setting_font"
