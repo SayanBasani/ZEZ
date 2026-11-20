@@ -176,9 +176,20 @@ public class ChatMessage implements Serializable {
         if (clean != null && !clean.trim().isEmpty()) {
             return clean.replace("\n", " ").trim();
         }
-        if (mediaType != null) {
-            if ("image".equalsIgnoreCase(mediaType)) return "📷 Photo";
-            if ("video".equalsIgnoreCase(mediaType)) return "🎥 Video";
+        String type = mediaType;
+        if (type == null && mediaUrl != null) {
+            String lower = mediaUrl.toLowerCase();
+            if (lower.contains(".jpg") || lower.contains(".jpeg") || lower.contains(".png") || lower.contains(".webp") || lower.contains(".gif") || lower.contains("chat-media") || lower.contains("avatars")) {
+                type = "image";
+            } else if (lower.contains(".mp4") || lower.contains(".mkv") || lower.contains(".mov") || lower.contains(".3gp") || lower.contains("videos")) {
+                type = "video";
+            } else {
+                type = "file";
+            }
+        }
+        if (type != null) {
+            if ("image".equalsIgnoreCase(type)) return "📷 Photo";
+            if ("video".equalsIgnoreCase(type)) return "🎥 Video";
             return "📎 File";
         }
         if (fileName != null && !fileName.isEmpty()) return "📄 " + fileName;

@@ -94,8 +94,9 @@ public class PreferencesHelper {
         String saved = getPrefs(context).getString(KEY_API_URL, null);
         if (saved != null && !saved.trim().isEmpty()) {
             String trimmed = saved.trim();
-            // Automatically clean up old inactive legacy Render URL
-            if ("https://zez-backend.onrender.com".equalsIgnoreCase(trimmed)) {
+            // Automatically clean up old inactive legacy Render URL, or localhost/emulator IP on a physical device
+            if ("https://zez-backend.onrender.com".equalsIgnoreCase(trimmed)
+                    || ((trimmed.contains("10.0.2.2") || trimmed.contains("localhost")) && !isEmulator())) {
                 setApiUrl(context, DEFAULT_API_URL);
                 return DEFAULT_API_URL;
             }

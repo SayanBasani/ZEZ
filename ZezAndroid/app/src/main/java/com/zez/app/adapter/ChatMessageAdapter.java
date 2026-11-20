@@ -134,8 +134,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         for (int i = 0; i < rowItems.size(); i++) {
             ChatRowItem row = rowItems.get(i);
             if (!row.isHeader && row.message != null && messageId.equals(row.message.getId())) {
+                if (java.util.Objects.equals(row.message.getReaction(), reaction)) {
+                    return;
+                }
                 row.message.setReaction(reaction);
-                notifyItemChanged(i);
+                notifyItemChanged(i, "reaction_payload");
                 break;
             }
         }
@@ -146,6 +149,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         for (int i = 0; i < rowItems.size(); i++) {
             ChatRowItem row = rowItems.get(i);
             if (!row.isHeader && row.message != null && messageId.equals(row.message.getId())) {
+                if (row.message.isDeletedForEveryone()) return;
                 row.message.setDeletedForEveryone(true);
                 row.message.setMessageText("🚫 This message was deleted");
                 row.message.setMediaUrl(null);
@@ -173,6 +177,22 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public ChatMessageAdapter(String currentUserId) {
         this.currentUserId = currentUserId;
         this.isoFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        setHasStableIds(true);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        if (position >= 0 && position < rowItems.size()) {
+            ChatRowItem item = rowItems.get(position);
+            if (item != null) {
+                if (item.isHeader) {
+                    return ("header_" + item.headerDate).hashCode();
+                } else if (item.message != null && item.message.getId() != null) {
+                    return item.message.getId().hashCode();
+                }
+            }
+        }
+        return position;
     }
 
     public void setMessages(List<ChatMessage> messages) {
@@ -217,8 +237,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         for (int i = 0; i < rowItems.size(); i++) {
             ChatRowItem row = rowItems.get(i);
             if (!row.isHeader && row.message != null && messageId.equals(row.message.getId())) {
+                if (newStatus.equalsIgnoreCase(row.message.getStatus())) {
+                    return;
+                }
                 row.message.setStatus(newStatus);
-                notifyItemChanged(i);
+                notifyItemChanged(i, "status_payload");
                 break;
             }
         }
@@ -283,7 +306,30 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        onBindViewHolder(holder, position, java.util.Collections.emptyList());
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
         ChatRowItem item = rowItems.get(position);
+        if (item == null) return;
+
+        if (!payloads.isEmpty() && item.message != null) {
+            if (payloads.contains("status_payload") && holder instanceof OutgoingViewHolder) {
+                ((OutgoingViewHolder) holder).bindStatusOnly(item.message);
+                return;
+            }
+            if (payloads.contains("reaction_payload")) {
+                if (holder instanceof OutgoingViewHolder) {
+                    ((OutgoingViewHolder) holder).bindReactionOnly(item.message);
+                    return;
+                } else if (holder instanceof IncomingViewHolder) {
+                    ((IncomingViewHolder) holder).bindReactionOnly(item.message);
+                    return;
+                }
+            }
+        }
+
         if (holder instanceof DateHeaderViewHolder) {
             ((DateHeaderViewHolder) holder).tvHeader.setText(item.headerDate);
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
@@ -357,6 +403,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         LinearLayout layoutQuote;
         TextView tvQuoteSender;
         TextView tvQuoteText;
+        ImageView ivQuoteImage;
         LinearLayout layoutReaction;
         TextView tvReaction;
         View layoutBubble;
@@ -376,8 +423,46 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutQuote = itemView.findViewById(R.id.layout_msg_outgoing_quote);
             tvQuoteSender = itemView.findViewById(R.id.tv_msg_outgoing_quote_sender);
             tvQuoteText = itemView.findViewById(R.id.tv_msg_outgoing_quote_text);
+            ivQuoteImage = itemView.findViewById(R.id.iv_msg_outgoing_quote_image);
             layoutReaction = itemView.findViewById(R.id.layout_msg_outgoing_reaction);
             tvReaction = itemView.findViewById(R.id.tv_msg_outgoing_reaction);
+        }
+
+        void bindStatusOnly(ChatMessage msg) {
+            if (ivTick == null || msg == null) return;
+            if (msg.isDeletedForEveryone()) {
+                ivTick.setVisibility(View.GONE);
+                return;
+            }
+            ivTick.setVisibility(View.VISIBLE);
+            String status = msg.getStatus();
+            if (ChatMessage.STATUS_READ.equalsIgnoreCase(status)) {
+                ivTick.setImageResource(R.drawable.ic_check_double);
+                ivTick.setColorFilter(Color.parseColor("#34B7F1"));
+            } else if (ChatMessage.STATUS_DELIVERED.equalsIgnoreCase(status)) {
+                ivTick.setImageResource(R.drawable.ic_check_double);
+                ivTick.setColorFilter(Color.parseColor("#94A3B8"));
+            } else if (ChatMessage.STATUS_PENDING.equalsIgnoreCase(status)) {
+                ivTick.setImageResource(R.drawable.ic_clock);
+                ivTick.setColorFilter(Color.parseColor("#94A3B8"));
+            } else if (ChatMessage.STATUS_FAILED.equalsIgnoreCase(status)) {
+                ivTick.setImageResource(R.drawable.ic_refresh);
+                ivTick.setColorFilter(Color.parseColor("#EF4444"));
+            } else {
+                ivTick.setImageResource(R.drawable.ic_check_single);
+                ivTick.setColorFilter(Color.parseColor("#94A3B8"));
+            }
+        }
+
+        void bindReactionOnly(ChatMessage msg) {
+            if (layoutReaction == null || tvReaction == null || msg == null) return;
+            String react = msg.getReaction();
+            if (react != null && !react.trim().isEmpty() && !msg.isDeletedForEveryone()) {
+                layoutReaction.setVisibility(View.VISIBLE);
+                tvReaction.setText(react.trim());
+            } else {
+                layoutReaction.setVisibility(View.GONE);
+            }
         }
 
         void bind(ChatMessage msg, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
@@ -404,17 +489,27 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             tvText.setTextColor(Color.WHITE);
             if (ivTick != null) ivTick.setVisibility(View.VISIBLE);
 
-            bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
-
             if (layoutQuote != null) {
                 if (msg.hasQuotedReply()) {
                     layoutQuote.setVisibility(View.VISIBLE);
                     if (tvQuoteSender != null) tvQuoteSender.setText(msg.getQuotedSender());
                     if (tvQuoteText != null) tvQuoteText.setText(msg.getQuotedText());
+                    if (ivQuoteImage != null) {
+                        String qText = msg.getQuotedText();
+                        if (qText != null && (qText.contains("Photo") || qText.contains("📷") || qText.contains("Video") || qText.contains("🎥"))) {
+                            ivQuoteImage.setVisibility(View.VISIBLE);
+                            ivQuoteImage.setImageResource(R.drawable.ic_photo_library);
+                            ivQuoteImage.setColorFilter(Color.parseColor("#A7F3D0"));
+                        } else {
+                            ivQuoteImage.setVisibility(View.GONE);
+                        }
+                    }
                 } else {
                     layoutQuote.setVisibility(View.GONE);
                 }
             }
+
+            bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
 
             String text = msg.getCleanMessageText();
             if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
@@ -428,34 +523,8 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
-
-            if (layoutReaction != null && tvReaction != null) {
-                String react = msg.getReaction();
-                if (react != null && !react.trim().isEmpty()) {
-                    layoutReaction.setVisibility(View.VISIBLE);
-                    tvReaction.setText(react.trim());
-                } else {
-                    layoutReaction.setVisibility(View.GONE);
-                }
-            }
-
-            String status = msg.getStatus();
-            if (ChatMessage.STATUS_READ.equalsIgnoreCase(status)) {
-                ivTick.setImageResource(R.drawable.ic_check_double);
-                ivTick.setColorFilter(Color.parseColor("#34B7F1")); // WhatsApp vibrant blue double tick
-            } else if (ChatMessage.STATUS_DELIVERED.equalsIgnoreCase(status)) {
-                ivTick.setImageResource(R.drawable.ic_check_double);
-                ivTick.setColorFilter(Color.parseColor("#94A3B8")); // Ash double tick
-            } else if (ChatMessage.STATUS_PENDING.equalsIgnoreCase(status)) {
-                ivTick.setImageResource(R.drawable.ic_clock);
-                ivTick.setColorFilter(Color.parseColor("#94A3B8")); // Pending clock icon
-            } else if (ChatMessage.STATUS_FAILED.equalsIgnoreCase(status)) {
-                ivTick.setImageResource(R.drawable.ic_refresh);
-                ivTick.setColorFilter(Color.parseColor("#EF4444")); // Red retry icon
-            } else {
-                ivTick.setImageResource(R.drawable.ic_check_single);
-                ivTick.setColorFilter(Color.parseColor("#94A3B8")); // Ash single tick
-            }
+            bindReactionOnly(msg);
+            bindStatusOnly(msg);
         }
     }
 
@@ -471,6 +540,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         LinearLayout layoutQuote;
         TextView tvQuoteSender;
         TextView tvQuoteText;
+        ImageView ivQuoteImage;
         LinearLayout layoutReaction;
         TextView tvReaction;
 
@@ -487,8 +557,20 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutQuote = itemView.findViewById(R.id.layout_msg_incoming_quote);
             tvQuoteSender = itemView.findViewById(R.id.tv_msg_incoming_quote_sender);
             tvQuoteText = itemView.findViewById(R.id.tv_msg_incoming_quote_text);
+            ivQuoteImage = itemView.findViewById(R.id.iv_msg_incoming_quote_image);
             layoutReaction = itemView.findViewById(R.id.layout_msg_incoming_reaction);
             tvReaction = itemView.findViewById(R.id.tv_msg_incoming_reaction);
+        }
+
+        void bindReactionOnly(ChatMessage msg) {
+            if (layoutReaction == null || tvReaction == null || msg == null) return;
+            String react = msg.getReaction();
+            if (react != null && !react.trim().isEmpty() && !msg.isDeletedForEveryone()) {
+                layoutReaction.setVisibility(View.VISIBLE);
+                tvReaction.setText(react.trim());
+            } else {
+                layoutReaction.setVisibility(View.GONE);
+            }
         }
 
         void bind(ChatMessage msg, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
@@ -508,17 +590,27 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             tvText.setTypeface(null, android.graphics.Typeface.NORMAL);
             tvText.setTextColor(Color.parseColor("#E2E8F0"));
 
-            bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
-
             if (layoutQuote != null) {
                 if (msg.hasQuotedReply()) {
                     layoutQuote.setVisibility(View.VISIBLE);
                     if (tvQuoteSender != null) tvQuoteSender.setText(msg.getQuotedSender());
                     if (tvQuoteText != null) tvQuoteText.setText(msg.getQuotedText());
+                    if (ivQuoteImage != null) {
+                        String qText = msg.getQuotedText();
+                        if (qText != null && (qText.contains("Photo") || qText.contains("📷") || qText.contains("Video") || qText.contains("🎥"))) {
+                            ivQuoteImage.setVisibility(View.VISIBLE);
+                            ivQuoteImage.setImageResource(R.drawable.ic_photo_library);
+                            ivQuoteImage.setColorFilter(Color.parseColor("#22C55E"));
+                        } else {
+                            ivQuoteImage.setVisibility(View.GONE);
+                        }
+                    }
                 } else {
                     layoutQuote.setVisibility(View.GONE);
                 }
             }
+
+            bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
 
             String text = msg.getCleanMessageText();
             if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
@@ -532,16 +624,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
-
-            if (layoutReaction != null && tvReaction != null) {
-                String react = msg.getReaction();
-                if (react != null && !react.trim().isEmpty()) {
-                    layoutReaction.setVisibility(View.VISIBLE);
-                    tvReaction.setText(react.trim());
-                } else {
-                    layoutReaction.setVisibility(View.GONE);
-                }
-            }
+            bindReactionOnly(msg);
         }
     }
 
@@ -574,6 +657,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (ivImage != null) {
                     Glide.with(context)
                             .load(fullUrl)
+                            .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
                             .placeholder(R.drawable.bg_search_input)
                             .error(R.drawable.ic_photo_library)
                             .centerCrop()

@@ -1802,6 +1802,36 @@ versionName "1.0.1"</pre>
               <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Chat Messages:</span> <span id="sysDbChatSize" class="cell-mono" style="color: var(--text-primary);">--</span></div>
             </div>
           </div>
+
+          <!-- Card 5: Backblaze B2 Cloud Object Storage -->
+          <div class="admin-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                Backblaze B2 Cloud
+              </span>
+              <span id="sysB2Badge" class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 11px;">Checking...</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Bucket:</span> <span id="sysB2Bucket" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Region / S3:</span> <span id="sysB2Region" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Stored Objects:</span> <span id="sysB2TotalObjects" class="cell-mono" style="color: var(--positive); font-weight: 600;">--</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Storage Used:</span> <span id="sysB2UsedFormatted" class="cell-mono" style="color: var(--text-primary);">--</span></div>
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px;">
+                  <span style="color: var(--text-secondary);">Free Tier Usage (10 GB):</span>
+                  <span id="sysB2Pct" style="color: var(--primary); font-weight: 600;">0%</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: var(--surface-raised); border-radius: 3px; overflow: hidden;">
+                  <div id="sysB2ProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #06b6d4); transition: width 0.3s ease;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: var(--text-muted);">
+                  <span id="sysB2Remaining">10 GB remaining</span>
+                  <span id="sysB2StatusDetail">S3 Compatible</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Storage Management Container -->
@@ -1889,6 +1919,98 @@ versionName "1.0.1"</pre>
               </thead>
               <tbody id="sysFilesTableBody">
                 <tr><td colspan="6" class="empty-state">Loading files...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Backblaze B2 Cloud Storage & Media Manager Container -->
+        <div class="admin-card" style="margin-bottom: 24px;">
+          <!-- B2 Header & Action Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" fill="none" stroke="#10b981" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                Backblaze B2 Cloud Storage &amp; Media Manager
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                High-performance S3-compatible cloud object storage for avatars, chat images, videos, and documents.
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <input type="file" id="b2UploadFileInput" style="display: none;" onchange="handleB2AdminUpload(event)">
+              <button class="btn btn-primary btn-sm" id="btnUploadB2" onclick="document.getElementById('b2UploadFileInput').click()" title="Upload file to Backblaze B2">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload to Cloud
+              </button>
+              <button class="btn btn-secondary btn-sm" id="btnRefreshB2" onclick="loadB2StatsAndFiles()" title="Refresh B2 cloud files and metrics">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Refresh Cloud
+              </button>
+            </div>
+          </div>
+
+          <!-- B2 Category Breakdown Badges -->
+          <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+            <div class="stat-row-card" style="flex: 1; min-width: 180px; padding: 10px 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">Total Cloud Objects</div>
+                <div id="b2TotalStats" style="font-size: 15px; font-weight: 600; color: #10b981;">0 objects (0 B)</div>
+              </div>
+            </div>
+            <div class="stat-row-card" style="flex: 1; min-width: 180px; padding: 10px 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">Cloud Avatars (avatars/)</div>
+                <div id="b2AvatarsStats" style="font-size: 15px; font-weight: 600; color: var(--text-primary);">0 (0 B)</div>
+              </div>
+            </div>
+            <div class="stat-row-card" style="flex: 1; min-width: 180px; padding: 10px 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">Chat Media (chat-media/)</div>
+                <div id="b2ChatMediaStats" style="font-size: 15px; font-weight: 600; color: var(--text-primary);">0 (0 B)</div>
+              </div>
+            </div>
+            <div class="stat-row-card" style="flex: 1; min-width: 180px; padding: 10px 14px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted);">Videos &amp; Documents</div>
+                <div id="b2MediaStats" style="font-size: 15px; font-weight: 600; color: var(--text-primary);">0 (0 B)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- B2 File Filter Toolbar -->
+          <div class="toolbar" style="margin-bottom: 16px;">
+            <div class="search-wrap">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="b2FileSearch" class="search-input" placeholder="Search B2 file name or object key..." oninput="debounceB2Search()">
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <select id="b2CategoryFilter" class="form-select" style="width: auto; height: 34px;" onchange="loadB2StatsAndFiles()">
+                <option value="all">All Cloud Categories</option>
+                <option value="avatars">Avatars (avatars/)</option>
+                <option value="chat-media">Chat Media (chat-media/)</option>
+                <option value="videos">Videos (videos/)</option>
+                <option value="documents">Documents (documents/)</option>
+                <option value="uploads">General Uploads (uploads/)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- B2 Files Table Container -->
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Object Key / File Name</th>
+                  <th>Category</th>
+                  <th>MIME Type</th>
+                  <th>Size</th>
+                  <th>Uploaded Date</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="b2FilesTableBody">
+                <tr><td colspan="6" class="empty-state">Loading Backblaze B2 files...</td></tr>
               </tbody>
             </table>
           </div>
@@ -2206,6 +2328,7 @@ versionName "1.0.1"</pre>
       setActiveTab('system');
       loadSystemDashboard();
       loadSystemFiles();
+      loadB2StatsAndFiles();
     });
 
     // Refresh Handlers
@@ -3903,8 +4026,194 @@ versionName "1.0.1"</pre>
         if (sAv) sAv.textContent = `${env.storage.categories.avatars.count} (${env.storage.categories.avatars.formatted})`;
         const sChat = document.getElementById('storageChatMediaStats');
         if (sChat) sChat.textContent = `${env.storage.categories.chatMedia.count} (${env.storage.categories.chatMedia.formatted})`;
+
+        // Backblaze B2 Telemetry
+        const b2 = env.storage?.b2Cloud;
+        if (b2 && b2.isConfigured) {
+          const b2Badge = document.getElementById('sysB2Badge');
+          if (b2Badge) {
+            b2Badge.textContent = 'Connected';
+            b2Badge.style.color = '#10b981';
+            b2Badge.style.background = 'rgba(16, 185, 129, 0.15)';
+          }
+          const b2Bucket = document.getElementById('sysB2Bucket');
+          if (b2Bucket) b2Bucket.textContent = b2.bucketName;
+          const b2Region = document.getElementById('sysB2Region');
+          if (b2Region) b2Region.textContent = b2.region;
+          const b2Objs = document.getElementById('sysB2TotalObjects');
+          if (b2Objs) b2Objs.textContent = `${b2.totalObjects} objects`;
+          const b2Used = document.getElementById('sysB2UsedFormatted');
+          if (b2Used) b2Used.textContent = b2.totalFormatted;
+          const b2Pct = document.getElementById('sysB2Pct');
+          if (b2Pct) b2Pct.textContent = `${b2.usedPercentage}%`;
+          const b2Bar = document.getElementById('sysB2ProgressBar');
+          if (b2Bar) b2Bar.style.width = `${Math.min(b2.usedPercentage, 100)}%`;
+          const b2Rem = document.getElementById('sysB2Remaining');
+          if (b2Rem) b2Rem.textContent = `${b2.remainingFormatted} free`;
+
+          // B2 Container Badges
+          const b2TotStats = document.getElementById('b2TotalStats');
+          if (b2TotStats) b2TotStats.textContent = `${b2.totalObjects} objects (${b2.totalFormatted})`;
+          const b2AvStats = document.getElementById('b2AvatarsStats');
+          if (b2AvStats) b2AvStats.textContent = `${b2.categories?.avatars?.count || 0} (${b2.categories?.avatars?.formatted || '0 B'})`;
+          const b2ChatStats = document.getElementById('b2ChatMediaStats');
+          if (b2ChatStats) b2ChatStats.textContent = `${b2.categories?.chatMedia?.count || 0} (${b2.categories?.chatMedia?.formatted || '0 B'})`;
+          const b2MedStats = document.getElementById('b2MediaStats');
+          if (b2MedStats) {
+            const vCount = (b2.categories?.videos?.count || 0) + (b2.categories?.documents?.count || 0) + (b2.categories?.uploads?.count || 0);
+            b2MedStats.textContent = `${vCount} (${b2.categories?.videos?.formatted || '0 B'})`;
+          }
+        } else if (b2 && !b2.isConfigured) {
+          const b2Badge = document.getElementById('sysB2Badge');
+          if (b2Badge) {
+            b2Badge.textContent = 'Unconfigured';
+            b2Badge.style.color = '#ef4444';
+            b2Badge.style.background = 'rgba(239, 68, 68, 0.15)';
+          }
+        }
       } catch (err) {
         showToast('Error loading environment telemetry: ' + err.message);
+      }
+    }
+
+    let b2SearchTimeout = null;
+    function debounceB2Search() {
+      clearTimeout(b2SearchTimeout);
+      b2SearchTimeout = setTimeout(() => {
+        loadB2StatsAndFiles();
+      }, 300);
+    }
+
+    async function loadB2StatsAndFiles() {
+      const tbody = document.getElementById('b2FilesTableBody');
+      if (!tbody) return;
+      const category = document.getElementById('b2CategoryFilter')?.value || 'all';
+      const search = document.getElementById('b2FileSearch')?.value || '';
+
+      try {
+        const query = new URLSearchParams();
+        if (category && category !== 'all') query.append('category', category);
+        if (search && search.trim()) query.append('search', search.trim());
+
+        const res = await apiRequest(`/b2/files?${query.toString()}`);
+        const files = res.files || [];
+
+        if (files.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No objects found in Backblaze B2 bucket.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = files.map(f => {
+          const uploadDate = f.created_at ? new Date(f.created_at).toLocaleString() : '--';
+          let categoryBadgeColor = '#10b981';
+          if (f.file_category === 'chat-media') categoryBadgeColor = '#8b5cf6';
+          else if (f.file_category === 'videos') categoryBadgeColor = '#ec4899';
+          else if (f.file_category === 'documents') categoryBadgeColor = '#f59e0b';
+          else if (f.file_category === 'avatars') categoryBadgeColor = '#06b6d4';
+
+          return `
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 16px;">☁️</span>
+                  <div style="font-weight: 500; word-break: break-all;">
+                    <a href="${escapeHtml(f.accessUrl)}" target="_blank" style="color: var(--text-primary); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                      ${escapeHtml(f.original_file_name || f.object_key)}
+                    </a>
+                    <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${escapeHtml(f.object_key)}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge" style="border: 1px solid var(--hairline); color: ${categoryBadgeColor};">
+                  ${escapeHtml(f.file_category || 'uploads')}
+                </span>
+              </td>
+              <td class="cell-mono" style="font-size: 11px;">${escapeHtml(f.mime_type || '--')}</td>
+              <td class="cell-mono">${escapeHtml(f.fileSizeFormatted)}</td>
+              <td style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(uploadDate)}</td>
+              <td style="text-align: right; white-space: nowrap;">
+                <div style="display: inline-flex; gap: 6px;">
+                  <a href="${escapeHtml(f.accessUrl)}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 12px;" title="View / Stream file">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  </a>
+                  <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 12px;" onclick="copyB2PresignedUrl('${escapeHtml(f.object_key)}')" title="Generate & Copy Temporary Presigned URL">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  </button>
+                  <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 12px; color: var(--negative);" onclick="deleteSingleB2File('${escapeHtml(f.object_key)}')" title="Delete from Backblaze B2">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color: var(--negative);">Failed to load Backblaze B2 files: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    async function handleB2AdminUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'uploads');
+
+      showToast(`Uploading ${file.name} to Backblaze B2...`);
+      try {
+        const token = localStorage.getItem('zez_admin_token');
+        const res = await fetch('/api/storage/upload', {
+          method: 'POST',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Upload failed');
+        }
+        showToast(`Successfully uploaded ${file.name} to Backblaze B2!`);
+        event.target.value = '';
+        await loadSystemDashboard();
+        await loadB2StatsAndFiles();
+      } catch (err) {
+        showToast(`Upload error: ${err.message}`);
+      }
+    }
+
+    async function copyB2PresignedUrl(objectKey) {
+      try {
+        const res = await apiRequest('/storage/presigned-download', {
+          method: 'POST',
+          body: { objectKey, expiresInSeconds: 3600 }
+        });
+        if (res.downloadUrl) {
+          await navigator.clipboard.writeText(res.downloadUrl);
+          showToast('Presigned download URL copied to clipboard! (Valid for 1 hour)');
+        }
+      } catch (err) {
+        showToast('Failed to generate presigned URL: ' + err.message);
+      }
+    }
+
+    async function deleteSingleB2File(objectKey) {
+      if (!confirm(`Are you sure you want to permanently delete '${objectKey}' from Backblaze B2 cloud storage?`)) return;
+
+      try {
+        const res = await apiRequest('/b2/file', {
+          method: 'DELETE',
+          body: { objectKey }
+        });
+        if (res.success) {
+          showToast(`Deleted '${objectKey}' from Backblaze B2.`);
+          await loadSystemDashboard();
+          await loadB2StatsAndFiles();
+        } else {
+          showToast(`Deletion failed: ${res.error}`);
+        }
+      } catch (err) {
+        showToast(`Error deleting file: ${err.message}`);
       }
     }
 
