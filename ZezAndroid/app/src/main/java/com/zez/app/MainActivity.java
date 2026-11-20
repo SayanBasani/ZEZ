@@ -11,8 +11,15 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.SeekBar;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.zez.app.adapter.ChatMessageAdapter;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -53,6 +60,7 @@ import com.zez.app.util.ChatNotificationManager;
 import com.zez.app.util.ChatPreferencesHelper;
 import com.zez.app.util.DeviceHelper;
 import com.zez.app.util.MediaHelper;
+import com.zez.app.util.PhoneHelper;
 import com.zez.app.util.PreferencesHelper;
 import com.zez.app.util.RecycleBinHelper;
 
@@ -570,6 +578,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         conversationsAdapter = new ConversationsAdapter(this::openChatConversation);
+        conversationsAdapter.setOnAvatarClickListener(this::showContactProfileDialog);
         if (recyclerChats != null) {
             recyclerChats.setLayoutManager(new LinearLayoutManager(this));
             recyclerChats.setAdapter(conversationsAdapter);
@@ -1293,18 +1302,18 @@ public class MainActivity extends AppCompatActivity {
         // 1. Contextual Screen Refresh (Chat, Gallery, Alarms, Settings)
         if (currentTab == R.id.nav_chats) {
             loadChatsData();
-            Toast.makeText(this, "Refreshing chats & syncing calls...", Toast.LENGTH_SHORT).show();
+            // Silent refresh - no toast
         } else if (currentTab == R.id.nav_gallery) {
             loadGalleryData();
-            Toast.makeText(this, "Refreshing gallery & syncing calls...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Refreshing gallery...", Toast.LENGTH_SHORT).show();
         } else if (currentTab == R.id.nav_alarms) {
             loadAlarmsData();
-            Toast.makeText(this, "Refreshing alarms & syncing calls...", Toast.LENGTH_SHORT).show();
+            // Silent refresh - no toast
         } else if (currentTab == R.id.nav_settings) {
             loadSettingsData();
-            Toast.makeText(this, "Syncing status & calls...", Toast.LENGTH_SHORT).show();
+            // Silent refresh - no toast
         } else {
-            Toast.makeText(this, "Syncing data...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Syncing calls...", Toast.LENGTH_SHORT).show();
         }
 
         // 2. Background Call Sync (re-checks un-synced call history & uploads silently)
@@ -1941,6 +1950,317 @@ public class MainActivity extends AppCompatActivity {
         swatchAccentViolet.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.COLOR_VIOLET, "Violet Purple"));
         swatchAccentAmber.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.COLOR_AMBER, "Amber Orange"));
         swatchAccentCyan.setOnClickListener(v -> setAppAccentColor(PreferencesHelper.COLOR_CYAN, "Teal Cyan"));
+
+        View btnColorStudio = findViewById(R.id.btn_open_full_color_picker);
+        if (btnColorStudio != null) {
+            btnColorStudio.setOnClickListener(v -> showColorStudioDialog());
+        }
+        View rowAccent = findViewById(R.id.row_setting_accent_color);
+        if (rowAccent != null) {
+            rowAccent.setOnClickListener(v -> showColorStudioDialog());
+        }
+    }
+
+    private void showContactProfileDialog(ChatConversation conv) {
+        if (conv == null) return;
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_contact_profile, null);
+        sheet.setContentView(view);
+
+        ImageButton btnBack = view.findViewById(R.id.btn_profile_back);
+        ImageButton btnMore = view.findViewById(R.id.btn_profile_more);
+        ImageView ivAvatar = view.findViewById(R.id.iv_profile_avatar);
+        TextView tvInitials = view.findViewById(R.id.tv_profile_initials);
+        TextView tvName = view.findViewById(R.id.tv_profile_name);
+        TextView tvPhone = view.findViewById(R.id.tv_profile_phone);
+        TextView tvLastSeen = view.findViewById(R.id.tv_profile_last_seen);
+
+        View btnCall = view.findViewById(R.id.btn_profile_call);
+        View btnVideo = view.findViewById(R.id.btn_profile_videocall);
+        View btnPay = view.findViewById(R.id.btn_profile_pay);
+        View btnSearch = view.findViewById(R.id.btn_profile_search);
+
+        String myUserId = ChatPreferencesHelper.getUserId(this);
+        boolean isSelfChat = conv.getOtherUserId() != null && conv.getOtherUserId().equals(myUserId);
+        String name = isSelfChat ? "You (Message yourself)" : PhoneHelper.resolveContactName(this, conv.getOtherUserPhone(), conv.getOtherUserName());
+        String phone = conv.getOtherUserPhone() != null && !conv.getOtherUserPhone().trim().isEmpty() ? conv.getOtherUserPhone().trim() : "";
+
+        if (btnBack != null) btnBack.setOnClickListener(v -> sheet.dismiss());
+
+        if (tvName != null) tvName.setText(name);
+        if (tvPhone != null) {
+            if (!phone.isEmpty() && !isSelfChat) {
+                tvPhone.setText(phone.startsWith("+") ? phone : "+91 " + phone);
+                tvPhone.setVisibility(View.VISIBLE);
+            } else {
+                tvPhone.setVisibility(View.GONE);
+            }
+        }
+
+        if (tvLastSeen != null) {
+            if (isSelfChat) {
+                tvLastSeen.setText("Message yourself · Notes, links, drafts");
+            } else {
+                tvLastSeen.setText("Tap to open chat");
+            }
+        }
+
+        String avatarToLoad = conv.getOtherUserAvatar();
+        if (isSelfChat && (avatarToLoad == null || avatarToLoad.trim().isEmpty())) {
+            avatarToLoad = ChatPreferencesHelper.getUserAvatar(this);
+        }
+
+        if (ivAvatar != null) {
+            if (avatarToLoad != null && !avatarToLoad.trim().isEmpty()) {
+                String fullUrl = ChatApiClient.getAbsoluteMediaUrl(this, avatarToLoad);
+                ivAvatar.setImageTintList(null);
+                ivAvatar.setPadding(0, 0, 0, 0);
+                Glide.with(this)
+                        .load(fullUrl)
+                        .circleCrop()
+                        .placeholder(R.drawable.ic_person)
+                        .error(R.drawable.ic_person)
+                        .into(ivAvatar);
+                if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+
+                final String viewerUrl = fullUrl;
+                ivAvatar.setClickable(true);
+                ivAvatar.setFocusable(true);
+                ivAvatar.setOnClickListener(v -> {
+                    Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
+                    viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, viewerUrl);
+                    viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, name);
+                    startActivity(viewerIntent);
+                });
+            } else {
+                ivAvatar.setImageResource(R.drawable.ic_person);
+                ivAvatar.setImageTintList(ContextCompat.getColorStateList(this, R.color.theme_icon_tint));
+                int pad = (int) (20 * getResources().getDisplayMetrics().density);
+                ivAvatar.setPadding(pad, pad, pad, pad);
+                ivAvatar.setOnClickListener(null);
+            }
+        }
+
+        if (btnCall != null) {
+            btnCall.setOnClickListener(v -> {
+                sheet.dismiss();
+                if (!phone.isEmpty()) {
+                    try {
+                        startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone)));
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Cannot open dialer: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(this, "No phone number available", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        if (btnVideo != null) {
+            btnVideo.setOnClickListener(v -> {
+                sheet.dismiss();
+                Toast.makeText(this, "Starting encrypted video call...", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (btnPay != null) {
+            btnPay.setOnClickListener(v -> {
+                sheet.dismiss();
+                Toast.makeText(this, "Payment transfer feature...", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (btnSearch != null) {
+            btnSearch.setOnClickListener(v -> {
+                sheet.dismiss();
+                openChatConversation(conv);
+            });
+        }
+
+        sheet.show();
+    }
+
+    private void showColorStudioDialog() {
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_color_picker, null);
+        sheet.setContentView(dialogView);
+
+        RadioGroup rgTarget = dialogView.findViewById(R.id.rg_color_target);
+        RadioButton rbOutgoing = dialogView.findViewById(R.id.rb_target_outgoing);
+        RadioButton rbIncoming = dialogView.findViewById(R.id.rb_target_incoming);
+
+        View previewBubble = dialogView.findViewById(R.id.preview_bubble);
+        TextView tvPreviewText = dialogView.findViewById(R.id.tv_preview_bubble_text);
+        TextView tvPreviewTime = dialogView.findViewById(R.id.tv_preview_bubble_time);
+        ImageView ivPreviewTick = dialogView.findViewById(R.id.iv_preview_bubble_tick);
+
+        SeekBar sbHue = dialogView.findViewById(R.id.sb_hue);
+        SeekBar sbSaturation = dialogView.findViewById(R.id.sb_saturation);
+        SeekBar sbValue = dialogView.findViewById(R.id.sb_value);
+
+        View viewCurrentSwatch = dialogView.findViewById(R.id.view_current_color_swatch);
+        com.google.android.material.textfield.TextInputEditText etHex = dialogView.findViewById(R.id.et_hex_code);
+
+        LinearLayout layoutPresets = dialogView.findViewById(R.id.layout_preset_chips);
+        Button btnReset = dialogView.findViewById(R.id.btn_picker_reset);
+        Button btnCancel = dialogView.findViewById(R.id.btn_picker_cancel);
+        Button btnApply = dialogView.findViewById(R.id.btn_picker_apply);
+
+        final float[] hsv = new float[3];
+        final boolean[] isUpdatingProgrammatically = new boolean[]{false};
+
+        String initialOutgoing = PreferencesHelper.getAccentColor(this);
+        final String[] currentColorHex = new String[]{initialOutgoing};
+
+        Runnable updatePreview = () -> {
+            try {
+                int col = android.graphics.Color.parseColor(currentColorHex[0]);
+                if (viewCurrentSwatch != null) {
+                    viewCurrentSwatch.setBackgroundTintList(android.content.res.ColorStateList.valueOf(col));
+                }
+                boolean isOutgoing = rbOutgoing.isChecked();
+                if (isOutgoing) {
+                    FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) previewBubble.getLayoutParams();
+                    lp.gravity = android.view.Gravity.END;
+                    previewBubble.setLayoutParams(lp);
+                    previewBubble.setBackgroundResource(R.drawable.bg_bubble_outgoing);
+                    previewBubble.getBackground().mutate().setTint(col);
+                    tvPreviewText.setTextColor(android.graphics.Color.WHITE);
+                    tvPreviewText.setText("Outgoing: Hello from TWING! 🚀");
+                    tvPreviewTime.setTextColor(android.graphics.Color.parseColor("#CCFFFFFF"));
+                    ivPreviewTick.setVisibility(View.VISIBLE);
+                } else {
+                    FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) previewBubble.getLayoutParams();
+                    lp.gravity = android.view.Gravity.START;
+                    previewBubble.setLayoutParams(lp);
+                    previewBubble.setBackgroundResource(R.drawable.bg_bubble_incoming);
+                    previewBubble.getBackground().mutate().setTint(col);
+                    boolean isDark = ChatMessageAdapter.isColorDark(col);
+                    tvPreviewText.setTextColor(isDark ? android.graphics.Color.WHITE : android.graphics.Color.parseColor("#0F172A"));
+                    tvPreviewText.setText("Incoming: Test message preview ✨");
+                    tvPreviewTime.setTextColor(isDark ? android.graphics.Color.parseColor("#94A3B8") : android.graphics.Color.parseColor("#64748B"));
+                    ivPreviewTick.setVisibility(View.GONE);
+                }
+            } catch (Exception ignored) {}
+        };
+
+        java.util.function.Consumer<String> setColorFromHex = hex -> {
+            try {
+                int col = android.graphics.Color.parseColor(hex);
+                android.graphics.Color.colorToHSV(col, hsv);
+                currentColorHex[0] = String.format("#%06X", (0xFFFFFF & col));
+                isUpdatingProgrammatically[0] = true;
+                sbHue.setProgress(Math.round(hsv[0]));
+                sbSaturation.setProgress(Math.round(hsv[1] * 100));
+                sbValue.setProgress(Math.round(hsv[2] * 100));
+                etHex.setText(currentColorHex[0]);
+                isUpdatingProgrammatically[0] = false;
+                updatePreview.run();
+            } catch (Exception ignored) {}
+        };
+
+        setColorFromHex.accept(currentColorHex[0]);
+
+        SeekBar.OnSeekBarChangeListener seekListener = new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (isUpdatingProgrammatically[0]) return;
+                hsv[0] = sbHue.getProgress();
+                hsv[1] = sbSaturation.getProgress() / 100f;
+                hsv[2] = sbValue.getProgress() / 100f;
+                int col = android.graphics.Color.HSVToColor(hsv);
+                currentColorHex[0] = String.format("#%06X", (0xFFFFFF & col));
+                isUpdatingProgrammatically[0] = true;
+                etHex.setText(currentColorHex[0]);
+                isUpdatingProgrammatically[0] = false;
+                updatePreview.run();
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        };
+        sbHue.setOnSeekBarChangeListener(seekListener);
+        sbSaturation.setOnSeekBarChangeListener(seekListener);
+        sbValue.setOnSeekBarChangeListener(seekListener);
+
+        etHex.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (isUpdatingProgrammatically[0] || s == null) return;
+                String input = s.toString().trim();
+                if (!input.startsWith("#")) input = "#" + input;
+                if (input.length() == 7 || input.length() == 9) {
+                    try {
+                        int col = android.graphics.Color.parseColor(input);
+                        android.graphics.Color.colorToHSV(col, hsv);
+                        currentColorHex[0] = String.format("#%06X", (0xFFFFFF & col));
+                        isUpdatingProgrammatically[0] = true;
+                        sbHue.setProgress(Math.round(hsv[0]));
+                        sbSaturation.setProgress(Math.round(hsv[1] * 100));
+                        sbValue.setProgress(Math.round(hsv[2] * 100));
+                        isUpdatingProgrammatically[0] = false;
+                        updatePreview.run();
+                    } catch (Exception ignored) {}
+                }
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        rgTarget.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rb_target_incoming) {
+                String inc = PreferencesHelper.getIncomingBubbleColor(this);
+                setColorFromHex.accept(inc != null && !inc.isEmpty() ? inc : "#1E293B");
+            } else {
+                setColorFromHex.accept(PreferencesHelper.getAccentColor(this));
+            }
+        });
+
+        // Populate preset chips
+        String[] presets = new String[]{
+                "#10B981", "#2563EB", "#EF4444", "#EC4899", "#8B5CF6",
+                "#F59E0B", "#06B6D4", "#059669", "#1E293B", "#A855F7",
+                "#F43F5E", "#334155", "#0F172A", "#FFFFFF", "#38BDF8"
+        };
+        for (String pCol : presets) {
+            FrameLayout chip = new FrameLayout(this);
+            int size = (int) (32 * getResources().getDisplayMetrics().density);
+            int margin = (int) (4 * getResources().getDisplayMetrics().density);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
+            lp.setMargins(margin, margin, margin, margin);
+            chip.setLayoutParams(lp);
+            chip.setBackgroundResource(R.drawable.bg_circle_primary);
+            chip.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(pCol)));
+            chip.setClickable(true);
+            chip.setFocusable(true);
+            chip.setOnClickListener(v -> setColorFromHex.accept(pCol));
+            layoutPresets.addView(chip);
+        }
+
+        btnReset.setOnClickListener(v -> {
+            if (rbIncoming.isChecked()) {
+                PreferencesHelper.setIncomingBubbleColor(this, null);
+                Toast.makeText(this, "Incoming bubble reset to default theme", Toast.LENGTH_SHORT).show();
+                setColorFromHex.accept("#1E293B");
+            } else {
+                setAppAccentColor(PreferencesHelper.DEFAULT_ACCENT_COLOR, "Classic Blue");
+                setColorFromHex.accept(PreferencesHelper.DEFAULT_ACCENT_COLOR);
+            }
+            sheet.dismiss();
+        });
+
+        btnCancel.setOnClickListener(v -> sheet.dismiss());
+
+        btnApply.setOnClickListener(v -> {
+            String finalColor = currentColorHex[0];
+            if (rbIncoming.isChecked()) {
+                PreferencesHelper.setIncomingBubbleColor(this, finalColor);
+                Toast.makeText(this, "Incoming bubble color applied: " + finalColor, Toast.LENGTH_SHORT).show();
+            } else {
+                setAppAccentColor(finalColor, finalColor);
+            }
+            sheet.dismiss();
+        });
+
+        sheet.show();
     }
 
     private void setAppAccentColor(String hexColor, String name) {

@@ -13,9 +13,13 @@
 
     <!-- Avatar -->
     <FrameLayout
+        android:id="@+id/layout_conv_avatar_container"
         android:layout_width="52dp"
         android:layout_height="52dp"
-        android:layout_marginEnd="14dp">
+        android:layout_marginEnd="14dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless">
 
         <ImageView
             android:id="@+id/iv_conv_avatar"

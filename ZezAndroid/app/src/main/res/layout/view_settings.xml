@@ -310,6 +310,34 @@
                         </FrameLayout>
 
                     </LinearLayout>
+
+                    <!-- Custom Full-Spectrum Color Studio Button -->
+                    <LinearLayout
+                        android:id="@+id/btn_open_full_color_picker"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_search_input"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_palette"
+                            app:tint="@color/theme_text_primary"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Custom Color &amp; Bubble Studio"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/theme_text_primary" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <View

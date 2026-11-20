@@ -26,6 +26,10 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
         void onConversationClick(ChatConversation conversation);
     }
 
+    public interface OnAvatarClickListener {
+        void onAvatarClick(ChatConversation conversation);
+    }
+
     public interface OnSelectionListener {
         void onSelectionChanged(int count);
     }
@@ -34,7 +38,12 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     private final Set<String> selectedConversationIds = new HashSet<>();
     private boolean isSelectionMode = false;
     private final OnConversationClickListener listener;
+    private OnAvatarClickListener avatarClickListener;
     private OnSelectionListener selectionListener;
+
+    public void setOnAvatarClickListener(OnAvatarClickListener avatarClickListener) {
+        this.avatarClickListener = avatarClickListener;
+    }
     private final SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy", Locale.getDefault());
@@ -168,6 +177,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         View layoutRoot;
+        View layoutAvatar;
         ImageView ivAvatar;
         TextView tvInitials;
         ImageView ivCheckBadge;
@@ -180,6 +190,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             layoutRoot = itemView.findViewById(R.id.layout_conv_root);
+            layoutAvatar = itemView.findViewById(R.id.layout_conv_avatar_container);
             ivAvatar = itemView.findViewById(R.id.iv_conv_avatar);
             tvInitials = itemView.findViewById(R.id.tv_conv_avatar_initials);
             ivCheckBadge = itemView.findViewById(R.id.iv_conv_check_badge);
@@ -238,6 +249,12 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             }
 
             String lastMsg = item.getLastMessageText();
+            if (lastMsg != null && lastMsg.startsWith("[reply:")) {
+                int closeIdx = lastMsg.indexOf("]\n");
+                if (closeIdx != -1) {
+                    lastMsg = lastMsg.substring(closeIdx + 2).trim();
+                }
+            }
             tvLastMessage.setText(lastMsg != null && !lastMsg.isEmpty() ? lastMsg : "No messages yet");
 
             // Format timestamp
@@ -275,6 +292,19 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             } else {
                 tvUnreadBadge.setVisibility(View.GONE);
                 tvLastMessage.setTextColor(itemView.getContext().getResources().getColor(R.color.theme_text_secondary));
+            }
+
+            View avatarClickTarget = layoutAvatar != null ? layoutAvatar : ivAvatar;
+            if (avatarClickTarget != null) {
+                avatarClickTarget.setOnClickListener(v -> {
+                    if (adapter.isSelectionMode()) {
+                        adapter.toggleSelection(item);
+                    } else if (adapter.avatarClickListener != null) {
+                        adapter.avatarClickListener.onAvatarClick(item);
+                    } else if (listener != null) {
+                        listener.onConversationClick(item);
+                    }
+                });
             }
 
             itemView.setOnLongClickListener(v -> {

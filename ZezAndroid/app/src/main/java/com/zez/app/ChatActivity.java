@@ -799,11 +799,21 @@ public class ChatActivity extends AppCompatActivity {
                         .error(R.drawable.ic_person)
                         .into(ivAvatar);
                 if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+
+                ivAvatar.setClickable(true);
+                ivAvatar.setFocusable(true);
+                ivAvatar.setOnClickListener(v -> {
+                    Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
+                    viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, fullUrl);
+                    viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, name);
+                    startActivity(viewerIntent);
+                });
             } else {
                 ivAvatar.setImageResource(R.drawable.ic_person);
                 ivAvatar.setImageTintList(ContextCompat.getColorStateList(this, R.color.theme_icon_tint));
                 int pad = (int) (20 * getResources().getDisplayMetrics().density);
                 ivAvatar.setPadding(pad, pad, pad, pad);
+                ivAvatar.setOnClickListener(null);
             }
         }
 
@@ -1136,6 +1146,8 @@ public class ChatActivity extends AppCompatActivity {
                 showEmojiReactionPopup(message, anchorView);
             }
         });
+
+        adapter.setOnMediaRetryListener(this::retryMediaMessage);
 
         // WhatsApp-Style Effortless Swipe to Reply (both left & right, very low threshold)
         ItemTouchHelper.SimpleCallback swipeToReplyCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT) {
@@ -1627,7 +1639,7 @@ public class ChatActivity extends AppCompatActivity {
             boolean isSelf = currentUserId != null && currentUserId.equals(replyingToMessage.getSenderId());
             String senderName = isSelf ? "You" : (otherUserName != null ? otherUserName : "Contact");
             String snippet = replyingToMessage.getDisplaySnippet();
-            text = ChatMessage.formatReply(senderName, snippet, text);
+            text = ChatMessage.formatReply(senderName, snippet, text, replyingToMessage.getMediaUrl());
             cancelReply();
         }
 
@@ -1768,6 +1780,115 @@ public class ChatActivity extends AppCompatActivity {
         sheet.show();
     }
 
+    private static class PendingMediaTask {
+        ChatMessage optimisticMsg;
+        Uri uri;
+        String displayName;
+        String mimeType;
+        String caption;
+        String defaultType;
+        long fileSize;
+        String activeMode;
+        String sessionUuid;
+
+        PendingMediaTask(ChatMessage optimisticMsg, Uri uri, String displayName, String mimeType, String caption, String defaultType, long fileSize, String activeMode, String sessionUuid) {
+            this.optimisticMsg = optimisticMsg;
+            this.uri = uri;
+            this.displayName = displayName;
+            this.mimeType = mimeType;
+            this.caption = caption;
+            this.defaultType = defaultType;
+            this.fileSize = fileSize;
+            this.activeMode = activeMode;
+            this.sessionUuid = sessionUuid;
+        }
+    }
+
+    private final java.util.Map<String, PendingMediaTask> pendingMediaTasks = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private void retryMediaMessage(ChatMessage msg) {
+        if (msg == null) return;
+        PendingMediaTask task = pendingMediaTasks.get(msg.getId());
+        if (task != null) {
+            task.optimisticMsg.setStatus(ChatMessage.STATUS_PENDING);
+            adapter.updateMessageStatus(msg.getId(), ChatMessage.STATUS_PENDING);
+            uploadAndSendMedia(task);
+        } else if (msg.getMediaUrl() != null && !msg.getMediaUrl().isEmpty()) {
+            Uri uri = Uri.parse(msg.getMediaUrl());
+            String dispName = msg.getFileName() != null ? msg.getFileName() : "attachment";
+            String mime = getContentResolver().getType(uri);
+            String cap = msg.getMessageText();
+            String type = msg.getMediaType() != null ? msg.getMediaType() : "image";
+            long sz = msg.getFileSize() != null ? msg.getFileSize() : 0;
+            String mode = msg.getMode() != null ? msg.getMode() : ChatMessage.MODE_NORMAL;
+            String sess = msg.getSecretSessionId();
+
+            PendingMediaTask newTask = new PendingMediaTask(msg, uri, dispName, mime, cap, type, sz, mode, sess);
+            pendingMediaTasks.put(msg.getId(), newTask);
+            msg.setStatus(ChatMessage.STATUS_PENDING);
+            adapter.updateMessageStatus(msg.getId(), ChatMessage.STATUS_PENDING);
+            uploadAndSendMedia(newTask);
+        }
+    }
+
+    private void uploadAndSendMedia(PendingMediaTask task) {
+        ChatApiClient.uploadChatMedia(this, task.uri, task.displayName, task.mimeType, new ChatApiClient.ChatCallback<ChatApiClient.MediaUploadResult>() {
+            @Override
+            public void onSuccess(ChatApiClient.MediaUploadResult result) {
+                ChatApiClient.sendMessage(
+                        ChatActivity.this,
+                        currentUserId,
+                        otherUserId,
+                        task.caption,
+                        result.url,
+                        result.mediaType != null ? result.mediaType : task.defaultType,
+                        result.fileName != null ? result.fileName : task.displayName,
+                        result.fileSize > 0 ? result.fileSize : task.fileSize,
+                        task.activeMode,
+                        task.sessionUuid,
+                        new ChatApiClient.ChatCallback<ChatMessage>() {
+                            @Override
+                            public void onSuccess(ChatMessage sentMessage) {
+                                pendingMediaTasks.remove(task.optimisticMsg.getId());
+                                if (sentMessage != null) {
+                                    String serverId = sentMessage.getId();
+                                    String st = sentMessage.getStatus() != null ? sentMessage.getStatus() : ChatMessage.STATUS_SENT;
+                                    if (serverId != null) {
+                                        loadedMessageIds.add(serverId);
+                                    }
+                                    task.optimisticMsg.setMediaUrl(sentMessage.getMediaUrl());
+                                    adapter.updateTempMessage(task.optimisticMsg.getId(), serverId, st);
+                                    if (serverId != null) {
+                                        task.optimisticMsg.setId(serverId);
+                                    }
+                                    task.optimisticMsg.setStatus(st);
+                                    if (chatDb != null && !isSecretMode) {
+                                        chatDb.saveMessage(sentMessage);
+                                    }
+                                    if (conversationId == null && sentMessage.getConversationId() != null) {
+                                        conversationId = sentMessage.getConversationId();
+                                        activeConversationId = conversationId;
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorMessage) {
+                                task.optimisticMsg.setStatus(ChatMessage.STATUS_FAILED);
+                                adapter.updateMessageStatus(task.optimisticMsg.getId(), ChatMessage.STATUS_FAILED);
+                            }
+                        }
+                );
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                task.optimisticMsg.setStatus(ChatMessage.STATUS_FAILED);
+                adapter.updateMessageStatus(task.optimisticMsg.getId(), ChatMessage.STATUS_FAILED);
+            }
+        });
+    }
+
     private void handleMediaSelection(Uri uri, String defaultType) {
         String displayName = "attachment";
         long fileSize = 0;
@@ -1782,82 +1903,49 @@ public class ChatActivity extends AppCompatActivity {
             }
         } catch (Exception ignored) {}
 
-        Toast.makeText(this, "Uploading " + displayName + "...", Toast.LENGTH_SHORT).show();
-        btnSend.setVisibility(View.GONE);
-        pbSending.setVisibility(View.VISIBLE);
+        String caption = etInput.getText() != null ? etInput.getText().toString().trim() : "";
+        etInput.setText("");
 
-        final String finalName = displayName;
-        final long finalSize = fileSize;
-        final String finalType = defaultType;
+        if (replyingToMessage != null) {
+            boolean isSelf = currentUserId != null && currentUserId.equals(replyingToMessage.getSenderId());
+            String senderName = isSelf ? "You" : (otherUserName != null ? otherUserName : "Contact");
+            String snippet = replyingToMessage.getDisplaySnippet();
+            caption = ChatMessage.formatReply(senderName, snippet, caption, replyingToMessage.getMediaUrl());
+            cancelReply();
+        }
+
         final String activeMode = isSecretMode ? ChatMessage.MODE_SECRET : ChatMessage.MODE_NORMAL;
         final String sessionUuid = isSecretMode ? currentSecretSessionId : null;
 
-        ChatApiClient.uploadChatMedia(this, uri, displayName, mimeType, new ChatApiClient.ChatCallback<ChatApiClient.MediaUploadResult>() {
-            @Override
-            public void onSuccess(ChatApiClient.MediaUploadResult result) {
-                btnSend.setVisibility(View.VISIBLE);
-                pbSending.setVisibility(View.GONE);
+        String tempId = "temp_media_" + System.currentTimeMillis();
+        ChatMessage optimisticMsg = new ChatMessage(
+                tempId,
+                conversationId,
+                currentUserId,
+                otherUserId,
+                caption,
+                uri.toString(),
+                ChatMessage.STATUS_PENDING,
+                isoFormat.format(new Date())
+        );
+        optimisticMsg.setMediaType(defaultType);
+        optimisticMsg.setFileName(displayName);
+        optimisticMsg.setFileSize(fileSize);
+        optimisticMsg.setMode(activeMode);
+        optimisticMsg.setSecretSessionId(sessionUuid);
 
-                String caption = etInput.getText() != null ? etInput.getText().toString().trim() : "";
-                etInput.setText("");
+        if (isSecretMode) {
+            ephemeralSecretMessages.add(optimisticMsg);
+        } else {
+            normalMessages.add(optimisticMsg);
+        }
+        adapter.addMessage(optimisticMsg);
+        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
 
-                if (replyingToMessage != null) {
-                    boolean isSelf = currentUserId != null && currentUserId.equals(replyingToMessage.getSenderId());
-                    String senderName = isSelf ? "You" : (otherUserName != null ? otherUserName : "Contact");
-                    String snippet = replyingToMessage.getDisplaySnippet();
-                    caption = ChatMessage.formatReply(senderName, snippet, caption);
-                    cancelReply();
-                }
+        PendingMediaTask task = new PendingMediaTask(optimisticMsg, uri, displayName, mimeType, caption, defaultType, fileSize, activeMode, sessionUuid);
+        pendingMediaTasks.put(tempId, task);
 
-                ChatApiClient.sendMessage(
-                        ChatActivity.this,
-                        currentUserId,
-                        otherUserId,
-                        caption,
-                        result.url,
-                        result.mediaType != null ? result.mediaType : finalType,
-                        result.fileName != null ? result.fileName : finalName,
-                        result.fileSize > 0 ? result.fileSize : finalSize,
-                        activeMode,
-                        sessionUuid,
-                        new ChatApiClient.ChatCallback<ChatMessage>() {
-                            @Override
-                            public void onSuccess(ChatMessage sentMessage) {
-                                if (sentMessage != null) {
-                                    if (sentMessage.getId() != null) loadedMessageIds.add(sentMessage.getId());
-                                    if (conversationId == null && sentMessage.getConversationId() != null) {
-                                        conversationId = sentMessage.getConversationId();
-                                        activeConversationId = conversationId;
-                                    }
-                                    
-                                    if (isSecretMode) {
-                                        ephemeralSecretMessages.add(sentMessage);
-                                    } else {
-                                        normalMessages.add(sentMessage);
-                                        if (chatDb != null) {
-                                            chatDb.saveMessage(sentMessage);
-                                        }
-                                    }
-                                    adapter.addMessage(sentMessage);
-                                    recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-                                }
-                            }
-
-                            @Override
-                            public void onError(String errorMessage) {
-                                Toast.makeText(ChatActivity.this, "Send failed: " + errorMessage, Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                );
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                btnSend.setVisibility(View.VISIBLE);
-                pbSending.setVisibility(View.GONE);
-                Toast.makeText(ChatActivity.this, "Upload failed: " + errorMessage, Toast.LENGTH_SHORT).show();
-            }
-        });
+        uploadAndSendMedia(task);
     }
 
     private void handleBitmapCapture(Bitmap bitmap) {

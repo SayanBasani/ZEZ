@@ -60,7 +60,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 <div class="container">
 
 <h1>Call Log Mannager — Complete Call Flow &amp; Architecture Documentation</h1>
-<p class="subtitle">Generated from graphify knowledge graph: 1538 nodes, 3957 edges, 83 communities. Commit: 22e19c2</p>
+<p class="subtitle">Generated from graphify knowledge graph: 1567 nodes, 4077 edges, 88 communities. Commit: b6cb99c</p>
 
 <div class="nav">
     <a href="#overview">Architecture Overview</a>
@@ -69,15 +69,15 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
     <a href="#analysis-clustering">Analysis &amp; Clustering</a>
     <a href="#serve-api">Serving API</a>
     <a href="#tests-fixtures">Tests &amp; Fixtures</a>
-    <a href="#b2storageservicejs-zez-backend">B2Storageservicejs Zez Backend</a>
     <a href="#zez-backend-adminjs">Zez Backend Adminjs</a>
     <a href="#indexdts-zez-backend">Indexdts Zez Backend</a>
-    <a href="#chatjs-zez-backend">Chatjs Zez Backend</a>
     <a href="#gradlew-script-module-c40">Gradlew Script Module (C40)</a>
     <a href="#handler">Handler</a>
     <a href="#chip">Chip</a>
     <a href="#new-requirements-specification-module-c41">New Requirements Specification Module (C41)</a>
     <a href="#project-readme-module-c42">Project Readme Module (C42)</a>
+    <a href="#system-architecture-and-sync-guide-module-c43">System Architecture And Sync Guide Module (C43)</a>
+    <a href="#backend-admin-routes-apis-c44">Backend Admin Routes &amp; APIs (C44)</a>
     <a href="#other">Other</a>
 </div>
 
@@ -88,24 +88,20 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    EXTRACT_PIPELINE_5F350230("Extraction Pipeline<br/><small>1158 nodes</small>")
+    EXTRACT_PIPELINE_5F350230("Extraction Pipeline<br/><small>1182 nodes</small>")
     class EXTRACT_PIPELINE_5F350230 module;
-    BUILD_GRAPH_321CBB04("Graph Build<br/><small>65 nodes</small>")
+    BUILD_GRAPH_321CBB04("Graph Build<br/><small>110 nodes</small>")
     class BUILD_GRAPH_321CBB04 module;
     ANALYSIS_CLUSTERING_C79796DA("Analysis &amp; Clustering<br/><small>39 nodes</small>")
     class ANALYSIS_CLUSTERING_C79796DA module;
     SERVE_API_35EC8E86("Serving API<br/><small>32 nodes</small>")
     class SERVE_API_35EC8E86 module;
-    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>145 nodes</small>")
+    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>138 nodes</small>")
     class TESTS_FIXTURES_B84B1DCC module;
-    B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B("B2Storageservicejs Zez Backend<br/><small>23 nodes</small>")
-    class B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B module;
-    ZEZ_BACKEND_ADMINJS_420B968F("Zez Backend Adminjs<br/><small>23 nodes</small>")
+    ZEZ_BACKEND_ADMINJS_420B968F("Zez Backend Adminjs<br/><small>22 nodes</small>")
     class ZEZ_BACKEND_ADMINJS_420B968F module;
     INDEXDTS_ZEZ_BACKEND_8715DDD7("Indexdts Zez Backend<br/><small>16 nodes</small>")
     class INDEXDTS_ZEZ_BACKEND_8715DDD7 module;
-    CHATJS_ZEZ_BACKEND_FDE8E725("Chatjs Zez Backend<br/><small>14 nodes</small>")
-    class CHATJS_ZEZ_BACKEND_FDE8E725 module;
     GRADLEW_SCRIPT_MODULE_C40_516C8B5E("Gradlew Script Module (C40)<br/><small>4 nodes</small>")
     class GRADLEW_SCRIPT_MODULE_C40_516C8B5E module;
     HANDLER_31A81EC9("Handler<br/><small>1 nodes</small>")
@@ -116,20 +112,24 @@ flowchart LR
     class NEW_REQUIREMENTS_SPECIFICATION_MODULE_C41_009367C3 module;
     PROJECT_README_MODULE_C42_92137360("Project Readme Module (C42)<br/><small>1 nodes</small>")
     class PROJECT_README_MODULE_C42_92137360 module;
-    OTHER_D0941E68("Other<br/><small>15 nodes</small>")
+    SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE_MODULE_C43_F87D41BF("System Architecture And Sync Guide Module (C43)<br/><small>1 nodes</small>")
+    class SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE_MODULE_C43_F87D41BF module;
+    BACKEND_ADMIN_ROUTES_APIS_C44_2E75BE2E("Backend Admin Routes &amp; APIs (C44)<br/><small>1 nodes</small>")
+    class BACKEND_ADMIN_ROUTES_APIS_C44_2E75BE2E module;
+    OTHER_D0941E68("Other<br/><small>18 nodes</small>")
     class OTHER_D0941E68 module;
     ANALYSIS_CLUSTERING_C79796DA -->|imports x16| TESTS_FIXTURES_B84B1DCC
+    TESTS_FIXTURES_B84B1DCC -->|imports x11| BUILD_GRAPH_321CBB04
     ZEZ_BACKEND_ADMINJS_420B968F -->|imports x10| TESTS_FIXTURES_B84B1DCC
-    SERVE_API_35EC8E86 -->|imports x8| TESTS_FIXTURES_B84B1DCC
     TESTS_FIXTURES_B84B1DCC -->|imports x6| SERVE_API_35EC8E86
-    TESTS_FIXTURES_B84B1DCC -->|imports x4| BUILD_GRAPH_321CBB04
+    BUILD_GRAPH_321CBB04 -->|imports x6| TESTS_FIXTURES_B84B1DCC
+    SERVE_API_35EC8E86 -->|imports x6| TESTS_FIXTURES_B84B1DCC
     ZEZ_BACKEND_ADMINJS_420B968F -->|imports x3| SERVE_API_35EC8E86
-    CHATJS_ZEZ_BACKEND_FDE8E725 -->|imports x3| TESTS_FIXTURES_B84B1DCC
-    BUILD_GRAPH_321CBB04 -->|imports x2| TESTS_FIXTURES_B84B1DCC
-    B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B -->|imports x2| BUILD_GRAPH_321CBB04
-    B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B -->|imports x2| TESTS_FIXTURES_B84B1DCC
-    TESTS_FIXTURES_B84B1DCC -->|imports x2| B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B
-    TESTS_FIXTURES_B84B1DCC -->|imports x2| CHATJS_ZEZ_BACKEND_FDE8E725
+    SERVE_API_35EC8E86 -->|imports x3| BUILD_GRAPH_321CBB04
+    TESTS_FIXTURES_B84B1DCC -->|imports x2| ANALYSIS_CLUSTERING_C79796DA
+    ZEZ_BACKEND_ADMINJS_420B968F -->|imports x2| BUILD_GRAPH_321CBB04
+    BUILD_GRAPH_321CBB04 -->|imports x2| ANALYSIS_CLUSTERING_C79796DA
+    BUILD_GRAPH_321CBB04 -->|imports| SERVE_API_35EC8E86
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -146,51 +146,51 @@ flowchart LR
     <h4>Architecture Layers</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
-      <tr><td>Extraction Pipeline</td><td>1158</td><td><code>3, 7, 66, 6, 9, 12, 5, 23, 1, 77, 31, 34, 72, 0, 29, 64, 21, 38, 61, 18, 69, 28, 8, 19, 24, 25, 54, 14, 10, 33, 70, 17, 27, 30, 51, 52, 58, 53, 55, 60, 63, 56, 65, 68, 71, 35, 73</code></td></tr><tr><td>Graph Build</td><td>65</td><td><code>15, 13, 48, 49</code></td></tr><tr><td>Analysis &amp; Clustering</td><td>39</td><td><code>20, 74</code></td></tr><tr><td>Serving API</td><td>32</td><td><code>67</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>145</td><td><code>22, 11, 32, 4, 59</code></td></tr><tr><td>B2Storageservicejs Zez Backend</td><td>23</td><td><code>2</code></td></tr><tr><td>Zez Backend Adminjs</td><td>23</td><td><code>26</code></td></tr><tr><td>Indexdts Zez Backend</td><td>16</td><td><code>16</code></td></tr><tr><td>Chatjs Zez Backend</td><td>14</td><td><code>36</code></td></tr><tr><td>Gradlew Script Module (C40)</td><td>4</td><td><code>40</code></td></tr><tr><td>Handler</td><td>1</td><td><code>37</code></td></tr><tr><td>Chip</td><td>1</td><td><code>39</code></td></tr><tr><td>New Requirements Specification Module (C41)</td><td>1</td><td><code>41</code></td></tr><tr><td>Project Readme Module (C42)</td><td>1</td><td><code>42</code></td></tr><tr><td>Other</td><td>15</td><td><code>43, 44, 45, 46, 47, 50, 57, 62, 75, 76, 78, 79, 80, 81, 86</code></td></tr>
+      <tr><td>Extraction Pipeline</td><td>1182</td><td><code>7, 9, 66, 6, 12, 1, 23, 33, 5, 8, 3, 31, 34, 38, 77, 17, 2, 21, 18, 29, 30, 72, 0, 69, 28, 24, 54, 10, 19, 35, 14, 64, 51, 25, 53, 52, 27, 56, 61, 55, 58, 60, 63, 65, 68, 70, 71, 73</code></td></tr><tr><td>Graph Build</td><td>110</td><td><code>15, 36, 13, 48, 49</code></td></tr><tr><td>Analysis &amp; Clustering</td><td>39</td><td><code>20, 74</code></td></tr><tr><td>Serving API</td><td>32</td><td><code>67</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>138</td><td><code>32, 11, 22, 4, 59</code></td></tr><tr><td>Zez Backend Adminjs</td><td>22</td><td><code>26</code></td></tr><tr><td>Indexdts Zez Backend</td><td>16</td><td><code>16</code></td></tr><tr><td>Gradlew Script Module (C40)</td><td>4</td><td><code>40</code></td></tr><tr><td>Handler</td><td>1</td><td><code>37</code></td></tr><tr><td>Chip</td><td>1</td><td><code>39</code></td></tr><tr><td>New Requirements Specification Module (C41)</td><td>1</td><td><code>41</code></td></tr><tr><td>Project Readme Module (C42)</td><td>1</td><td><code>42</code></td></tr><tr><td>System Architecture And Sync Guide Module (C43)</td><td>1</td><td><code>43</code></td></tr><tr><td>Backend Admin Routes &amp; APIs (C44)</td><td>1</td><td><code>44</code></td></tr><tr><td>Other</td><td>18</td><td><code>45, 46, 47, 50, 57, 62, 75, 76, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87</code></td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Core Flow</h4>
-    <div class="arrow-chain">Extraction Pipeline -&gt; Graph Build -&gt; Tests &amp; Fixtures -&gt; Serving API -&gt; Analysis &amp; Clustering -&gt; B2Storageservicejs Zez Backend -&gt; Zez Backend Adminjs</div>
+    <div class="arrow-chain">Extraction Pipeline -&gt; Graph Build -&gt; Tests &amp; Fixtures -&gt; Serving API -&gt; Analysis &amp; Clustering -&gt; Zez Backend Adminjs -&gt; Indexdts Zez Backend</div>
   </div>
 </div>
 <div class="grid">
   <div class="card">
     <h4>Graph Report Highlights</h4>
     <ul>
-      <li>1538 nodes · 3957 edges · 83 communities (34 shown, 49 thin omitted)</li>
-      <li>Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 349 edges (avg confidence: 0.85)</li>
+      <li>1567 nodes · 4077 edges · 88 communities (32 shown, 56 thin omitted)</li>
+      <li>Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 385 edges (avg confidence: 0.85)</li>
       <li>Token cost: 0 input · 0 output</li>
-      <li>1. `MainActivity` - 97 edges</li>
-      <li>2. `ChatMessage` - 79 edges</li>
-      <li>3. `ChatActivity` - 65 edges</li>
+      <li>1. `MainActivity` - 99 edges</li>
+      <li>2. `ChatMessage` - 85 edges</li>
+      <li>3. `ChatActivity` - 68 edges</li>
     </ul>
   </div>
 </div>
 <hr>
 <!-- ====== 2. Extraction Pipeline ====== -->
 <h2 id="extract-pipeline">2. Extraction Pipeline</h2>
-<p>Extraction Pipeline groups implementation around app, zezandroid, com, zez, mostly in zez/app/ChatActivity.java, zez/app/MainActivity.java, app/util/ChatApiClient.java. This section covers 1158 nodes and 3358 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Extraction Pipeline groups implementation around app, zezandroid, com, zez, mostly in zez/app/MainActivity.java, zez/app/ChatActivity.java, app/util/ChatApiClient.java. This section covers 1182 nodes and 3478 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Extraction Pipeline (1158 nodes, 3358 edges)
+    %% Section: Extraction Pipeline (1182 nodes, 3478 edges)
     subgraph extract_pipeline_zez_app_MainActivity_java_fc3e29d8["zez/app/MainActivity.java"]
-        zezandroid_app_src_main_java_com_zez_app_mainact_61b4814c("MainActivity<br/><small>zez/app/MainActivity.java</small>")
         zezandroid_app_src_main_java_com_zez_app_mainact_9c5d42ba("MainActivity.java")
-        zezandroid_app_src_main_java_com_zez_app_mainact_6e463b73("android.text.TextWatcher<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_f972164f("beforeTextChanged()<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_841285fd("onTextChanged()<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_23aa3b4a("afterTextChanged()<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_3509b835("com.google.android.material.tabs.TabLay...<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_c4c0c841("onTabSelected()<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_4d6a4657("onTabUnselected()<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_90b6747b("onTabReselected()<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_56b9c726("GalleryAdapter.Listener<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_6145248f("onMediaClick()<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_23055fb9("onSelectionChanged()<br/><small>zez/app/MainActivity.java</small>")
-        zezandroid_app_src_main_java_com_zez_app_mainact_2c53082a("onMultiSelectStart()<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_61b4814c("MainActivity<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_8b0b66a7("android.text.TextWatcher<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_48b3dc76("beforeTextChanged()<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_aa53ad62("onTextChanged()<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_e04623ba("afterTextChanged()<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_2b86b308("GalleryAdapter.Listener<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_daaf54d7("onMediaClick()<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_c9d9482d("onSelectionChanged()<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_7a6727a0("onMultiSelectStart()<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_c1dccb68("ChatApiClient.ChatCallback&lt;List&lt;ChatCon...<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_06d7b081("onSuccess()<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_a1c2d43d("onError()<br/><small>zez/app/MainActivity.java</small>")
+        zezandroid_app_src_main_java_com_zez_app_mainact_3928ddcb("android.text.TextWatcher<br/><small>zez/app/MainActivity.java</small>")
     end
     subgraph extract_pipeline_zez_app_ChatActivity_java_8ba95322["zez/app/ChatActivity.java"]
         zezandroid_app_src_main_java_com_zez_app_chatact_6f6ade66("ChatActivity.java")
@@ -198,31 +198,30 @@ flowchart LR
     end
     zezandroid_app_src_main_java_com_zez_app_model_c_caff774d("ChatMessage<br/><small>app/model/ChatMessage.java</small>")
     zezandroid_app_src_main_java_com_zez_app_contact_18de2866("ContactsActivity.java")
-    zezandroid_app_src_main_java_com_zez_app_mainact_6e463b73 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_f972164f
-    zezandroid_app_src_main_java_com_zez_app_mainact_6e463b73 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_841285fd
-    zezandroid_app_src_main_java_com_zez_app_mainact_6e463b73 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_23aa3b4a
-    zezandroid_app_src_main_java_com_zez_app_mainact_3509b835 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_c4c0c841
-    zezandroid_app_src_main_java_com_zez_app_mainact_3509b835 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_4d6a4657
-    zezandroid_app_src_main_java_com_zez_app_mainact_3509b835 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_90b6747b
-    zezandroid_app_src_main_java_com_zez_app_mainact_56b9c726 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_6145248f
-    zezandroid_app_src_main_java_com_zez_app_mainact_56b9c726 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_23055fb9
-    zezandroid_app_src_main_java_com_zez_app_mainact_56b9c726 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_2c53082a
+    zezandroid_app_src_main_java_com_zez_app_mainact_8b0b66a7 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_48b3dc76
+    zezandroid_app_src_main_java_com_zez_app_mainact_8b0b66a7 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_aa53ad62
+    zezandroid_app_src_main_java_com_zez_app_mainact_8b0b66a7 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_e04623ba
+    zezandroid_app_src_main_java_com_zez_app_mainact_2b86b308 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_daaf54d7
+    zezandroid_app_src_main_java_com_zez_app_mainact_2b86b308 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_c9d9482d
+    zezandroid_app_src_main_java_com_zez_app_mainact_2b86b308 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_7a6727a0
+    zezandroid_app_src_main_java_com_zez_app_mainact_c1dccb68 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_06d7b081
+    zezandroid_app_src_main_java_com_zez_app_mainact_c1dccb68 -->|method| zezandroid_app_src_main_java_com_zez_app_mainact_a1c2d43d
     zezandroid_app_src_main_java_com_zez_app_chatact_6f6ade66 -->|imports| zezandroid_app_src_main_java_com_zez_app_model_c_caff774d
-    %% Omitted for readability: 1140 nodes, 0 edges
-    class zezandroid_app_src_main_java_com_zez_app_mainact_61b4814c klass;
+    %% Omitted for readability: 1164 nodes, 0 edges
     class zezandroid_app_src_main_java_com_zez_app_mainact_9c5d42ba klass;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_6e463b73 function;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_f972164f function;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_841285fd function;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_23aa3b4a function;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_3509b835 function;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_c4c0c841 function;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_4d6a4657 function;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_90b6747b function;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_56b9c726 klass;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_6145248f entry;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_23055fb9 function;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_2c53082a function;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_61b4814c klass;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_8b0b66a7 function;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_48b3dc76 function;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_aa53ad62 function;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_e04623ba function;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_2b86b308 klass;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_daaf54d7 entry;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_c9d9482d function;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_7a6727a0 function;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_c1dccb68 api;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_06d7b081 function;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_a1c2d43d function;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_3928ddcb function;
     class zezandroid_app_src_main_java_com_zez_app_chatact_6f6ade66 klass;
     class zezandroid_app_src_main_java_com_zez_app_chatact_1dd5d485 klass;
     class zezandroid_app_src_main_java_com_zez_app_model_c_caff774d klass;
@@ -250,243 +249,243 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-class">Class</span></td>
+  <td><code>ChatApiClient.ChatCallback&lt;ChatApiClient.MessagesResult&gt;</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td><span class="tag tag-endpoint">API</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>bindMedia()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>buildGroupedList()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>enterSelectMode()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br>+15 more</td>
-  <td>GalleryAdapter node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>onError()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>onSuccess()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
 </tr>
 <tr>
   <td>2</td>
-  <td><code>GridLayoutManager.SpanSizeLookup</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-class">Class</span></td>
+  <td><code>ChatApiClient.ChatCallback&lt;ChatApiClient.ConversationModeInfo&gt;</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td><span class="tag tag-endpoint">API</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>getSpanSize()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>GridLayoutManager.SpanSizeLookup node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>onError()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>onSuccess()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
 </tr>
 <tr>
   <td>3</td>
-  <td><code>Listener</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td><code>initViews()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
-  <td><code>onMediaClick()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>onMultiSelectStart()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>onSelectionChanged()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>Listener node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>ChatApiClient.ChatCallback&lt;ChatApiClient.MessagesResult&gt;</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td><span class="tag tag-endpoint">API</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onError()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>onSuccess()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
 </tr>
 <tr>
   <td>4</td>
-  <td><code>AlbumDetailActivity</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small></td>
-  <td><span class="tag tag-class">Class</span></td>
+  <td><code>ChatApiClient.ChatCallback&lt;ChatApiClient.MediaUploadResult&gt;</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td><span class="tag tag-endpoint">API</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>binSelected()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>favoriteSelected()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br>+8 more</td>
-  <td>AlbumDetailActivity node in zez/app/AlbumDetailActivity.java.</td>
+  <td><code>onError()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>onSuccess()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
 </tr>
 <tr>
   <td>5</td>
-  <td><code>GalleryAdapter.Listener</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>onMediaClick()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>onMultiSelectStart()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>onSelectionChanged()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small></td>
-  <td>GalleryAdapter.Listener node in zez/app/AlbumDetailActivity.java.</td>
+  <td><code>ChatApiClient</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-endpoint">API</span></td>
+  <td><code>ChatActivity.java</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>ChatMessageAdapter.java</code><br><small style="color:var(--muted)">app/adapter/ChatMessageAdapter.java</small><br><code>ContactsActivity.java</code><br><small style="color:var(--muted)">zez/app/ContactsActivity.java</small><br>+1 more</td>
+  <td><code>deleteMessage()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>getAbsoluteMediaUrl()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>getBaseUrl()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br>+16 more</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
 </tr>
 <tr>
   <td>6</td>
-  <td><code>ImageViewerActivity</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small></td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
   <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>confirmDelete()</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small><br><code>extractText()</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small><br><code>fmtDur()</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small><br>+15 more</td>
-  <td>ImageViewerActivity node in zez/app/ImageViewerActivity.java.</td>
+  <td><code>getConversations()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>getMessages()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>getUserProfile()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br>+11 more</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>7</td>
-  <td><code>ViewPager2.OnPageChangeCallback</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small></td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>onPageSelected()</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small></td>
-  <td>Organizes documentation pages, navigation, or content lookup.</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>8</td>
-  <td><code>GalleryListItem</code><br><small style="color:var(--muted)">app/model/GalleryListItem.java</small></td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
   <td><span class="tag tag-class">Class</span></td>
-  <td><code>GalleryAdapter.java</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><code>GalleryListItem()</code><br><small style="color:var(--muted)">app/model/GalleryListItem.java</small></td>
-  <td>GalleryListItem node in app/model/GalleryListItem.java.</td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>9</td>
-  <td><code>MediaItem</code><br><small style="color:var(--muted)">app/model/MediaItem.java</small></td>
+  <td><code>ChatCallback&lt;MessagesResult&gt;</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
   <td><span class="tag tag-class">Class</span></td>
-  <td><code>GalleryAdapter.java</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>MediaHelper.java</code><br><small style="color:var(--muted)">app/util/MediaHelper.java</small></td>
-  <td><code>getBucketId()</code><br><small style="color:var(--muted)">app/model/MediaItem.java</small><br><code>getBucketName()</code><br><small style="color:var(--muted)">app/model/MediaItem.java</small><br><code>getDateAdded()</code><br><small style="color:var(--muted)">app/model/MediaItem.java</small><br>+9 more</td>
-  <td>MediaItem node in app/model/MediaItem.java.</td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onError()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onSuccess()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
 </tr>
 <tr>
   <td>10</td>
-  <td><code>.getSpanSizeLookup()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.getSpanSizeLookup() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>11</td>
-  <td><code>.getUri()</code><br><small style="color:var(--muted)">app/model/MediaItem.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>bindMedia()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>confirmDelete()</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small><br><code>extractText()</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small><br>+11 more</td>
-  <td>No direct outbound edge</td>
-  <td>.getUri() node in app/model/MediaItem.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>12</td>
-  <td><code>.setSelectedPosition()</code><br><small style="color:var(--muted)">app/adapter/FilmstripAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>FilmstripAdapter</code><br><small style="color:var(--muted)">app/adapter/FilmstripAdapter.java</small><br><code>onCreate()</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small><br><code>updateUIForPosition()</code><br><small style="color:var(--muted)">zez/app/ImageViewerActivity.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.setSelectedPosition() node in app/adapter/FilmstripAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>13</td>
-  <td><code>.bindMedia()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>onBindViewHolder()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><code>enterSelectMode()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>exitSelectMode()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>fmtDur()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br>+6 more</td>
-  <td>.bindMedia() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>14</td>
-  <td><code>.buildGroupedList()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>rebuildDisplayList()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><code>sameDay()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>.buildGroupedList() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>15</td>
-  <td><code>.enterSelectMode()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>bindMedia()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><code>onMultiSelectStart()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>onSelectionChanged()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>.enterSelectMode() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>16</td>
-  <td><code>.exitSelectMode()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>bindMedia()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>binSelected()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>favoriteSelected()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br>+9 more</td>
-  <td><code>onSelectionChanged()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>.exitSelectMode() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>17</td>
-  <td><code>.fmtDur()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>bindMedia()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.fmtDur() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>18</td>
-  <td><code>.GalleryAdapter()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.GalleryAdapter() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>19</td>
-  <td><code>.getItemCount()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.getItemCount() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Callback node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>20</td>
-  <td><code>.getItemViewType()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.getItemViewType() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>ChatCallback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>deleteSelectedMessages()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>drainPendingQueue()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>fetchPeerProfile()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br>+13 more</td>
+  <td><code>onError()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onSuccess()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
 </tr>
 <tr>
   <td>21</td>
-  <td><code>.getSelectedCount()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
+  <td><code>ContactSyncResult</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
   <td>No direct outbound edge</td>
-  <td>.getSelectedCount() node in app/adapter/GalleryAdapter.java.</td>
+  <td>ContactSyncResult node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>22</td>
-  <td><code>.getSelectedItems()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>binSelected()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>favoriteSelected()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br>+3 more</td>
+  <td><code>ConversationModeInfo</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
   <td>No direct outbound edge</td>
-  <td>.getSelectedItems() node in app/adapter/GalleryAdapter.java.</td>
+  <td>ConversationModeInfo node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>23</td>
-  <td><code>.getSpanSize()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GridLayoutManager.SpanSizeLookup</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
+  <td><code>MediaUploadResult</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>.getSpanSize() node in app/adapter/GalleryAdapter.java.</td>
+  <td>MediaUploadResult node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>24</td>
-  <td><code>.isSelectMode()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-async">Async</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>onBackPressed()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br>+1 more</td>
+  <td><code>MessagesResult</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
   <td>No direct outbound edge</td>
-  <td>.isSelectMode() node in app/adapter/GalleryAdapter.java.</td>
+  <td>MessagesResult node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>25</td>
-  <td><code>.onBindViewHolder()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><code>bindMedia()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>.onBindViewHolder() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>PeerStatus</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>No direct outbound edge</td>
+  <td>PeerStatus node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>26</td>
-  <td><code>.rebuildDisplayList()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>setFilter()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>setItems()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><code>buildGroupedList()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>.rebuildDisplayList() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>PollResult</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>onResponse()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>No direct outbound edge</td>
+  <td>PollResult node in app/util/ChatApiClient.java.</td>
 </tr>
 <tr>
   <td>27</td>
-  <td><code>.sameDay()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
+  <td><code>.applyModeState()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>buildGroupedList()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.sameDay() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>applyModeState()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>ChatActivity</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>onError()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br>+3 more</td>
+  <td><code>applyModeState()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>getItemCount()</code><br><small style="color:var(--muted)">app/adapter/ChatMessageAdapter.java</small><br><code>setMessages()</code><br><small style="color:var(--muted)">app/adapter/ChatMessageAdapter.java</small><br>+1 more</td>
+  <td>.applyModeState() node in zez/app/ChatActivity.java.</td>
 </tr>
 <tr>
   <td>28</td>
-  <td><code>.setFilter()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
+  <td><code>.fetchPeerProfile()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
-  <td><code>exitSelectMode()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>rebuildDisplayList()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>.setFilter() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>ChatActivity</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td><code>ChatCallback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>getUserProfile()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>loadHeaderAvatar()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td>.fetchPeerProfile() node in zez/app/ChatActivity.java.</td>
 </tr>
 <tr>
   <td>29</td>
-  <td><code>.setItems()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
+  <td><code>.loadMessages()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>GalleryAdapter</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>loadAlbumMedia()</code><br><small style="color:var(--muted)">zez/app/AlbumDetailActivity.java</small><br><code>loadGalleryData()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
-  <td><code>exitSelectMode()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>rebuildDisplayList()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>.setItems() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>ChatActivity</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>onCreate()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td><code>ChatCallback</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>getMessages()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small></td>
+  <td>.loadMessages() node in zez/app/ChatActivity.java.</td>
 </tr>
 <tr>
   <td>30</td>
-  <td><code>.onMediaClick()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td><code>bindMedia()</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small><br><code>Listener</code><br><small style="color:var(--muted)">app/adapter/GalleryAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.onMediaClick() node in app/adapter/GalleryAdapter.java.</td>
+  <td><code>.onSuccess()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>ChatApiClient.ChatCallback&lt;ChatApiClien...</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td><code>applyModeState()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small><br><code>markMessagesAsRead()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>updatePeerStatus()</code><br><small style="color:var(--muted)">zez/app/ChatActivity.java</small></td>
+  <td>.onSuccess() node in zez/app/ChatActivity.java.</td>
 </tr>
 </table>
 
@@ -495,84 +494,94 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>zez/app/ChatActivity.java</code></td><td>99 nodes</td></tr>
-<tr><td><code>zez/app/MainActivity.java</code></td><td>96 nodes</td></tr>
+      <tr><td><code>zez/app/MainActivity.java</code></td><td>106 nodes</td></tr>
+<tr><td><code>zez/app/ChatActivity.java</code></td><td>103 nodes</td></tr>
 <tr><td><code>app/util/ChatApiClient.java</code></td><td>72 nodes</td></tr>
-<tr><td><code>app/adapter/ChatMessageAdapter.java</code></td><td>45 nodes</td></tr>
-<tr><td><code>app/model/ChatMessage.java</code></td><td>40 nodes</td></tr>
+<tr><td><code>app/adapter/ChatMessageAdapter.java</code></td><td>50 nodes</td></tr>
+<tr><td><code>app/model/ChatMessage.java</code></td><td>41 nodes</td></tr>
 <tr><td><code>app/adapter/GalleryAdapter.java</code></td><td>30 nodes</td></tr>
-<tr><td><code>app/adapter/ConversationsAdapter.java</code></td><td>23 nodes</td></tr>
-<tr><td><code>app/util/ZoomImageView.java</code></td><td>23 nodes</td></tr>
+<tr><td><code>app/adapter/ConversationsAdapter.java</code></td><td>26 nodes</td></tr>
+<tr><td><code>app/util/PreferencesHelper.java</code></td><td>24 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: calls x919, references x826, imports x718, method x702. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x978, references x853, imports x727, method x722. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
 <!-- ====== 3. Graph Build ====== -->
 <h2 id="build-graph">3. Graph Build</h2>
-<p>Graph Build groups implementation around zez, backend, packagejson, tsconfigjson, mostly in Zez-Backend/package.json, Zez-Backend/tsconfig.json, scripts/run-backend.ps1. This section covers 65 nodes and 74 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Graph Build groups implementation around zez, backend, packagejson, b2storageservicejs, mostly in Zez-Backend/package.json, src/services/b2StorageService.js, Zez-Backend/tsconfig.json. This section covers 110 nodes and 157 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Graph Build (65 nodes, 74 edges)
-    subgraph build_graph_Zez_Backend_package_json_da7fc674["Zez-Backend/package.json"]
-        zez_backend_package_ebaa6205("package.json")
-        ref_aws_sdk_client_s3_4205c050("@aws-sdk/client-s3<br/><small>Zez-Backend/package.json</small>")
-        ref_aws_sdk_s3_request_presigner_0e02e3d3("@aws-sdk/s3-request-presigner<br/><small>Zez-Backend/package.json</small>")
-        ref_noble_ciphers_45777d42("@noble/ciphers<br/><small>Zez-Backend/package.json</small>")
-        ref_cors_c3ba69b0("cors<br/><small>Zez-Backend/package.json</small>")
-        ref_dotenv_f23d7946("dotenv<br/><small>Zez-Backend/package.json</small>")
-        ref_multer_4493b979("multer<br/><small>Zez-Backend/package.json</small>")
-        ref_pg_848e5969("pg<br/><small>Zez-Backend/package.json</small>")
-        ref_types_cors_87031099("@types/cors<br/><small>Zez-Backend/package.json</small>")
-        ref_types_express_ac694a57("@types/express<br/><small>Zez-Backend/package.json</small>")
-        ref_types_multer_b1907081("@types/multer<br/><small>Zez-Backend/package.json</small>")
-        ref_types_node_4b20becf("@types/node<br/><small>Zez-Backend/package.json</small>")
-        ref_types_pg_a468afaa("@types/pg<br/><small>Zez-Backend/package.json</small>")
-        ref_typescript_d5a01309("typescript<br/><small>Zez-Backend/package.json</small>")
-        zez_backend_package_engines_node_ff8d36a1("node<br/><small>Zez-Backend/package.json</small>")
-        zez_backend_package_dependencies_aws_sdk_client_dc83ed7a("@aws-sdk/client-s3@^3.1173.0<br/><small>Zez-Backend/package.json</small>")
-        zez_backend_package_dependencies_aws_sdk_s3_requ_f8acd3ba("@aws-sdk/s3-request-presigner@^3.1173.0<br/><small>Zez-Backend/package.json</small>")
+    %% Section: Graph Build (110 nodes, 157 edges)
+    subgraph build_graph_src_services_b2StorageService_js_c36a1a11["src/services/b2StorageService.js"]
+        zez_backend_src_services_b2storageservice_upload_a7f3cb92("uploadFile()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_listfi_652d5f99("listFiles()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_delete_d2330653("deleteFile()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_gets3c_49e4b03a("getS3Client()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_getb2c_14bf35eb("getB2Config()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_saniti_ca51b9ea("sanitizeKey()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_fileex_e30ed578("fileExists()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_getfil_d7999573("getFileMetadata()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_genera_adfe3e02("generateDownloadUrl()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_genera_b8d8ed4a("generateUploadUrl()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_getfil_eee45cad("getFile()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_getfil_e87fb4bf("getFileStream()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_getsto_0bbd8ee6("getStorageStats()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_format_3c0e8622("formatBytes()<br/><small>src/services/b2StorageService.js</small>")
+        zez_backend_src_services_b2storageservice_valida_ac18e028("validateFile()<br/><small>src/services/b2StorageService.js</small>")
     end
-    scripts_run_backend_ce290640("run-backend.ps1")
-    zez_backend_package_ebaa6205 -->|imports| ref_aws_sdk_client_s3_4205c050
-    zez_backend_package_ebaa6205 -->|imports| ref_aws_sdk_s3_request_presigner_0e02e3d3
-    zez_backend_package_ebaa6205 -->|imports| ref_noble_ciphers_45777d42
-    zez_backend_package_ebaa6205 -->|imports| ref_cors_c3ba69b0
-    zez_backend_package_ebaa6205 -->|imports| ref_dotenv_f23d7946
-    zez_backend_package_ebaa6205 -->|imports| ref_multer_4493b979
-    zez_backend_package_ebaa6205 -->|imports| ref_pg_848e5969
-    zez_backend_package_ebaa6205 -->|imports| ref_types_cors_87031099
-    zez_backend_package_ebaa6205 -->|imports| ref_types_express_ac694a57
-    zez_backend_package_ebaa6205 -->|imports| ref_types_multer_b1907081
-    zez_backend_package_ebaa6205 -->|imports| ref_types_node_4b20becf
-    zez_backend_package_ebaa6205 -->|imports| ref_types_pg_a468afaa
-    zez_backend_package_ebaa6205 -->|imports| ref_typescript_d5a01309
-    scripts_run_backend_ce290640 -->|calls| zez_backend_package_engines_node_ff8d36a1
-    %% Omitted for readability: 47 nodes, 0 edges
+    zez_backend_package_ebaa6205("package.json")
+    zez_backend_src_routes_chat_16bea5e5("chat.js")
+    zez_backend_src_routes_storage_190c6196("storage.js")
+    zez_backend_src_services_b2storageservice_delete_d2330653 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
+    zez_backend_src_services_b2storageservice_delete_d2330653 -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
+    zez_backend_src_services_b2storageservice_delete_d2330653 -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
+    zez_backend_src_services_b2storageservice_fileex_e30ed578 -->|calls| zez_backend_src_services_b2storageservice_getfil_d7999573
+    zez_backend_src_services_b2storageservice_genera_adfe3e02 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
+    zez_backend_src_services_b2storageservice_genera_adfe3e02 -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
+    zez_backend_src_services_b2storageservice_genera_adfe3e02 -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
+    zez_backend_src_services_b2storageservice_genera_b8d8ed4a -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
+    zez_backend_src_services_b2storageservice_genera_b8d8ed4a -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
+    zez_backend_src_services_b2storageservice_genera_b8d8ed4a -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
+    zez_backend_src_services_b2storageservice_getfil_eee45cad -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
+    zez_backend_src_services_b2storageservice_getfil_eee45cad -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
+    zez_backend_src_services_b2storageservice_getfil_eee45cad -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
+    zez_backend_src_services_b2storageservice_getfil_d7999573 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
+    zez_backend_src_services_b2storageservice_getfil_d7999573 -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
+    zez_backend_src_services_b2storageservice_getfil_d7999573 -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
+    zez_backend_src_services_b2storageservice_getfil_e87fb4bf -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
+    zez_backend_src_services_b2storageservice_getfil_e87fb4bf -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
+    zez_backend_src_services_b2storageservice_getfil_e87fb4bf -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
+    zez_backend_src_services_b2storageservice_gets3c_49e4b03a -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
+    zez_backend_src_services_b2storageservice_getsto_0bbd8ee6 -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
+    zez_backend_src_services_b2storageservice_getsto_0bbd8ee6 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
+    zez_backend_src_services_b2storageservice_getsto_0bbd8ee6 -->|calls| zez_backend_src_services_b2storageservice_format_3c0e8622
+    zez_backend_src_services_b2storageservice_listfi_652d5f99 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
+    %% Omitted for readability: 92 nodes, 7 edges
+    class zez_backend_src_services_b2storageservice_upload_a7f3cb92 function;
+    class zez_backend_src_services_b2storageservice_listfi_652d5f99 function;
+    class zez_backend_src_services_b2storageservice_delete_d2330653 function;
+    class zez_backend_src_services_b2storageservice_gets3c_49e4b03a entry;
+    class zez_backend_src_services_b2storageservice_getb2c_14bf35eb function;
+    class zez_backend_src_services_b2storageservice_saniti_ca51b9ea function;
+    class zez_backend_src_services_b2storageservice_fileex_e30ed578 function;
+    class zez_backend_src_services_b2storageservice_getfil_d7999573 function;
+    class zez_backend_src_services_b2storageservice_genera_adfe3e02 function;
+    class zez_backend_src_services_b2storageservice_genera_b8d8ed4a function;
+    class zez_backend_src_services_b2storageservice_getfil_eee45cad function;
+    class zez_backend_src_services_b2storageservice_getfil_e87fb4bf async;
+    class zez_backend_src_services_b2storageservice_getsto_0bbd8ee6 function;
+    class zez_backend_src_services_b2storageservice_format_3c0e8622 function;
+    class zez_backend_src_services_b2storageservice_valida_ac18e028 function;
     class zez_backend_package_ebaa6205 function;
-    class ref_aws_sdk_client_s3_4205c050 entry;
-    class ref_aws_sdk_s3_request_presigner_0e02e3d3 function;
-    class ref_noble_ciphers_45777d42 function;
-    class ref_cors_c3ba69b0 function;
-    class ref_dotenv_f23d7946 function;
-    class ref_multer_4493b979 function;
-    class ref_pg_848e5969 function;
-    class ref_types_cors_87031099 function;
-    class ref_types_express_ac694a57 function;
-    class ref_types_multer_b1907081 function;
-    class ref_types_node_4b20becf function;
-    class ref_types_pg_a468afaa function;
-    class ref_typescript_d5a01309 function;
-    class zez_backend_package_engines_node_ff8d36a1 function;
-    class zez_backend_package_dependencies_aws_sdk_client_dc83ed7a entry;
-    class zez_backend_package_dependencies_aws_sdk_s3_requ_f8acd3ba function;
-    class scripts_run_backend_ce290640 function;
+    class zez_backend_src_routes_chat_16bea5e5 module;
+    class zez_backend_src_routes_storage_190c6196 module;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -596,6 +605,134 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
+  <td><code>deleteFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>deleteFile() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>fileExists()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>getFileMetadata()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>fileExists() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>formatBytes()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getStorageStats()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>listFiles()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>No direct outbound edge</td>
+  <td>formatBytes() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>generateDownloadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>generateDownloadUrl() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>generateObjectKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>uploadFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>No direct outbound edge</td>
+  <td>generateObjectKey() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>generateUploadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>generateUploadUrl() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>deleteFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>generateDownloadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+8 more</td>
+  <td>No direct outbound edge</td>
+  <td>Reads, resolves, or persists project configuration.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>getFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>getFile() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>getFileMetadata()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>fileExists()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>getFileMetadata() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>getFileStream()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>getFileStream() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>deleteFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>generateDownloadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+7 more</td>
+  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>getS3Client() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>getStorageStats()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>formatBytes()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>listFiles()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>formatBytes()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+1 more</td>
+  <td>listFiles() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>deleteFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>generateDownloadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+6 more</td>
+  <td>No direct outbound edge</td>
+  <td>sanitizeKey() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>uploadFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><code>generateObjectKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+2 more</td>
+  <td>uploadFile() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>validateFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>uploadFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
+  <td>No direct outbound edge</td>
+  <td>validateFile() node in src/services/b2StorageService.js.</td>
+</tr>
+<tr>
+  <td>17</td>
   <td><code>run-backend.ps1</code><br><small style="color:var(--muted)">scripts/run-backend.ps1</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -603,7 +740,7 @@ flowchart LR
   <td>run-backend.ps1 node in scripts/run-backend.ps1.</td>
 </tr>
 <tr>
-  <td>2</td>
+  <td>18</td>
   <td><code>package.json</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -611,7 +748,7 @@ flowchart LR
   <td>package.json node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>3</td>
+  <td>19</td>
   <td><code>dependencies</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -619,7 +756,7 @@ flowchart LR
   <td>dependencies node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>4</td>
+  <td>20</td>
   <td><code>@aws-sdk/client-s3@^3.1173.0</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-cmd">Entry</span></td>
   <td>External entry / no inbound edge</td>
@@ -627,7 +764,7 @@ flowchart LR
   <td>@aws-sdk/client-s3@^3.1173.0 node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>5</td>
+  <td>21</td>
   <td><code>@aws-sdk/s3-request-presigner@^3.1173.0</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -635,7 +772,7 @@ flowchart LR
   <td>@aws-sdk/s3-request-presigner@^3.1173.0 node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>6</td>
+  <td>22</td>
   <td><code>cors@^2.8.5</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -643,7 +780,7 @@ flowchart LR
   <td>cors@^2.8.5 node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>7</td>
+  <td>23</td>
   <td><code>dotenv@^18.0.7</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -651,15 +788,7 @@ flowchart LR
   <td>dotenv@^18.0.7 node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>8</td>
-  <td><code>multer@^2.5.0</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>multer@^2.5.0 node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>9</td>
+  <td>24</td>
   <td><code>@noble/ciphers@^2.4.0</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -667,7 +796,7 @@ flowchart LR
   <td>@noble/ciphers@^2.4.0 node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>10</td>
+  <td>25</td>
   <td><code>pg@^8.23.1</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -675,7 +804,7 @@ flowchart LR
   <td>pg@^8.23.1 node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>11</td>
+  <td>26</td>
   <td><code>description</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -683,7 +812,7 @@ flowchart LR
   <td>description node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>12</td>
+  <td>27</td>
   <td><code>devDependencies</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -691,7 +820,7 @@ flowchart LR
   <td>devDependencies node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>13</td>
+  <td>28</td>
   <td><code>@types/cors@^2.8.19</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -699,7 +828,7 @@ flowchart LR
   <td>@types/cors@^2.8.19 node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>14</td>
+  <td>29</td>
   <td><code>@types/express@^5.0.6</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -707,132 +836,12 @@ flowchart LR
   <td>@types/express@^5.0.6 node in Zez-Backend/package.json.</td>
 </tr>
 <tr>
-  <td>15</td>
+  <td>30</td>
   <td><code>@types/multer@^2.3.0</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
   <td>@types/multer@^2.3.0 node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>16</td>
-  <td><code>@types/node@^26.6.6</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>@types/node@^26.6.6 node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>17</td>
-  <td><code>@types/pg@^8.23.1</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>@types/pg@^8.23.1 node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>18</td>
-  <td><code>typescript@^7.0.2</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>typescript@^7.0.2 node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>19</td>
-  <td><code>engines</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>engines node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>20</td>
-  <td><code>node</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>run-backend.ps1</code><br><small style="color:var(--muted)">scripts/run-backend.ps1</small></td>
-  <td>No direct outbound edge</td>
-  <td>node node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>21</td>
-  <td><code>main</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>main node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>22</td>
-  <td><code>name</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>name node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>23</td>
-  <td><code>private</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>private node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>24</td>
-  <td><code>scripts</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>scripts node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>25</td>
-  <td><code>build</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>build node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>26</td>
-  <td><code>dev</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>dev node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>27</td>
-  <td><code>start</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>start node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>28</td>
-  <td><code>type-check</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>type-check node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>29</td>
-  <td><code>version</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>version node in Zez-Backend/package.json.</td>
-</tr>
-<tr>
-  <td>30</td>
-  <td><code>@aws-sdk/client-s3</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>package.json</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td>No direct outbound edge</td>
-  <td>@aws-sdk/client-s3 node in Zez-Backend/package.json.</td>
 </tr>
 </table>
 
@@ -841,8 +850,11 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>Zez-Backend/package.json</code></td><td>41 nodes</td></tr>
+      <tr><td><code>Zez-Backend/package.json</code></td><td>43 nodes</td></tr>
+<tr><td><code>src/services/b2StorageService.js</code></td><td>23 nodes</td></tr>
 <tr><td><code>Zez-Backend/tsconfig.json</code></td><td>21 nodes</td></tr>
+<tr><td><code>src/routes/chat.js</code></td><td>14 nodes</td></tr>
+<tr><td><code>src/routes/storage.js</code></td><td>6 nodes</td></tr>
 <tr><td><code>ZezAndroid/app/build.gradle</code></td><td>1 nodes</td></tr>
 <tr><td><code>ZezAndroid/build.gradle</code></td><td>1 nodes</td></tr>
 <tr><td><code>scripts/run-backend.ps1</code></td><td>1 nodes</td></tr>
@@ -850,7 +862,7 @@ flowchart LR
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x47, imports x13, declares x13, calls x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x72, calls x33, indirect call x16, imports x14. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -1565,12 +1577,12 @@ flowchart LR
 
 <!-- ====== 6. Tests & Fixtures ====== -->
 <h2 id="tests-fixtures">6. Tests &amp; Fixtures</h2>
-<p>Tests &amp; Fixtures groups implementation around backend, zez, test, scripts, mostly in src/routes/appRelease.js, Zez-Backend/src/server.js, Zez-Backend/test_backend_suite.js. This section covers 145 nodes and 252 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Tests &amp; Fixtures groups implementation around backend, zez, test, scripts, mostly in src/routes/appRelease.js, src/middleware/adminAuth.js, Zez-Backend/src/server.js. This section covers 138 nodes and 239 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Tests &amp; Fixtures (145 nodes, 252 edges)
+    %% Section: Tests &amp; Fixtures (138 nodes, 239 edges)
     subgraph tests_fixtures_Zez_Backend_tests_test_b2_integra_9fc4d1a9["Zez-Backend/tests/test-b2-integration.js"]
         zez_backend_tests_test_b2_integration_bef5ef66("test-b2-integration.js")
         zez_backend_tests_test_b2_integration_runb2tests_6a8add65("runB2Tests()<br/><small>Zez-Backend/tests/test-b2-integration.js</small>")
@@ -1597,8 +1609,8 @@ flowchart LR
     zez_backend_scripts_test_exports_run_790ef363("run()<br/><small>Zez-Backend/scripts/test-exports.js</small>")
     scripts_e2e_device_test_send_chat_text_318567e4("send_chat_text()<br/><small>scripts/e2e_device_test.py</small>")
     scripts_test_offline_retry_send_chat_text_d9e2e00c("send_chat_text()<br/><small>scripts/test_offline_retry.py</small>")
+    scripts_test_secret_mode_sync_send_chat_text_ccc390af("send_chat_text()<br/><small>scripts/test_secret_mode_sync.py</small>")
     zez_backend_src_middleware_adminauth_createadmin_f8624c4e("createAdminToken()<br/><small>src/middleware/adminAuth.js</small>")
-    zez_backend_src_routes_apprelease_9ad49f04("appRelease.js")
     zez_backend_tests_chat_extreme_test_suite_runcha_9a28744b -->|calls| zez_backend_tests_chat_extreme_test_suite_makere_62767cfb
     zez_backend_src_db_initializedatabase_7b4e5dd9 -->|calls| zez_backend_src_db_hashpassword_87239947
     zez_backend_src_server_startserver_61d34ef2 -->|calls| zez_backend_src_db_initializedatabase_7b4e5dd9
@@ -1610,12 +1622,11 @@ flowchart LR
     zez_backend_scripts_test_exports_run_790ef363 -->|calls| zez_backend_src_middleware_adminauth_createadmin_f8624c4e
     zez_backend_src_server_2df91fdf -->|imports| zez_backend_src_db_closedatabase_b73dc8d4
     zez_backend_src_server_2df91fdf -->|imports| zez_backend_src_db_initializedatabase_7b4e5dd9
-    zez_backend_src_server_2df91fdf -->|imports| zez_backend_src_routes_apprelease_9ad49f04
     zez_backend_test_backend_suite_01cb7d0a -->|imports| zez_backend_src_db_closedatabase_b73dc8d4
     zez_backend_test_backend_suite_01cb7d0a -->|imports| zez_backend_src_db_initializedatabase_7b4e5dd9
     zez_backend_test_backend_suite_01cb7d0a -->|imports| zez_backend_src_server_2df91fdf
     zez_backend_tests_test_b2_integration_bef5ef66 -->|imports| zez_backend_src_server_2df91fdf
-    %% Omitted for readability: 127 nodes, 0 edges
+    %% Omitted for readability: 120 nodes, 0 edges
     class zez_backend_tests_test_b2_integration_bef5ef66 test;
     class zez_backend_tests_test_b2_integration_runb2tests_6a8add65 test;
     class zez_backend_tests_test_b2_integration_request_f101c842 test;
@@ -1632,8 +1643,8 @@ flowchart LR
     class zez_backend_scripts_test_exports_run_790ef363 test;
     class scripts_e2e_device_test_send_chat_text_318567e4 test;
     class scripts_test_offline_retry_send_chat_text_d9e2e00c test;
+    class scripts_test_secret_mode_sync_send_chat_text_ccc390af test;
     class zez_backend_src_middleware_adminauth_createadmin_f8624c4e function;
-    class zez_backend_src_routes_apprelease_9ad49f04 module;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -1657,118 +1668,198 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
-  <td><code>closeDatabase()</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>db.js</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small><br><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/test_backend_suite.js</small><br><code>server.js</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small><br>+2 more</td>
-  <td>No direct outbound edge</td>
-  <td>closeDatabase() node in Zez-Backend/src/db.js.</td>
+  <td><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-exports.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>createAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td>run() node in Zez-Backend/scripts/test-exports.js.</td>
 </tr>
 <tr>
   <td>2</td>
-  <td><code>initializeDatabase()</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>db.js</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small><br><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/test_backend_suite.js</small><br><code>server.js</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small><br>+2 more</td>
-  <td><code>hashPassword()</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small></td>
-  <td>initializeDatabase() node in Zez-Backend/src/db.js.</td>
+  <td><code>get()</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-exports.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>get() node in Zez-Backend/scripts/test-exports.js.</td>
 </tr>
 <tr>
   <td>3</td>
-  <td><code>extractObjectKey()</code><br><small style="color:var(--muted)">src/routes/storage.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
+  <td><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-roster.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
   <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>extractObjectKey() node in src/routes/storage.js.</td>
+  <td><code>createAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td>run() node in Zez-Backend/scripts/test-roster.js.</td>
 </tr>
 <tr>
   <td>4</td>
-  <td><code>startServer()</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
+  <td><code>get()</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-roster.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>closeDatabase()</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small><br><code>initializeDatabase()</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small></td>
-  <td>startServer() node in Zez-Backend/src/server.js.</td>
+  <td>No direct outbound edge</td>
+  <td>get() node in Zez-Backend/scripts/test-roster.js.</td>
 </tr>
 <tr>
   <td>5</td>
-  <td><code>assert()</code><br><small style="color:var(--muted)">Zez-Backend/test_backend_suite.js</small></td>
+  <td><code>request()</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-system-endpoints.js</small></td>
   <td><span class="tag tag-func">Test</span></td>
-  <td>External entry / no inbound edge</td>
+  <td><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-system-endpoints.js</small></td>
   <td>No direct outbound edge</td>
-  <td>assert() node in Zez-Backend/test_backend_suite.js.</td>
+  <td>request() node in Zez-Backend/scripts/test-system-endpoints.js.</td>
 </tr>
 <tr>
   <td>6</td>
-  <td><code>request()</code><br><small style="color:var(--muted)">Zez-Backend/test_backend_suite.js</small></td>
+  <td><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-system-endpoints.js</small></td>
   <td><span class="tag tag-func">Test</span></td>
   <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>request() node in Zez-Backend/test_backend_suite.js.</td>
+  <td><code>request()</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-system-endpoints.js</small></td>
+  <td>run() node in Zez-Backend/scripts/test-system-endpoints.js.</td>
 </tr>
 <tr>
   <td>7</td>
-  <td><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/test_backend_suite.js</small></td>
-  <td><span class="tag tag-func">Test</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>closeDatabase()</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small><br><code>initializeDatabase()</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small></td>
-  <td>run() node in Zez-Backend/test_backend_suite.js.</td>
+  <td><code>adminAuth()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>adminAuth.js</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>appRelease.js</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
+  <td><code>verifyAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td>adminAuth() node in src/middleware/adminAuth.js.</td>
 </tr>
 <tr>
   <td>8</td>
-  <td><code>test()</code><br><small style="color:var(--muted)">Zez-Backend/test_backend_suite.js</small></td>
-  <td><span class="tag tag-func">Test</span></td>
-  <td>External entry / no inbound edge</td>
+  <td><code>base64UrlDecode()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>verifyAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
   <td>No direct outbound edge</td>
-  <td>Verifies imports, entry points, or version behavior.</td>
+  <td>base64UrlDecode() node in src/middleware/adminAuth.js.</td>
 </tr>
 <tr>
   <td>9</td>
-  <td><code>request()</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small></td>
-  <td><span class="tag tag-func">Test</span></td>
-  <td><code>runB2Tests()</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small></td>
+  <td><code>base64UrlEncode()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>createAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
   <td>No direct outbound edge</td>
-  <td>request() node in Zez-Backend/tests/test-b2-integration.js.</td>
+  <td>base64UrlEncode() node in src/middleware/adminAuth.js.</td>
 </tr>
 <tr>
   <td>10</td>
-  <td><code>runB2Tests()</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small></td>
-  <td><span class="tag tag-func">Test</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>request()</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small><br><code>sendMultipart()</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small></td>
-  <td>Verifies imports, entry points, or version behavior.</td>
+  <td><code>createAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>admin.js</code><br><small style="color:var(--muted)">src/routes/admin.js</small><br><code>adminAuth.js</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-exports.js</small><br>+1 more</td>
+  <td><code>base64UrlEncode()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>getSecret()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td>createAdminToken() node in src/middleware/adminAuth.js.</td>
 </tr>
 <tr>
   <td>11</td>
-  <td><code>assert()</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small></td>
-  <td><span class="tag tag-func">Test</span></td>
-  <td>External entry / no inbound edge</td>
+  <td><code>getSecret()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>createAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>verifyAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
   <td>No direct outbound edge</td>
-  <td>assert() node in Zez-Backend/tests/test-b2-integration.js.</td>
+  <td>getSecret() node in src/middleware/adminAuth.js.</td>
 </tr>
 <tr>
   <td>12</td>
-  <td><code>sendMultipart()</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small></td>
-  <td><span class="tag tag-func">Test</span></td>
-  <td><code>runB2Tests()</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>sendMultipart() node in Zez-Backend/tests/test-b2-integration.js.</td>
+  <td><code>verifyAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>adminAuth()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>adminAuth.js</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td><code>base64UrlDecode()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>getSecret()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td>verifyAdminToken() node in src/middleware/adminAuth.js.</td>
 </tr>
 <tr>
   <td>13</td>
-  <td><code>express@^5.1.0</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
+  <td><code>get()</code><br><small style="color:var(--muted)">Zez-Backend/test_chat_endpoints.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/test_chat_endpoints.js</small></td>
   <td>No direct outbound edge</td>
-  <td>express@^5.1.0 node in Zez-Backend/package.json.</td>
+  <td>get() node in Zez-Backend/test_chat_endpoints.js.</td>
 </tr>
 <tr>
   <td>14</td>
-  <td><code>{ Pool }</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>add-indexes.js</code><br><small style="color:var(--muted)">Zez-Backend/scripts/add-indexes.js</small><br><code>add-reaction-columns.js</code><br><small style="color:var(--muted)">Zez-Backend/scripts/add-reaction-columns.js</small><br><code>admin.js</code><br><small style="color:var(--muted)">src/routes/admin.js</small><br>+8 more</td>
+  <td><code>post()</code><br><small style="color:var(--muted)">Zez-Backend/test_chat_endpoints.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/test_chat_endpoints.js</small></td>
   <td>No direct outbound edge</td>
-  <td>{ Pool } node in Zez-Backend/src/db.js.</td>
+  <td>post() node in Zez-Backend/test_chat_endpoints.js.</td>
 </tr>
 <tr>
   <td>15</td>
+  <td><code>run()</code><br><small style="color:var(--muted)">Zez-Backend/test_chat_endpoints.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>get()</code><br><small style="color:var(--muted)">Zez-Backend/test_chat_endpoints.js</small><br><code>post()</code><br><small style="color:var(--muted)">Zez-Backend/test_chat_endpoints.js</small></td>
+  <td>run() node in Zez-Backend/test_chat_endpoints.js.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>test-exports.js</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-exports.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>adminAuth.js</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>middleware adminauth createadmintoken</code><br><code>ref_http</code></td>
+  <td>Exports documentation data to a target format.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>http</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-exports.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>http node in Zez-Backend/scripts/test-exports.js.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>test-roster.js</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-roster.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>adminAuth.js</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>db.js</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small><br><code>middleware adminauth createadmintoken</code><br>+2 more</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>http</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-roster.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>http node in Zez-Backend/scripts/test-roster.js.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>test-system-endpoints.js</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-system-endpoints.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>adminAuth.js</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>middleware adminauth createadmintoken</code><br><code>ref_http</code></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>http</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-system-endpoints.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>http node in Zez-Backend/scripts/test-system-endpoints.js.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>token</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-system-endpoints.js</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>token node in Zez-Backend/scripts/test-system-endpoints.js.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>adminAuth.js</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td><span class="tag tag-class">Module</span></td>
+  <td><code>admin.js</code><br><small style="color:var(--muted)">src/routes/admin.js</small><br><code>appRelease.js</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small><br><code>test-exports.js</code><br><small style="color:var(--muted)">Zez-Backend/scripts/test-exports.js</small><br>+2 more</td>
+  <td><code>adminAuth()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>createAdminToken()</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small><br><code>ref_node_crypto</code><br>+1 more</td>
+  <td>adminAuth.js node in src/middleware/adminAuth.js.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>crypto</code><br><small style="color:var(--muted)">src/middleware/adminAuth.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>crypto node in src/middleware/adminAuth.js.</td>
+</tr>
+<tr>
+  <td>25</td>
   <td><code>appRelease.js</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
   <td><span class="tag tag-class">Module</span></td>
   <td><code>server.js</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small></td>
@@ -1776,7 +1867,7 @@ flowchart LR
   <td>appRelease.js node in src/routes/appRelease.js.</td>
 </tr>
 <tr>
-  <td>16</td>
+  <td>26</td>
   <td><code>downloadsDir</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -1784,7 +1875,7 @@ flowchart LR
   <td>downloadsDir node in src/routes/appRelease.js.</td>
 </tr>
 <tr>
-  <td>17</td>
+  <td>27</td>
   <td><code>express</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -1792,7 +1883,7 @@ flowchart LR
   <td>express node in src/routes/appRelease.js.</td>
 </tr>
 <tr>
-  <td>18</td>
+  <td>28</td>
   <td><code>fs</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -1800,7 +1891,7 @@ flowchart LR
   <td>fs node in src/routes/appRelease.js.</td>
 </tr>
 <tr>
-  <td>19</td>
+  <td>29</td>
   <td><code>multer</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -1808,92 +1899,12 @@ flowchart LR
   <td>multer node in src/routes/appRelease.js.</td>
 </tr>
 <tr>
-  <td>20</td>
+  <td>30</td>
   <td><code>path</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
   <td>path node in src/routes/appRelease.js.</td>
-</tr>
-<tr>
-  <td>21</td>
-  <td><code>router</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
-  <td><span class="tag tag-endpoint">API</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>router node in src/routes/appRelease.js.</td>
-</tr>
-<tr>
-  <td>22</td>
-  <td><code>storage</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>23</td>
-  <td><code>upload</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>upload node in src/routes/appRelease.js.</td>
-</tr>
-<tr>
-  <td>24</td>
-  <td><code>storage.js</code><br><small style="color:var(--muted)">src/routes/storage.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td><code>server.js</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>db.js</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small><br><code>express</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small><br>+2 more</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>25</td>
-  <td><code>express</code><br><small style="color:var(--muted)">src/routes/storage.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>express node in src/routes/storage.js.</td>
-</tr>
-<tr>
-  <td>26</td>
-  <td><code>memoryUpload</code><br><small style="color:var(--muted)">src/routes/storage.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>memoryUpload node in src/routes/storage.js.</td>
-</tr>
-<tr>
-  <td>27</td>
-  <td><code>multer</code><br><small style="color:var(--muted)">src/routes/storage.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>multer node in src/routes/storage.js.</td>
-</tr>
-<tr>
-  <td>28</td>
-  <td><code>router</code><br><small style="color:var(--muted)">src/routes/storage.js</small></td>
-  <td><span class="tag tag-endpoint">API</span></td>
-  <td><code>server.js</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>router node in src/routes/storage.js.</td>
-</tr>
-<tr>
-  <td>29</td>
-  <td><code>server.js</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td><code>test-b2-integration.js</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small><br><code>test_backend_suite.js</code><br><small style="color:var(--muted)">Zez-Backend/test_backend_suite.js</small></td>
-  <td><code>admin.js</code><br><small style="color:var(--muted)">src/routes/admin.js</small><br><code>appRelease.js</code><br><small style="color:var(--muted)">src/routes/appRelease.js</small><br><code>callRead.js</code><br><small style="color:var(--muted)">src/routes/callRead.js</small><br>+15 more</td>
-  <td>server.js node in Zez-Backend/src/server.js.</td>
-</tr>
-<tr>
-  <td>30</td>
-  <td><code>app</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>test-b2-integration.js</code><br><small style="color:var(--muted)">Zez-Backend/tests/test-b2-integration.js</small><br><code>test_backend_suite.js</code><br><small style="color:var(--muted)">Zez-Backend/test_backend_suite.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>app node in Zez-Backend/src/server.js.</td>
 </tr>
 </table>
 
@@ -1914,324 +1925,19 @@ flowchart LR
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x95, calls x58, imports x47, imports x44. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x90, calls x58, imports x46, imports x38. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
-<!-- ====== 7. B2Storageservicejs Zez Backend ====== -->
-<h2 id="b2storageservicejs-zez-backend">7. B2Storageservicejs Zez Backend</h2>
-<p>B2Storageservicejs Zez Backend groups implementation around b2storageservicejs, zez, backend, services, mostly in src/services/b2StorageService.js. This section covers 23 nodes and 54 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 7. Zez Backend Adminjs ====== -->
+<h2 id="zez-backend-adminjs">7. Zez Backend Adminjs</h2>
+<p>Zez Backend Adminjs groups implementation around zez, backend, adminjs, routes, mostly in src/routes/admin.js. This section covers 22 nodes and 22 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: B2Storageservicejs Zez Backend (23 nodes, 54 edges)
-    zez_backend_src_services_b2storageservice_upload_a7f3cb92("uploadFile()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_listfi_652d5f99("listFiles()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_delete_d2330653("deleteFile()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_genera_adfe3e02("generateDownloadUrl()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_genera_b8d8ed4a("generateUploadUrl()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_getfil_eee45cad("getFile()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_gets3c_49e4b03a("getS3Client()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_getb2c_14bf35eb("getB2Config()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_saniti_ca51b9ea("sanitizeKey()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_fileex_e30ed578("fileExists()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_getfil_d7999573("getFileMetadata()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_getfil_e87fb4bf("getFileStream()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_getsto_0bbd8ee6("getStorageStats()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_format_3c0e8622("formatBytes()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_valida_ac18e028("validateFile()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_genera_bfa008e2("generateObjectKey()<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_catego_00d994f2("CATEGORY_LIMITS<br/><small>src/services/b2StorageService.js</small>")
-    zez_backend_src_services_b2storageservice_5d38717d("b2StorageService.js")
-    zez_backend_src_services_b2storageservice_delete_d2330653 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
-    zez_backend_src_services_b2storageservice_delete_d2330653 -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
-    zez_backend_src_services_b2storageservice_delete_d2330653 -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
-    zez_backend_src_services_b2storageservice_fileex_e30ed578 -->|calls| zez_backend_src_services_b2storageservice_getfil_d7999573
-    zez_backend_src_services_b2storageservice_genera_adfe3e02 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
-    zez_backend_src_services_b2storageservice_genera_adfe3e02 -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
-    zez_backend_src_services_b2storageservice_genera_adfe3e02 -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
-    zez_backend_src_services_b2storageservice_genera_b8d8ed4a -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
-    zez_backend_src_services_b2storageservice_genera_b8d8ed4a -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
-    zez_backend_src_services_b2storageservice_genera_b8d8ed4a -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
-    zez_backend_src_services_b2storageservice_getfil_eee45cad -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
-    zez_backend_src_services_b2storageservice_getfil_eee45cad -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
-    zez_backend_src_services_b2storageservice_getfil_eee45cad -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
-    zez_backend_src_services_b2storageservice_getfil_d7999573 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
-    zez_backend_src_services_b2storageservice_getfil_d7999573 -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
-    zez_backend_src_services_b2storageservice_getfil_d7999573 -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
-    zez_backend_src_services_b2storageservice_getfil_e87fb4bf -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
-    zez_backend_src_services_b2storageservice_getfil_e87fb4bf -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
-    zez_backend_src_services_b2storageservice_getfil_e87fb4bf -->|calls| zez_backend_src_services_b2storageservice_saniti_ca51b9ea
-    zez_backend_src_services_b2storageservice_gets3c_49e4b03a -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
-    zez_backend_src_services_b2storageservice_getsto_0bbd8ee6 -->|calls| zez_backend_src_services_b2storageservice_getb2c_14bf35eb
-    zez_backend_src_services_b2storageservice_getsto_0bbd8ee6 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
-    zez_backend_src_services_b2storageservice_getsto_0bbd8ee6 -->|calls| zez_backend_src_services_b2storageservice_format_3c0e8622
-    zez_backend_src_services_b2storageservice_listfi_652d5f99 -->|calls| zez_backend_src_services_b2storageservice_gets3c_49e4b03a
-    %% Omitted for readability: 5 nodes, 8 edges
-    class zez_backend_src_services_b2storageservice_upload_a7f3cb92 function;
-    class zez_backend_src_services_b2storageservice_listfi_652d5f99 function;
-    class zez_backend_src_services_b2storageservice_delete_d2330653 function;
-    class zez_backend_src_services_b2storageservice_genera_adfe3e02 function;
-    class zez_backend_src_services_b2storageservice_genera_b8d8ed4a function;
-    class zez_backend_src_services_b2storageservice_getfil_eee45cad function;
-    class zez_backend_src_services_b2storageservice_gets3c_49e4b03a entry;
-    class zez_backend_src_services_b2storageservice_getb2c_14bf35eb function;
-    class zez_backend_src_services_b2storageservice_saniti_ca51b9ea function;
-    class zez_backend_src_services_b2storageservice_fileex_e30ed578 function;
-    class zez_backend_src_services_b2storageservice_getfil_d7999573 function;
-    class zez_backend_src_services_b2storageservice_getfil_e87fb4bf async;
-    class zez_backend_src_services_b2storageservice_getsto_0bbd8ee6 function;
-    class zez_backend_src_services_b2storageservice_format_3c0e8622 function;
-    class zez_backend_src_services_b2storageservice_valida_ac18e028 function;
-    class zez_backend_src_services_b2storageservice_genera_bfa008e2 function;
-    class zez_backend_src_services_b2storageservice_catego_00d994f2 klass;
-    class zez_backend_src_services_b2storageservice_5d38717d module;
-    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
-    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
-    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
-    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
-    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
-    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
-    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
-    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
-    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
-</div>
-
-<h3>Call Details</h3>
-<table class="call-table">
-<tr>
-  <th style="width:5%">#</th>
-  <th style="width:28%">Node</th>
-  <th style="width:10%">Type</th>
-  <th style="width:17%">Caller</th>
-  <th style="width:20%">Callees</th>
-  <th style="width:20%">Description</th>
-</tr>
-<tr>
-  <td>1</td>
-  <td><code>deleteFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>deleteFile() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>2</td>
-  <td><code>fileExists()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>getFileMetadata()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>fileExists() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>3</td>
-  <td><code>formatBytes()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getStorageStats()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>listFiles()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>formatBytes() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>4</td>
-  <td><code>generateDownloadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>generateDownloadUrl() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>5</td>
-  <td><code>generateObjectKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>uploadFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>generateObjectKey() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>6</td>
-  <td><code>generateUploadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>generateUploadUrl() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>7</td>
-  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>deleteFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>generateDownloadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+8 more</td>
-  <td>No direct outbound edge</td>
-  <td>Reads, resolves, or persists project configuration.</td>
-</tr>
-<tr>
-  <td>8</td>
-  <td><code>getFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>getFile() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>9</td>
-  <td><code>getFileMetadata()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>fileExists()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>getFileMetadata() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>getFileStream()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-async">Async</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>getFileStream() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>11</td>
-  <td><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>deleteFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>generateDownloadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+7 more</td>
-  <td><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>getS3Client() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>12</td>
-  <td><code>getStorageStats()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>formatBytes()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>13</td>
-  <td><code>listFiles()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>formatBytes()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+1 more</td>
-  <td>listFiles() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>14</td>
-  <td><code>sanitizeKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>deleteFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>generateDownloadUrl()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+6 more</td>
-  <td>No direct outbound edge</td>
-  <td>sanitizeKey() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>15</td>
-  <td><code>uploadFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><code>generateObjectKey()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getB2Config()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>getS3Client()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+2 more</td>
-  <td>uploadFile() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>16</td>
-  <td><code>validateFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>uploadFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>validateFile() node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>17</td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td><code>admin.js</code><br><small style="color:var(--muted)">src/routes/admin.js</small><br><code>chat.js</code><br><small style="color:var(--muted)">src/routes/chat.js</small><br><code>storage.js</code><br><small style="color:var(--muted)">src/routes/storage.js</small><br>+1 more</td>
-  <td><code>@aws-sdk/client-s3</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small><br><code>@aws-sdk/s3-request-presigner</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small><br><code>deleteFile()</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br>+18 more</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>18</td>
-  <td><code>CATEGORY_LIMITS</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>CATEGORY_LIMITS node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>19</td>
-  <td><code>crypto</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>crypto node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>20</td>
-  <td><code>fs</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>fs node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>21</td>
-  <td><code>{ getSignedUrl }</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{ getSignedUrl } node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>22</td>
-  <td><code>path</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>path node in src/services/b2StorageService.js.</td>
-</tr>
-<tr>
-  <td>23</td>
-  <td><code>{
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  HeadObjectCommand,
-  DeleteObjectCommand,
-  ListObjectsV2Command
-}</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  HeadObjectCommand,
-  DeleteObjectCommand,
-  ListObjectsV2Command
-} node in src/services/b2StorageService.js.</td>
-</tr>
-</table>
-
-<div class="grid">
-  <div class="card">
-    <h4>Key Files</h4>
-    <table style="width:100%;font-size:0.85rem;">
-      <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>src/services/b2StorageService.js</code></td><td>23 nodes</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: calls x32, indirect call x16, contains x6. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
-  </div>
-</div>
-<hr>
-
-<!-- ====== 8. Zez Backend Adminjs ====== -->
-<h2 id="zez-backend-adminjs">8. Zez Backend Adminjs</h2>
-<p>Zez Backend Adminjs groups implementation around zez, backend, adminjs, routes, mostly in src/routes/admin.js. This section covers 23 nodes and 23 internal edges; the diagram shows only representative relationships to stay readable.</p>
-
-<div class="mermaid">
-%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
-flowchart LR
-    %% Section: Zez Backend Adminjs (23 nodes, 23 edges)
+    %% Section: Zez Backend Adminjs (22 nodes, 22 edges)
     subgraph zez_backend_adminjs_src_routes_admin_js_4f65e1ff["src/routes/admin.js"]
         zez_backend_src_routes_admin_18cd6132("admin.js")
         zez_backend_src_routes_admin_scandirectoryfiles_c76f921c("scanDirectoryFiles()<br/><small>src/routes/admin.js</small>")
@@ -2258,7 +1964,7 @@ flowchart LR
     zez_backend_src_routes_admin_18cd6132 -->|imports| d_call_log_mannager_zez_backend_src_middleware_a_059d6fd0
     zez_backend_src_routes_admin_18cd6132 -->|imports| d_call_log_mannager_zez_backend_src_crypto_decry_55ad5d16
     zez_backend_src_routes_admin_18cd6132 -->|imports| ref_node_os_7cf622f8
-    %% Omitted for readability: 5 nodes, 0 edges
+    %% Omitted for readability: 4 nodes, 0 edges
     class zez_backend_src_routes_admin_18cd6132 module;
     class zez_backend_src_routes_admin_scandirectoryfiles_c76f921c function;
     class zez_backend_src_routes_admin_formatbytes_100082ac function;
@@ -2444,14 +2150,6 @@ flowchart LR
 </tr>
 <tr>
   <td>19</td>
-  <td><code>router</code><br><small style="color:var(--muted)">src/routes/admin.js</small></td>
-  <td><span class="tag tag-endpoint">API</span></td>
-  <td><code>server.js</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>router node in src/routes/admin.js.</td>
-</tr>
-<tr>
-  <td>20</td>
   <td><code>UPLOADS_DIR</code><br><small style="color:var(--muted)">src/routes/admin.js</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -2459,7 +2157,7 @@ flowchart LR
   <td>UPLOADS_DIR node in src/routes/admin.js.</td>
 </tr>
 <tr>
-  <td>21</td>
+  <td>20</td>
   <td><code>d_call_log_mannager_zez_backend_src_crypto_decryptstoredpayload</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td><code>admin.js</code><br><small style="color:var(--muted)">src/routes/admin.js</small></td>
@@ -2467,7 +2165,7 @@ flowchart LR
   <td>d_call_log_mannager_zez_backend_src_crypto_decryptstoredpayload node in project.</td>
 </tr>
 <tr>
-  <td>22</td>
+  <td>21</td>
   <td><code>d_call_log_mannager_zez_backend_src_middleware_adminauth_adminauth</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>admin.js</code><br><small style="color:var(--muted)">src/routes/admin.js</small></td>
@@ -2475,7 +2173,7 @@ flowchart LR
   <td>d_call_log_mannager_zez_backend_src_middleware_adminauth_adminauth node in project.</td>
 </tr>
 <tr>
-  <td>23</td>
+  <td>22</td>
   <td><code>ref_node_os</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>admin.js</code><br><small style="color:var(--muted)">src/routes/admin.js</small></td>
@@ -2489,18 +2187,18 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>src/routes/admin.js</code></td><td>20 nodes</td></tr>
+      <tr><td><code>src/routes/admin.js</code></td><td>19 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x19, imports x2, calls x1, imports x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x18, imports x2, calls x1, imports x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
-<!-- ====== 9. Indexdts Zez Backend ====== -->
-<h2 id="indexdts-zez-backend">9. Indexdts Zez Backend</h2>
+<!-- ====== 8. Indexdts Zez Backend ====== -->
+<h2 id="indexdts-zez-backend">8. Indexdts Zez Backend</h2>
 <p>Indexdts Zez Backend groups implementation around indexdts, zez, backend, types, mostly in src/types/index.d.ts. This section covers 16 nodes and 15 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -2720,207 +2418,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 10. Chatjs Zez Backend ====== -->
-<h2 id="chatjs-zez-backend">10. Chatjs Zez Backend</h2>
-<p>Chatjs Zez Backend groups implementation around chatjs, zez, backend, routes, mostly in src/routes/chat.js. This section covers 14 nodes and 13 internal edges; the diagram shows only representative relationships to stay readable.</p>
-
-<div class="mermaid">
-%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
-flowchart LR
-    %% Section: Chatjs Zez Backend (14 nodes, 13 edges)
-    zez_backend_src_routes_chat_16bea5e5("chat.js")
-    zez_backend_src_routes_chat_getorcreateconversat_8d59c580("getOrCreateConversation()<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_normalizephone_18814c7f("normalizePhone()<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_express_0095ca60("express<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_mediauploaddir_23bf34c4("mediaUploadDir<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_avataruploaddir_28b7f9a8("avatarUploadDir<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_mediastorage_89bfe9e9("mediaStorage<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_path_bf4a1222("path<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_avatarstorage_8bb89d86("avatarStorage<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_fs_4c434e29("fs<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_uploadmedia_9698f417("uploadMedia<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_multer_59fc55aa("multer<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_uploadavatar_7b06f11f("uploadAvatar<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_router_8ff6af42("router<br/><small>src/routes/chat.js</small>")
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_getorcreateconversat_8d59c580
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_normalizephone_18814c7f
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_express_0095ca60
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_mediauploaddir_23bf34c4
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_avataruploaddir_28b7f9a8
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_mediastorage_89bfe9e9
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_path_bf4a1222
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_avatarstorage_8bb89d86
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_fs_4c434e29
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_uploadmedia_9698f417
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_multer_59fc55aa
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_uploadavatar_7b06f11f
-    zez_backend_src_routes_chat_16bea5e5 -->|contains| zez_backend_src_routes_chat_router_8ff6af42
-    class zez_backend_src_routes_chat_16bea5e5 module;
-    class zez_backend_src_routes_chat_getorcreateconversat_8d59c580 function;
-    class zez_backend_src_routes_chat_normalizephone_18814c7f function;
-    class zez_backend_src_routes_chat_express_0095ca60 function;
-    class zez_backend_src_routes_chat_mediauploaddir_23bf34c4 function;
-    class zez_backend_src_routes_chat_avataruploaddir_28b7f9a8 function;
-    class zez_backend_src_routes_chat_mediastorage_89bfe9e9 function;
-    class zez_backend_src_routes_chat_path_bf4a1222 function;
-    class zez_backend_src_routes_chat_avatarstorage_8bb89d86 function;
-    class zez_backend_src_routes_chat_fs_4c434e29 function;
-    class zez_backend_src_routes_chat_uploadmedia_9698f417 function;
-    class zez_backend_src_routes_chat_multer_59fc55aa function;
-    class zez_backend_src_routes_chat_uploadavatar_7b06f11f function;
-    class zez_backend_src_routes_chat_router_8ff6af42 api;
-    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
-    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
-    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
-    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
-    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
-    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
-    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
-    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
-    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
-</div>
-
-<h3>Call Details</h3>
-<table class="call-table">
-<tr>
-  <th style="width:5%">#</th>
-  <th style="width:28%">Node</th>
-  <th style="width:10%">Type</th>
-  <th style="width:17%">Caller</th>
-  <th style="width:20%">Callees</th>
-  <th style="width:20%">Description</th>
-</tr>
-<tr>
-  <td>1</td>
-  <td><code>getOrCreateConversation()</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>getOrCreateConversation() node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>2</td>
-  <td><code>normalizePhone()</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>normalizePhone() node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>3</td>
-  <td><code>chat.js</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td><code>server.js</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small></td>
-  <td><code>b2StorageService.js</code><br><small style="color:var(--muted)">src/services/b2StorageService.js</small><br><code>db.js</code><br><small style="color:var(--muted)">Zez-Backend/src/db.js</small><br><code>express</code><br><small style="color:var(--muted)">Zez-Backend/package.json</small><br>+4 more</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>4</td>
-  <td><code>avatarStorage</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>5</td>
-  <td><code>avatarUploadDir</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>avatarUploadDir node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>6</td>
-  <td><code>express</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>express node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>7</td>
-  <td><code>fs</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>fs node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>8</td>
-  <td><code>mediaStorage</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>9</td>
-  <td><code>mediaUploadDir</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>mediaUploadDir node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>multer</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>multer node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>11</td>
-  <td><code>path</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>path node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>12</td>
-  <td><code>router</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-endpoint">API</span></td>
-  <td><code>server.js</code><br><small style="color:var(--muted)">Zez-Backend/src/server.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>router node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>13</td>
-  <td><code>uploadAvatar</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>uploadAvatar node in src/routes/chat.js.</td>
-</tr>
-<tr>
-  <td>14</td>
-  <td><code>uploadMedia</code><br><small style="color:var(--muted)">src/routes/chat.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>uploadMedia node in src/routes/chat.js.</td>
-</tr>
-</table>
-
-<div class="grid">
-  <div class="card">
-    <h4>Key Files</h4>
-    <table style="width:100%;font-size:0.85rem;">
-      <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>src/routes/chat.js</code></td><td>14 nodes</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x13. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
-  </div>
-</div>
-<hr>
-
-<!-- ====== 11. Gradlew Script Module (C40) ====== -->
-<h2 id="gradlew-script-module-c40">11. Gradlew Script Module (C40)</h2>
+<!-- ====== 9. Gradlew Script Module (C40) ====== -->
+<h2 id="gradlew-script-module-c40">9. Gradlew Script Module (C40)</h2>
 <p>Gradlew Script Module (C40) groups implementation around gradlew, zezandroid, script, die, mostly in ZezAndroid/gradlew. This section covers 4 nodes and 5 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3007,8 +2506,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 12. Handler ====== -->
-<h2 id="handler">12. Handler</h2>
+<!-- ====== 10. Handler ====== -->
+<h2 id="handler">10. Handler</h2>
 <p>Handler groups implementation around handler, mostly in unmapped files. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3063,8 +2562,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 13. Chip ====== -->
-<h2 id="chip">13. Chip</h2>
+<!-- ====== 11. Chip ====== -->
+<h2 id="chip">11. Chip</h2>
 <p>Chip groups implementation around chip, mostly in unmapped files. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3119,8 +2618,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 14. New Requirements Specification Module (C41) ====== -->
-<h2 id="new-requirements-specification-module-c41">14. New Requirements Specification Module (C41)</h2>
+<!-- ====== 12. New Requirements Specification Module (C41) ====== -->
+<h2 id="new-requirements-specification-module-c41">12. New Requirements Specification Module (C41)</h2>
 <p>New Requirements Specification Module (C41) groups implementation around new, requirements, specification, requirnmentmd, mostly in New_requirnment.md. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3175,8 +2674,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 15. Project Readme Module (C42) ====== -->
-<h2 id="project-readme-module-c42">15. Project Readme Module (C42)</h2>
+<!-- ====== 13. Project Readme Module (C42) ====== -->
+<h2 id="project-readme-module-c42">13. Project Readme Module (C42)</h2>
 <p>Project Readme Module (C42) groups implementation around project, readme, readmemd, mostly in README.md. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3231,46 +2730,16 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 16. Other ====== -->
-<h2 id="other">16. Other</h2>
-<p>Other groups implementation around emulatorps1, scripts, system, architecture, mostly in SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md, public/admin/index.html, scripts/reset-emulator.ps1. This section covers 15 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 14. System Architecture And Sync Guide Module (C43) ====== -->
+<h2 id="system-architecture-and-sync-guide-module-c43">14. System Architecture And Sync Guide Module (C43)</h2>
+<p>System Architecture And Sync Guide Module (C43) groups implementation around system, architecture, sync, guide, mostly in SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Other (15 nodes, 0 edges)
-    subgraph other_External_generated_9e8859fa["External / generated"]
-        zezandroid_app_src_main_java_com_zez_app_mainact_f071262c("Button")
-        call_bc8d8647("Call")
-        editable_50c2168c("Editable")
-        zezandroid_app_src_main_java_com_zez_app_imagevi_846e1275("Override")
-        android_graphics_pointf_6a3d36b8("android.graphics.PointF")
-        com_zez_app_adapter_chatmessageadapter_b57cbe63("com.zez.app.adapter.ChatMessageAdapter")
-        com_zez_app_adapter_contactsadapter_e0ba4ebf("com.zez.app.adapter.ContactsAdapter")
-        com_zez_app_adapter_conversationsadapter_13bf869f("com.zez.app.adapter.ConversationsAdapter")
-        com_zez_app_model_chatmessage_2b4643d7("com.zez.app.model.ChatMessage")
-    end
+    %% Section: System Architecture And Sync Guide Module (C43) (1 nodes, 0 edges)
     doc_SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE_md_9b6a5463("System Architecture and Sync Guide<br/><small>SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md</small>")
-    zezandroid_gradlew_ps1_zezandroid_gradlew_911d2e93("gradlew.ps1")
-    doc_admin_index_html_d66718ae("Admin Dashboard Web Interface<br/><small>public/admin/index.html</small>")
-    scripts_reset_emulator_3308432a("reset-emulator.ps1")
-    scripts_run_android_ccbca228("run-android.ps1")
-    scripts_start_emulator_04478b87("start-emulator.ps1")
-    class zezandroid_app_src_main_java_com_zez_app_mainact_f071262c klass;
-    class call_bc8d8647 klass;
-    class editable_50c2168c klass;
-    class zezandroid_app_src_main_java_com_zez_app_imagevi_846e1275 klass;
-    class android_graphics_pointf_6a3d36b8 function;
-    class com_zez_app_adapter_chatmessageadapter_b57cbe63 function;
-    class com_zez_app_adapter_contactsadapter_e0ba4ebf function;
-    class com_zez_app_adapter_conversationsadapter_13bf869f function;
-    class com_zez_app_model_chatmessage_2b4643d7 function;
     class doc_SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE_md_9b6a5463 klass;
-    class zezandroid_gradlew_ps1_zezandroid_gradlew_911d2e93 function;
-    class doc_admin_index_html_d66718ae klass;
-    class scripts_reset_emulator_3308432a function;
-    class scripts_run_android_ccbca228 function;
-    class scripts_start_emulator_04478b87 function;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -3300,118 +2769,6 @@ flowchart LR
   <td>No direct outbound edge</td>
   <td>System Architecture and Sync Guide node in SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md.</td>
 </tr>
-<tr>
-  <td>2</td>
-  <td><code>Admin Dashboard Web Interface</code><br><small style="color:var(--muted)">public/admin/index.html</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Admin Dashboard Web Interface node in public/admin/index.html.</td>
-</tr>
-<tr>
-  <td>3</td>
-  <td><code>reset-emulator.ps1</code><br><small style="color:var(--muted)">scripts/reset-emulator.ps1</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>reset-emulator.ps1 node in scripts/reset-emulator.ps1.</td>
-</tr>
-<tr>
-  <td>4</td>
-  <td><code>run-android.ps1</code><br><small style="color:var(--muted)">scripts/run-android.ps1</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>run-android.ps1 node in scripts/run-android.ps1.</td>
-</tr>
-<tr>
-  <td>5</td>
-  <td><code>start-emulator.ps1</code><br><small style="color:var(--muted)">scripts/start-emulator.ps1</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>start-emulator.ps1 node in scripts/start-emulator.ps1.</td>
-</tr>
-<tr>
-  <td>6</td>
-  <td><code>gradlew.ps1</code><br><small style="color:var(--muted)">ZezAndroid/gradlew.ps1</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>gradlew.ps1 node in ZezAndroid/gradlew.ps1.</td>
-</tr>
-<tr>
-  <td>7</td>
-  <td><code>Button</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Button node in project.</td>
-</tr>
-<tr>
-  <td>8</td>
-  <td><code>android.graphics.PointF</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Builds dependency relationships and graph data.</td>
-</tr>
-<tr>
-  <td>9</td>
-  <td><code>Override</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Override node in project.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>com.zez.app.adapter.ContactsAdapter</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>com.zez.app.adapter.ContactsAdapter node in project.</td>
-</tr>
-<tr>
-  <td>11</td>
-  <td><code>Call</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Call node in project.</td>
-</tr>
-<tr>
-  <td>12</td>
-  <td><code>com.zez.app.model.ChatMessage</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>13</td>
-  <td><code>com.zez.app.adapter.ChatMessageAdapter</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
-</tr>
-<tr>
-  <td>14</td>
-  <td><code>Editable</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Editable node in project.</td>
-</tr>
-<tr>
-  <td>15</td>
-  <td><code>com.zez.app.adapter.ConversationsAdapter</code><br><small style="color:var(--muted)"></small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>com.zez.app.adapter.ConversationsAdapter node in project.</td>
-</tr>
 </table>
 
 <div class="grid">
@@ -3420,8 +2777,290 @@ flowchart LR
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
       <tr><td><code>SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md</code></td><td>1 nodes</td></tr>
-<tr><td><code>public/admin/index.html</code></td><td>1 nodes</td></tr>
-<tr><td><code>ZezAndroid/gradlew.ps1</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 15. Backend Admin Routes & APIs (C44) ====== -->
+<h2 id="backend-admin-routes-apis-c44">15. Backend Admin Routes &amp; APIs (C44)</h2>
+<p>Backend Admin Routes &amp; APIs (C44) groups implementation around admin, dashboard, web, interface, mostly in public/admin/index.html. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Backend Admin Routes &amp; APIs (C44) (1 nodes, 0 edges)
+    doc_admin_index_html_d66718ae("Admin Dashboard Web Interface<br/><small>public/admin/index.html</small>")
+    class doc_admin_index_html_d66718ae klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>Admin Dashboard Web Interface</code><br><small style="color:var(--muted)">public/admin/index.html</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Admin Dashboard Web Interface node in public/admin/index.html.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>public/admin/index.html</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 16. Other ====== -->
+<h2 id="other">16. Other</h2>
+<p>Other groups implementation around emulatorps1, scripts, reset, run, mostly in scripts/reset-emulator.ps1, scripts/run-android.ps1, scripts/start-emulator.ps1. This section covers 18 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Other (18 nodes, 0 edges)
+    subgraph other_External_generated_9e8859fa["External / generated"]
+        zezandroid_app_src_main_java_com_zez_app_mainact_f071262c("Button")
+        button_7b7fcc78("Button")
+        call_bc8d8647("Call")
+        editable_50c2168c("Editable")
+        zezandroid_app_src_main_java_com_zez_app_mainact_7cb8c538("MaterialButton")
+        zezandroid_app_src_main_java_com_zez_app_imagevi_846e1275("Override")
+        radiobutton_9454b401("RadioButton")
+        radiogroup_a4b33ab4("RadioGroup")
+        seekbar_ed6d8054("SeekBar")
+        android_graphics_pointf_6a3d36b8("android.graphics.PointF")
+        com_zez_app_adapter_chatmessageadapter_b57cbe63("com.zez.app.adapter.ChatMessageAdapter")
+        com_zez_app_adapter_contactsadapter_e0ba4ebf("com.zez.app.adapter.ContactsAdapter")
+        com_zez_app_adapter_conversationsadapter_13bf869f("com.zez.app.adapter.ConversationsAdapter")
+        com_zez_app_model_chatmessage_2b4643d7("com.zez.app.model.ChatMessage")
+    end
+    zezandroid_gradlew_ps1_zezandroid_gradlew_911d2e93("gradlew.ps1")
+    scripts_reset_emulator_3308432a("reset-emulator.ps1")
+    scripts_run_android_ccbca228("run-android.ps1")
+    scripts_start_emulator_04478b87("start-emulator.ps1")
+    class zezandroid_app_src_main_java_com_zez_app_mainact_f071262c klass;
+    class button_7b7fcc78 klass;
+    class call_bc8d8647 klass;
+    class editable_50c2168c klass;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_7cb8c538 klass;
+    class zezandroid_app_src_main_java_com_zez_app_imagevi_846e1275 klass;
+    class radiobutton_9454b401 klass;
+    class radiogroup_a4b33ab4 klass;
+    class seekbar_ed6d8054 klass;
+    class android_graphics_pointf_6a3d36b8 function;
+    class com_zez_app_adapter_chatmessageadapter_b57cbe63 function;
+    class com_zez_app_adapter_contactsadapter_e0ba4ebf function;
+    class com_zez_app_adapter_conversationsadapter_13bf869f function;
+    class com_zez_app_model_chatmessage_2b4643d7 function;
+    class zezandroid_gradlew_ps1_zezandroid_gradlew_911d2e93 function;
+    class scripts_reset_emulator_3308432a function;
+    class scripts_run_android_ccbca228 function;
+    class scripts_start_emulator_04478b87 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>reset-emulator.ps1</code><br><small style="color:var(--muted)">scripts/reset-emulator.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>reset-emulator.ps1 node in scripts/reset-emulator.ps1.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>run-android.ps1</code><br><small style="color:var(--muted)">scripts/run-android.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>run-android.ps1 node in scripts/run-android.ps1.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>start-emulator.ps1</code><br><small style="color:var(--muted)">scripts/start-emulator.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>start-emulator.ps1 node in scripts/start-emulator.ps1.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>gradlew.ps1</code><br><small style="color:var(--muted)">ZezAndroid/gradlew.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>gradlew.ps1 node in ZezAndroid/gradlew.ps1.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>Button</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Button node in project.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>android.graphics.PointF</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Builds dependency relationships and graph data.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>Override</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Override node in project.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>com.zez.app.adapter.ContactsAdapter</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>com.zez.app.adapter.ContactsAdapter node in project.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>Call</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Call node in project.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>com.zez.app.model.ChatMessage</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>com.zez.app.adapter.ChatMessageAdapter</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>Editable</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Editable node in project.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>Button</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Button node in project.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>RadioButton</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>RadioButton node in project.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>RadioGroup</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>RadioGroup node in project.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>SeekBar</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>SeekBar node in project.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>com.zez.app.adapter.ConversationsAdapter</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>com.zez.app.adapter.ConversationsAdapter node in project.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>MaterialButton</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>MaterialButton node in project.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>ZezAndroid/gradlew.ps1</code></td><td>1 nodes</td></tr>
 <tr><td><code>scripts/reset-emulator.ps1</code></td><td>1 nodes</td></tr>
 <tr><td><code>scripts/run-android.ps1</code></td><td>1 nodes</td></tr>
 <tr><td><code>scripts/start-emulator.ps1</code></td><td>1 nodes</td></tr>
@@ -3440,18 +3079,18 @@ flowchart LR
   <div class="card">
     <h4>Graph</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>Nodes</td><td>1538</td></tr>
-      <tr><td>Edges</td><td>3957</td></tr>
+      <tr><td>Nodes</td><td>1567</td></tr>
+      <tr><td>Edges</td><td>4077</td></tr>
       <tr><td>Hyperedges</td><td>0</td></tr>
-      <tr><td>Communities</td><td>83</td></tr>
+      <tr><td>Communities</td><td>88</td></tr>
       <tr><td>Documented Sections</td><td>15</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Edge Confidence</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>EXTRACTED</td><td>3608</td></tr>
-      <tr><td>INFERRED</td><td>349</td></tr>
+      <tr><td>EXTRACTED</td><td>3692</td></tr>
+      <tr><td>INFERRED</td><td>385</td></tr>
       <tr><td>AMBIGUOUS</td><td>0</td></tr>
     </table>
   </div>
@@ -3459,7 +3098,7 @@ flowchart LR
 
 <div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
   <p>Call Log Mannager — Architecture Documentation</p>
-  <p>Generated: 2026-11-20 15:50 UTC · graphify callflow-html</p>
+  <p>Generated: 2026-11-20 21:39 UTC · graphify callflow-html</p>
 </div>
 
 </div><!-- .container -->

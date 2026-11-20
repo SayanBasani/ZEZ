@@ -10,9 +10,11 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -66,10 +68,37 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         void onMessageLongClick(ChatMessage message, View anchorView);
     }
 
+    public interface OnMediaRetryListener {
+        void onMediaRetry(ChatMessage message);
+    }
+
     private OnMessageActionListener actionListener;
+    private OnMediaRetryListener retryListener;
 
     public void setOnMessageActionListener(OnMessageActionListener listener) {
         this.actionListener = listener;
+    }
+
+    public void setOnMediaRetryListener(OnMediaRetryListener retryListener) {
+        this.retryListener = retryListener;
+    }
+
+    public String findMediaUrlForQuote(String quotedSender, String quotedText) {
+        for (int i = rowItems.size() - 1; i >= 0; i--) {
+            ChatRowItem item = rowItems.get(i);
+            if (!item.isHeader && item.message != null) {
+                ChatMessage m = item.message;
+                if (m.getMediaUrl() != null && !m.getMediaUrl().trim().isEmpty()) {
+                    return m.getMediaUrl();
+                }
+            }
+        }
+        return null;
+    }
+
+    public static boolean isColorDark(int color) {
+        double darkness = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255.0;
+        return darkness >= 0.5;
     }
 
     public boolean isSelectionMode() {
@@ -337,11 +366,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             holder.itemView.setOnClickListener(null);
         } else if (holder instanceof OutgoingViewHolder) {
             OutgoingViewHolder vh = (OutgoingViewHolder) holder;
-            vh.bind(item.message, isoFormat, timeFormat);
+            vh.bind(item.message, this, isoFormat, timeFormat);
             bindSelectionAndClicks(holder, item);
         } else if (holder instanceof IncomingViewHolder) {
             IncomingViewHolder vh = (IncomingViewHolder) holder;
-            vh.bind(item.message, isoFormat, timeFormat);
+            vh.bind(item.message, this, isoFormat, timeFormat);
             bindSelectionAndClicks(holder, item);
         }
     }
@@ -397,6 +426,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         FrameLayout layoutMedia;
         ImageView ivImage;
         ImageView ivPlay;
+        FrameLayout layoutMediaProgress;
+        ProgressBar pbMediaProgress;
+        FrameLayout layoutMediaRetry;
+        ImageView btnMediaRetry;
         LinearLayout layoutFile;
         TextView tvFileName;
         TextView tvFileSize;
@@ -417,6 +450,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutMedia = itemView.findViewById(R.id.layout_msg_outgoing_media);
             ivImage = itemView.findViewById(R.id.iv_msg_outgoing_image);
             ivPlay = itemView.findViewById(R.id.iv_msg_outgoing_play);
+            layoutMediaProgress = itemView.findViewById(R.id.layout_msg_outgoing_media_progress);
+            pbMediaProgress = itemView.findViewById(R.id.pb_msg_outgoing_media_progress);
+            layoutMediaRetry = itemView.findViewById(R.id.layout_msg_outgoing_media_retry);
+            btnMediaRetry = itemView.findViewById(R.id.btn_msg_outgoing_media_retry);
             layoutFile = itemView.findViewById(R.id.layout_msg_outgoing_file);
             tvFileName = itemView.findViewById(R.id.tv_msg_outgoing_filename);
             tvFileSize = itemView.findViewById(R.id.tv_msg_outgoing_filesize);
@@ -465,7 +502,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
-        void bind(ChatMessage msg, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
+        void bind(ChatMessage msg, ChatMessageAdapter adapter, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
             if (layoutBubble != null && layoutBubble.getBackground() != null) {
                 int accentColor = com.zez.app.util.PreferencesHelper.getAccentColorInt(itemView.getContext());
                 layoutBubble.getBackground().mutate().setTint(accentColor);
@@ -495,11 +532,28 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if (tvQuoteSender != null) tvQuoteSender.setText(msg.getQuotedSender());
                     if (tvQuoteText != null) tvQuoteText.setText(msg.getQuotedText());
                     if (ivQuoteImage != null) {
+                        String qMediaUrl = msg.getQuotedMediaUrl();
                         String qText = msg.getQuotedText();
-                        if (qText != null && (qText.contains("Photo") || qText.contains("📷") || qText.contains("Video") || qText.contains("🎥"))) {
+                        boolean isMedia = (qMediaUrl != null && !qMediaUrl.isEmpty()) ||
+                                (qText != null && (qText.contains("Photo") || qText.contains("📷") || qText.contains("Video") || qText.contains("🎥")));
+                        if (isMedia) {
                             ivQuoteImage.setVisibility(View.VISIBLE);
-                            ivQuoteImage.setImageResource(R.drawable.ic_photo_library);
-                            ivQuoteImage.setColorFilter(Color.parseColor("#A7F3D0"));
+                            if (qMediaUrl == null || qMediaUrl.isEmpty()) {
+                                qMediaUrl = adapter.findMediaUrlForQuote(msg.getQuotedSender(), qText);
+                            }
+                            if (qMediaUrl != null && !qMediaUrl.isEmpty()) {
+                                String fullUrl = ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), qMediaUrl);
+                                ivQuoteImage.clearColorFilter();
+                                Glide.with(itemView.getContext())
+                                        .load(fullUrl)
+                                        .centerCrop()
+                                        .placeholder(R.drawable.ic_photo_library)
+                                        .error(R.drawable.ic_photo_library)
+                                        .into(ivQuoteImage);
+                            } else {
+                                ivQuoteImage.setImageResource(R.drawable.ic_photo_library);
+                                ivQuoteImage.setColorFilter(Color.parseColor("#A7F3D0"));
+                            }
                         } else {
                             ivQuoteImage.setVisibility(View.GONE);
                         }
@@ -510,6 +564,23 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
+
+            // WhatsApp-style media upload progress & retry overlays
+            if (ChatMessage.STATUS_PENDING.equalsIgnoreCase(msg.getStatus())) {
+                if (layoutMediaProgress != null) layoutMediaProgress.setVisibility(View.VISIBLE);
+                if (layoutMediaRetry != null) layoutMediaRetry.setVisibility(View.GONE);
+            } else if (ChatMessage.STATUS_FAILED.equalsIgnoreCase(msg.getStatus())) {
+                if (layoutMediaProgress != null) layoutMediaProgress.setVisibility(View.GONE);
+                if (layoutMediaRetry != null) layoutMediaRetry.setVisibility(View.VISIBLE);
+                if (btnMediaRetry != null) {
+                    btnMediaRetry.setOnClickListener(v -> {
+                        if (adapter.retryListener != null) adapter.retryListener.onMediaRetry(msg);
+                    });
+                }
+            } else {
+                if (layoutMediaProgress != null) layoutMediaProgress.setVisibility(View.GONE);
+                if (layoutMediaRetry != null) layoutMediaRetry.setVisibility(View.GONE);
+            }
 
             String text = msg.getCleanMessageText();
             if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
@@ -529,6 +600,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     static class IncomingViewHolder extends RecyclerView.ViewHolder {
+        View layoutBubble;
         TextView tvText;
         TextView tvTime;
         FrameLayout layoutMedia;
@@ -546,6 +618,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         IncomingViewHolder(@NonNull View itemView) {
             super(itemView);
+            layoutBubble = itemView.findViewById(R.id.layout_msg_incoming_bubble);
             tvText = itemView.findViewById(R.id.tv_msg_incoming_text);
             tvTime = itemView.findViewById(R.id.tv_msg_incoming_time);
             layoutMedia = itemView.findViewById(R.id.layout_msg_incoming_media);
@@ -573,7 +646,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
-        void bind(ChatMessage msg, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
+        void bind(ChatMessage msg, ChatMessageAdapter adapter, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
             if (msg.isDeletedForEveryone()) {
                 tvText.setVisibility(View.VISIBLE);
                 tvText.setText("🚫 This message was deleted");
@@ -588,7 +661,28 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             tvText.setTypeface(null, android.graphics.Typeface.NORMAL);
-            tvText.setTextColor(Color.parseColor("#E2E8F0"));
+
+            // Contrast & Custom Incoming Bubble Color
+            String customIncoming = com.zez.app.util.PreferencesHelper.getIncomingBubbleColor(itemView.getContext());
+            if (customIncoming != null && !customIncoming.trim().isEmpty() && layoutBubble != null && layoutBubble.getBackground() != null) {
+                try {
+                    int bubbleColor = Color.parseColor(customIncoming);
+                    layoutBubble.getBackground().mutate().setTint(bubbleColor);
+                    boolean isDark = isColorDark(bubbleColor);
+                    tvText.setTextColor(isDark ? Color.WHITE : Color.parseColor("#0F172A"));
+                    tvTime.setTextColor(isDark ? Color.parseColor("#94A3B8") : Color.parseColor("#64748B"));
+                } catch (Exception e) {
+                    layoutBubble.getBackground().mutate().setTintList(null);
+                    tvText.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_primary));
+                    tvTime.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_muted));
+                }
+            } else {
+                if (layoutBubble != null && layoutBubble.getBackground() != null) {
+                    layoutBubble.getBackground().mutate().setTintList(null);
+                }
+                tvText.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_primary));
+                tvTime.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_muted));
+            }
 
             if (layoutQuote != null) {
                 if (msg.hasQuotedReply()) {
@@ -596,11 +690,28 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if (tvQuoteSender != null) tvQuoteSender.setText(msg.getQuotedSender());
                     if (tvQuoteText != null) tvQuoteText.setText(msg.getQuotedText());
                     if (ivQuoteImage != null) {
+                        String qMediaUrl = msg.getQuotedMediaUrl();
                         String qText = msg.getQuotedText();
-                        if (qText != null && (qText.contains("Photo") || qText.contains("📷") || qText.contains("Video") || qText.contains("🎥"))) {
+                        boolean isMedia = (qMediaUrl != null && !qMediaUrl.isEmpty()) ||
+                                (qText != null && (qText.contains("Photo") || qText.contains("📷") || qText.contains("Video") || qText.contains("🎥")));
+                        if (isMedia) {
                             ivQuoteImage.setVisibility(View.VISIBLE);
-                            ivQuoteImage.setImageResource(R.drawable.ic_photo_library);
-                            ivQuoteImage.setColorFilter(Color.parseColor("#22C55E"));
+                            if (qMediaUrl == null || qMediaUrl.isEmpty()) {
+                                qMediaUrl = adapter.findMediaUrlForQuote(msg.getQuotedSender(), qText);
+                            }
+                            if (qMediaUrl != null && !qMediaUrl.isEmpty()) {
+                                String fullUrl = ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), qMediaUrl);
+                                ivQuoteImage.clearColorFilter();
+                                Glide.with(itemView.getContext())
+                                        .load(fullUrl)
+                                        .centerCrop()
+                                        .placeholder(R.drawable.ic_photo_library)
+                                        .error(R.drawable.ic_photo_library)
+                                        .into(ivQuoteImage);
+                            } else {
+                                ivQuoteImage.setImageResource(R.drawable.ic_photo_library);
+                                ivQuoteImage.setColorFilter(Color.parseColor("#22C55E"));
+                            }
                         } else {
                             ivQuoteImage.setVisibility(View.GONE);
                         }
