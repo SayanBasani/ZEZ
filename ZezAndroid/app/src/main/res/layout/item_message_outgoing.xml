@@ -103,6 +103,44 @@
                     android:src="@drawable/ic_play_circle"
                     app:tint="@android:color/white"
                     android:visibility="gone" />
+
+                <!-- Loading Progress Indicator (WhatsApp Style) -->
+                <FrameLayout
+                    android:id="@+id/layout_msg_outgoing_media_progress"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_circle_glass"
+                    android:visibility="gone">
+
+                    <ProgressBar
+                        android:id="@+id/pb_msg_outgoing_media_progress"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center"
+                        android:indeterminate="true"
+                        android:indeterminateTint="@android:color/white" />
+                </FrameLayout>
+
+                <!-- Resend / Retry Button (WhatsApp Style) -->
+                <FrameLayout
+                    android:id="@+id/layout_msg_outgoing_media_retry"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_circle_glass"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:id="@+id/btn_msg_outgoing_media_retry"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_refresh"
+                        app:tint="#EF4444" />
+                </FrameLayout>
             </androidx.cardview.widget.CardView>
         </FrameLayout>
 

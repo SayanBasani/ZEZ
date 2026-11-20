@@ -60,7 +60,7 @@ public class ChatApiClient {
     public static String getAbsoluteMediaUrl(Context context, String relativeOrAbsoluteUrl) {
         if (relativeOrAbsoluteUrl == null || relativeOrAbsoluteUrl.trim().isEmpty()) return null;
         String trimmed = relativeOrAbsoluteUrl.trim();
-        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("content://") || trimmed.startsWith("file://")) {
             return trimmed;
         }
         String base = getBaseUrl(context);

@@ -125,12 +125,17 @@ public class ChatMessage implements Serializable {
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
     public static String formatReply(String sender, String quotedSnippet, String actualText) {
+        return formatReply(sender, quotedSnippet, actualText, null);
+    }
+
+    public static String formatReply(String sender, String quotedSnippet, String actualText, String quotedMediaUrl) {
         String cleanSender = sender != null ? sender.replace("|", "/").replace("]", ")").trim() : "Contact";
         String cleanSnippet = quotedSnippet != null ? quotedSnippet.replace("\n", " ").replace("|", "/").replace("]", ")").trim() : "";
         if (cleanSnippet.length() > 100) {
             cleanSnippet = cleanSnippet.substring(0, 97) + "...";
         }
-        return "[reply:" + cleanSender + "|" + cleanSnippet + "]\n" + (actualText != null ? actualText : "");
+        String mediaPart = (quotedMediaUrl != null && !quotedMediaUrl.trim().isEmpty()) ? "|" + quotedMediaUrl.trim().replace("]", ")") : "";
+        return "[reply:" + cleanSender + "|" + cleanSnippet + mediaPart + "]\n" + (actualText != null ? actualText : "");
     }
 
     public boolean hasQuotedReply() {
@@ -151,13 +156,31 @@ public class ChatMessage implements Serializable {
     public String getQuotedText() {
         if (!hasQuotedReply()) return null;
         try {
-            int pipeIdx = messageText.indexOf('|');
+            int firstPipe = messageText.indexOf('|');
             int closeIdx = messageText.indexOf("]\n");
-            if (pipeIdx != -1 && closeIdx > pipeIdx) {
-                return messageText.substring(pipeIdx + 1, closeIdx).trim();
+            if (firstPipe != -1 && closeIdx > firstPipe) {
+                int secondPipe = messageText.indexOf('|', firstPipe + 1);
+                int endIdx = (secondPipe != -1 && secondPipe < closeIdx) ? secondPipe : closeIdx;
+                return messageText.substring(firstPipe + 1, endIdx).trim();
             }
         } catch (Exception ignored) {}
         return "";
+    }
+
+    public String getQuotedMediaUrl() {
+        if (!hasQuotedReply()) return null;
+        try {
+            int firstPipe = messageText.indexOf('|');
+            int closeIdx = messageText.indexOf("]\n");
+            if (firstPipe != -1 && closeIdx > firstPipe) {
+                int secondPipe = messageText.indexOf('|', firstPipe + 1);
+                if (secondPipe != -1 && secondPipe < closeIdx) {
+                    String url = messageText.substring(secondPipe + 1, closeIdx).trim();
+                    if (!url.isEmpty()) return url;
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     public String getCleanMessageText() {

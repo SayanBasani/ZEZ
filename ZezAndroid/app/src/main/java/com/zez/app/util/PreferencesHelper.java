@@ -15,6 +15,7 @@ public class PreferencesHelper {
     public static final String KEY_THEME_MODE = "theme_mode";
     public static final String KEY_FONT_SCALE = "font_scale";
     public static final String KEY_ACCENT_COLOR = "accent_color";
+    public static final String KEY_INCOMING_BUBBLE_COLOR = "incoming_bubble_color";
 
     public static final String DEFAULT_ACCENT_COLOR = "#2563EB";
     public static final String COLOR_EMERALD = "#10B981";
@@ -169,6 +170,18 @@ public class PreferencesHelper {
     public static void setAccentColor(Context context, String colorHex) {
         if (colorHex != null) {
             getPrefs(context).edit().putString(KEY_ACCENT_COLOR, colorHex).apply();
+        }
+    }
+
+    public static String getIncomingBubbleColor(Context context) {
+        return getPrefs(context).getString(KEY_INCOMING_BUBBLE_COLOR, null);
+    }
+
+    public static void setIncomingBubbleColor(Context context, String colorHex) {
+        if (colorHex != null && !colorHex.trim().isEmpty()) {
+            getPrefs(context).edit().putString(KEY_INCOMING_BUBBLE_COLOR, colorHex.trim()).apply();
+        } else {
+            getPrefs(context).edit().remove(KEY_INCOMING_BUBBLE_COLOR).apply();
         }
     }
 }
