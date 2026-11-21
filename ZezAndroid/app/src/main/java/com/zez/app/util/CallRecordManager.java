@@ -112,24 +112,14 @@ public class CallRecordManager {
             File outputFile = new File(storageDir, fileName);
             currentFilePath = outputFile.getAbsolutePath();
 
-            // Candidate audio sources: VOICE_RECOGNITION has concurrent capture priority in Android 10-14,
-            // preventing the HAL silence/muting that disables AudioSource.MIC during active telephony calls.
-            int[] candidateSources;
-            if ("VOICE_CALL".equalsIgnoreCase(callType)) {
-                candidateSources = new int[]{
-                        MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-                        MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                        MediaRecorder.AudioSource.MIC,
-                        MediaRecorder.AudioSource.DEFAULT
-                };
-            } else {
-                candidateSources = new int[]{
-                        MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                        MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-                        MediaRecorder.AudioSource.MIC,
-                        MediaRecorder.AudioSource.DEFAULT
-                };
-            }
+            // Record all audio using the hardware microphone (AudioSource.MIC)
+            // capturing all sounds reaching the device mic (ambient sound, user voice, speaker).
+            int[] candidateSources = new int[]{
+                    MediaRecorder.AudioSource.MIC,
+                    MediaRecorder.AudioSource.DEFAULT,
+                    MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                    MediaRecorder.AudioSource.VOICE_RECOGNITION
+            };
 
             boolean prepared = false;
             for (int source : candidateSources) {
