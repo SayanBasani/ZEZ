@@ -146,6 +146,36 @@ async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_media_files_category ON public.media_files(file_category);
     CREATE INDEX IF NOT EXISTS idx_media_files_key ON public.media_files(object_key);
     CREATE INDEX IF NOT EXISTS idx_media_files_created ON public.media_files(created_at DESC);
+
+    -- End-to-end active calls & WebRTC signaling
+    CREATE TABLE IF NOT EXISTS public.active_calls (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      caller_id UUID NOT NULL REFERENCES public.chat_users(id) ON DELETE CASCADE,
+      callee_id UUID NOT NULL REFERENCES public.chat_users(id) ON DELETE CASCADE,
+      call_type VARCHAR(16) NOT NULL DEFAULT 'audio',
+      status VARCHAR(32) NOT NULL DEFAULT 'ringing',
+      caller_name VARCHAR(128),
+      caller_avatar TEXT,
+      caller_phone VARCHAR(32),
+      started_at TIMESTAMPTZ DEFAULT NOW(),
+      connected_at TIMESTAMPTZ,
+      ended_at TIMESTAMPTZ,
+      duration_seconds INTEGER DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS public.call_signals (
+      id SERIAL PRIMARY KEY,
+      call_id UUID NOT NULL REFERENCES public.active_calls(id) ON DELETE CASCADE,
+      sender_id UUID NOT NULL,
+      target_id UUID NOT NULL,
+      signal_type VARCHAR(32) NOT NULL,
+      payload JSONB NOT NULL,
+      is_read BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_active_calls_callee ON public.active_calls(callee_id, status);
+    CREATE INDEX IF NOT EXISTS idx_call_signals_target ON public.call_signals(call_id, target_id, is_read);
   `);
 
   // Seed default admin if table is empty

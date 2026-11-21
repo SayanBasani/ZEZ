@@ -777,15 +777,27 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         String fullUrl = ChatApiClient.getAbsoluteMediaUrl(context, mediaUrl);
         String mediaType = msg.getMediaType();
-        if (mediaType == null) {
-            String lower = mediaUrl.toLowerCase();
-            if (lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp") || lower.endsWith(".gif")) {
+        if (mediaType == null || mediaType.trim().isEmpty() || "file".equalsIgnoreCase(mediaType)) {
+            String lowerUrl = mediaUrl != null ? mediaUrl.toLowerCase() : "";
+            String lowerName = msg.getFileName() != null ? msg.getFileName().toLowerCase() : "";
+            String lowerText = msg.getMessageText() != null ? msg.getMessageText().toLowerCase() : "";
+
+            if (isImageExtension(lowerUrl) || isImageExtension(lowerName) || lowerUrl.contains("/chat-media/") || lowerUrl.contains("/avatars/") || lowerText.contains("📷") || lowerText.contains("photo")) {
                 mediaType = "image";
-            } else if (lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".mov") || lower.endsWith(".3gp")) {
+            } else if (isVideoExtension(lowerUrl) || isVideoExtension(lowerName) || lowerUrl.contains("/videos/") || lowerText.contains("🎥") || lowerText.contains("video")) {
                 mediaType = "video";
-            } else {
-                mediaType = "file";
+            } else if (lowerUrl.startsWith("content://")) {
+                try {
+                    String mime = context.getContentResolver().getType(Uri.parse(mediaUrl));
+                    if (mime != null) {
+                        if (mime.startsWith("image/")) mediaType = "image";
+                        else if (mime.startsWith("video/")) mediaType = "video";
+                    }
+                } catch (Exception ignored) {}
             }
+        }
+        if (mediaType == null || mediaType.trim().isEmpty()) {
+            mediaType = "file";
         }
         final String resolvedType = mediaType;
 
@@ -857,5 +869,20 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } catch (Exception e) {
             return "";
         }
+    }
+
+    private static boolean isImageExtension(String str) {
+        if (str == null || str.isEmpty()) return false;
+        String s = str.toLowerCase();
+        return s.endsWith(".jpg") || s.endsWith(".jpeg") || s.endsWith(".png") ||
+               s.endsWith(".webp") || s.endsWith(".gif") || s.endsWith(".bmp") ||
+               s.endsWith(".heic");
+    }
+
+    private static boolean isVideoExtension(String str) {
+        if (str == null || str.isEmpty()) return false;
+        String s = str.toLowerCase();
+        return s.endsWith(".mp4") || s.endsWith(".mkv") || s.endsWith(".mov") ||
+               s.endsWith(".3gp") || s.endsWith(".webm") || s.endsWith(".avi");
     }
 }

@@ -963,13 +963,38 @@ router.get("/poll", async (req, res) => {
       }
     }
 
+    // Check for active ringing incoming call
+    let incomingCall = null;
+    try {
+      const callRes = await pool.query(
+        `SELECT id, call_type, status, caller_id, caller_name, caller_avatar, caller_phone, started_at
+         FROM public.active_calls 
+         WHERE callee_id = $1 AND status = 'ringing' AND started_at > NOW() - INTERVAL '60 seconds'
+         ORDER BY started_at DESC LIMIT 1`,
+        [userId]
+      );
+      if (callRes.rowCount > 0) {
+        const c = callRes.rows[0];
+        incomingCall = {
+          id: c.id,
+          callType: c.call_type,
+          callerId: c.caller_id,
+          callerName: c.caller_name,
+          callerAvatar: c.caller_avatar,
+          callerPhone: c.caller_phone,
+          startedAt: c.started_at
+        };
+      }
+    } catch (_) {}
+
     return res.json({
       success: true,
       timestamp: new Date().toISOString(),
       incoming: incomingRes.rows,
       status_updates: statusRes.rows,
       conversation_mode: conversationMode,
-      peer_status: peerStatus
+      peer_status: peerStatus,
+      incoming_call: incomingCall
     });
   } catch (err) {
     console.error("Error in /api/chat/poll:", err);
