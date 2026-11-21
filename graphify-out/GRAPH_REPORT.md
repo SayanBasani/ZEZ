@@ -1,18 +1,18 @@
 # Graph Report - Call Log Mannager  (2026-11-21)
 
 ## Corpus Check
-- 124 files · ~108,867 words
+- 125 files · ~109,099 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 155 file(s) not represented in the graph (top: .xml 146, .properties 5, (none) 2)
-- WARNING: 155 of 292 files seen (53%) have no supported extractor and are missing from this graph entirely. It may look complete while representing only part of the codebase.
+- Unclassified: 156 file(s) not represented in the graph (top: .xml 146, .properties 5, (none) 3)
+- WARNING: 156 of 294 files seen (53%) have no supported extractor and are missing from this graph entirely. It may look complete while representing only part of the codebase.
 
 ## Summary
-- 1824 nodes · 4909 edges · 95 communities (38 shown, 57 thin omitted)
+- 1828 nodes · 4916 edges · 111 communities (34 shown, 77 thin omitted)
 - Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 507 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `27d887b3`
+- Built from commit: `aaf469f6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -22,13 +22,13 @@
 - b2StorageService.js
 - AudioPlaybackManager
 - e2e_device_test.py
-- ContactsActivity
+- ChatContactItem
 - Hardware Info & Performance Telemetry (C6)
 - CallRecordDbHelper
 - android.view.View
 - CallRecordItem
-- .toContentValues
-- ChatNotificationManager
+- ChatLocalDbHelper
+- ZezApplication.java
 - android.content.Context
 - compilerOptions
 - .loadGalleryData
@@ -36,7 +36,7 @@
 - index.d.ts
 - ChatMessageAdapter
 - ChatUser
-- CallSyncWorker.java
+- log
 - d_call_log_mannager_zez_backend_src_db_pool
 - server.js
 - MainActivity
@@ -44,13 +44,10 @@
 - ImageEditActivity.java
 - admin.js
 - Hardware Info & Performance Telemetry (C27)
-- CallSyncWorker
-- IncomingCallActivity
-- AlarmRingingService.java
+- CallRecordManager
 - Override
 - test-roster.js
-- AlbumDetailActivity.java
-- ChatApiClient.java
+- android.net.Uri
 - Override
 - chat.js
 - ChatMessage
@@ -58,32 +55,48 @@
 - Project Readme Module (C42)
 - System Architecture And Sync Guide Module (C43)
 - Backend Admin Routes & APIs (C44)
+- android.os.Handler
 - appRelease.js
-- { Pool }
-- .getMessages
+- db.js
 - ImageViewerActivity
+- GalleryAdapter
 - CallLogItem
 - extreme-test-suite.js
 - android.text.TextWatcher
 - okhttp3.Call
 - .downloadAndInstall
-- AlarmRingingService.java
+- android.content.Intent
 - .checkIncomingCalls
-- ConversationsAdapter
+- com.zez.app.model.ChatConversation
 - callRead.js
-- IncomingCallActivity.java
+- AlarmRingingService.java
 - .getPrefs
-- .onResponse
-- .initViews
-- android.text.TextWatcher
+- com.zez.app.model.ChatMessage
+- .exitSelectMode
+- MainActivity.java
 - benchmark
 - ChatActivity
 - GalleryAdapter.Listener
-- ChatApiClient
+- .applyModeState
 - .onResponse
-- .startCall
-- CallRecordAdapter
+- Adapter
+- com.zez.app.model.CallLogItem
+- MediaItem
 - .getPrefs
+- com.zez.app.model.ChatContactItem
+- ChatConversation
+- MediaPagerAdapter
+- ChatNotificationManager
+- RecycleBinAdapter
+- CallSyncWorker
+- Override
+- .onSuccess
+- .onItemSelected
+- TextWatcher
+- com.google.android.material.tabs.TabLayout.OnTabSelectedListener
+- PhoneHelper
+- .onSuccess
+- ApiCallback
 
 ## God Nodes (most connected - your core abstractions)
 1. `MainActivity` - 108 edges
@@ -98,29 +111,29 @@
 10. `ImageViewerActivity` - 28 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `CallRecordAdapter` --references--> `CallRecordItem`  [EXTRACTED]
-  ZezAndroid/app/src/main/java/com/zez/app/adapter/CallRecordAdapter.java → ZezAndroid/app/src/main/java/com/zez/app/model/CallRecordItem.java
-- `MainActivity` --references--> `CallRecordAdapter`  [EXTRACTED]
-  ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java → ZezAndroid/app/src/main/java/com/zez/app/adapter/CallRecordAdapter.java
-- `MainActivity` --references--> `CallRecordItem`  [EXTRACTED]
-  ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java → ZezAndroid/app/src/main/java/com/zez/app/model/CallRecordItem.java
-- `CallRecordManager` --references--> `CallRecordItem`  [EXTRACTED]
-  ZezAndroid/app/src/main/java/com/zez/app/util/CallRecordManager.java → ZezAndroid/app/src/main/java/com/zez/app/model/CallRecordItem.java
-- `CallRecordManager` --references--> `CallRecordDbHelper`  [EXTRACTED]
-  ZezAndroid/app/src/main/java/com/zez/app/util/CallRecordManager.java → ZezAndroid/app/src/main/java/com/zez/app/util/CallRecordDbHelper.java
+- `MainActivity` --references--> `AlarmAdapter`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java → ZezAndroid/app/src/main/java/com/zez/app/adapter/AlarmAdapter.java
+- `MainActivity` --references--> `AlarmItem`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java → ZezAndroid/app/src/main/java/com/zez/app/model/AlarmItem.java
+- `ChatActivity` --references--> `ChatLocalDbHelper`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/ChatActivity.java → ZezAndroid/app/src/main/java/com/zez/app/util/ChatLocalDbHelper.java
+- `RecycleBinAdapter` --references--> `RecycledItem`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/adapter/RecycleBinAdapter.java → ZezAndroid/app/src/main/java/com/zez/app/util/RecycleBinHelper.java
+- `ChatMessageAdapter` --references--> `ViewHolder`  [EXTRACTED]
+  ZezAndroid/app/src/main/java/com/zez/app/adapter/ChatMessageAdapter.java → ZezAndroid/app/src/main/java/com/zez/app/adapter/ConversationsAdapter.java
 
 ## Import Cycles
 - None detected.
 
-## Communities (95 total, 57 thin omitted)
+## Communities (111 total, 77 thin omitted)
 
 ### Community 0 - "CallActivity"
 Cohesion: 0.08
 Nodes (9): CallActivity, Callback, TextureView.SurfaceTextureListener, CameraDevice.StateCallback, CameraCaptureSession.StateCallback, Runnable, Callback, Runnable (+1 more)
 
 ### Community 1 - "AlarmItem"
-Cohesion: 0.13
-Nodes (6): AlarmAdapter, OnAlarmClickListener, com.zez.app.adapter.AlarmAdapter.OnAlarmClickListener, AlarmItem, AlarmHelper, TypeToken<List<AlarmItem>>
+Cohesion: 0.11
+Nodes (7): AlarmAdapter, AlarmViewHolder, OnAlarmClickListener, com.zez.app.adapter.AlarmAdapter.OnAlarmClickListener, AlarmItem, AlarmHelper, TypeToken<List<AlarmItem>>
 
 ### Community 2 - "b2StorageService.js"
 Cohesion: 0.21
@@ -130,29 +143,17 @@ Nodes (22): CATEGORY_LIMITS, crypto, deleteFile(), fileExists(), formatBytes(), 
 Cohesion: 0.19
 Nodes (19): configure_backend(), adb_shell(), dump_ui(), find_node(), get_nodes(), send_chat_text(), tap_node(), adb_shell() (+11 more)
 
-### Community 5 - "ContactsActivity"
-Cohesion: 0.09
-Nodes (5): DisplayItem, OnContactClickListener, ContactsActivity, TextWatcher, ChatContactItem
-
 ### Community 6 - "Hardware Info & Performance Telemetry (C6)"
 Cohesion: 0.08
 Nodes (5): TelemetryGraphView, GestureListener, OnTapListener, ScaleListener, ZoomImageView
 
 ### Community 8 - "android.view.View"
-Cohesion: 0.05
-Nodes (24): AlarmViewHolder, AlbumsAdapter, AlbumVH, OnAlbumClickListener, CallLogAdapter, CallViewHolder, DateHeaderViewHolder, IncomingViewHolder (+16 more)
-
-### Community 10 - ".toContentValues"
-Cohesion: 0.10
-Nodes (3): ChatApiClient.ChatCallback<ChatMessage>, ChatApiClient.ChatCallback<ChatMessage>, ChatLocalDbHelper
-
-### Community 11 - "ChatNotificationManager"
-Cohesion: 0.11
-Nodes (5): BootReceiver, ChatNotificationHelper, ChatNotificationManager, OnChatsUpdateListener, ZezApplication
+Cohesion: 0.14
+Nodes (11): AlbumVH, RecordViewHolder, DateHeaderViewHolder, IncomingViewHolder, OutgoingViewHolder, ContactsAdapter, ContactViewHolder, HeaderViewHolder (+3 more)
 
 ### Community 12 - "android.content.Context"
-Cohesion: 0.13
-Nodes (3): android.widget.AdapterView.OnItemSelectedListener, DeviceHelper, PreferencesHelper
+Cohesion: 0.16
+Nodes (3): ApiClient, DeviceHelper, PreferencesHelper
 
 ### Community 13 - "compilerOptions"
 Cohesion: 0.10
@@ -171,120 +172,116 @@ Cohesion: 0.12
 Nodes (15): AdminCallsQuery, AdminChatExportFormat, AdminUserRecord, ApiResponse, AppReleaseRecord, CallLogRecord, CallSyncBatchPayload, ChatConversationRecord (+7 more)
 
 ### Community 17 - "ChatMessageAdapter"
-Cohesion: 0.10
-Nodes (6): ChatMessageAdapter, ChatRowItem, OnMediaRetryListener, OnMessageActionListener, ChatMessageAdapter.OnMessageActionListener, PendingMediaTask
-
-### Community 19 - "CallSyncWorker.java"
-Cohesion: 0.10
-Nodes (3): CallStateReceiver, CallSyncWorker, CallLogHelper
+Cohesion: 0.12
+Nodes (4): ChatMessageAdapter, OnMediaRetryListener, OnMessageActionListener, ChatMessageAdapter.OnMessageActionListener
 
 ### Community 20 - "d_call_log_mannager_zez_backend_src_db_pool"
-Cohesion: 0.05
-Nodes (27): fs, path, fs, path, fs, path, fs, path (+19 more)
+Cohesion: 0.06
+Nodes (19): fs, path, fs, path, fs, path, fs, path (+11 more)
 
 ### Community 22 - "server.js"
-Cohesion: 0.07
-Nodes (27): express, closeDatabase(), initializeDatabase(), callMediaCache, express, router, router, crypto (+19 more)
+Cohesion: 0.10
+Nodes (21): closeDatabase(), initializeDatabase(), router, router, app, cors, express, fs (+13 more)
+
+### Community 23 - "MainActivity"
+Cohesion: 0.08
+Nodes (4): ConversationsAdapter, OnAvatarClickListener, OnSelectionListener, MainActivity
 
 ### Community 24 - "AppUpdateHelper"
-Cohesion: 0.23
-Nodes (4): com.zez.app.util.AppUpdateHelper.UpdateCheckCallback, AppUpdateHelper, ReleaseInfo, UpdateCheckCallback
+Cohesion: 0.24
+Nodes (3): com.zez.app.util.AppUpdateHelper.UpdateCheckCallback, ReleaseInfo, UpdateCheckCallback
 
 ### Community 25 - "ImageEditActivity.java"
-Cohesion: 0.16
-Nodes (4): ImageEditActivity, SeekBar.OnSeekBarChangeListener, SeekBar.OnSeekBarChangeListener, ImageEditHelper
+Cohesion: 0.10
+Nodes (7): CallRecordAdapter, OnRecordDeletedListener, SeekBar.OnSeekBarChangeListener, ImageEditActivity, SeekBar.OnSeekBarChangeListener, SeekBar.OnSeekBarChangeListener, ImageEditHelper
 
 ### Community 26 - "admin.js"
-Cohesion: 0.10
-Nodes (13): AVATARS_DIR, CHAT_MEDIA_DIR, crypto, DOWNLOADS_DIR, express, formatBytes(), fs, os (+5 more)
+Cohesion: 0.09
+Nodes (14): verifyPassword(), AVATARS_DIR, CHAT_MEDIA_DIR, crypto, DOWNLOADS_DIR, express, formatBytes(), fs (+6 more)
 
 ### Community 27 - "Hardware Info & Performance Telemetry (C27)"
 Cohesion: 0.27
 Nodes (4): CpuInfo, HardwareInfoHelper, RamInfo, StorageInfo
 
-### Community 29 - "IncomingCallActivity"
-Cohesion: 0.23
-Nodes (3): IncomingCallActivity, Callback, Callback
-
 ### Community 31 - "Override"
-Cohesion: 0.08
-Nodes (9): ChatApiClient.ChatCallback<Void>, ChatApiClient.ChatCallback<Void>, android.text.TextWatcher, ItemTouchHelper.SimpleCallback, android.widget.SeekBar.OnSeekBarChangeListener, ChatApiClient.ChatCallback<ChatApiClient.ConversationModeInfo>, ChatApiClient.ChatCallback<ChatApiClient.MessagesResult>, ProfileMediaAdapter (+1 more)
+Cohesion: 0.11
+Nodes (7): ChatApiClient.ChatCallback<Void>, ChatApiClient.ChatCallback<Void>, android.text.TextWatcher, ItemTouchHelper.SimpleCallback, android.widget.SeekBar.OnSeekBarChangeListener, ProfileMediaAdapter, ViewHolder
 
 ### Community 32 - "test-roster.js"
-Cohesion: 0.11
-Nodes (19): http, run(), http, run(), http, request(), run(), token (+11 more)
+Cohesion: 0.09
+Nodes (22): http, run(), http, run(), http, request(), run(), token (+14 more)
+
+### Community 33 - "android.net.Uri"
+Cohesion: 0.18
+Nodes (3): AlbumsAdapter, OnAlbumClickListener, AlbumItem
 
 ### Community 35 - "Override"
 Cohesion: 0.14
-Nodes (5): com.google.android.material.tabs.TabLayout.OnTabSelectedListener, ChatApiClient.ChatCallback<List<ChatConversation>>, com.zez.app.util.AppUpdateHelper.DownloadProgressCallback, Runnable, ChatApiClient.ChatCallback<String>
+Nodes (5): android.text.TextWatcher, ChatApiClient.ChatCallback<List<ChatConversation>>, com.zez.app.util.AppUpdateHelper.DownloadProgressCallback, Runnable, ChatApiClient.ChatCallback<String>
 
 ### Community 36 - "chat.js"
-Cohesion: 0.09
-Nodes (20): multer, multer@^2.5.0, avatarStorage, avatarUploadDir, express, fs, mediaStorage, mediaUploadDir (+12 more)
+Cohesion: 0.07
+Nodes (24): express, multer, multer@^2.5.0, avatarStorage, avatarUploadDir, express, fs, mediaStorage (+16 more)
 
 ### Community 52 - "appRelease.js"
+Cohesion: 0.11
+Nodes (12): fs, path, fs, path, downloadsDir, express, fs, multer (+4 more)
+
+### Community 53 - "db.js"
+Cohesion: 0.07
+Nodes (9): fs, path, fs, path, crypto, hashPassword(), { Pool }, callMediaCache (+1 more)
+
+### Community 56 - "GalleryAdapter"
 Cohesion: 0.13
-Nodes (10): fs, path, downloadsDir, express, fs, multer, path, router (+2 more)
-
-### Community 53 - "{ Pool }"
-Cohesion: 0.18
-Nodes (3): fs, path, { Pool }
-
-### Community 55 - ".getMessages"
-Cohesion: 0.24
-Nodes (4): ChatApiClient.ChatCallback<ChatApiClient.MessagesResult>, Callback, ChatCallback<MessagesResult>, MessagesResult
-
-### Community 56 - "ImageViewerActivity"
-Cohesion: 0.06
-Nodes (9): GalleryAdapter, GridLayoutManager.SpanSizeLookup, Listener, AlbumDetailActivity, GalleryAdapter.Listener, ImageViewerActivity, ViewPager2.OnPageChangeCallback, GalleryListItem (+1 more)
+Nodes (4): GalleryAdapter, GridLayoutManager.SpanSizeLookup, Listener, GalleryListItem
 
 ### Community 59 - "extreme-test-suite.js"
 Cohesion: 0.38
 Nodes (5): api(), assert, crypto, runExtremeTestSuite(), test()
 
 ### Community 61 - "okhttp3.Call"
-Cohesion: 0.14
-Nodes (8): Callback, Callback, Callback, Callback, Callback, Callback, Callback, Callback
-
-### Community 66 - "ConversationsAdapter"
 Cohesion: 0.06
-Nodes (9): ConversationsAdapter, androidx.recyclerview.widget.DiffUtil.Callback, OnAvatarClickListener, OnConversationClickListener, OnSelectionListener, ChatConversation, Callback, ChatApiClient.ChatCallback<List<ChatConversation>> (+1 more)
+Nodes (28): Callback, ChatApiClient.ChatCallback<ChatApiClient.MediaUploadResult>, IncomingCallActivity, Callback, Callback, ChatApiClient, Callback, Callback (+20 more)
 
 ### Community 67 - "callRead.js"
 Cohesion: 0.09
 Nodes (23): crypto, decryptJson(), decryptPortableHex(), decryptStoredPayload(), encryptJson(), { gcm }, getKey(), { managedNonce, hexToBytes, bytesToUtf8 } (+15 more)
 
-### Community 70 - ".onResponse"
-Cohesion: 0.53
-Nodes (5): Callback, ConversationModeInfo, IncomingCallInfo, PeerStatus, PollResult
+### Community 70 - "com.zez.app.model.ChatMessage"
+Cohesion: 0.17
+Nodes (3): ChatRowItem, PendingMediaTask, PendingMessage
 
-### Community 86 - "ChatApiClient"
-Cohesion: 0.16
-Nodes (7): ChatApiClient.ChatCallback<ChatApiClient.MediaUploadResult>, ChatApiClient, Callback, Callback, ChatCallback, ContactSyncResult, MediaUploadResult
+### Community 89 - "Adapter"
+Cohesion: 0.19
+Nodes (5): CallLogAdapter, CallViewHolder, FilmstripAdapter, FilmstripVH, OnFilmstripClickListener
 
-### Community 90 - "CallRecordAdapter"
-Cohesion: 0.15
-Nodes (3): CallRecordAdapter, OnRecordDeletedListener, SeekBar.OnSeekBarChangeListener
+### Community 96 - "MediaPagerAdapter"
+Cohesion: 0.26
+Nodes (3): MediaPagerAdapter, OnTapListener, PageVH
+
+### Community 98 - "RecycleBinAdapter"
+Cohesion: 0.31
+Nodes (3): BinViewHolder, OnRestoreClickListener, RecycleBinAdapter
 
 ## Knowledge Gaps
 - **4 isolated node(s):** `New Requirements Specification`, `Project README`, `System Architecture and Sync Guide`, `Admin Dashboard Web Interface`
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 355 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **57 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 359 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **77 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `MainActivity` connect `MainActivity` to `AlarmItem`, `AudioPlaybackManager`, `Hardware Info & Performance Telemetry (C6)`, `android.view.View`, `CallRecordItem`, `ChatNotificationManager`, `android.content.Context`, `.loadGalleryData`, `CallSyncWorker.java`, `AppUpdateHelper`, `AlbumDetailActivity.java`, `Override`, `ImageViewerActivity`, `.checkIncomingCalls`, `ConversationsAdapter`, `IncomingCallActivity.java`, `.getPrefs`, `.initViews`, `android.text.TextWatcher`, `ChatActivity.java`, `GalleryAdapter.Listener`, `ChatApiClient`, `CallRecordAdapter`?**
-  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+- **Why does `MainActivity` connect `MainActivity` to `AlarmItem`, `AudioPlaybackManager`, `Hardware Info & Performance Telemetry (C6)`, `CallRecordDbHelper`, `android.view.View`, `CallRecordItem`, `ZezApplication.java`, `android.content.Context`, `.loadGalleryData`, `AppUpdateHelper`, `ImageEditActivity.java`, `ChatActivity.java`, `Override`, `Override`, `ImageViewerActivity`, `android.text.TextWatcher`, `okhttp3.Call`, `com.zez.app.model.ChatConversation`, `AlarmRingingService.java`, `.getPrefs`, `.exitSelectMode`, `MainActivity.java`, `GalleryAdapter.Listener`, `com.zez.app.model.CallLogItem`, `MediaItem`, `ChatNotificationManager`, `RecycleBinAdapter`, `.onItemSelected`?**
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
 - **What connects `New Requirements Specification`, `Project README`, `System Architecture and Sync Guide` to the rest of the system?**
   _4 weakly-connected nodes found - possible missing edges._
 - **Should `CallActivity` be split into smaller, more focused modules?**
-  _Cohesion score 0.07686932215234102 - nodes in this community are weakly interconnected._
-- **Why does `ChatActivity` connect `ChatActivity` to `.startCall`, `AlarmRingingService.java`, `IncomingCallActivity.java`, `.getPrefs`, `ChatMessage`, `.initViews`, `android.view.View`, `ChatActivity.java`, `.toContentValues`, `ChatMessageAdapter`, `ChatNotificationManager.java`, `ChatApiClient`, `.getMessages`, `.bind`, `ImageEditActivity.java`, `Override`?**
-  _High betweenness centrality (0.058) - this node is a cross-community bridge._
+  _Cohesion score 0.07609427609427609 - nodes in this community are weakly interconnected._
+- **Why does `ChatActivity` connect `ChatActivity` to `.getPrefs`, `com.zez.app.model.ChatMessage`, `ChatMessage`, `android.view.View`, `MainActivity.java`, `ChatLocalDbHelper`, `ChatMessageAdapter`, `android.os.Handler`, `.bind`, `.applyModeState`, `AlarmHelper.java`, `okhttp3.Call`, `ChatActivity.java`, `Override`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
 - **Should `AlarmItem` be split into smaller, more focused modules?**
-  _Cohesion score 0.12612612612612611 - nodes in this community are weakly interconnected._
-- **Why does `CallRecordItem` connect `CallRecordItem` to `CallRecordDbHelper`, `android.view.View`, `ChatActivity.java`, `.initViews`, `locale`, `MainActivity`, `CallRecordAdapter`, `CallSyncWorker`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
-- **Should `ContactsActivity` be split into smaller, more focused modules?**
-  _Cohesion score 0.0859465737514518 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11219512195121951 - nodes in this community are weakly interconnected._
+- **Why does `ChatMessageAdapter` connect `ChatMessageAdapter` to `com.zez.app.model.ChatMessage`, `ChatMessage`, `android.view.View`, `MainActivity.java`, `ChatLocalDbHelper`, `ChatActivity`, `.bind`, `Adapter`, `CallRecordAdapter.java`, `ChatActivity.java`?**
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+- **Should `AudioPlaybackManager` be split into smaller, more focused modules?**
+  _Cohesion score 0.1422924901185771 - nodes in this community are weakly interconnected._
