@@ -84,6 +84,20 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     public String findMediaUrlForQuote(String quotedSender, String quotedText) {
+        if (quotedText != null && !quotedText.isEmpty()) {
+            for (int i = rowItems.size() - 1; i >= 0; i--) {
+                ChatRowItem item = rowItems.get(i);
+                if (!item.isHeader && item.message != null) {
+                    ChatMessage m = item.message;
+                    if (m.getMediaUrl() != null && !m.getMediaUrl().trim().isEmpty()) {
+                        String snip = m.getDisplaySnippet();
+                        if (quotedText.equals(snip) || (m.getMessageText() != null && m.getMessageText().equals(quotedText))) {
+                            return m.getMediaUrl();
+                        }
+                    }
+                }
+            }
+        }
         for (int i = rowItems.size() - 1; i >= 0; i--) {
             ChatRowItem item = rowItems.get(i);
             if (!item.isHeader && item.message != null) {
@@ -647,11 +661,21 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         void bind(ChatMessage msg, ChatMessageAdapter adapter, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
+            int nightMode = itemView.getContext().getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            boolean isSysDark = (nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES);
+            String customIncoming = com.zez.app.util.PreferencesHelper.getIncomingBubbleColor(itemView.getContext());
+            boolean isDark = isSysDark;
+
             if (msg.isDeletedForEveryone()) {
                 tvText.setVisibility(View.VISIBLE);
                 tvText.setText("🚫 This message was deleted");
                 tvText.setTypeface(null, android.graphics.Typeface.ITALIC);
-                tvText.setTextColor(Color.parseColor("#94A3B8"));
+                if (customIncoming != null && !customIncoming.trim().isEmpty()) {
+                    try {
+                        isDark = isColorDark(Color.parseColor(customIncoming));
+                    } catch (Exception ignored) {}
+                }
+                tvText.setTextColor(isDark ? Color.parseColor("#94A3B8") : Color.parseColor("#475569"));
                 if (layoutMedia != null) layoutMedia.setVisibility(View.GONE);
                 if (layoutFile != null) layoutFile.setVisibility(View.GONE);
                 if (layoutQuote != null) layoutQuote.setVisibility(View.GONE);
@@ -663,16 +687,16 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             tvText.setTypeface(null, android.graphics.Typeface.NORMAL);
 
             // Contrast & Custom Incoming Bubble Color
-            String customIncoming = com.zez.app.util.PreferencesHelper.getIncomingBubbleColor(itemView.getContext());
             if (customIncoming != null && !customIncoming.trim().isEmpty() && layoutBubble != null && layoutBubble.getBackground() != null) {
                 try {
                     int bubbleColor = Color.parseColor(customIncoming);
                     layoutBubble.getBackground().mutate().setTint(bubbleColor);
-                    boolean isDark = isColorDark(bubbleColor);
+                    isDark = isColorDark(bubbleColor);
                     tvText.setTextColor(isDark ? Color.WHITE : Color.parseColor("#0F172A"));
                     tvTime.setTextColor(isDark ? Color.parseColor("#94A3B8") : Color.parseColor("#64748B"));
                 } catch (Exception e) {
                     layoutBubble.getBackground().mutate().setTintList(null);
+                    isDark = isSysDark;
                     tvText.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_primary));
                     tvTime.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_muted));
                 }
@@ -680,6 +704,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (layoutBubble != null && layoutBubble.getBackground() != null) {
                     layoutBubble.getBackground().mutate().setTintList(null);
                 }
+                isDark = isSysDark;
                 tvText.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_primary));
                 tvTime.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_muted));
             }
@@ -688,7 +713,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (msg.hasQuotedReply()) {
                     layoutQuote.setVisibility(View.VISIBLE);
                     if (tvQuoteSender != null) tvQuoteSender.setText(msg.getQuotedSender());
-                    if (tvQuoteText != null) tvQuoteText.setText(msg.getQuotedText());
+                    if (tvQuoteText != null) {
+                        tvQuoteText.setText(msg.getQuotedText());
+                        tvQuoteText.setTextColor(isDark ? Color.parseColor("#CBD5E1") : Color.parseColor("#475569"));
+                    }
                     if (ivQuoteImage != null) {
                         String qMediaUrl = msg.getQuotedMediaUrl();
                         String qText = msg.getQuotedText();
