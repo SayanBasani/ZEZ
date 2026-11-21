@@ -60,6 +60,8 @@ public class CallRecordItem implements Serializable {
 
     public void setDurationSeconds(int durationSeconds) { this.durationSeconds = durationSeconds; }
     public void setFileSize(long fileSize) { this.fileSize = fileSize; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setContactName(String contactName) { this.contactName = contactName; }
 
     public boolean fileExists() {
         if (filePath == null) return false;

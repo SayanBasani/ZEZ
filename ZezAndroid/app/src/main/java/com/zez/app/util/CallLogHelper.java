@@ -18,6 +18,14 @@ public class CallLogHelper {
         return getCallLogs(context, 0);
     }
 
+    public static CallLogItem getLastCallLog(Context context) {
+        List<CallLogItem> list = getCallLogs(context, 1);
+        if (list != null && !list.isEmpty()) {
+            return list.get(0);
+        }
+        return null;
+    }
+
     public static List<CallLogItem> getCallLogs(Context context, int limit) {
         List<CallLogItem> list = new ArrayList<>();
         Uri queryUri = CallLog.Calls.CONTENT_URI;

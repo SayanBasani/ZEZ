@@ -34,8 +34,25 @@ public class CallLogAdapter extends RecyclerView.Adapter<CallLogAdapter.CallView
     @Override
     public void onBindViewHolder(@NonNull CallViewHolder holder, int position) {
         CallLogItem item = calls.get(position);
-        holder.tvName.setText(item.getName());
-        holder.tvNumber.setText(item.getPhoneNumber() != null ? item.getPhoneNumber() : "");
+        String name = item.getName();
+        String phone = item.getPhoneNumber() != null ? item.getPhoneNumber().trim() : "";
+        if (name == null || name.trim().isEmpty() || "Unknown".equalsIgnoreCase(name.trim())) {
+            if (!phone.isEmpty()) {
+                holder.tvName.setText(phone);
+                holder.tvNumber.setVisibility(View.GONE);
+            } else {
+                holder.tvName.setText("Unknown Contact");
+                holder.tvNumber.setVisibility(View.GONE);
+            }
+        } else {
+            holder.tvName.setText(name);
+            if (!phone.isEmpty() && !phone.equals(name)) {
+                holder.tvNumber.setText(phone);
+                holder.tvNumber.setVisibility(View.VISIBLE);
+            } else {
+                holder.tvNumber.setVisibility(View.GONE);
+            }
+        }
         holder.tvType.setText(item.getType());
 
         if ("INCOMING".equals(item.getType())) {

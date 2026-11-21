@@ -53,7 +53,16 @@ public class CallRecordService extends Service {
                     startForeground(NOTIFICATION_ID, notification);
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Failed startForeground: " + e.getMessage(), e);
+                Log.e(TAG, "Failed startForeground with microphone: " + e.getMessage(), e);
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+                    } else {
+                        startForeground(NOTIFICATION_ID, notification);
+                    }
+                } catch (Exception ex) {
+                    Log.e(TAG, "Failed fallback startForeground: " + ex.getMessage(), ex);
+                }
             }
 
             String phoneNumber = intent.getStringExtra(EXTRA_PHONE_NUMBER);

@@ -108,6 +108,25 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
         }
     }
 
+    public synchronized void updateContactAndPhone(String id, String phoneNumber, String contactName) {
+        if (id == null) return;
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+                cv.put(COL_PHONE_NUMBER, phoneNumber.trim());
+            }
+            if (contactName != null && !contactName.trim().isEmpty()) {
+                cv.put(COL_CONTACT_NAME, contactName.trim());
+            }
+            if (cv.size() > 0) {
+                db.update(TABLE_RECORDINGS, cv, COL_ID + " = ?", new String[]{id});
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating contact & phone: " + e.getMessage(), e);
+        }
+    }
+
     public synchronized List<CallRecordItem> getAllRecordings() {
         List<CallRecordItem> list = new ArrayList<>();
         try {

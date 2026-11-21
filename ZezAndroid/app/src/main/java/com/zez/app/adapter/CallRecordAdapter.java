@@ -109,8 +109,15 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
         void bind(CallRecordItem item) {
             int accentColor = PreferencesHelper.getAccentColorInt(context);
 
-            tvContactName.setText(item.getContactName());
-            tvPhoneNumber.setText(item.getPhoneNumber());
+            String displayName = item.getContactName();
+            String phone = item.getPhoneNumber();
+            tvContactName.setText(displayName);
+            if (phone != null && !phone.trim().isEmpty() && !phone.equals(displayName)) {
+                tvPhoneNumber.setText(phone);
+                tvPhoneNumber.setVisibility(View.VISIBLE);
+            } else {
+                tvPhoneNumber.setVisibility(View.GONE);
+            }
             tvDate.setText(item.getFormattedDate());
             tvSize.setText(item.getFormattedSize());
             tvTimeTotal.setText(item.getFormattedDuration());

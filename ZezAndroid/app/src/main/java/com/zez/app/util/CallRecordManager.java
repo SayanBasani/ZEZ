@@ -59,6 +59,25 @@ public class CallRecordManager {
         return isRecording;
     }
 
+    public synchronized void updateCurrentCallNumber(String number) {
+        if (number == null || number.trim().isEmpty()) return;
+        String trimmed = number.trim();
+        if (currentItem != null) {
+            String existing = currentItem.getPhoneNumber();
+            if (existing == null || existing.isEmpty() || existing.equalsIgnoreCase("unknown")) {
+                currentItem.setPhoneNumber(trimmed);
+                String currentName = currentItem.getContactName();
+                if (currentName.equalsIgnoreCase("Unknown Contact") || currentName.equalsIgnoreCase("Unknown")) {
+                    currentItem.setContactName(trimmed);
+                }
+                if (currentRecordId != null) {
+                    dbHelper.updateContactAndPhone(currentRecordId, trimmed, currentItem.getContactName());
+                }
+                Log.d(TAG, "Updated in-flight call recording with real number: " + trimmed);
+            }
+        }
+    }
+
     /**
      * Starts recording call audio silently.
      * Absolutely NO notification, NO toast, NO sound played to keep the user experience seamless.
@@ -93,35 +112,75 @@ public class CallRecordManager {
             File outputFile = new File(storageDir, fileName);
             currentFilePath = outputFile.getAbsolutePath();
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                mediaRecorder = new MediaRecorder(context);
+            // Candidate audio sources: VOICE_RECOGNITION has concurrent capture priority in Android 10-14,
+            // preventing the HAL silence/muting that disables AudioSource.MIC during active telephony calls.
+            int[] candidateSources;
+            if ("VOICE_CALL".equalsIgnoreCase(callType)) {
+                candidateSources = new int[]{
+                        MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                        MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                        MediaRecorder.AudioSource.MIC,
+                        MediaRecorder.AudioSource.DEFAULT
+                };
             } else {
-                mediaRecorder = new MediaRecorder();
+                candidateSources = new int[]{
+                        MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                        MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                        MediaRecorder.AudioSource.MIC,
+                        MediaRecorder.AudioSource.DEFAULT
+                };
             }
 
-            // Normal cellular calls MUST use MIC directly to prevent VoIP echo cancellation muting
-            int preferredSource = "VOICE_CALL".equalsIgnoreCase(callType)
-                    ? MediaRecorder.AudioSource.VOICE_COMMUNICATION
-                    : MediaRecorder.AudioSource.MIC;
-
-            try {
-                mediaRecorder.setAudioSource(preferredSource);
-            } catch (Exception e) {
-                Log.w(TAG, "Preferred audio source " + preferredSource + " failed: " + e.getMessage());
+            boolean prepared = false;
+            for (int source : candidateSources) {
                 try {
-                    mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-                } catch (Exception ex) {
-                    mediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+                    if (mediaRecorder != null) {
+                        try { mediaRecorder.release(); } catch (Exception ignored) {}
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        mediaRecorder = new MediaRecorder(context);
+                    } else {
+                        mediaRecorder = new MediaRecorder();
+                    }
+
+                    mediaRecorder.setAudioSource(source);
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        try {
+                            mediaRecorder.setPrivacySensitive(false);
+                        } catch (Exception ignored) {}
+                    }
+
+                    mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+                    mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+                    mediaRecorder.setAudioEncodingBitRate(128000);
+                    mediaRecorder.setAudioSamplingRate(44100);
+                    mediaRecorder.setOutputFile(currentFilePath);
+
+                    mediaRecorder.prepare();
+                    prepared = true;
+                    Log.d(TAG, "MediaRecorder successfully prepared with audio source: " + source);
+                    break;
+                } catch (Exception e) {
+                    Log.w(TAG, "AudioSource " + source + " preparation failed: " + e.getMessage());
                 }
             }
 
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-            mediaRecorder.setAudioEncodingBitRate(128000);
-            mediaRecorder.setAudioSamplingRate(44100);
-            mediaRecorder.setOutputFile(currentFilePath);
+            if (!prepared) {
+                Log.e(TAG, "All candidate audio sources failed to prepare.");
+                releaseRecorder();
+                isRecording = false;
+                return false;
+            }
 
-            mediaRecorder.prepare();
+            // Ensure microphone is unmuted
+            try {
+                android.media.AudioManager am = (android.media.AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+                if (am != null && am.isMicrophoneMute()) {
+                    am.setMicrophoneMute(false);
+                }
+            } catch (Exception ignored) {}
+
             mediaRecorder.start();
 
             isRecording = true;
@@ -194,6 +253,28 @@ public class CallRecordManager {
                 if (finishedItem != null) {
                     finishedItem.setDurationSeconds((int) durationSec);
                     finishedItem.setFileSize(fileSize);
+
+                    // Resolve actual number and contact name from system CallLog if unknown or empty
+                    if (finishedItem.getPhoneNumber().isEmpty() || finishedItem.getPhoneNumber().equalsIgnoreCase("unknown")) {
+                        try {
+                            com.zez.app.model.CallLogItem latestCall = CallLogHelper.getLastCallLog(context);
+                            if (latestCall != null && latestCall.getPhoneNumber() != null && !latestCall.getPhoneNumber().trim().isEmpty()) {
+                                String realNum = latestCall.getPhoneNumber().trim();
+                                String realName = latestCall.getName();
+                                if (realName == null || realName.trim().isEmpty() || "Unknown".equalsIgnoreCase(realName.trim())) {
+                                    realName = realNum;
+                                }
+                                finishedItem.setPhoneNumber(realNum);
+                                finishedItem.setContactName(realName);
+                                if (currentRecordId != null) {
+                                    dbHelper.updateContactAndPhone(currentRecordId, realNum, realName);
+                                }
+                                Log.d(TAG, "Resolved finished recording number from CallLog: " + realNum + " (" + realName + ")");
+                            }
+                        } catch (Exception e) {
+                            Log.w(TAG, "Failed resolving call number from CallLog: " + e.getMessage());
+                        }
+                    }
                 }
                 if (currentRecordId != null) {
                     dbHelper.updateDurationAndSize(currentRecordId, (int) durationSec, fileSize);
