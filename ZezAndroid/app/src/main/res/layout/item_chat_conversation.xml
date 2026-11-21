@@ -27,9 +27,8 @@
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_person"
-            app:tint="@color/theme_text_secondary"
             android:background="@drawable/bg_circle_glass"
-            android:padding="10dp" />
+            android:padding="0dp" />
 
         <TextView
             android:id="@+id/tv_conv_avatar_initials"

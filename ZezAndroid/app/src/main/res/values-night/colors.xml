@@ -9,6 +9,7 @@
     <color name="theme_background">#141415</color>
     <color name="theme_surface">#19191B</color>
     <color name="theme_card_border">#232325</color>
+    <color name="theme_border">#232325</color>
     <color name="theme_app_bar">#19191B</color>
     <color name="theme_bottom_nav_bg">#19191B</color>
     <color name="theme_text_primary">#EDEDED</color>

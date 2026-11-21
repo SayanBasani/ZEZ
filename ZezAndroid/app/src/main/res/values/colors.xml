@@ -9,6 +9,7 @@
     <color name="theme_background">#FAFAFA</color>
     <color name="theme_surface">#FFFFFF</color>
     <color name="theme_card_border">#E4E4E7</color>
+    <color name="theme_border">#E4E4E7</color>
     <color name="theme_app_bar">#FFFFFF</color>
     <color name="theme_bottom_nav_bg">#FFFFFF</color>
     <color name="theme_text_primary">#171717</color>

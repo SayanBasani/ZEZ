@@ -89,10 +89,13 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 ChatRowItem item = rowItems.get(i);
                 if (!item.isHeader && item.message != null) {
                     ChatMessage m = item.message;
-                    if (m.getMediaUrl() != null && !m.getMediaUrl().trim().isEmpty()) {
+                    String source = (m.getLocalUri() != null && !m.getLocalUri().trim().isEmpty())
+                            ? m.getLocalUri().trim()
+                            : m.getMediaUrl();
+                    if (source != null && !source.trim().isEmpty()) {
                         String snip = m.getDisplaySnippet();
                         if (quotedText.equals(snip) || (m.getMessageText() != null && m.getMessageText().equals(quotedText))) {
-                            return m.getMediaUrl();
+                            return source;
                         }
                     }
                 }
@@ -102,8 +105,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             ChatRowItem item = rowItems.get(i);
             if (!item.isHeader && item.message != null) {
                 ChatMessage m = item.message;
-                if (m.getMediaUrl() != null && !m.getMediaUrl().trim().isEmpty()) {
-                    return m.getMediaUrl();
+                String source = (m.getLocalUri() != null && !m.getLocalUri().trim().isEmpty())
+                        ? m.getLocalUri().trim()
+                        : m.getMediaUrl();
+                if (source != null && !source.trim().isEmpty()) {
+                    return source;
                 }
             }
         }
@@ -556,10 +562,12 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 qMediaUrl = adapter.findMediaUrlForQuote(msg.getQuotedSender(), qText);
                             }
                             if (qMediaUrl != null && !qMediaUrl.isEmpty()) {
-                                String fullUrl = ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), qMediaUrl);
+                                Object quoteTarget = (qMediaUrl.startsWith("content://") || qMediaUrl.startsWith("file://"))
+                                        ? Uri.parse(qMediaUrl)
+                                        : ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), qMediaUrl);
                                 ivQuoteImage.clearColorFilter();
                                 Glide.with(itemView.getContext())
-                                        .load(fullUrl)
+                                        .load(quoteTarget)
                                         .centerCrop()
                                         .placeholder(R.drawable.ic_photo_library)
                                         .error(R.drawable.ic_photo_library)
@@ -687,35 +695,37 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             tvText.setTypeface(null, android.graphics.Typeface.NORMAL);
 
             // Contrast & Custom Incoming Bubble Color
+            boolean bubbleIsDark = isSysDark;
             if (customIncoming != null && !customIncoming.trim().isEmpty() && layoutBubble != null && layoutBubble.getBackground() != null) {
                 try {
                     int bubbleColor = Color.parseColor(customIncoming);
                     layoutBubble.getBackground().mutate().setTint(bubbleColor);
-                    isDark = isColorDark(bubbleColor);
-                    tvText.setTextColor(isDark ? Color.WHITE : Color.parseColor("#0F172A"));
-                    tvTime.setTextColor(isDark ? Color.parseColor("#94A3B8") : Color.parseColor("#64748B"));
+                    bubbleIsDark = isColorDark(bubbleColor);
                 } catch (Exception e) {
                     layoutBubble.getBackground().mutate().setTintList(null);
-                    isDark = isSysDark;
-                    tvText.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_primary));
-                    tvTime.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_muted));
+                    bubbleIsDark = isSysDark;
                 }
             } else {
                 if (layoutBubble != null && layoutBubble.getBackground() != null) {
                     layoutBubble.getBackground().mutate().setTintList(null);
                 }
-                isDark = isSysDark;
-                tvText.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_primary));
-                tvTime.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.theme_text_muted));
+                bubbleIsDark = isSysDark;
             }
+
+            // Always enforce high contrast: Crisp dark charcoal on light bubble, pure white on dark bubble
+            tvText.setTextColor(bubbleIsDark ? Color.parseColor("#F8FAFC") : Color.parseColor("#0F172A"));
+            tvTime.setTextColor(bubbleIsDark ? Color.parseColor("#94A3B8") : Color.parseColor("#64748B"));
 
             if (layoutQuote != null) {
                 if (msg.hasQuotedReply()) {
                     layoutQuote.setVisibility(View.VISIBLE);
-                    if (tvQuoteSender != null) tvQuoteSender.setText(msg.getQuotedSender());
+                    if (tvQuoteSender != null) {
+                        tvQuoteSender.setText(msg.getQuotedSender());
+                        tvQuoteSender.setTextColor(bubbleIsDark ? Color.parseColor("#4ADE80") : Color.parseColor("#16A34A"));
+                    }
                     if (tvQuoteText != null) {
                         tvQuoteText.setText(msg.getQuotedText());
-                        tvQuoteText.setTextColor(isDark ? Color.parseColor("#CBD5E1") : Color.parseColor("#475569"));
+                        tvQuoteText.setTextColor(bubbleIsDark ? Color.parseColor("#CBD5E1") : Color.parseColor("#334155"));
                     }
                     if (ivQuoteImage != null) {
                         String qMediaUrl = msg.getQuotedMediaUrl();
@@ -728,10 +738,12 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 qMediaUrl = adapter.findMediaUrlForQuote(msg.getQuotedSender(), qText);
                             }
                             if (qMediaUrl != null && !qMediaUrl.isEmpty()) {
-                                String fullUrl = ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), qMediaUrl);
+                                Object quoteTarget = (qMediaUrl.startsWith("content://") || qMediaUrl.startsWith("file://"))
+                                        ? Uri.parse(qMediaUrl)
+                                        : ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), qMediaUrl);
                                 ivQuoteImage.clearColorFilter();
                                 Glide.with(itemView.getContext())
-                                        .load(fullUrl)
+                                        .load(quoteTarget)
                                         .centerCrop()
                                         .placeholder(R.drawable.ic_photo_library)
                                         .error(R.drawable.ic_photo_library)
@@ -768,17 +780,29 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     private static void bindMedia(Context context, ChatMessage msg, FrameLayout layoutMedia, ImageView ivImage, ImageView ivPlay, LinearLayout layoutFile, TextView tvFileName, TextView tvFileSize) {
-        String mediaUrl = msg.getMediaUrl();
-        if (mediaUrl == null || mediaUrl.trim().isEmpty()) {
+        String rawMedia = (msg.getLocalUri() != null && !msg.getLocalUri().trim().isEmpty())
+                ? msg.getLocalUri().trim()
+                : msg.getMediaUrl();
+
+        if (rawMedia == null || rawMedia.trim().isEmpty()) {
             if (layoutMedia != null) layoutMedia.setVisibility(View.GONE);
             if (layoutFile != null) layoutFile.setVisibility(View.GONE);
             return;
         }
 
-        String fullUrl = ChatApiClient.getAbsoluteMediaUrl(context, mediaUrl);
+        final Object loadTarget;
+        final String fullUrl;
+        if (rawMedia.startsWith("content://") || rawMedia.startsWith("file://")) {
+            loadTarget = Uri.parse(rawMedia);
+            fullUrl = rawMedia;
+        } else {
+            fullUrl = ChatApiClient.getAbsoluteMediaUrl(context, rawMedia);
+            loadTarget = fullUrl;
+        }
+
         String mediaType = msg.getMediaType();
         if (mediaType == null || mediaType.trim().isEmpty() || "file".equalsIgnoreCase(mediaType)) {
-            String lowerUrl = mediaUrl != null ? mediaUrl.toLowerCase() : "";
+            String lowerUrl = rawMedia.toLowerCase();
             String lowerName = msg.getFileName() != null ? msg.getFileName().toLowerCase() : "";
             String lowerText = msg.getMessageText() != null ? msg.getMessageText().toLowerCase() : "";
 
@@ -788,7 +812,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 mediaType = "video";
             } else if (lowerUrl.startsWith("content://")) {
                 try {
-                    String mime = context.getContentResolver().getType(Uri.parse(mediaUrl));
+                    String mime = context.getContentResolver().getType(Uri.parse(rawMedia));
                     if (mime != null) {
                         if (mime.startsWith("image/")) mediaType = "image";
                         else if (mime.startsWith("video/")) mediaType = "video";
@@ -806,8 +830,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (layoutMedia != null) {
                 layoutMedia.setVisibility(View.VISIBLE);
                 if (ivImage != null) {
+                    ivImage.clearColorFilter();
                     Glide.with(context)
-                            .load(fullUrl)
+                            .load(loadTarget)
                             .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
                             .placeholder(R.drawable.bg_search_input)
                             .error(R.drawable.ic_photo_library)

@@ -16,7 +16,7 @@ import java.util.List;
 public class ChatLocalDbHelper extends SQLiteOpenHelper {
     private static final String TAG = "ChatLocalDbHelper";
     private static final String DATABASE_NAME = "zez_chat_local.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_MESSAGES = "local_chat_messages";
     private static final String COL_ID = "id";
@@ -25,6 +25,7 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
     private static final String COL_RECEIVER_ID = "receiver_id";
     private static final String COL_MSG_TEXT = "message_text";
     private static final String COL_MEDIA_URL = "media_url";
+    private static final String COL_LOCAL_URI = "local_uri";
     private static final String COL_MEDIA_TYPE = "media_type";
     private static final String COL_FILE_NAME = "file_name";
     private static final String COL_FILE_SIZE = "file_size";
@@ -57,6 +58,7 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
                 + COL_RECEIVER_ID + " TEXT, "
                 + COL_MSG_TEXT + " TEXT, "
                 + COL_MEDIA_URL + " TEXT, "
+                + COL_LOCAL_URI + " TEXT, "
                 + COL_MEDIA_TYPE + " TEXT, "
                 + COL_FILE_NAME + " TEXT, "
                 + COL_FILE_SIZE + " INTEGER, "
@@ -73,8 +75,11 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGES);
-        onCreate(db);
+        if (oldVersion < 2) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_MESSAGES + " ADD COLUMN " + COL_LOCAL_URI + " TEXT;");
+            } catch (Exception ignored) {}
+        }
     }
 
     public synchronized void saveMessage(ChatMessage msg) {
@@ -217,6 +222,7 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
         cv.put(COL_RECEIVER_ID, msg.getReceiverId());
         cv.put(COL_MSG_TEXT, msg.getMessageText());
         cv.put(COL_MEDIA_URL, msg.getMediaUrl());
+        cv.put(COL_LOCAL_URI, msg.getLocalUri());
         cv.put(COL_MEDIA_TYPE, msg.getMediaType());
         cv.put(COL_FILE_NAME, msg.getFileName());
         if (msg.getFileSize() != null) cv.put(COL_FILE_SIZE, msg.getFileSize());
@@ -237,6 +243,9 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
         msg.setReceiverId(cursor.getString(cursor.getColumnIndexOrThrow(COL_RECEIVER_ID)));
         msg.setMessageText(cursor.getString(cursor.getColumnIndexOrThrow(COL_MSG_TEXT)));
         msg.setMediaUrl(cursor.getString(cursor.getColumnIndexOrThrow(COL_MEDIA_URL)));
+        if (!cursor.isNull(cursor.getColumnIndexOrThrow(COL_LOCAL_URI))) {
+            msg.setLocalUri(cursor.getString(cursor.getColumnIndexOrThrow(COL_LOCAL_URI)));
+        }
         msg.setMediaType(cursor.getString(cursor.getColumnIndexOrThrow(COL_MEDIA_TYPE)));
         msg.setFileName(cursor.getString(cursor.getColumnIndexOrThrow(COL_FILE_NAME)));
         if (!cursor.isNull(cursor.getColumnIndexOrThrow(COL_FILE_SIZE))) {

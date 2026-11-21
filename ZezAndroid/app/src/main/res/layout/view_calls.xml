@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/view_calls_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/theme_background"
+    android:visibility="gone">
+
+    <!-- Segmented Tab Bar: Recordings & Call Logs -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="6dp"
+        android:gravity="center_vertical">
+
+        <!-- Tab Recordings Pill -->
+        <LinearLayout
+            android:id="@+id/tab_btn_recordings"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_selected"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/iv_tab_recordings_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_mic"
+                app:tint="@android:color/white" />
+
+            <TextView
+                android:id="@+id/tv_tab_recordings_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recordings"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="6dp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="0dp" />
+
+        <!-- Tab Call Logs Pill -->
+        <LinearLayout
+            android:id="@+id/tab_btn_call_logs"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_unselected"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/iv_tab_call_logs_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_call"
+                app:tint="@color/theme_text_muted" />
+
+            <TextView
+                android:id="@+id/tv_tab_call_logs_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Call Logs"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/theme_text_muted"
+                android:layout_marginStart="6dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Search Input -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginVertical="6dp"
+        android:background="@drawable/bg_search_input"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="12dp">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_search"
+            app:tint="@color/theme_text_muted" />
+
+        <EditText
+            android:id="@+id/et_search_calls"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:hint="Search recordings &amp; calls..."
+            android:textColor="@color/theme_text_primary"
+            android:textColorHint="@color/theme_text_muted"
+            android:textSize="13sp"
+            android:paddingStart="10dp"
+            android:singleLine="true" />
+    </LinearLayout>
+
+    <!-- Container for List Content -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- Recordings View -->
+        <LinearLayout
+            android:id="@+id/layout_recordings_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipe_refresh_recordings"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_call_recordings"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingVertical="4dp" />
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        </LinearLayout>
+
+        <!-- Call Logs View -->
+        <LinearLayout
+            android:id="@+id/layout_call_logs_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipe_refresh_calls"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_calls"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:padding="8dp" />
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        </LinearLayout>
+
+        <!-- Empty State for Recordings -->
+        <LinearLayout
+            android:id="@+id/layout_empty_recordings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="24dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_mic"
+                app:tint="@color/theme_text_muted" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No Call Recordings Yet"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/theme_text_primary"
+                android:layout_marginTop="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Normal voice calls and phone calls are automatically recorded and saved in this app."
+                android:textSize="12sp"
+                android:textColor="@color/theme_text_muted"
+                android:gravity="center"
+                android:layout_marginTop="6dp" />
+        </LinearLayout>
+
+        <!-- Empty State for Call Logs -->
+        <LinearLayout
+            android:id="@+id/layout_empty_calls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="24dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_call"
+                app:tint="@color/theme_text_muted" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No Call Logs Found"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/theme_text_primary"
+                android:layout_marginTop="12dp" />
+        </LinearLayout>
+
+    </FrameLayout>
+</LinearLayout>
