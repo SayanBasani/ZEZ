@@ -31,6 +31,9 @@ public class ChatMessage implements Serializable {
     @SerializedName("media_url")
     private String mediaUrl;
 
+    @SerializedName("local_uri")
+    private String localUri;
+
     @SerializedName("media_type")
     private String mediaType;
 
@@ -95,6 +98,9 @@ public class ChatMessage implements Serializable {
 
     public String getMediaUrl() { return mediaUrl; }
     public void setMediaUrl(String mediaUrl) { this.mediaUrl = mediaUrl; }
+
+    public String getLocalUri() { return localUri; }
+    public void setLocalUri(String localUri) { this.localUri = localUri; }
 
     public String getMediaType() { return mediaType; }
     public void setMediaType(String mediaType) { this.mediaType = mediaType; }
@@ -161,10 +167,16 @@ public class ChatMessage implements Serializable {
             if (firstPipe != -1 && closeIdx > firstPipe) {
                 int secondPipe = messageText.indexOf('|', firstPipe + 1);
                 int endIdx = (secondPipe != -1 && secondPipe < closeIdx) ? secondPipe : closeIdx;
-                return messageText.substring(firstPipe + 1, endIdx).trim();
+                String snip = messageText.substring(firstPipe + 1, endIdx).trim();
+                if (!snip.isEmpty()) return snip;
             }
         } catch (Exception ignored) {}
-        return "";
+        if (getQuotedMediaUrl() != null) {
+            String q = getQuotedMediaUrl().toLowerCase();
+            if (q.contains(".mp4") || q.contains("video")) return "🎥 Video";
+            return "📷 Photo";
+        }
+        return "Message";
     }
 
     public String getQuotedMediaUrl() {

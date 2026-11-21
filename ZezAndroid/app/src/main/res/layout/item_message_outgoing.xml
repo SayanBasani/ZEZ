@@ -22,7 +22,7 @@
         <!-- Quoted Reply Box (Top of bubble, WhatsApp Style) -->
         <LinearLayout
             android:id="@+id/layout_msg_outgoing_quote"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:minWidth="180dp"
             android:orientation="horizontal"
@@ -37,6 +37,7 @@
             <View
                 android:layout_width="3dp"
                 android:layout_height="match_parent"
+                android:minHeight="36dp"
                 android:background="#A7F3D0"
                 android:layout_marginEnd="6dp" />
 
@@ -44,6 +45,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:minWidth="120dp"
                 android:orientation="vertical">
 
                 <TextView

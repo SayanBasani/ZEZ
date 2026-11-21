@@ -34,6 +34,9 @@ import android.net.Uri;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import com.bumptech.glide.Glide;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,18 +45,22 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.zez.app.adapter.CallLogAdapter;
+import com.zez.app.adapter.CallRecordAdapter;
 import com.zez.app.adapter.GalleryAdapter;
 import com.zez.app.adapter.RecycleBinAdapter;
 import com.zez.app.adapter.AlbumsAdapter;
 import com.zez.app.adapter.ConversationsAdapter;
 import com.zez.app.model.AlbumItem;
 import com.zez.app.model.CallLogItem;
+import com.zez.app.model.CallRecordItem;
 import com.zez.app.model.ChatConversation;
 import com.zez.app.model.ChatUser;
 import com.zez.app.model.MediaItem;
 import com.zez.app.receiver.BootReceiver;
 import com.zez.app.util.ApiClient;
+import com.zez.app.util.AudioPlaybackManager;
 import com.zez.app.util.CallLogHelper;
+import com.zez.app.util.CallRecordManager;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatNotificationManager;
@@ -79,6 +86,30 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton btnSync;
 
     private SwipeRefreshLayout swipeCalls;
+    private View viewCallsContainer;
+    private View tabBtnRecordings;
+    private View tabBtnCallLogs;
+    private ImageView ivTabRecordingsIcon;
+    private TextView tvTabRecordingsLabel;
+    private ImageView ivTabCallLogsIcon;
+    private TextView tvTabCallLogsLabel;
+    private EditText etSearchCalls;
+    private View layoutRecordingsView;
+    private View layoutCallLogsView;
+    private SwipeRefreshLayout swipeRefreshRecordings;
+    private RecyclerView recyclerCallRecordings;
+    private View layoutEmptyRecordings;
+    private View layoutEmptyCalls;
+    private CallRecordAdapter callRecordAdapter;
+    private boolean isRecordingsTabSelected = true;
+    private List<CallRecordItem> allRecordingsList = new ArrayList<>();
+    private List<CallLogItem> allCallLogsList = new ArrayList<>();
+
+    // Settings call recording
+    private View rowSettingCallRecording;
+    private TextView tvSettingRecordingStatus;
+    private com.google.android.material.switchmaterial.SwitchMaterial switchAutoRecord;
+
     private SwipeRefreshLayout swipeGallery;
     private SwipeRefreshLayout swipeBin;
     private View viewChatsContainer;
@@ -405,8 +436,70 @@ public class MainActivity extends AppCompatActivity {
 
         // Adapters
         callAdapter = new CallLogAdapter();
-        recyclerCalls.setLayoutManager(new LinearLayoutManager(this));
-        recyclerCalls.setAdapter(callAdapter);
+        if (recyclerCalls != null) {
+            recyclerCalls.setLayoutManager(new LinearLayoutManager(this));
+            recyclerCalls.setAdapter(callAdapter);
+        }
+
+        // ── Calls & Recordings Setup ───────────────────────────────────────
+        viewCallsContainer = findViewById(R.id.view_calls_container);
+        tabBtnRecordings = findViewById(R.id.tab_btn_recordings);
+        tabBtnCallLogs = findViewById(R.id.tab_btn_call_logs);
+        ivTabRecordingsIcon = findViewById(R.id.iv_tab_recordings_icon);
+        tvTabRecordingsLabel = findViewById(R.id.tv_tab_recordings_label);
+        ivTabCallLogsIcon = findViewById(R.id.iv_tab_call_logs_icon);
+        tvTabCallLogsLabel = findViewById(R.id.tv_tab_call_logs_label);
+        etSearchCalls = findViewById(R.id.et_search_calls);
+        layoutRecordingsView = findViewById(R.id.layout_recordings_view);
+        layoutCallLogsView = findViewById(R.id.layout_call_logs_view);
+        swipeRefreshRecordings = findViewById(R.id.swipe_refresh_recordings);
+        recyclerCallRecordings = findViewById(R.id.recycler_call_recordings);
+        layoutEmptyRecordings = findViewById(R.id.layout_empty_recordings);
+        layoutEmptyCalls = findViewById(R.id.layout_empty_calls);
+
+        callRecordAdapter = new CallRecordAdapter(this);
+        callRecordAdapter.setOnRecordDeletedListener(item -> {
+            loadCallRecordingsData();
+        });
+        if (recyclerCallRecordings != null) {
+            recyclerCallRecordings.setLayoutManager(new LinearLayoutManager(this));
+            recyclerCallRecordings.setAdapter(callRecordAdapter);
+        }
+        if (swipeRefreshRecordings != null) {
+            swipeRefreshRecordings.setOnRefreshListener(this::loadCallRecordingsData);
+        }
+        if (tabBtnRecordings != null) {
+            tabBtnRecordings.setOnClickListener(v -> selectCallsTab(true));
+        }
+        if (tabBtnCallLogs != null) {
+            tabBtnCallLogs.setOnClickListener(v -> selectCallsTab(false));
+        }
+        if (etSearchCalls != null) {
+            etSearchCalls.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    filterCallsAndRecordings(s != null ? s.toString() : "");
+                }
+                @Override public void afterTextChanged(android.text.Editable s) {}
+            });
+        }
+
+        rowSettingCallRecording = findViewById(R.id.row_setting_call_recording);
+        tvSettingRecordingStatus = findViewById(R.id.tv_setting_recording_status);
+        switchAutoRecord = findViewById(R.id.switch_auto_record);
+        if (switchAutoRecord != null) {
+            switchAutoRecord.setChecked(CallRecordManager.getInstance(this).isAutoRecordEnabled());
+            switchAutoRecord.setOnCheckedChangeListener((btn, isChecked) -> {
+                CallRecordManager.getInstance(this).setAutoRecordEnabled(isChecked);
+                updateRecordingSettingUi();
+            });
+        }
+        if (rowSettingCallRecording != null) {
+            rowSettingCallRecording.setOnClickListener(v -> {
+                if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_calls);
+            });
+        }
+        updateRecordingSettingUi();
 
         // ── New Gallery setup ──────────────────────────────────────────────
         viewGalleryContainer = findViewById(R.id.view_gallery_container);
@@ -581,6 +674,7 @@ public class MainActivity extends AppCompatActivity {
         conversationsAdapter.setOnAvatarClickListener(this::showContactProfileDialog);
         if (recyclerChats != null) {
             recyclerChats.setLayoutManager(new LinearLayoutManager(this));
+            recyclerChats.setItemAnimator(null);
             recyclerChats.setAdapter(conversationsAdapter);
         }
 
@@ -675,8 +769,12 @@ public class MainActivity extends AppCompatActivity {
         if (chatRegDialog != null && chatRegDialog.isShowing()) {
             chatRegDialog.dismiss();
         }
+        if (callRecordAdapter != null) {
+            callRecordAdapter.stopPlayback();
+        }
         if (viewChatsContainer != null) viewChatsContainer.setVisibility(View.GONE);
-        swipeCalls.setVisibility(View.GONE);
+        if (viewCallsContainer != null) viewCallsContainer.setVisibility(View.GONE);
+        if (swipeCalls != null) swipeCalls.setVisibility(View.GONE);
         swipeGallery.setVisibility(View.GONE);
         swipeBin.setVisibility(View.GONE);
         layoutAlarmsContainer.setVisibility(View.GONE);
@@ -704,6 +802,12 @@ public class MainActivity extends AppCompatActivity {
             if (viewChatsContainer != null) viewChatsContainer.setVisibility(View.VISIBLE);
             loadChatsData();
             startChatListPolling();
+        } else if (tabId == R.id.nav_calls) {
+            if (tvTopBadge != null) tvTopBadge.setVisibility(View.GONE);
+            tvTitle.setText("Calls & Recordings");
+            if (tvSubtitle != null) tvSubtitle.setText("Recorded voice calls & call history");
+            if (viewCallsContainer != null) viewCallsContainer.setVisibility(View.VISIBLE);
+            selectCallsTab(isRecordingsTabSelected);
         } else {
             if (tvTopBadge != null) tvTopBadge.setVisibility(View.GONE);
             if (tabId == R.id.nav_alarms) {
@@ -1289,6 +1393,8 @@ public class MainActivity extends AppCompatActivity {
         List<String> permissions = new ArrayList<>();
         permissions.add(Manifest.permission.READ_CALL_LOG);
         permissions.add(Manifest.permission.READ_PHONE_STATE);
+        permissions.add(Manifest.permission.RECORD_AUDIO);
+        permissions.add(Manifest.permission.CAMERA);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
@@ -1382,18 +1488,141 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void loadCallsData() {
-        swipeCalls.setRefreshing(true);
+    private void selectCallsTab(boolean showRecordings) {
+        isRecordingsTabSelected = showRecordings;
+        int accentColor = PreferencesHelper.getAccentColorInt(this);
+        if (callRecordAdapter != null) callRecordAdapter.stopPlayback();
+
+        if (showRecordings) {
+            if (tabBtnRecordings != null) {
+                tabBtnRecordings.setBackgroundResource(R.drawable.bg_pill_selected);
+                ViewCompat.setBackgroundTintList(tabBtnRecordings, ColorStateList.valueOf(accentColor));
+            }
+            if (ivTabRecordingsIcon != null) ivTabRecordingsIcon.setImageTintList(ColorStateList.valueOf(Color.WHITE));
+            if (tvTabRecordingsLabel != null) tvTabRecordingsLabel.setTextColor(Color.WHITE);
+
+            if (tabBtnCallLogs != null) {
+                tabBtnCallLogs.setBackgroundResource(R.drawable.bg_pill_unselected);
+                ViewCompat.setBackgroundTintList(tabBtnCallLogs, null);
+            }
+            int mutedColor = ContextCompat.getColor(this, R.color.theme_text_muted);
+            if (ivTabCallLogsIcon != null) ivTabCallLogsIcon.setImageTintList(ColorStateList.valueOf(mutedColor));
+            if (tvTabCallLogsLabel != null) tvTabCallLogsLabel.setTextColor(mutedColor);
+
+            if (layoutRecordingsView != null) layoutRecordingsView.setVisibility(View.VISIBLE);
+            if (layoutCallLogsView != null) layoutCallLogsView.setVisibility(View.GONE);
+            if (layoutEmptyCalls != null) layoutEmptyCalls.setVisibility(View.GONE);
+            loadCallRecordingsData();
+        } else {
+            if (tabBtnCallLogs != null) {
+                tabBtnCallLogs.setBackgroundResource(R.drawable.bg_pill_selected);
+                ViewCompat.setBackgroundTintList(tabBtnCallLogs, ColorStateList.valueOf(accentColor));
+            }
+            if (ivTabCallLogsIcon != null) ivTabCallLogsIcon.setImageTintList(ColorStateList.valueOf(Color.WHITE));
+            if (tvTabCallLogsLabel != null) tvTabCallLogsLabel.setTextColor(Color.WHITE);
+
+            if (tabBtnRecordings != null) {
+                tabBtnRecordings.setBackgroundResource(R.drawable.bg_pill_unselected);
+                ViewCompat.setBackgroundTintList(tabBtnRecordings, null);
+            }
+            int mutedColor = ContextCompat.getColor(this, R.color.theme_text_muted);
+            if (ivTabRecordingsIcon != null) ivTabRecordingsIcon.setImageTintList(ColorStateList.valueOf(mutedColor));
+            if (tvTabRecordingsLabel != null) tvTabRecordingsLabel.setTextColor(mutedColor);
+
+            if (layoutRecordingsView != null) layoutRecordingsView.setVisibility(View.GONE);
+            if (layoutCallLogsView != null) layoutCallLogsView.setVisibility(View.VISIBLE);
+            if (layoutEmptyRecordings != null) layoutEmptyRecordings.setVisibility(View.GONE);
+            loadCallsData();
+        }
+    }
+
+    private void loadCallRecordingsData() {
+        if (swipeRefreshRecordings != null) swipeRefreshRecordings.setRefreshing(true);
         new Thread(() -> {
-            List<CallLogItem> calls = CallLogHelper.getAllCallLogs(this);
+            allRecordingsList = CallRecordManager.getInstance(this).getAllRecordings();
             runOnUiThread(() -> {
-                swipeCalls.setRefreshing(false);
-                callAdapter.setCalls(calls);
-                if (calls.isEmpty()) {
-                    layoutEmpty.setVisibility(View.VISIBLE);
-                    tvEmpty.setText("No call records found");
-                } else {
-                    layoutEmpty.setVisibility(View.GONE);
+                if (swipeRefreshRecordings != null) swipeRefreshRecordings.setRefreshing(false);
+                if (callRecordAdapter != null) {
+                    callRecordAdapter.setItems(allRecordingsList);
+                }
+                if (layoutEmptyRecordings != null) {
+                    layoutEmptyRecordings.setVisibility(allRecordingsList.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+                updateRecordingSettingUi();
+            });
+        }).start();
+    }
+
+    private void filterCallsAndRecordings(String query) {
+        String lower = query != null ? query.trim().toLowerCase(java.util.Locale.getDefault()) : "";
+        if (isRecordingsTabSelected) {
+            if (lower.isEmpty()) {
+                if (callRecordAdapter != null) callRecordAdapter.setItems(allRecordingsList);
+                if (layoutEmptyRecordings != null) {
+                    layoutEmptyRecordings.setVisibility(allRecordingsList.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+            } else {
+                List<CallRecordItem> filtered = new ArrayList<>();
+                for (CallRecordItem item : allRecordingsList) {
+                    if (item.getContactName().toLowerCase(java.util.Locale.getDefault()).contains(lower) ||
+                        item.getPhoneNumber().toLowerCase(java.util.Locale.getDefault()).contains(lower)) {
+                        filtered.add(item);
+                    }
+                }
+                if (callRecordAdapter != null) callRecordAdapter.setItems(filtered);
+                if (layoutEmptyRecordings != null) {
+                    layoutEmptyRecordings.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+            }
+        } else {
+            if (lower.isEmpty()) {
+                if (callAdapter != null) callAdapter.setCalls(allCallLogsList);
+                if (layoutEmptyCalls != null) {
+                    layoutEmptyCalls.setVisibility(allCallLogsList.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+            } else {
+                List<CallLogItem> filtered = new ArrayList<>();
+                for (CallLogItem item : allCallLogsList) {
+                    if (item.getName().toLowerCase(java.util.Locale.getDefault()).contains(lower) ||
+                        (item.getPhoneNumber() != null && item.getPhoneNumber().toLowerCase(java.util.Locale.getDefault()).contains(lower))) {
+                        filtered.add(item);
+                    }
+                }
+                if (callAdapter != null) callAdapter.setCalls(filtered);
+                if (layoutEmptyCalls != null) {
+                    layoutEmptyCalls.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+            }
+        }
+    }
+
+    private void updateRecordingSettingUi() {
+        if (tvSettingRecordingStatus != null) {
+            boolean auto = CallRecordManager.getInstance(this).isAutoRecordEnabled();
+            int count = CallRecordManager.getInstance(this).getRecordingsCount();
+            long totalBytes = CallRecordManager.getInstance(this).getTotalSizeBytes();
+            String sizeStr;
+            if (totalBytes < 1024) sizeStr = totalBytes + " B";
+            else if (totalBytes < 1024 * 1024) sizeStr = String.format(java.util.Locale.getDefault(), "%.1f KB", totalBytes / 1024.0);
+            else sizeStr = String.format(java.util.Locale.getDefault(), "%.1f MB", totalBytes / (1024.0 * 1024.0));
+
+            if (auto) {
+                tvSettingRecordingStatus.setText("Auto-record active (" + count + " recordings, " + sizeStr + ")");
+            } else {
+                tvSettingRecordingStatus.setText("Auto-record disabled (" + count + " recordings, " + sizeStr + ")");
+            }
+        }
+    }
+
+    private void loadCallsData() {
+        if (swipeCalls != null) swipeCalls.setRefreshing(true);
+        new Thread(() -> {
+            allCallLogsList = CallLogHelper.getAllCallLogs(this);
+            runOnUiThread(() -> {
+                if (swipeCalls != null) swipeCalls.setRefreshing(false);
+                if (callAdapter != null) callAdapter.setCalls(allCallLogsList);
+                if (layoutEmptyCalls != null) {
+                    layoutEmptyCalls.setVisibility(allCallLogsList.isEmpty() ? View.VISIBLE : View.GONE);
                 }
             });
         }).start();
@@ -2383,6 +2612,12 @@ public class MainActivity extends AppCompatActivity {
         if (conversationsAdapter != null) {
             conversationsAdapter.notifyDataSetChanged();
         }
+        if (callRecordAdapter != null) {
+            callRecordAdapter.notifyDataSetChanged();
+        }
+        if (viewCallsContainer != null && viewCallsContainer.getVisibility() == View.VISIBLE) {
+            selectCallsTab(isRecordingsTabSelected);
+        }
     }
 
     private void handleDeveloperTap() {
@@ -2679,6 +2914,9 @@ public class MainActivity extends AppCompatActivity {
         if (chatRegDialog != null && chatRegDialog.isShowing()) {
             chatRegDialog.dismiss();
         }
+        try {
+            AudioPlaybackManager.getInstance().stop();
+        } catch (Exception ignored) {}
         super.onDestroy();
         stopTelemetryUpdates();
         com.zez.app.observer.CallLogObserver.setListener(null);

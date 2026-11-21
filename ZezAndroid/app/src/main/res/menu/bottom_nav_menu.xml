@@ -5,6 +5,10 @@
         android:icon="@drawable/ic_chat"
         android:title="@string/nav_chats" />
     <item
+        android:id="@+id/nav_calls"
+        android:icon="@drawable/ic_call"
+        android:title="@string/nav_calls" />
+    <item
         android:id="@+id/nav_alarms"
         android:icon="@drawable/ic_alarm"
         android:title="@string/nav_alarms" />

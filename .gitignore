@@ -1,4 +1,5 @@
 # Built binaries & builds
+*.apk
 .gradle/
 build/
 */build/
@@ -31,8 +32,11 @@ yarn-error.log*
 *.jks
 *.keystore
 
-# User uploads & runtime media
+# User uploads & runtime media & disk caches
 Zez-Backend/src/public/uploads/
+Zez-Backend/public/
+Zez-Backend/src/cache/
+Zez-Backend/cache/
 
 # Graphify visualization files & reports are kept; cache is excluded
 graphify-out/cache/

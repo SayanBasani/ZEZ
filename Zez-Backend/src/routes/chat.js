@@ -4,6 +4,7 @@ const fs = require("fs");
 const multer = require("multer");
 const { pool } = require("../db");
 const b2Storage = require("../services/b2StorageService");
+const { saveToStorageCache } = require("./storage");
 
 const router = express.Router();
 
@@ -249,7 +250,8 @@ router.post("/upload", uploadMedia.single("file"), async (req, res) => {
         ]
       );
 
-      // Clean up local temp file
+      // Clean up local temp file and preserve in instant local storage cache
+      saveToStorageCache(uploadResult.objectKey, req.file.path);
       try { if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); } catch (_) {}
     } catch (b2Err) {
       console.warn("Backblaze B2 upload error, falling back to local disk:", b2Err.message);
@@ -317,7 +319,8 @@ router.post("/upload-avatar", uploadAvatar.single("avatar"), async (req, res) =>
         ]
       );
 
-      // Clean up local temp file
+      // Clean up local temp file and preserve in instant local storage cache
+      saveToStorageCache(uploadResult.objectKey, req.file.path);
       try { if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); } catch (_) {}
     } catch (b2Err) {
       console.warn("Backblaze B2 avatar upload error, falling back to local disk:", b2Err.message);
@@ -944,7 +947,7 @@ router.get("/poll", async (req, res) => {
 
       if (userId) {
         const peerRes = await pool.query(
-          `SELECT u.id, u.last_seen, u.name 
+          `SELECT u.id, u.last_seen, u.name, u.avatar_url 
            FROM public.chat_conversations c
            JOIN public.chat_users u ON (u.id = CASE WHEN c.user1_id = $1::uuid THEN c.user2_id ELSE c.user1_id END)
            WHERE c.id = $2::uuid AND u.id != $1::uuid
@@ -957,7 +960,9 @@ router.get("/poll", async (req, res) => {
           peerStatus = {
             userId: peer.id,
             isOnline: !!isOnline,
-            lastSeen: peer.last_seen
+            lastSeen: peer.last_seen,
+            avatarUrl: peer.avatar_url,
+            name: peer.name
           };
         }
       }

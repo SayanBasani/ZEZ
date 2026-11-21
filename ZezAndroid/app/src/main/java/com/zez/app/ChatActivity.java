@@ -42,9 +42,12 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zez.app.adapter.CallRecordAdapter;
 import com.zez.app.adapter.ChatMessageAdapter;
+import com.zez.app.model.CallRecordItem;
 import com.zez.app.model.ChatMessage;
 import com.zez.app.model.ChatUser;
+import com.zez.app.util.CallRecordManager;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatPreferencesHelper;
@@ -787,13 +790,14 @@ public class ChatActivity extends AppCompatActivity {
             if (avatarToLoad != null && !avatarToLoad.trim().isEmpty()) {
                 String fullUrl = ChatApiClient.getAbsoluteMediaUrl(this, avatarToLoad);
                 ivAvatar.setImageTintList(null);
+                ivAvatar.clearColorFilter();
                 ivAvatar.setPadding(0, 0, 0, 0);
                 Glide.with(this)
                         .load(fullUrl)
                         .circleCrop()
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .placeholder(R.drawable.ic_person)
-                        .error(R.drawable.ic_person)
+                        .placeholder(R.drawable.bg_circle_glass)
+                        .error(R.drawable.bg_circle_glass)
                         .into(ivAvatar);
                 if (tvInitials != null) tvInitials.setVisibility(View.GONE);
 
@@ -806,6 +810,7 @@ public class ChatActivity extends AppCompatActivity {
                     startActivity(viewerIntent);
                 });
             } else {
+                ivAvatar.clearColorFilter();
                 ivAvatar.setImageResource(R.drawable.ic_person);
                 ivAvatar.setImageTintList(ContextCompat.getColorStateList(this, R.color.theme_icon_tint));
                 int pad = (int) (20 * getResources().getDisplayMetrics().density);
@@ -887,6 +892,20 @@ public class ChatActivity extends AppCompatActivity {
             } else {
                 tvStorageSize.setText("0 B");
             }
+        }
+
+        View rowRecordings = view.findViewById(R.id.row_profile_recordings);
+        TextView tvRecordingsCount = view.findViewById(R.id.tv_profile_recordings_count);
+        List<CallRecordItem> contactRecs = CallRecordManager.getInstance(this).getRecordingsForNumber(
+                otherUserPhone != null && !otherUserPhone.isEmpty() ? otherUserPhone : otherUserId
+        );
+        if (tvRecordingsCount != null) {
+            tvRecordingsCount.setText(contactRecs.size() + " recordings available");
+        }
+        if (rowRecordings != null) {
+            rowRecordings.setOnClickListener(v -> {
+                showContactRecordingsSheet();
+            });
         }
 
         if (btnMore != null) {
@@ -981,15 +1000,17 @@ public class ChatActivity extends AppCompatActivity {
         if (avatarToLoad != null && !avatarToLoad.trim().isEmpty()) {
             String fullUrl = ChatApiClient.getAbsoluteMediaUrl(this, avatarToLoad);
             ivChatHeaderAvatar.setImageTintList(null);
+            ivChatHeaderAvatar.clearColorFilter();
             ivChatHeaderAvatar.setPadding(0, 0, 0, 0);
             Glide.with(this)
                     .load(fullUrl)
                     .circleCrop()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .placeholder(R.drawable.ic_person)
-                    .error(R.drawable.ic_person)
+                    .placeholder(R.drawable.bg_circle_glass)
+                    .error(R.drawable.bg_circle_glass)
                     .into(ivChatHeaderAvatar);
         } else {
+            ivChatHeaderAvatar.clearColorFilter();
             ivChatHeaderAvatar.setImageResource(R.drawable.ic_person);
             ivChatHeaderAvatar.setImageTintList(ContextCompat.getColorStateList(this, R.color.theme_text_secondary));
             int pad = (int) (6 * getResources().getDisplayMetrics().density);
@@ -1110,10 +1131,7 @@ public class ChatActivity extends AppCompatActivity {
         layoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(adapter);
-
-        if (recyclerView.getItemAnimator() instanceof androidx.recyclerview.widget.SimpleItemAnimator) {
-            ((androidx.recyclerview.widget.SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
-        }
+        recyclerView.setItemAnimator(null);
 
         adapter.setOnMessageActionListener(new ChatMessageAdapter.OnMessageActionListener() {
             @Override
@@ -1426,6 +1444,7 @@ public class ChatActivity extends AppCompatActivity {
         popup.getMenu().add(0, 5, 4, isSecretMode ? "Normal mode (Disable disappearing)" : "Secret mode (Disappearing messages)");
         popup.getMenu().add(0, 6, 5, "Chat theme");
         popup.getMenu().add(0, 7, 6, "Clear chat");
+        popup.getMenu().add(0, 8, 7, "Call recordings");
 
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
@@ -1450,10 +1469,49 @@ public class ChatActivity extends AppCompatActivity {
             } else if (id == 7) {
                 confirmClearChat();
                 return true;
+            } else if (id == 8) {
+                showContactRecordingsSheet();
+                return true;
             }
             return false;
         });
         popup.show();
+    }
+
+    private void showContactRecordingsSheet() {
+        com.google.android.material.bottomsheet.BottomSheetDialog sheet =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_contact_recordings, null);
+        sheet.setContentView(view);
+
+        TextView tvTitle = view.findViewById(R.id.tv_contact_recordings_title);
+        TextView tvSubtitle = view.findViewById(R.id.tv_contact_recordings_subtitle);
+        RecyclerView rv = view.findViewById(R.id.rv_contact_recordings);
+        View layoutEmpty = view.findViewById(R.id.layout_contact_recordings_empty);
+        ImageButton btnClose = view.findViewById(R.id.btn_contact_recordings_close);
+
+        String titleName = otherUserName != null && !otherUserName.trim().isEmpty() ? otherUserName.trim() : "Contact";
+        if (tvTitle != null) tvTitle.setText(titleName);
+        if (tvSubtitle != null) tvSubtitle.setText("Recorded calls with " + titleName);
+
+        if (btnClose != null) btnClose.setOnClickListener(v -> sheet.dismiss());
+
+        CallRecordAdapter adapter = new CallRecordAdapter(this);
+        if (rv != null) {
+            rv.setLayoutManager(new LinearLayoutManager(this));
+            rv.setAdapter(adapter);
+        }
+
+        List<CallRecordItem> list = CallRecordManager.getInstance(this).getRecordingsForNumber(
+                otherUserPhone != null && !otherUserPhone.isEmpty() ? otherUserPhone : otherUserId
+        );
+        adapter.setItems(list);
+        if (layoutEmpty != null) {
+            layoutEmpty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
+        }
+
+        sheet.setOnDismissListener(d -> adapter.stopPlayback());
+        sheet.show();
     }
 
     private void confirmClearChat() {
@@ -1506,6 +1564,21 @@ public class ChatActivity extends AppCompatActivity {
         if (current == null || !statusText.equals(current.toString())) {
             tvHeaderStatus.setText(statusText);
             tvHeaderStatus.setTextColor(statusColor);
+        }
+
+        if (peerStatus != null) {
+            if (peerStatus.avatarUrl != null && !peerStatus.avatarUrl.trim().isEmpty()) {
+                if (!peerStatus.avatarUrl.equals(otherUserAvatar)) {
+                    otherUserAvatar = peerStatus.avatarUrl;
+                    loadHeaderAvatar();
+                }
+            }
+            if (peerStatus.name != null && !peerStatus.name.trim().isEmpty()) {
+                if (otherUserName == null || otherUserName.equals(otherUserPhone)) {
+                    otherUserName = peerStatus.name;
+                    if (tvHeaderName != null) tvHeaderName.setText(otherUserName);
+                }
+            }
         }
     }
 
@@ -1628,7 +1701,10 @@ public class ChatActivity extends AppCompatActivity {
             boolean isSelf = currentUserId != null && currentUserId.equals(replyingToMessage.getSenderId());
             String senderName = isSelf ? "You" : (otherUserName != null ? otherUserName : "Contact");
             String snippet = replyingToMessage.getDisplaySnippet();
-            text = ChatMessage.formatReply(senderName, snippet, text, replyingToMessage.getMediaUrl());
+            String replyMedia = (replyingToMessage.getMediaUrl() != null && !replyingToMessage.getMediaUrl().trim().isEmpty())
+                    ? replyingToMessage.getMediaUrl()
+                    : replyingToMessage.getLocalUri();
+            text = ChatMessage.formatReply(senderName, snippet, text, replyMedia);
             cancelReply();
         }
 
@@ -1845,6 +1921,8 @@ public class ChatActivity extends AppCompatActivity {
                                     if (serverId != null) {
                                         loadedMessageIds.add(serverId);
                                     }
+                                    sentMessage.setLocalUri(task.uri.toString());
+                                    task.optimisticMsg.setLocalUri(task.uri.toString());
                                     task.optimisticMsg.setMediaUrl(sentMessage.getMediaUrl());
                                     adapter.updateTempMessage(task.optimisticMsg.getId(), serverId, st);
                                     if (serverId != null) {
@@ -1899,7 +1977,10 @@ public class ChatActivity extends AppCompatActivity {
             boolean isSelf = currentUserId != null && currentUserId.equals(replyingToMessage.getSenderId());
             String senderName = isSelf ? "You" : (otherUserName != null ? otherUserName : "Contact");
             String snippet = replyingToMessage.getDisplaySnippet();
-            caption = ChatMessage.formatReply(senderName, snippet, caption, replyingToMessage.getMediaUrl());
+            String replyMedia = (replyingToMessage.getMediaUrl() != null && !replyingToMessage.getMediaUrl().trim().isEmpty())
+                    ? replyingToMessage.getMediaUrl()
+                    : replyingToMessage.getLocalUri();
+            caption = ChatMessage.formatReply(senderName, snippet, caption, replyMedia);
             cancelReply();
         }
 
@@ -1917,6 +1998,7 @@ public class ChatActivity extends AppCompatActivity {
                 ChatMessage.STATUS_PENDING,
                 isoFormat.format(new Date())
         );
+        optimisticMsg.setLocalUri(uri.toString());
         optimisticMsg.setMediaType(defaultType);
         optimisticMsg.setFileName(displayName);
         optimisticMsg.setFileSize(fileSize);
@@ -2280,6 +2362,9 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        try {
+            com.zez.app.util.AudioPlaybackManager.getInstance().stop();
+        } catch (Exception ignored) {}
         super.onDestroy();
         if (conversationId != null && conversationId.equals(activeConversationId)) {
             activeConversationId = null;

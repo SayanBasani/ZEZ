@@ -481,6 +481,8 @@ public class ChatApiClient {
         public String userId;
         public boolean isOnline;
         public String lastSeen;
+        public String avatarUrl;
+        public String name;
     }
 
     public static class MessagesResult {
@@ -589,6 +591,8 @@ public class ChatApiClient {
                         if (ps.has("userId")) peerStatus.userId = ps.get("userId").getAsString();
                         if (ps.has("isOnline")) peerStatus.isOnline = ps.get("isOnline").getAsBoolean();
                         if (ps.has("lastSeen") && !ps.get("lastSeen").isJsonNull()) peerStatus.lastSeen = ps.get("lastSeen").getAsString();
+                        if (ps.has("avatarUrl") && !ps.get("avatarUrl").isJsonNull()) peerStatus.avatarUrl = ps.get("avatarUrl").getAsString();
+                        if (ps.has("name") && !ps.get("name").isJsonNull()) peerStatus.name = ps.get("name").getAsString();
                         res.peerStatus = peerStatus;
                     }
 
@@ -760,6 +764,8 @@ public class ChatApiClient {
                         if (ps.has("userId")) peerStatus.userId = ps.get("userId").getAsString();
                         if (ps.has("isOnline")) peerStatus.isOnline = ps.get("isOnline").getAsBoolean();
                         if (ps.has("lastSeen") && !ps.get("lastSeen").isJsonNull()) peerStatus.lastSeen = ps.get("lastSeen").getAsString();
+                        if (ps.has("avatarUrl") && !ps.get("avatarUrl").isJsonNull()) peerStatus.avatarUrl = ps.get("avatarUrl").getAsString();
+                        if (ps.has("name") && !ps.get("name").isJsonNull()) peerStatus.name = ps.get("name").getAsString();
                         pr.peerStatus = peerStatus;
                     }
                     if (json.has("incoming_call") && !json.get("incoming_call").isJsonNull()) {

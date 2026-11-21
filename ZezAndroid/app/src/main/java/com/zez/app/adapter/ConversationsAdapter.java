@@ -229,6 +229,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
                 String fullUrl = com.zez.app.util.ChatApiClient.getAbsoluteMediaUrl(itemView.getContext(), avatarUrl);
                 ivAvatar.setImageTintList(null);
+                ivAvatar.clearColorFilter();
                 ivAvatar.setPadding(0, 0, 0, 0);
                 com.bumptech.glide.Glide.with(itemView.getContext())
                         .load(fullUrl)
@@ -238,6 +239,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
                         .into(ivAvatar);
                 if (tvInitials != null) tvInitials.setVisibility(View.GONE);
             } else {
+                ivAvatar.clearColorFilter();
                 int p = (int) (10 * itemView.getContext().getResources().getDisplayMetrics().density);
                 ivAvatar.setPadding(p, p, p, p);
                 ivAvatar.setImageTintList(androidx.core.content.ContextCompat.getColorStateList(itemView.getContext(), R.color.theme_text_secondary));
