@@ -24,6 +24,7 @@
             android:id="@+id/layout_msg_outgoing_quote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minWidth="180dp"
             android:orientation="horizontal"
             android:background="#25FFFFFF"
             android:paddingStart="8dp"
@@ -72,6 +73,7 @@
                 android:layout_marginStart="6dp"
                 android:scaleType="centerCrop"
                 android:background="@drawable/bg_pill_badge"
+                android:clipToOutline="true"
                 android:visibility="gone" />
         </LinearLayout>
 
