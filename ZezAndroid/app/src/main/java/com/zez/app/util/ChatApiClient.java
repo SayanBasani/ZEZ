@@ -44,6 +44,10 @@ public class ChatApiClient {
             .writeTimeout(15, TimeUnit.SECONDS)
             .build();
 
+    public static OkHttpClient getOkHttpClient() {
+        return client;
+    }
+
     public interface ChatCallback<T> {
         void onSuccess(T result);
         void onError(String errorMessage);

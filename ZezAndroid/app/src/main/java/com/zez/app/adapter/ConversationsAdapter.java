@@ -123,26 +123,41 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     }
 
     public void setConversations(List<ChatConversation> list) {
-        if (list == null && conversations.isEmpty()) return;
-        if (list != null && list.size() == conversations.size()) {
-            boolean identical = true;
-            for (int i = 0; i < list.size(); i++) {
-                ChatConversation a = list.get(i);
-                ChatConversation b = conversations.get(i);
-                if (!isSameConversation(a, b)) {
-                    identical = false;
-                    break;
+        if (list == null) list = new ArrayList<>();
+        final List<ChatConversation> oldList = new ArrayList<>(conversations);
+        final List<ChatConversation> targetList = new ArrayList<>(list);
+
+        androidx.recyclerview.widget.DiffUtil.DiffResult diffResult = androidx.recyclerview.widget.DiffUtil.calculateDiff(new androidx.recyclerview.widget.DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return oldList.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return targetList.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                ChatConversation o = oldList.get(oldItemPosition);
+                ChatConversation n = targetList.get(newItemPosition);
+                if (o == null || n == null) return o == n;
+                if (o.getConversationId() != null && n.getConversationId() != null) {
+                    return o.getConversationId().equals(n.getConversationId());
                 }
+                return java.util.Objects.equals(o.getOtherUserId(), n.getOtherUserId());
             }
-            if (identical) {
-                return;
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                return isSameConversation(oldList.get(oldItemPosition), targetList.get(newItemPosition));
             }
-        }
+        });
+
         conversations.clear();
-        if (list != null) {
-            conversations.addAll(list);
-        }
-        notifyDataSetChanged();
+        conversations.addAll(targetList);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     private boolean isSameConversation(ChatConversation a, ChatConversation b) {

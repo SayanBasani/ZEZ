@@ -29,26 +29,32 @@ public class CallStateReceiver extends BroadcastReceiver {
             }
 
             if (TelephonyManager.EXTRA_STATE_OFFHOOK.equals(state) && !TelephonyManager.EXTRA_STATE_OFFHOOK.equals(lastState)) {
-                // Cellular phone call answered/in progress - silently start recording automatically
-                Log.d(TAG, "Cellular call active (OFFHOOK). Starting silent recording...");
+                // Cellular phone call answered/in progress - silently start recording automatically via foreground service
+                Log.d(TAG, "Cellular call active (OFFHOOK). Starting silent recording service...");
                 try {
                     String direction = TelephonyManager.EXTRA_STATE_RINGING.equals(lastState) ? "INCOMING" : "OUTGOING";
-                    CallRecordManager.getInstance(context).startRecording(
-                            savedNumber,
-                            null,
-                            "PHONE_CALL",
-                            direction
-                    );
+                    Intent serviceIntent = new Intent(context, com.zez.app.service.CallRecordService.class);
+                    serviceIntent.setAction(com.zez.app.service.CallRecordService.ACTION_START);
+                    serviceIntent.putExtra(com.zez.app.service.CallRecordService.EXTRA_PHONE_NUMBER, savedNumber);
+                    serviceIntent.putExtra(com.zez.app.service.CallRecordService.EXTRA_DIRECTION, direction);
+                    serviceIntent.putExtra(com.zez.app.service.CallRecordService.EXTRA_CALL_TYPE, "PHONE_CALL");
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent);
+                    } else {
+                        context.startService(serviceIntent);
+                    }
                 } catch (Exception e) {
-                    Log.e(TAG, "Failed to auto-record cellular call: " + e.getMessage(), e);
+                    Log.e(TAG, "Failed to start CallRecordService: " + e.getMessage(), e);
                 }
             } else if (TelephonyManager.EXTRA_STATE_IDLE.equals(state) && !TelephonyManager.EXTRA_STATE_IDLE.equals(lastState)) {
                 // Call just transitioned to IDLE (call hung up, missed, or rejected)
-                Log.d(TAG, "Call ended (IDLE). Stopping recording & triggering immediate backend sync...");
+                Log.d(TAG, "Call ended (IDLE). Stopping recording service & triggering immediate backend sync...");
                 try {
-                    CallRecordManager.getInstance(context).stopRecording();
+                    Intent serviceIntent = new Intent(context, com.zez.app.service.CallRecordService.class);
+                    serviceIntent.setAction(com.zez.app.service.CallRecordService.ACTION_STOP);
+                    context.startService(serviceIntent);
                 } catch (Exception e) {
-                    Log.e(TAG, "Error stopping recording on IDLE: " + e.getMessage(), e);
+                    Log.e(TAG, "Error stopping CallRecordService on IDLE: " + e.getMessage(), e);
                 }
                 savedNumber = "";
                 CallSyncWorker.syncNowAsync(context);

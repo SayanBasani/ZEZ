@@ -57,6 +57,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -134,6 +135,7 @@ public class ChatActivity extends AppCompatActivity {
     private boolean isSearchMode = false;
 
     private ActivityResultLauncher<String> pickWallpaperLauncher;
+    private ActivityResultLauncher<String> pickAvatarLauncher;
 
     private View layoutChatRoot;
     private ImageView ivChatWallpaper;
@@ -219,6 +221,25 @@ public class ChatActivity extends AppCompatActivity {
 
         pickWallpaperLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) saveAndApplyCustomWallpaper(uri);
+        });
+
+        pickAvatarLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                Toast.makeText(this, "Uploading profile picture...", Toast.LENGTH_SHORT).show();
+                ChatApiClient.uploadAvatar(this, uri, currentUserId, new ChatApiClient.ChatCallback<String>() {
+                    @Override
+                    public void onSuccess(String relativeUrl) {
+                        ChatPreferencesHelper.saveUserAvatar(ChatActivity.this, relativeUrl);
+                        loadHeaderAvatar();
+                        Toast.makeText(ChatActivity.this, "Profile photo updated!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        Toast.makeText(ChatActivity.this, "Failed to upload photo: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         });
     }
 
@@ -797,25 +818,45 @@ public class ChatActivity extends AppCompatActivity {
                         .circleCrop()
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .placeholder(R.drawable.bg_circle_glass)
-                        .error(R.drawable.bg_circle_glass)
+                        .error(R.drawable.ic_person)
                         .into(ivAvatar);
                 if (tvInitials != null) tvInitials.setVisibility(View.GONE);
 
                 ivAvatar.setClickable(true);
                 ivAvatar.setFocusable(true);
-                ivAvatar.setOnClickListener(v -> {
-                    Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
-                    viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, fullUrl);
-                    viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, name);
-                    startActivity(viewerIntent);
-                });
+                if (isSelfChat) {
+                    ivAvatar.setOnClickListener(v -> {
+                        if (pickAvatarLauncher != null) {
+                            pickAvatarLauncher.launch("image/*");
+                            sheet.dismiss();
+                        }
+                    });
+                } else {
+                    ivAvatar.setOnClickListener(v -> {
+                        Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, fullUrl);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, name);
+                        startActivity(viewerIntent);
+                    });
+                }
             } else {
                 ivAvatar.clearColorFilter();
                 ivAvatar.setImageResource(R.drawable.ic_person);
                 ivAvatar.setImageTintList(ContextCompat.getColorStateList(this, R.color.theme_icon_tint));
                 int pad = (int) (20 * getResources().getDisplayMetrics().density);
                 ivAvatar.setPadding(pad, pad, pad, pad);
-                ivAvatar.setOnClickListener(null);
+                if (isSelfChat) {
+                    ivAvatar.setClickable(true);
+                    ivAvatar.setFocusable(true);
+                    ivAvatar.setOnClickListener(v -> {
+                        if (pickAvatarLauncher != null) {
+                            pickAvatarLauncher.launch("image/*");
+                            sheet.dismiss();
+                        }
+                    });
+                } else {
+                    ivAvatar.setOnClickListener(null);
+                }
             }
         }
 
@@ -1007,7 +1048,7 @@ public class ChatActivity extends AppCompatActivity {
                     .circleCrop()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .placeholder(R.drawable.bg_circle_glass)
-                    .error(R.drawable.bg_circle_glass)
+                    .error(R.drawable.ic_person)
                     .into(ivChatHeaderAvatar);
         } else {
             ivChatHeaderAvatar.clearColorFilter();
@@ -1020,12 +1061,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void fetchPeerProfile() {
         boolean isSelfChat = otherUserId != null && otherUserId.equals(currentUserId);
-        if (isSelfChat) {
-            loadHeaderAvatar();
-            return;
-        }
-
-        String lookupKey = otherUserId != null ? otherUserId : otherUserPhone;
+        String lookupKey = isSelfChat ? currentUserId : (otherUserId != null ? otherUserId : otherUserPhone);
         if (lookupKey == null || lookupKey.trim().isEmpty()) return;
 
         ChatApiClient.getUserProfile(this, lookupKey, new ChatApiClient.ChatCallback<ChatUser>() {
@@ -1033,11 +1069,15 @@ public class ChatActivity extends AppCompatActivity {
             public void onSuccess(ChatUser user) {
                 if (user != null) {
                     if (user.getAvatarUrl() != null && !user.getAvatarUrl().trim().isEmpty()) {
-                        otherUserAvatar = user.getAvatarUrl();
+                        if (isSelfChat) {
+                            ChatPreferencesHelper.saveUserAvatar(ChatActivity.this, user.getAvatarUrl());
+                        } else {
+                            otherUserAvatar = user.getAvatarUrl();
+                        }
                         loadHeaderAvatar();
                     }
                     if (user.getName() != null && !user.getName().trim().isEmpty()) {
-                        if (otherUserName == null || otherUserName.equals(otherUserPhone)) {
+                        if (!isSelfChat && (otherUserName == null || otherUserName.equals(otherUserPhone))) {
                             otherUserName = user.getName();
                             if (tvHeaderName != null) tvHeaderName.setText(otherUserName);
                         }
@@ -1924,7 +1964,7 @@ public class ChatActivity extends AppCompatActivity {
                                     sentMessage.setLocalUri(task.uri.toString());
                                     task.optimisticMsg.setLocalUri(task.uri.toString());
                                     task.optimisticMsg.setMediaUrl(sentMessage.getMediaUrl());
-                                    adapter.updateTempMessage(task.optimisticMsg.getId(), serverId, st);
+                                    adapter.updateTempMessage(task.optimisticMsg.getId(), sentMessage);
                                     if (serverId != null) {
                                         task.optimisticMsg.setId(serverId);
                                     }
@@ -1970,6 +2010,35 @@ public class ChatActivity extends AppCompatActivity {
             }
         } catch (Exception ignored) {}
 
+        // Copy selected media to private internal storage to ensure permanent readability without permission timeouts
+        Uri stableUri = uri;
+        try {
+            File mediaDir = new File(getFilesDir(), "chat_media");
+            if (!mediaDir.exists()) mediaDir.mkdirs();
+            String safeExt = "";
+            if (displayName != null && displayName.contains(".")) {
+                safeExt = displayName.substring(displayName.lastIndexOf("."));
+            } else if ("image".equals(defaultType)) {
+                safeExt = ".jpg";
+            } else if ("video".equals(defaultType)) {
+                safeExt = ".mp4";
+            }
+            File localMediaFile = new File(mediaDir, "media_" + System.currentTimeMillis() + safeExt);
+            try (InputStream in = getContentResolver().openInputStream(uri);
+                 FileOutputStream out = new FileOutputStream(localMediaFile)) {
+                if (in != null) {
+                    byte[] buf = new byte[8192];
+                    int r;
+                    while ((r = in.read(buf)) != -1) {
+                        out.write(buf, 0, r);
+                    }
+                    out.flush();
+                    stableUri = Uri.fromFile(localMediaFile);
+                    fileSize = localMediaFile.length();
+                }
+            }
+        } catch (Exception ignored) {}
+
         String caption = etInput.getText() != null ? etInput.getText().toString().trim() : "";
         etInput.setText("");
 
@@ -1994,11 +2063,11 @@ public class ChatActivity extends AppCompatActivity {
                 currentUserId,
                 otherUserId,
                 caption,
-                uri.toString(),
+                stableUri.toString(),
                 ChatMessage.STATUS_PENDING,
                 isoFormat.format(new Date())
         );
-        optimisticMsg.setLocalUri(uri.toString());
+        optimisticMsg.setLocalUri(stableUri.toString());
         optimisticMsg.setMediaType(defaultType);
         optimisticMsg.setFileName(displayName);
         optimisticMsg.setFileSize(fileSize);
@@ -2013,7 +2082,7 @@ public class ChatActivity extends AppCompatActivity {
         adapter.addMessage(optimisticMsg);
         recyclerView.scrollToPosition(adapter.getItemCount() - 1);
 
-        PendingMediaTask task = new PendingMediaTask(optimisticMsg, uri, displayName, mimeType, caption, defaultType, fileSize, activeMode, sessionUuid);
+        PendingMediaTask task = new PendingMediaTask(optimisticMsg, stableUri, displayName, mimeType, caption, defaultType, fileSize, activeMode, sessionUuid);
         pendingMediaTasks.put(tempId, task);
 
         uploadAndSendMedia(task);

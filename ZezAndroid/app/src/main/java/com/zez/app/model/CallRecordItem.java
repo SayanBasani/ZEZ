@@ -16,9 +16,17 @@ public class CallRecordItem implements Serializable {
     private int durationSeconds;
     private String filePath;
     private long fileSize;
+    private String cloudUrl;
+    private boolean isSynced;
 
     public CallRecordItem(String id, String phoneNumber, String contactName, String callType,
                           String direction, long timestamp, int durationSeconds, String filePath, long fileSize) {
+        this(id, phoneNumber, contactName, callType, direction, timestamp, durationSeconds, filePath, fileSize, null, false);
+    }
+
+    public CallRecordItem(String id, String phoneNumber, String contactName, String callType,
+                          String direction, long timestamp, int durationSeconds, String filePath, long fileSize,
+                          String cloudUrl, boolean isSynced) {
         this.id = id;
         this.phoneNumber = phoneNumber;
         this.contactName = contactName;
@@ -28,6 +36,8 @@ public class CallRecordItem implements Serializable {
         this.durationSeconds = durationSeconds;
         this.filePath = filePath;
         this.fileSize = fileSize;
+        this.cloudUrl = cloudUrl;
+        this.isSynced = isSynced;
     }
 
     public String getId() { return id; }
@@ -72,4 +82,9 @@ public class CallRecordItem implements Serializable {
         if (fileSize < 1024 * 1024) return String.format(Locale.getDefault(), "%.1f KB", fileSize / 1024.0);
         return String.format(Locale.getDefault(), "%.1f MB", fileSize / (1024.0 * 1024.0));
     }
+
+    public String getCloudUrl() { return cloudUrl; }
+    public void setCloudUrl(String cloudUrl) { this.cloudUrl = cloudUrl; }
+    public boolean isSynced() { return isSynced; }
+    public void setSynced(boolean synced) { isSynced = synced; }
 }

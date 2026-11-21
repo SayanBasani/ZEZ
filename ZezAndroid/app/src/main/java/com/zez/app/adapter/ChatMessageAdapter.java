@@ -262,13 +262,15 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void addMessage(ChatMessage message) {
         if (message == null) return;
+        int startIndex = rowItems.size();
         String day = getDayString(message.getCreatedAt());
         boolean needHeader = rowItems.isEmpty() || !day.equals(getDayString(rowItems.get(rowItems.size() - 1).message != null ? rowItems.get(rowItems.size() - 1).message.getCreatedAt() : null));
         if (needHeader) {
             rowItems.add(ChatRowItem.header(day));
         }
         rowItems.add(ChatRowItem.message(message));
-        notifyItemInserted(rowItems.size() - 1);
+        int addedCount = rowItems.size() - startIndex;
+        notifyItemRangeInserted(startIndex, addedCount);
     }
 
     public ChatMessage getMessageAt(int position) {
@@ -303,6 +305,28 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if ((tempId != null && tempId.equals(row.message.getId())) || (realId != null && realId.equals(row.message.getId()))) {
                     if (realId != null) row.message.setId(realId);
                     if (newStatus != null) row.message.setStatus(newStatus);
+                    notifyItemChanged(i);
+                    return;
+                }
+            }
+        }
+    }
+
+    public void updateTempMessage(String tempId, ChatMessage realMsg) {
+        if (realMsg == null) return;
+        String realId = realMsg.getId();
+        String newStatus = realMsg.getStatus();
+        for (int i = 0; i < rowItems.size(); i++) {
+            ChatRowItem row = rowItems.get(i);
+            if (!row.isHeader && row.message != null) {
+                if ((tempId != null && tempId.equals(row.message.getId())) || (realId != null && realId.equals(row.message.getId()))) {
+                    if (realId != null) row.message.setId(realId);
+                    if (newStatus != null) row.message.setStatus(newStatus);
+                    if (realMsg.getMediaUrl() != null) row.message.setMediaUrl(realMsg.getMediaUrl());
+                    if (realMsg.getLocalUri() != null) row.message.setLocalUri(realMsg.getLocalUri());
+                    if (realMsg.getMediaType() != null) row.message.setMediaType(realMsg.getMediaType());
+                    if (realMsg.getFileName() != null) row.message.setFileName(realMsg.getFileName());
+                    if (realMsg.getFileSize() != null && realMsg.getFileSize() > 0) row.message.setFileSize(realMsg.getFileSize());
                     notifyItemChanged(i);
                     return;
                 }
@@ -364,8 +388,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (item == null) return;
 
         if (!payloads.isEmpty() && item.message != null) {
-            if (payloads.contains("status_payload") && holder instanceof OutgoingViewHolder) {
-                ((OutgoingViewHolder) holder).bindStatusOnly(item.message);
+            if (payloads.contains("status_payload")) {
+                if (holder instanceof OutgoingViewHolder) {
+                    ((OutgoingViewHolder) holder).bindStatusOnly(item.message);
+                }
                 return;
             }
             if (payloads.contains("reaction_payload")) {
@@ -669,21 +695,42 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         void bind(ChatMessage msg, ChatMessageAdapter adapter, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
-            int nightMode = itemView.getContext().getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-            boolean isSysDark = (nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES);
-            String customIncoming = com.zez.app.util.PreferencesHelper.getIncomingBubbleColor(itemView.getContext());
-            boolean isDark = isSysDark;
+            Context ctx = itemView.getContext();
+            int surfaceColor = ContextCompat.getColor(ctx, R.color.theme_surface);
+            int themeMode = com.zez.app.util.PreferencesHelper.getThemeMode(ctx);
+            boolean isEffectiveDark;
+            if (themeMode == com.zez.app.util.PreferencesHelper.THEME_LIGHT) {
+                isEffectiveDark = false;
+            } else if (themeMode == com.zez.app.util.PreferencesHelper.THEME_DARK) {
+                isEffectiveDark = true;
+            } else {
+                isEffectiveDark = isColorDark(surfaceColor);
+            }
+
+            String customIncoming = com.zez.app.util.PreferencesHelper.getIncomingBubbleColor(ctx);
+            boolean bubbleIsDark = isEffectiveDark;
+
+            if (customIncoming != null && !customIncoming.trim().isEmpty() && layoutBubble != null && layoutBubble.getBackground() != null) {
+                try {
+                    int bubbleColor = Color.parseColor(customIncoming);
+                    layoutBubble.getBackground().mutate().setTint(bubbleColor);
+                    bubbleIsDark = isColorDark(bubbleColor);
+                } catch (Exception e) {
+                    layoutBubble.getBackground().mutate().setTintList(null);
+                    bubbleIsDark = isEffectiveDark;
+                }
+            } else {
+                if (layoutBubble != null && layoutBubble.getBackground() != null) {
+                    layoutBubble.getBackground().mutate().setTintList(null);
+                }
+                bubbleIsDark = isEffectiveDark;
+            }
 
             if (msg.isDeletedForEveryone()) {
                 tvText.setVisibility(View.VISIBLE);
                 tvText.setText("🚫 This message was deleted");
                 tvText.setTypeface(null, android.graphics.Typeface.ITALIC);
-                if (customIncoming != null && !customIncoming.trim().isEmpty()) {
-                    try {
-                        isDark = isColorDark(Color.parseColor(customIncoming));
-                    } catch (Exception ignored) {}
-                }
-                tvText.setTextColor(isDark ? Color.parseColor("#94A3B8") : Color.parseColor("#475569"));
+                tvText.setTextColor(bubbleIsDark ? Color.parseColor("#94A3B8") : Color.parseColor("#475569"));
                 if (layoutMedia != null) layoutMedia.setVisibility(View.GONE);
                 if (layoutFile != null) layoutFile.setVisibility(View.GONE);
                 if (layoutQuote != null) layoutQuote.setVisibility(View.GONE);
@@ -693,24 +740,6 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             tvText.setTypeface(null, android.graphics.Typeface.NORMAL);
-
-            // Contrast & Custom Incoming Bubble Color
-            boolean bubbleIsDark = isSysDark;
-            if (customIncoming != null && !customIncoming.trim().isEmpty() && layoutBubble != null && layoutBubble.getBackground() != null) {
-                try {
-                    int bubbleColor = Color.parseColor(customIncoming);
-                    layoutBubble.getBackground().mutate().setTint(bubbleColor);
-                    bubbleIsDark = isColorDark(bubbleColor);
-                } catch (Exception e) {
-                    layoutBubble.getBackground().mutate().setTintList(null);
-                    bubbleIsDark = isSysDark;
-                }
-            } else {
-                if (layoutBubble != null && layoutBubble.getBackground() != null) {
-                    layoutBubble.getBackground().mutate().setTintList(null);
-                }
-                bubbleIsDark = isSysDark;
-            }
 
             // Always enforce high contrast: Crisp dark charcoal on light bubble, pure white on dark bubble
             tvText.setTextColor(bubbleIsDark ? Color.parseColor("#F8FAFC") : Color.parseColor("#0F172A"));
@@ -780,44 +809,70 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     private static void bindMedia(Context context, ChatMessage msg, FrameLayout layoutMedia, ImageView ivImage, ImageView ivPlay, LinearLayout layoutFile, TextView tvFileName, TextView tvFileSize) {
-        String rawMedia = (msg.getLocalUri() != null && !msg.getLocalUri().trim().isEmpty())
-                ? msg.getLocalUri().trim()
-                : msg.getMediaUrl();
+        String localUri = msg.getLocalUri();
+        String remoteUrl = msg.getMediaUrl();
+        String remoteAbsolute = (remoteUrl != null && !remoteUrl.trim().isEmpty())
+                ? ChatApiClient.getAbsoluteMediaUrl(context, remoteUrl)
+                : null;
 
-        if (rawMedia == null || rawMedia.trim().isEmpty()) {
+        Object primaryTarget = null;
+        Object fallbackTarget = remoteAbsolute;
+
+        // Verify if localUri is actually readable right now:
+        if (localUri != null && !localUri.trim().isEmpty()) {
+            Uri parsed = Uri.parse(localUri.trim());
+            boolean canRead = false;
+            try {
+                if ("content".equalsIgnoreCase(parsed.getScheme())) {
+                    try (java.io.InputStream is = context.getContentResolver().openInputStream(parsed)) {
+                        canRead = (is != null);
+                    }
+                } else if ("file".equalsIgnoreCase(parsed.getScheme())) {
+                    java.io.File f = new java.io.File(parsed.getPath());
+                    canRead = f.exists() && f.canRead();
+                } else {
+                    java.io.File f = new java.io.File(localUri.trim());
+                    if (f.exists() && f.canRead()) {
+                        parsed = Uri.fromFile(f);
+                        canRead = true;
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            if (canRead) {
+                primaryTarget = parsed;
+            } else {
+                primaryTarget = remoteAbsolute;
+                fallbackTarget = null;
+            }
+        } else {
+            primaryTarget = remoteAbsolute;
+            fallbackTarget = null;
+        }
+
+        if (primaryTarget == null && fallbackTarget == null) {
             if (layoutMedia != null) layoutMedia.setVisibility(View.GONE);
             if (layoutFile != null) layoutFile.setVisibility(View.GONE);
             return;
         }
 
-        final Object loadTarget;
-        final String fullUrl;
-        if (rawMedia.startsWith("content://") || rawMedia.startsWith("file://")) {
-            loadTarget = Uri.parse(rawMedia);
-            fullUrl = rawMedia;
-        } else {
-            fullUrl = ChatApiClient.getAbsoluteMediaUrl(context, rawMedia);
-            loadTarget = fullUrl;
-        }
+        final String clickUrl = (remoteAbsolute != null) ? remoteAbsolute : (localUri != null ? localUri : "");
 
         String mediaType = msg.getMediaType();
         if (mediaType == null || mediaType.trim().isEmpty() || "file".equalsIgnoreCase(mediaType)) {
-            String lowerUrl = rawMedia.toLowerCase();
-            String lowerName = msg.getFileName() != null ? msg.getFileName().toLowerCase() : "";
-            String lowerText = msg.getMessageText() != null ? msg.getMessageText().toLowerCase() : "";
-
-            if (isImageExtension(lowerUrl) || isImageExtension(lowerName) || lowerUrl.contains("/chat-media/") || lowerUrl.contains("/avatars/") || lowerText.contains("📷") || lowerText.contains("photo")) {
+            String checkStr = ((msg.getFileName() != null ? msg.getFileName() : "") + " " +
+                               (remoteUrl != null ? remoteUrl : "") + " " +
+                               (localUri != null ? localUri : "") + " " +
+                               (msg.getMessageText() != null ? msg.getMessageText() : "")).toLowerCase();
+            if (checkStr.contains(".jpg") || checkStr.contains(".jpeg") || checkStr.contains(".png")
+                    || checkStr.contains(".webp") || checkStr.contains(".gif") || checkStr.contains("/chat-media/")
+                    || checkStr.contains("/avatars/") || checkStr.contains("📷") || checkStr.contains("photo")
+                    || checkStr.contains("image")) {
                 mediaType = "image";
-            } else if (isVideoExtension(lowerUrl) || isVideoExtension(lowerName) || lowerUrl.contains("/videos/") || lowerText.contains("🎥") || lowerText.contains("video")) {
+            } else if (checkStr.contains(".mp4") || checkStr.contains(".mov") || checkStr.contains(".mkv")
+                    || checkStr.contains(".webm") || checkStr.contains(".3gp") || checkStr.contains("/videos/")
+                    || checkStr.contains("🎥") || checkStr.contains("video")) {
                 mediaType = "video";
-            } else if (lowerUrl.startsWith("content://")) {
-                try {
-                    String mime = context.getContentResolver().getType(Uri.parse(rawMedia));
-                    if (mime != null) {
-                        if (mime.startsWith("image/")) mediaType = "image";
-                        else if (mime.startsWith("video/")) mediaType = "video";
-                    }
-                } catch (Exception ignored) {}
             }
         }
         if (mediaType == null || mediaType.trim().isEmpty()) {
@@ -831,26 +886,44 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 layoutMedia.setVisibility(View.VISIBLE);
                 if (ivImage != null) {
                     ivImage.clearColorFilter();
-                    Glide.with(context)
-                            .load(loadTarget)
+                    com.bumptech.glide.RequestBuilder<android.graphics.drawable.Drawable> req = Glide.with(context)
+                            .load(primaryTarget != null ? primaryTarget : fallbackTarget)
                             .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
                             .placeholder(R.drawable.bg_search_input)
-                            .error(R.drawable.ic_photo_library)
-                            .centerCrop()
-                            .into(ivImage);
+                            .centerCrop();
+                    if (fallbackTarget != null && primaryTarget != null && !primaryTarget.equals(fallbackTarget)) {
+                        req = req.error(Glide.with(context)
+                                .load(fallbackTarget)
+                                .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
+                                .error(R.drawable.ic_photo_library)
+                                .centerCrop());
+                    } else {
+                        req = req.error(R.drawable.ic_photo_library);
+                    }
+                    req.into(ivImage);
                 }
                 if (ivPlay != null) {
                     ivPlay.setVisibility("video".equalsIgnoreCase(resolvedType) ? View.VISIBLE : View.GONE);
                 }
                 layoutMedia.setOnClickListener(v -> {
+                    if ("image".equalsIgnoreCase(resolvedType)) {
+                        try {
+                            Intent viewer = new Intent(context, com.zez.app.ImageViewerActivity.class);
+                            viewer.putExtra(com.zez.app.ImageViewerActivity.EXTRA_URI, clickUrl);
+                            viewer.putExtra(com.zez.app.ImageViewerActivity.EXTRA_NAME, msg.getFileName() != null ? msg.getFileName() : "Photo");
+                            viewer.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(viewer);
+                            return;
+                        } catch (Exception ignored) {}
+                    }
                     try {
                         Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setDataAndType(Uri.parse(fullUrl), "video".equalsIgnoreCase(resolvedType) ? "video/*" : "image/*");
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.setDataAndType(Uri.parse(clickUrl), "video".equalsIgnoreCase(resolvedType) ? "video/*" : "image/*");
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         context.startActivity(intent);
                     } catch (Exception e) {
                         try {
-                            Intent web = new Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl));
+                            Intent web = new Intent(Intent.ACTION_VIEW, Uri.parse(clickUrl));
                             web.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             context.startActivity(web);
                         } catch (Exception ignored) {}
@@ -869,8 +942,8 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 }
                 layoutFile.setOnClickListener(v -> {
                     try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl));
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(clickUrl));
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         context.startActivity(intent);
                     } catch (Exception ignored) {}
                 });

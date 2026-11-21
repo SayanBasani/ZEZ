@@ -193,6 +193,11 @@ async function initializeDatabase() {
     console.log(`Initialized public.admin_users with default credentials for '${defaultUser}'.`);
   }
 
+  // Cleanup ephemeral local disk avatar URLs so client falls back to initials rather than 404 dead links
+  await pool.query(
+    "UPDATE public.chat_users SET avatar_url = NULL WHERE avatar_url LIKE '/uploads/avatars/%'"
+  ).catch(() => {});
+
   const tablesResult = await pool.query(
     `SELECT table_name
        FROM information_schema.tables

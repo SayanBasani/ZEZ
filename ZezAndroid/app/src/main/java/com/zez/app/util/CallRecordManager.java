@@ -80,9 +80,10 @@ public class CallRecordManager {
         }
 
         try {
-            File storageDir = new File(context.getExternalFilesDir(null), "CallRecordings");
+            // Store strictly inside app's private sandbox storage (inaccessible to outside apps)
+            File storageDir = new File(context.getFilesDir(), "CallRecordings");
             if (!storageDir.exists() && !storageDir.mkdirs()) {
-                storageDir = new File(context.getFilesDir(), "CallRecordings");
+                storageDir = new File(context.getExternalFilesDir(null), "CallRecordings");
                 if (!storageDir.exists()) storageDir.mkdirs();
             }
 
@@ -98,12 +99,20 @@ public class CallRecordManager {
                 mediaRecorder = new MediaRecorder();
             }
 
-            // Attempt VOICE_COMMUNICATION for voice/calls, fallback to MIC
+            // Normal cellular calls MUST use MIC directly to prevent VoIP echo cancellation muting
+            int preferredSource = "VOICE_CALL".equalsIgnoreCase(callType)
+                    ? MediaRecorder.AudioSource.VOICE_COMMUNICATION
+                    : MediaRecorder.AudioSource.MIC;
+
             try {
-                mediaRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
+                mediaRecorder.setAudioSource(preferredSource);
             } catch (Exception e) {
-                Log.w(TAG, "VOICE_COMMUNICATION audio source failed, falling back to MIC: " + e.getMessage());
-                mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                Log.w(TAG, "Preferred audio source " + preferredSource + " failed: " + e.getMessage());
+                try {
+                    mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                } catch (Exception ex) {
+                    mediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+                }
             }
 
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
