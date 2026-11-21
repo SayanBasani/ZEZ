@@ -84,7 +84,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
         SeekBar sbProgress;
         TextView tvTimeCurrent, tvTimeTotal, tvSize;
         View btnShare, btnDelete;
-        ImageView ivTypeIcon;
+        ImageView ivTypeIcon, ivCloudStatus;
 
         public RecordViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -93,6 +93,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
             tvPhoneNumber = itemView.findViewById(R.id.tv_rec_phone_number);
             tvTypeBadge = itemView.findViewById(R.id.tv_rec_type_badge);
             tvDate = itemView.findViewById(R.id.tv_rec_date);
+            ivCloudStatus = itemView.findViewById(R.id.iv_rec_cloud_status);
 
             btnPlayPause = itemView.findViewById(R.id.btn_rec_play_pause);
             sbProgress = itemView.findViewById(R.id.sb_rec_progress);
@@ -117,6 +118,11 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
             boolean isVoip = "VOICE_CALL".equalsIgnoreCase(item.getCallType());
             tvTypeBadge.setText(isVoip ? "TWING Voice" : "Phone Call");
             tvTypeBadge.setTextColor(accentColor);
+
+            if (ivCloudStatus != null) {
+                boolean hasCloud = item.isSynced() || (item.getCloudUrl() != null && !item.getCloudUrl().trim().isEmpty());
+                ivCloudStatus.setVisibility(hasCloud ? View.VISIBLE : View.GONE);
+            }
 
             boolean isIncoming = "INCOMING".equalsIgnoreCase(item.getDirection());
             if (isIncoming) {

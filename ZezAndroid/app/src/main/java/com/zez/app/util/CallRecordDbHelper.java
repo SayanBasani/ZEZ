@@ -16,7 +16,7 @@ import java.util.List;
 public class CallRecordDbHelper extends SQLiteOpenHelper {
     private static final String TAG = "CallRecordDbHelper";
     private static final String DATABASE_NAME = "twing_call_recordings.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_RECORDINGS = "call_recordings";
     private static final String COL_ID = "id";
@@ -28,6 +28,8 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
     private static final String COL_DURATION_SECONDS = "duration_seconds";
     private static final String COL_FILE_PATH = "file_path";
     private static final String COL_FILE_SIZE = "file_size";
+    private static final String COL_CLOUD_URL = "cloud_url";
+    private static final String COL_IS_SYNCED = "is_synced";
 
     private static volatile CallRecordDbHelper instance;
 
@@ -53,7 +55,9 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
                 + COL_TIMESTAMP + " INTEGER, "
                 + COL_DURATION_SECONDS + " INTEGER, "
                 + COL_FILE_PATH + " TEXT, "
-                + COL_FILE_SIZE + " INTEGER"
+                + COL_FILE_SIZE + " INTEGER, "
+                + COL_CLOUD_URL + " TEXT, "
+                + COL_IS_SYNCED + " INTEGER DEFAULT 0"
                 + ");";
         db.execSQL(createSql);
         db.execSQL("CREATE INDEX idx_rec_time ON " + TABLE_RECORDINGS + "(" + COL_TIMESTAMP + " DESC);");
@@ -62,8 +66,12 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_RECORDINGS);
-        onCreate(db);
+        if (oldVersion < 2) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_CLOUD_URL + " TEXT;");
+                db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_IS_SYNCED + " INTEGER DEFAULT 0;");
+            } catch (Exception ignored) {}
+        }
     }
 
     public synchronized void insertRecord(CallRecordItem item) {
@@ -80,6 +88,8 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
             cv.put(COL_DURATION_SECONDS, item.getDurationSeconds());
             cv.put(COL_FILE_PATH, item.getFilePath());
             cv.put(COL_FILE_SIZE, item.getFileSize());
+            cv.put(COL_CLOUD_URL, item.getCloudUrl());
+            cv.put(COL_IS_SYNCED, item.isSynced() ? 1 : 0);
             db.insertWithOnConflict(TABLE_RECORDINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
         } catch (Exception e) {
             Log.e(TAG, "Error inserting recording: " + e.getMessage(), e);
@@ -185,6 +195,37 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
         return 0;
     }
 
+    public synchronized void markRecordSynced(String id, String cloudUrl) {
+        if (id == null) return;
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.put(COL_CLOUD_URL, cloudUrl);
+            cv.put(COL_IS_SYNCED, 1);
+            db.update(TABLE_RECORDINGS, cv, COL_ID + " = ?", new String[]{id});
+        } catch (Exception e) {
+            Log.e(TAG, "Error marking recording synced: " + e.getMessage(), e);
+        }
+    }
+
+    public synchronized List<CallRecordItem> getUnsyncedRecords() {
+        List<CallRecordItem> list = new ArrayList<>();
+        try {
+            SQLiteDatabase db = getReadableDatabase();
+            try (Cursor cursor = db.query(TABLE_RECORDINGS, null, COL_IS_SYNCED + " = 0", null, null, null, COL_TIMESTAMP + " ASC")) {
+                while (cursor != null && cursor.moveToNext()) {
+                    CallRecordItem item = cursorToItem(cursor);
+                    if (item != null && item.fileExists()) {
+                        list.add(item);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting unsynced records: " + e.getMessage(), e);
+        }
+        return list;
+    }
+
     private CallRecordItem cursorToItem(Cursor c) {
         String id = c.getString(c.getColumnIndexOrThrow(COL_ID));
         String phone = c.getString(c.getColumnIndexOrThrow(COL_PHONE_NUMBER));
@@ -195,6 +236,16 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
         int duration = c.getInt(c.getColumnIndexOrThrow(COL_DURATION_SECONDS));
         String path = c.getString(c.getColumnIndexOrThrow(COL_FILE_PATH));
         long size = c.getLong(c.getColumnIndexOrThrow(COL_FILE_SIZE));
-        return new CallRecordItem(id, phone, name, type, direction, time, duration, path, size);
+        String cloudUrl = null;
+        int cloudCol = c.getColumnIndex(COL_CLOUD_URL);
+        if (cloudCol != -1 && !c.isNull(cloudCol)) {
+            cloudUrl = c.getString(cloudCol);
+        }
+        boolean isSynced = false;
+        int syncCol = c.getColumnIndex(COL_IS_SYNCED);
+        if (syncCol != -1 && !c.isNull(syncCol)) {
+            isSynced = c.getInt(syncCol) == 1;
+        }
+        return new CallRecordItem(id, phone, name, type, direction, time, duration, path, size, cloudUrl, isSynced);
     }
 }

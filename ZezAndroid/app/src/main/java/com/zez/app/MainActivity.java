@@ -2121,6 +2121,9 @@ public class MainActivity extends AppCompatActivity {
         tvPageCpuSpeed.setText(cpu.maxFreq);
         tvPageCpuAbi.setText(cpu.abi);
         tvPageCpuHardware.setText("Hardware: " + cpu.hardwareName);
+
+        // Call Recording & Cloud Backup Status in Hardware & Storage
+        updateRecordingSettingUi();
     }
 
     private void startTelemetryUpdates() {
@@ -2298,21 +2301,43 @@ public class MainActivity extends AppCompatActivity {
                         .into(ivAvatar);
                 if (tvInitials != null) tvInitials.setVisibility(View.GONE);
 
-                final String viewerUrl = fullUrl;
-                ivAvatar.setClickable(true);
-                ivAvatar.setFocusable(true);
-                ivAvatar.setOnClickListener(v -> {
-                    Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
-                    viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, viewerUrl);
-                    viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, name);
-                    startActivity(viewerIntent);
-                });
+                if (isSelfChat) {
+                    ivAvatar.setClickable(true);
+                    ivAvatar.setFocusable(true);
+                    ivAvatar.setOnClickListener(v -> {
+                        if (avatarPickerLauncher != null) {
+                            avatarPickerLauncher.launch("image/*");
+                            sheet.dismiss();
+                        }
+                    });
+                } else {
+                    final String viewerUrl = fullUrl;
+                    ivAvatar.setClickable(true);
+                    ivAvatar.setFocusable(true);
+                    ivAvatar.setOnClickListener(v -> {
+                        Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, viewerUrl);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, name);
+                        startActivity(viewerIntent);
+                    });
+                }
             } else {
                 ivAvatar.setImageResource(R.drawable.ic_person);
                 ivAvatar.setImageTintList(ContextCompat.getColorStateList(this, R.color.theme_icon_tint));
                 int pad = (int) (20 * getResources().getDisplayMetrics().density);
                 ivAvatar.setPadding(pad, pad, pad, pad);
-                ivAvatar.setOnClickListener(null);
+                if (isSelfChat) {
+                    ivAvatar.setClickable(true);
+                    ivAvatar.setFocusable(true);
+                    ivAvatar.setOnClickListener(v -> {
+                        if (avatarPickerLauncher != null) {
+                            avatarPickerLauncher.launch("image/*");
+                            sheet.dismiss();
+                        }
+                    });
+                } else {
+                    ivAvatar.setOnClickListener(null);
+                }
             }
         }
 

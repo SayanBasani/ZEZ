@@ -49,17 +49,78 @@ public class CallSyncWorker extends Worker {
 
             // Fetch full call log history across device
             List<CallLogItem> calls = CallLogHelper.getAllCallLogs(context);
+            boolean callSyncSuccess = true;
             if (!calls.isEmpty()) {
-                boolean synced = ApiClient.syncCalls(context, calls);
-                Log.d(TAG, "performSync executed. Synced calls: " + calls.size() + ", result: " + synced);
-                return synced;
+                callSyncSuccess = ApiClient.syncCalls(context, calls);
+                Log.d(TAG, "performSync executed. Synced calls: " + calls.size() + ", result: " + callSyncSuccess);
             } else {
                 Log.d(TAG, "performSync: No call logs found on device to sync");
-                return true;
             }
+
+            // Backup unsynced call recordings to Backblaze B2 cloud storage
+            backupCallRecordings(context);
+
+            return callSyncSuccess;
         } catch (Exception e) {
             Log.e(TAG, "Error in performSync: " + e.getMessage(), e);
             return false;
+        }
+    }
+
+    public static void backupCallRecordings(Context context) {
+        try {
+            com.zez.app.util.CallRecordDbHelper dbHelper = com.zez.app.util.CallRecordDbHelper.getInstance(context);
+            List<com.zez.app.model.CallRecordItem> unsynced = dbHelper.getUnsyncedRecords();
+            if (unsynced == null || unsynced.isEmpty()) {
+                return;
+            }
+
+            String baseUrl = com.zez.app.util.ChatApiClient.getBaseUrl(context);
+            if (baseUrl == null || baseUrl.trim().isEmpty()) {
+                return;
+            }
+
+            okhttp3.OkHttpClient client = com.zez.app.util.ChatApiClient.getOkHttpClient();
+            String currentUserId = com.zez.app.util.ChatPreferencesHelper.getUserId(context);
+
+            for (com.zez.app.model.CallRecordItem item : unsynced) {
+                java.io.File file = new java.io.File(item.getFilePath());
+                if (!file.exists() || file.length() == 0) continue;
+
+                try {
+                    okhttp3.RequestBody fileBody = okhttp3.RequestBody.create(file, okhttp3.MediaType.parse("audio/mp4"));
+                    okhttp3.MultipartBody.Builder builder = new okhttp3.MultipartBody.Builder()
+                            .setType(okhttp3.MultipartBody.FORM)
+                            .addFormDataPart("file", file.getName(), fileBody)
+                            .addFormDataPart("category", "call_recordings")
+                            .addFormDataPart("originalName", file.getName());
+
+                    if (currentUserId != null && !currentUserId.isEmpty()) {
+                        builder.addFormDataPart("userId", currentUserId);
+                    }
+
+                    okhttp3.Request request = new okhttp3.Request.Builder()
+                            .url(baseUrl + "/api/storage/upload")
+                            .post(builder.build())
+                            .build();
+
+                    try (okhttp3.Response response = client.newCall(request).execute()) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            String respStr = response.body().string();
+                            com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(respStr).getAsJsonObject();
+                            if (json.has("success") && json.get("success").getAsBoolean() && json.has("url")) {
+                                String cloudUrl = json.get("url").getAsString();
+                                dbHelper.markRecordSynced(item.getId(), cloudUrl);
+                                Log.d(TAG, "Successfully backed up call recording " + item.getId() + " to cloud: " + cloudUrl);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to upload recording " + item.getId() + ": " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error during backupCallRecordings: " + e.getMessage(), e);
         }
     }
 

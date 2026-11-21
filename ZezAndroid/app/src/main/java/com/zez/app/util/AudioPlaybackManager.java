@@ -85,6 +85,7 @@ public class AudioPlaybackManager {
             mediaPlayer.setDataSource(filePath);
             mediaPlayer.setOnPreparedListener(mp -> {
                 try {
+                    mp.setVolume(1.0f, 1.0f);
                     mp.start();
                     isPaused = false;
                     int dur = mp.getDuration();
