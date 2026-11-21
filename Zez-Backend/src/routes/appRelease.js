@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const multer = require("multer");
 const { pool } = require("../db");
 const { adminAuth } = require("../middleware/adminAuth");
+const b2Storage = require("../services/b2StorageService");
 
 const router = express.Router();
 
@@ -132,8 +133,48 @@ router.post("/upload", adminAuth, (req, res, next) => {
         return res.status(400).json({ success: false, error: "Version Code must be a positive integer." });
       }
 
-      const downloadUrl = `/downloads/${req.file.filename}`;
+      let downloadUrl = `/downloads/${req.file.filename}`;
+      let objectKey = null;
       const uploadedBy = req.admin ? req.admin.username : "admin";
+
+      // Upload directly to Backblaze B2 Cloud Object Storage
+      try {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const uploadResult = await b2Storage.uploadFile({
+          buffer: fileBuffer,
+          originalName: req.file.filename,
+          category: "releases",
+          mimeType: "application/vnd.android.package-archive"
+        });
+        objectKey = uploadResult.objectKey;
+        downloadUrl = `/api/storage/file/${uploadResult.objectKey}`;
+
+        // Save reference in storage_files
+        await pool.query(
+          `INSERT INTO public.storage_files 
+           (bucket_name, object_key, original_name, stored_name, mime_type, file_size, file_category, uploaded_by, upload_status, metadata)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', $9)
+           ON CONFLICT (object_key) DO NOTHING`,
+          [
+            uploadResult.bucketName,
+            uploadResult.objectKey,
+            req.file.originalname || req.file.filename,
+            req.file.filename,
+            "application/vnd.android.package-archive",
+            req.file.size,
+            "releases",
+            uploadedBy,
+            JSON.stringify({ etag: uploadResult.etag })
+          ]
+        );
+
+        // Remove from local disk to keep backend server completely uncluttered
+        if (fs.existsSync(req.file.path)) {
+          try { fs.unlinkSync(req.file.path); } catch {}
+        }
+      } catch (b2Err) {
+        console.warn("Backblaze B2 release upload error, keeping local file:", b2Err.message);
+      }
 
       const insertResult = await pool.query(
         `INSERT INTO public.app_releases (version_name, version_code, release_notes, file_name, file_size, download_url, is_active, uploaded_by)
@@ -185,6 +226,13 @@ router.delete("/releases/:id", adminAuth, async (req, res, next) => {
     if (fs.existsSync(filePath)) {
       try { fs.unlinkSync(filePath); } catch (e) {
         console.warn("Could not remove APK file from disk:", e.message);
+      }
+    }
+
+    if (row.download_url && row.download_url.startsWith("/api/storage/file/")) {
+      const b2Key = row.download_url.replace("/api/storage/file/", "");
+      try { await b2Storage.deleteFile(b2Key); } catch (e) {
+        console.warn("Could not remove APK from B2:", e.message);
       }
     }
 

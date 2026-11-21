@@ -84,9 +84,9 @@
     "semantic_hash": "cb85c827499b13b0db4ba8491215823e"
   },
   "ZezAndroid/app/build.gradle": {
-    "mtime": 1795192696.7264214,
-    "seen": 1795210788.3859591,
-    "ast_hash": "f023ed721c63891fde86e983db3ee999",
+    "mtime": 1795223798.67438,
+    "seen": 1795224056.8414814,
+    "ast_hash": "e915fbfe6370901ca75d8fd35584585d",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/AlarmFiringActivity.java": {
@@ -156,9 +156,9 @@
     "semantic_hash": "1c47802726aec2008b78ef53f7c697f7"
   },
   "ZezAndroid/app/src/main/java/com/zez/app/adapter/ChatMessageAdapter.java": {
-    "mtime": 1795192333.3011062,
-    "seen": 1795210788.385976,
-    "ast_hash": "512703696ac3159d09255aa69c71ebd4",
+    "mtime": 1795223784.2824285,
+    "seen": 1795224056.841535,
+    "ast_hash": "f6f02710acd04ebee69dda3c51534b23",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/adapter/ContactsAdapter.java": {
@@ -741,6 +741,12 @@
     "mtime": 1795177479.4970174,
     "seen": 1795177774.998702,
     "ast_hash": "28c0fae172b964808040710e685a33da",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/register-release-1.0.22.js": {
+    "mtime": 1795223985.271338,
+    "seen": 1795224056.8413112,
+    "ast_hash": "22098e46de7c721c2bb65c6aa065a836",
     "semantic_hash": ""
   },
   "Zez-Backend/package-lock.json": {

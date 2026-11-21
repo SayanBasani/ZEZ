@@ -41,6 +41,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.zez.app.adapter.ChatMessageAdapter;
 import com.zez.app.model.ChatMessage;
 import com.zez.app.model.ChatUser;
@@ -52,6 +53,7 @@ import com.zez.app.util.PreferencesHelper;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -62,6 +64,14 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class ChatActivity extends AppCompatActivity {
     public static volatile String activeConversationId = null;
@@ -311,8 +321,8 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         int accentColor = com.zez.app.util.PreferencesHelper.getAccentColorInt(this);
-        if (btnSend != null && btnSend.getBackground() != null) {
-            btnSend.getBackground().mutate().setTint(accentColor);
+        if (btnSendContainer != null) {
+            androidx.core.view.ViewCompat.setBackgroundTintList(btnSendContainer, android.content.res.ColorStateList.valueOf(accentColor));
         }
 
         btnBack.setOnClickListener(v -> finish());
@@ -322,24 +332,11 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         if (btnAudiocall != null) {
-            btnAudiocall.setOnClickListener(v -> {
-                if (otherUserPhone != null && !otherUserPhone.trim().isEmpty()) {
-                    try {
-                        Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + otherUserPhone.trim()));
-                        startActivity(dialIntent);
-                    } catch (Exception e) {
-                        Toast.makeText(this, "Cannot open dialer: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(this, "No phone number available for this contact", Toast.LENGTH_SHORT).show();
-                }
-            });
+            btnAudiocall.setOnClickListener(v -> startCall("audio"));
         }
 
         if (btnVideocall != null) {
-            btnVideocall.setOnClickListener(v -> {
-                Toast.makeText(this, "Starting encrypted video call...", Toast.LENGTH_SHORT).show();
-            });
+            btnVideocall.setOnClickListener(v -> startCall("video"));
         }
 
         if (btnMore != null) {
@@ -820,22 +817,14 @@ public class ChatActivity extends AppCompatActivity {
         if (btnCall != null) {
             btnCall.setOnClickListener(v -> {
                 sheet.dismiss();
-                if (!phone.isEmpty()) {
-                    try {
-                        startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone)));
-                    } catch (Exception e) {
-                        Toast.makeText(this, "Cannot open dialer: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(this, "No phone number available", Toast.LENGTH_SHORT).show();
-                }
+                startCall("audio");
             });
         }
 
         if (btnVideo != null) {
             btnVideo.setOnClickListener(v -> {
                 sheet.dismiss();
-                Toast.makeText(this, "Starting encrypted video call...", Toast.LENGTH_SHORT).show();
+                startCall("video");
             });
         }
 
@@ -1973,6 +1962,10 @@ public class ChatActivity extends AppCompatActivity {
                     if (result != null) {
                         if (result.timestamp != null) lastPollTimestamp = result.timestamp;
 
+                        if (result.incomingCall != null) {
+                            handleIncomingCall(result.incomingCall);
+                        }
+
                         if (result.peerStatus != null) {
                             updatePeerStatus(result.peerStatus);
                         }
@@ -2094,6 +2087,10 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        int accentColor = com.zez.app.util.PreferencesHelper.getAccentColorInt(this);
+        if (btnSendContainer != null) {
+            androidx.core.view.ViewCompat.setBackgroundTintList(btnSendContainer, android.content.res.ColorStateList.valueOf(accentColor));
+        }
         activeConversationId = conversationId;
         if (conversationId != null) {
             ChatNotificationHelper.clearNotification(this, conversationId);
@@ -2201,6 +2198,84 @@ public class ChatActivity extends AppCompatActivity {
                 tvDuration = itemView.findViewById(R.id.tv_thumb_video_duration);
             }
         }
+    }
+
+    private String activeIncomingCallId = null;
+
+    private void handleIncomingCall(ChatApiClient.IncomingCallInfo call) {
+        if (call == null || call.id == null || call.id.equals(activeIncomingCallId)) return;
+        activeIncomingCallId = call.id;
+
+        Intent intent = new Intent(this, IncomingCallActivity.class);
+        intent.putExtra(IncomingCallActivity.EXTRA_CALL_ID, call.id);
+        intent.putExtra(IncomingCallActivity.EXTRA_CALL_TYPE, call.callType);
+        intent.putExtra(IncomingCallActivity.EXTRA_CALLER_ID, call.callerId);
+        intent.putExtra(IncomingCallActivity.EXTRA_CALLER_NAME, call.callerName);
+        intent.putExtra(IncomingCallActivity.EXTRA_CALLER_AVATAR, call.callerAvatar);
+        intent.putExtra(IncomingCallActivity.EXTRA_CALLER_PHONE, call.callerPhone);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+    }
+
+    private void startCall(String callType) {
+        if (otherUserId == null || otherUserId.isEmpty()) {
+            Toast.makeText(this, "Cannot call: recipient not identified", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (otherUserId.equals(currentUserId)) {
+            Toast.makeText(this, "Cannot call yourself", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "Starting " + callType + " call...", Toast.LENGTH_SHORT).show();
+
+        String url = ChatApiClient.getBaseUrl(this) + "/api/call/initiate";
+        JsonObject json = new JsonObject();
+        json.addProperty("callerId", currentUserId);
+        json.addProperty("calleeId", otherUserId);
+        json.addProperty("callType", callType);
+
+        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));
+        Request req = new Request.Builder().url(url).post(body).build();
+
+        new OkHttpClient().newCall(req).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                runOnUiThread(() -> Toast.makeText(ChatActivity.this, "Call failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    runOnUiThread(() -> Toast.makeText(ChatActivity.this, "Call server error: " + response.code(), Toast.LENGTH_SHORT).show());
+                    return;
+                }
+                try {
+                    String str = response.body().string();
+                    JsonObject respJson = JsonParser.parseString(str).getAsJsonObject();
+                    if (respJson.has("success") && respJson.get("success").getAsBoolean() && respJson.has("call")) {
+                        JsonObject cObj = respJson.getAsJsonObject("call");
+                        String callId = cObj.get("id").getAsString();
+                        runOnUiThread(() -> {
+                            Intent intent = new Intent(ChatActivity.this, CallActivity.class);
+                            intent.putExtra(CallActivity.EXTRA_CALL_ID, callId);
+                            intent.putExtra(CallActivity.EXTRA_IS_CALLER, true);
+                            intent.putExtra(CallActivity.EXTRA_CALL_TYPE, callType);
+                            intent.putExtra(CallActivity.EXTRA_PEER_ID, otherUserId);
+                            intent.putExtra(CallActivity.EXTRA_PEER_NAME, otherUserName);
+                            intent.putExtra(CallActivity.EXTRA_PEER_AVATAR, otherUserAvatar);
+                            intent.putExtra(CallActivity.EXTRA_PEER_PHONE, otherUserPhone);
+                            startActivity(intent);
+                        });
+                    } else {
+                        String err = respJson.has("error") ? respJson.get("error").getAsString() : "User busy or unavailable";
+                        runOnUiThread(() -> Toast.makeText(ChatActivity.this, err, Toast.LENGTH_SHORT).show());
+                    }
+                } catch (Exception e) {
+                    runOnUiThread(() -> Toast.makeText(ChatActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                }
+            }
+        });
     }
 
     @Override

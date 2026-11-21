@@ -997,12 +997,58 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private String activeIncomingCallId = null;
+
+    private void checkIncomingCalls() {
+        String userId = ChatPreferencesHelper.getUserId(this);
+        if (userId == null) return;
+        String url = ChatApiClient.getBaseUrl(this) + "/api/call/incoming?userId=" + userId;
+        okhttp3.Request req = new okhttp3.Request.Builder().url(url).build();
+        new okhttp3.OkHttpClient().newCall(req).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(okhttp3.Call call, java.io.IOException e) {}
+
+            @Override
+            public void onResponse(okhttp3.Call call, okhttp3.Response response) throws java.io.IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        String body = response.body().string();
+                        com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(body).getAsJsonObject();
+                        if (json.has("hasIncomingCall") && json.get("hasIncomingCall").getAsBoolean() && json.has("call")) {
+                            com.google.gson.JsonObject c = json.getAsJsonObject("call");
+                            String cId = c.has("id") ? c.get("id").getAsString() : null;
+                            if (cId != null && !cId.equals(activeIncomingCallId)) {
+                                activeIncomingCallId = cId;
+                                runOnUiThread(() -> {
+                                    Intent intent = new Intent(MainActivity.this, IncomingCallActivity.class);
+                                    intent.putExtra(IncomingCallActivity.EXTRA_CALL_ID, cId);
+                                    intent.putExtra(IncomingCallActivity.EXTRA_CALL_TYPE, c.has("callType") ? c.get("callType").getAsString() : "video");
+                                    intent.putExtra(IncomingCallActivity.EXTRA_CALLER_ID, c.has("callerId") ? c.get("callerId").getAsString() : "");
+                                    intent.putExtra(IncomingCallActivity.EXTRA_CALLER_NAME, c.has("callerName") ? c.get("callerName").getAsString() : "TWING Contact");
+                                    if (c.has("callerAvatar") && !c.get("callerAvatar").isJsonNull()) {
+                                        intent.putExtra(IncomingCallActivity.EXTRA_CALLER_AVATAR, c.get("callerAvatar").getAsString());
+                                    }
+                                    if (c.has("callerPhone") && !c.get("callerPhone").isJsonNull()) {
+                                        intent.putExtra(IncomingCallActivity.EXTRA_CALLER_PHONE, c.get("callerPhone").getAsString());
+                                    }
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                    startActivity(intent);
+                                });
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        });
+    }
+
     private final Runnable chatListPollRunnable = new Runnable() {
         @Override
         public void run() {
             if (!isChatListPolling || !ChatPreferencesHelper.isChatRegistered(MainActivity.this)) {
                 return;
             }
+            checkIncomingCalls();
             String userId = ChatPreferencesHelper.getUserId(MainActivity.this);
             if (userId != null) {
                 ChatApiClient.getConversations(MainActivity.this, userId, new ChatApiClient.ChatCallback<List<ChatConversation>>() {

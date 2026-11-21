@@ -108,6 +108,15 @@ const CATEGORY_LIMITS = {
   uploads: {
     allowedMimes: null, // Allow all standard
     maxSizeBytes: 100 * 1024 * 1024 // 100MB
+  },
+  releases: {
+    allowedMimes: [
+      "application/vnd.android.package-archive",
+      "application/octet-stream",
+      "application/x-zip-compressed",
+      "application/zip"
+    ],
+    maxSizeBytes: 200 * 1024 * 1024 // 200MB
   }
 };
 
@@ -472,6 +481,7 @@ async function getStorageStats() {
     documents: { count: 0, bytes: 0, formatted: "0 B" },
     videos: { count: 0, bytes: 0, formatted: "0 B" },
     uploads: { count: 0, bytes: 0, formatted: "0 B" },
+    releases: { count: 0, bytes: 0, formatted: "0 B" },
     other: { count: 0, bytes: 0, formatted: "0 B" }
   };
 
@@ -509,6 +519,9 @@ async function getStorageStats() {
       } else if (key.startsWith("uploads/")) {
         categories.uploads.count++;
         categories.uploads.bytes += size;
+      } else if (key.startsWith("releases/")) {
+        categories.releases.count++;
+        categories.releases.bytes += size;
       } else {
         categories.other.count++;
         categories.other.bytes += size;

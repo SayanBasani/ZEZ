@@ -9,6 +9,7 @@ const adminRouter = require("./routes/admin");
 const appReleaseRouter = require("./routes/appRelease");
 const chatRouter = require("./routes/chat");
 const storageRouter = require("./routes/storage");
+const callSignalingRouter = require("./routes/callSignaling");
 const path = require('path');
 const fs = require('fs');
 
@@ -58,13 +59,17 @@ app.get('/downloads/:filename', async (req, res, next) => {
   try {
     const { pool } = require('./db');
     const result = await pool.query(
-      `SELECT file_name FROM public.app_releases WHERE is_active = TRUE ORDER BY version_code DESC LIMIT 1`
+      `SELECT file_name, download_url FROM public.app_releases WHERE is_active = TRUE ORDER BY version_code DESC LIMIT 1`
     );
     if (result.rows.length > 0) {
-      const activeFile = result.rows[0].file_name;
+      const row = result.rows[0];
+      const activeFile = row.file_name;
       const activePath = path.join(__dirname, 'public/downloads', activeFile);
       if (fs.existsSync(activePath)) {
         return res.sendFile(activePath);
+      }
+      if (row.download_url && row.download_url.startsWith('/api/storage/file/')) {
+        return res.redirect(row.download_url);
       }
     }
   } catch (err) {
@@ -82,6 +87,7 @@ app.use("/api/calls", callSyncRouter);
 app.use("/api/calls/read", callReadRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/storage", storageRouter);
+app.use("/api/call", callSignalingRouter);
 
 app.use((error, _req, res, _next) => {
   if (error?.type === 'entity.too.large') {

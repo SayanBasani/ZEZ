@@ -682,6 +682,16 @@ public class ChatApiClient {
         });
     }
 
+    public static class IncomingCallInfo {
+        public String id;
+        public String callType;
+        public String callerId;
+        public String callerName;
+        public String callerAvatar;
+        public String callerPhone;
+        public String startedAt;
+    }
+
     // 6. Polling for Live Chat Updates
     public static class PollResult {
         public String timestamp;
@@ -689,6 +699,7 @@ public class ChatApiClient {
         public List<JsonObject> statusUpdates = new ArrayList<>();
         public ConversationModeInfo conversationMode;
         public PeerStatus peerStatus;
+        public IncomingCallInfo incomingCall;
     }
 
     public static void pollUpdates(Context context, String userId, String sinceTimestamp, ChatCallback<PollResult> callback) {
@@ -750,6 +761,18 @@ public class ChatApiClient {
                         if (ps.has("isOnline")) peerStatus.isOnline = ps.get("isOnline").getAsBoolean();
                         if (ps.has("lastSeen") && !ps.get("lastSeen").isJsonNull()) peerStatus.lastSeen = ps.get("lastSeen").getAsString();
                         pr.peerStatus = peerStatus;
+                    }
+                    if (json.has("incoming_call") && !json.get("incoming_call").isJsonNull()) {
+                        JsonObject ic = json.getAsJsonObject("incoming_call");
+                        IncomingCallInfo info = new IncomingCallInfo();
+                        if (ic.has("id")) info.id = ic.get("id").getAsString();
+                        if (ic.has("callType")) info.callType = ic.get("callType").getAsString();
+                        if (ic.has("callerId")) info.callerId = ic.get("callerId").getAsString();
+                        if (ic.has("callerName")) info.callerName = ic.get("callerName").getAsString();
+                        if (ic.has("callerAvatar") && !ic.get("callerAvatar").isJsonNull()) info.callerAvatar = ic.get("callerAvatar").getAsString();
+                        if (ic.has("callerPhone") && !ic.get("callerPhone").isJsonNull()) info.callerPhone = ic.get("callerPhone").getAsString();
+                        if (ic.has("startedAt") && !ic.get("startedAt").isJsonNull()) info.startedAt = ic.get("startedAt").getAsString();
+                        pr.incomingCall = info;
                     }
                     postSuccess(callback, pr);
                 } catch (Exception e) {
