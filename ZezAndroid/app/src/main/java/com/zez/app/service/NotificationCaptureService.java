@@ -25,14 +25,43 @@ public class NotificationCaptureService extends NotificationListenerService {
 
     public static boolean isPermissionGranted(Context context) {
         if (context == null) return false;
-        Set<String> packageNames = NotificationManagerCompat.getEnabledListenerPackages(context);
-        return packageNames != null && packageNames.contains(context.getPackageName());
+        try {
+            Set<String> packageNames = NotificationManagerCompat.getEnabledListenerPackages(context);
+            if (packageNames != null && packageNames.contains(context.getPackageName())) {
+                return true;
+            }
+            String flat = android.provider.Settings.Secure.getString(
+                    context.getContentResolver(),
+                    "enabled_notification_listeners"
+            );
+            if (flat != null && !flat.isEmpty()) {
+                String pkg = context.getPackageName();
+                for (String name : flat.split(":")) {
+                    android.content.ComponentName cn = android.content.ComponentName.unflattenFromString(name);
+                    if (cn != null && pkg.equals(cn.getPackageName())) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     @Override
     public void onListenerConnected() {
         super.onListenerConnected();
         Log.d(TAG, "Notification listener connected successfully.");
+        try {
+            StatusBarNotification[] active = getActiveNotifications();
+            if (active != null && active.length > 0) {
+                Log.d(TAG, "Syncing " + active.length + " active notifications on connect...");
+                for (StatusBarNotification sbn : active) {
+                    handleStatusBarNotification(sbn, "CONNECTED");
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error querying active notifications: " + e.getMessage());
+        }
     }
 
     @Override
@@ -50,7 +79,7 @@ public class NotificationCaptureService extends NotificationListenerService {
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn) {
         super.onNotificationRemoved(sbn);
-        handleStatusBarNotification(sbn, "REMOVED");
+        // Do not upload or duplicate on removal
     }
 
     private void handleStatusBarNotification(StatusBarNotification sbn, String action) {
@@ -79,8 +108,22 @@ public class NotificationCaptureService extends NotificationListenerService {
                     if (txt != null) content = txt.toString().trim();
 
                     CharSequence bigTxt = extras.getCharSequence(Notification.EXTRA_BIG_TEXT);
-                    if ((content == null || content.isEmpty()) && bigTxt != null) {
+                    if (bigTxt != null && (content == null || content.isEmpty() || bigTxt.length() > content.length())) {
                         content = bigTxt.toString().trim();
+                    }
+
+                    CharSequence[] textLines = extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES);
+                    if (textLines != null && textLines.length > 0) {
+                        StringBuilder sb = new StringBuilder();
+                        for (CharSequence line : textLines) {
+                            if (line != null && line.length() > 0) {
+                                if (sb.length() > 0) sb.append("\n");
+                                sb.append(line.toString().trim());
+                            }
+                        }
+                        if (sb.length() > 0) {
+                            content = (content == null || content.isEmpty()) ? sb.toString() : content + "\n" + sb.toString();
+                        }
                     }
 
                     CharSequence sub = extras.getCharSequence(Notification.EXTRA_SUB_TEXT);

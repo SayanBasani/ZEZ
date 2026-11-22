@@ -92,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
     private com.zez.app.util.ActiveCallManager.CallStateListener activeCallBannerListener;
     private Button btnGalleryGrantPermission;
     private TextView tvGalleryEmptySubtitle;
-    private View btnSettingSyncNow;
 
     private SwipeRefreshLayout swipeGallery;
     private SwipeRefreshLayout swipeBin;
@@ -423,11 +422,6 @@ public class MainActivity extends AppCompatActivity {
         View activeCallBanner = findViewById(R.id.banner_active_call);
         if (activeCallBanner != null) {
             activeCallBannerListener = com.zez.app.util.ActiveCallManager.getInstance().bindBanner(activeCallBanner, this);
-        }
-
-        btnSettingSyncNow = findViewById(R.id.btn_setting_sync_now);
-        if (btnSettingSyncNow != null) {
-            btnSettingSyncNow.setOnClickListener(v -> triggerManualSync());
         }
 
         // Adapters
@@ -1504,9 +1498,6 @@ public class MainActivity extends AppCompatActivity {
             rotate.setRepeatCount(1);
             btnSync.startAnimation(rotate);
         }
-        if (btnSettingSyncNow != null) {
-            btnSettingSyncNow.setEnabled(false);
-        }
         Toast.makeText(this, "Syncing call logs with cloud...", Toast.LENGTH_SHORT).show();
 
         // 1. Contextual Screen Refresh (Chat, Gallery, Alarms, Settings, Calls)
@@ -1537,9 +1528,6 @@ public class MainActivity extends AppCompatActivity {
                     if (btnSync != null) {
                         btnSync.setEnabled(true);
                         btnSync.clearAnimation();
-                    }
-                    if (btnSettingSyncNow != null) {
-                        btnSettingSyncNow.setEnabled(true);
                     }
                     Toast.makeText(MainActivity.this, "Call logs synced successfully", Toast.LENGTH_SHORT).show();
                     if (currentTab == R.id.nav_calls) {
@@ -2347,7 +2335,10 @@ public class MainActivity extends AppCompatActivity {
                 if (!com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
                     new AlertDialog.Builder(this)
                             .setTitle("Notification Cloud Backup")
-                            .setMessage("Allow TWING to read notifications so they can be securely backed up to your server, even after you clear them from your device.\n\nPlease enable TWING under Notification Access.")
+                            .setMessage("Allow TWING to read notifications so they can be securely backed up to your dashboard, even after you dismiss them on your phone.\n\n" +
+                                    "1. Tap 'Open Settings'\n" +
+                                    "2. Find 'TWING' and toggle it ON\n\n" +
+                                    "(Note: On Android 13/14, if the option is greyed out as 'Restricted setting', please open phone Settings -> Apps -> TWING -> tap ⋮ at top right -> 'Allow restricted settings', then turn on Notification Access.)")
                             .setPositiveButton("Open Settings", (dialog, which) -> {
                                 try {
                                     startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
@@ -2358,7 +2349,16 @@ public class MainActivity extends AppCompatActivity {
                             .setNegativeButton("Cancel", null)
                             .show();
                 } else {
-                    Toast.makeText(this, "Notification cloud backup is active and granted", Toast.LENGTH_SHORT).show();
+                    new AlertDialog.Builder(this)
+                            .setTitle("Notification Cloud Backup")
+                            .setMessage("Notification cloud backup is active.\n\nTWING is actively monitoring and backing up notifications to your private dashboard whenever they arrive.")
+                            .setPositiveButton("OK", null)
+                            .setNeutralButton("Manage in Settings", (d, w) -> {
+                                try {
+                                    startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+                                } catch (Exception ignored) {}
+                            })
+                            .show();
                 }
             });
         }

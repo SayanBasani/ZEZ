@@ -482,7 +482,7 @@ router.get("/devices/:deviceId/notifications", async (req, res, next) => {
   try {
     const { deviceId } = req.params;
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 500);
-    const search = req.query.q ? String(req.query.q).toLowerCase().trim() : null;
+    const search = (req.query.search || req.query.q) ? String(req.query.search || req.query.q).toLowerCase().trim() : null;
 
     const deviceCheck = await pool.query(
       `SELECT id, device_name, device_model, androidid FROM public.devices WHERE id = $1 LIMIT 1`,

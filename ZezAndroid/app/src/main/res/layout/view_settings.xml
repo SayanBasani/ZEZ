@@ -459,69 +459,6 @@
                 </LinearLayout>
 
                 <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/theme_card_border" />
-
-                <!-- Cloud Sync Call Logs Row -->
-                <LinearLayout
-                    android:id="@+id/row_setting_sync_calls"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:padding="16dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_refresh"
-                        app:tint="@color/theme_icon_tint"
-                        android:layout_marginEnd="14dp" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Sync Call Logs to Cloud"
-                            android:textSize="15sp"
-                            android:singleLine="true"
-                            android:ellipsize="end"
-                            android:textStyle="bold"
-                            android:textColor="@color/theme_text_primary" />
-
-                        <TextView
-                            android:id="@+id/tv_setting_sync_summary"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Automatic background sync is active"
-                            android:textSize="12sp"
-                            android:singleLine="true"
-                            android:ellipsize="end"
-                            android:textColor="@color/theme_text_secondary" />
-                    </LinearLayout>
-
-                    <Button
-                        android:id="@+id/btn_setting_sync_now"
-                        android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:text="Sync Now"
-                        android:textSize="12sp"
-                        android:textColor="@android:color/white"
-                        android:backgroundTint="@color/primary"
-                        style="@style/Widget.MaterialComponents.Button" />
-                </LinearLayout>
-
-                <View
                     android:id="@+id/divider_setting_notifications"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
