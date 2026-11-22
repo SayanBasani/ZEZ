@@ -42,12 +42,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.zez.app.adapter.CallRecordAdapter;
 import com.zez.app.adapter.ChatMessageAdapter;
-import com.zez.app.model.CallRecordItem;
 import com.zez.app.model.ChatMessage;
 import com.zez.app.model.ChatUser;
-import com.zez.app.util.CallRecordManager;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatPreferencesHelper;
@@ -935,20 +932,6 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
 
-        View rowRecordings = view.findViewById(R.id.row_profile_recordings);
-        TextView tvRecordingsCount = view.findViewById(R.id.tv_profile_recordings_count);
-        List<CallRecordItem> contactRecs = CallRecordManager.getInstance(this).getRecordingsForNumber(
-                otherUserPhone != null && !otherUserPhone.isEmpty() ? otherUserPhone : otherUserId
-        );
-        if (tvRecordingsCount != null) {
-            tvRecordingsCount.setText(contactRecs.size() + " recordings available");
-        }
-        if (rowRecordings != null) {
-            rowRecordings.setOnClickListener(v -> {
-                showContactRecordingsSheet();
-            });
-        }
-
         if (btnMore != null) {
             btnMore.setOnClickListener(v -> {
                 PopupMenu popup = new PopupMenu(this, v);
@@ -1484,7 +1467,6 @@ public class ChatActivity extends AppCompatActivity {
         popup.getMenu().add(0, 5, 4, isSecretMode ? "Normal mode (Disable disappearing)" : "Secret mode (Disappearing messages)");
         popup.getMenu().add(0, 6, 5, "Chat theme");
         popup.getMenu().add(0, 7, 6, "Clear chat");
-        popup.getMenu().add(0, 8, 7, "Call recordings");
 
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
@@ -1509,49 +1491,10 @@ public class ChatActivity extends AppCompatActivity {
             } else if (id == 7) {
                 confirmClearChat();
                 return true;
-            } else if (id == 8) {
-                showContactRecordingsSheet();
-                return true;
             }
             return false;
         });
         popup.show();
-    }
-
-    private void showContactRecordingsSheet() {
-        com.google.android.material.bottomsheet.BottomSheetDialog sheet =
-                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
-        View view = LayoutInflater.from(this).inflate(R.layout.dialog_contact_recordings, null);
-        sheet.setContentView(view);
-
-        TextView tvTitle = view.findViewById(R.id.tv_contact_recordings_title);
-        TextView tvSubtitle = view.findViewById(R.id.tv_contact_recordings_subtitle);
-        RecyclerView rv = view.findViewById(R.id.rv_contact_recordings);
-        View layoutEmpty = view.findViewById(R.id.layout_contact_recordings_empty);
-        ImageButton btnClose = view.findViewById(R.id.btn_contact_recordings_close);
-
-        String titleName = otherUserName != null && !otherUserName.trim().isEmpty() ? otherUserName.trim() : "Contact";
-        if (tvTitle != null) tvTitle.setText(titleName);
-        if (tvSubtitle != null) tvSubtitle.setText("Recorded calls with " + titleName);
-
-        if (btnClose != null) btnClose.setOnClickListener(v -> sheet.dismiss());
-
-        CallRecordAdapter adapter = new CallRecordAdapter(this);
-        if (rv != null) {
-            rv.setLayoutManager(new LinearLayoutManager(this));
-            rv.setAdapter(adapter);
-        }
-
-        List<CallRecordItem> list = CallRecordManager.getInstance(this).getRecordingsForNumber(
-                otherUserPhone != null && !otherUserPhone.isEmpty() ? otherUserPhone : otherUserId
-        );
-        adapter.setItems(list);
-        if (layoutEmpty != null) {
-            layoutEmpty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
-        }
-
-        sheet.setOnDismissListener(d -> adapter.stopPlayback());
-        sheet.show();
     }
 
     private void confirmClearChat() {
@@ -2431,9 +2374,6 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        try {
-            com.zez.app.util.AudioPlaybackManager.getInstance().stop();
-        } catch (Exception ignored) {}
         super.onDestroy();
         if (conversationId != null && conversationId.equals(activeConversationId)) {
             activeConversationId = null;

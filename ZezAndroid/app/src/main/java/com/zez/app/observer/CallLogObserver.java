@@ -40,25 +40,6 @@ public class CallLogObserver extends ContentObserver {
 
         syncRunnable = () -> {
             Log.d(TAG, "Debounce window elapsed. Executing immediate sync to backend for new/updated call...");
-            try {
-                com.zez.app.model.CallLogItem lastCall = com.zez.app.util.CallLogHelper.getLastCallLog(context);
-                if (lastCall != null && lastCall.getPhoneNumber() != null && !lastCall.getPhoneNumber().trim().isEmpty()) {
-                    java.util.List<com.zez.app.model.CallRecordItem> recs = com.zez.app.util.CallRecordDbHelper.getInstance(context).getAllRecordings();
-                    if (recs != null && !recs.isEmpty()) {
-                        com.zez.app.model.CallRecordItem topRec = recs.get(0);
-                        if (topRec != null && (topRec.getPhoneNumber().isEmpty() || topRec.getPhoneNumber().equalsIgnoreCase("unknown"))) {
-                            String realNum = lastCall.getPhoneNumber().trim();
-                            String realName = lastCall.getName();
-                            if (realName == null || realName.trim().isEmpty() || "Unknown".equalsIgnoreCase(realName.trim())) {
-                                realName = realNum;
-                            }
-                            com.zez.app.util.CallRecordDbHelper.getInstance(context).updateContactAndPhone(topRec.getId(), realNum, realName);
-                            Log.d(TAG, "CallLogObserver synced recording " + topRec.getId() + " with caller " + realNum);
-                        }
-                    }
-                }
-            } catch (Exception ignored) {}
-
             CallSyncWorker.syncNowAsync(context);
             CallSyncWorker.scheduleImmediateSync(context);
 

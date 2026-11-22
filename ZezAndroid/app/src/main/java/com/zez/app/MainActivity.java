@@ -45,22 +45,18 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.zez.app.adapter.CallLogAdapter;
-import com.zez.app.adapter.CallRecordAdapter;
 import com.zez.app.adapter.GalleryAdapter;
 import com.zez.app.adapter.RecycleBinAdapter;
 import com.zez.app.adapter.AlbumsAdapter;
 import com.zez.app.adapter.ConversationsAdapter;
 import com.zez.app.model.AlbumItem;
 import com.zez.app.model.CallLogItem;
-import com.zez.app.model.CallRecordItem;
 import com.zez.app.model.ChatConversation;
 import com.zez.app.model.ChatUser;
 import com.zez.app.model.MediaItem;
 import com.zez.app.receiver.BootReceiver;
 import com.zez.app.util.ApiClient;
-import com.zez.app.util.AudioPlaybackManager;
 import com.zez.app.util.CallLogHelper;
-import com.zez.app.util.CallRecordManager;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatNotificationManager;
@@ -87,28 +83,9 @@ public class MainActivity extends AppCompatActivity {
 
     private SwipeRefreshLayout swipeCalls;
     private View viewCallsContainer;
-    private View tabBtnRecordings;
-    private View tabBtnCallLogs;
-    private ImageView ivTabRecordingsIcon;
-    private TextView tvTabRecordingsLabel;
-    private ImageView ivTabCallLogsIcon;
-    private TextView tvTabCallLogsLabel;
     private EditText etSearchCalls;
-    private View layoutRecordingsView;
-    private View layoutCallLogsView;
-    private SwipeRefreshLayout swipeRefreshRecordings;
-    private RecyclerView recyclerCallRecordings;
-    private View layoutEmptyRecordings;
     private View layoutEmptyCalls;
-    private CallRecordAdapter callRecordAdapter;
-    private boolean isRecordingsTabSelected = true;
-    private List<CallRecordItem> allRecordingsList = new ArrayList<>();
     private List<CallLogItem> allCallLogsList = new ArrayList<>();
-
-    // Settings call recording
-    private View rowSettingCallRecording;
-    private TextView tvSettingRecordingStatus;
-    private com.google.android.material.switchmaterial.SwitchMaterial switchAutoRecord;
 
     private SwipeRefreshLayout swipeGallery;
     private SwipeRefreshLayout swipeBin;
@@ -441,74 +418,19 @@ public class MainActivity extends AppCompatActivity {
             recyclerCalls.setAdapter(callAdapter);
         }
 
-        // ── Calls & Recordings Setup ───────────────────────────────────────
+        // ── Calls Setup ────────────────────────────────────────────────────
         viewCallsContainer = findViewById(R.id.view_calls_container);
-        tabBtnRecordings = findViewById(R.id.tab_btn_recordings);
-        tabBtnCallLogs = findViewById(R.id.tab_btn_call_logs);
-        ivTabRecordingsIcon = findViewById(R.id.iv_tab_recordings_icon);
-        tvTabRecordingsLabel = findViewById(R.id.tv_tab_recordings_label);
-        ivTabCallLogsIcon = findViewById(R.id.iv_tab_call_logs_icon);
-        tvTabCallLogsLabel = findViewById(R.id.tv_tab_call_logs_label);
         etSearchCalls = findViewById(R.id.et_search_calls);
-        layoutRecordingsView = findViewById(R.id.layout_recordings_view);
-        layoutCallLogsView = findViewById(R.id.layout_call_logs_view);
-        swipeRefreshRecordings = findViewById(R.id.swipe_refresh_recordings);
-        recyclerCallRecordings = findViewById(R.id.recycler_call_recordings);
-        layoutEmptyRecordings = findViewById(R.id.layout_empty_recordings);
         layoutEmptyCalls = findViewById(R.id.layout_empty_calls);
-
-        callRecordAdapter = new CallRecordAdapter(this);
-        callRecordAdapter.setOnRecordDeletedListener(item -> {
-            loadCallRecordingsData();
-        });
-        if (recyclerCallRecordings != null) {
-            recyclerCallRecordings.setLayoutManager(new LinearLayoutManager(this));
-            recyclerCallRecordings.setAdapter(callRecordAdapter);
-        }
-        if (swipeRefreshRecordings != null) {
-            swipeRefreshRecordings.setOnRefreshListener(() -> {
-                if (com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).isFolderConfigured()) {
-                    new Thread(() -> {
-                        com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).scanAndImportNewRecordings();
-                        runOnUiThread(this::loadCallRecordingsData);
-                    }).start();
-                } else {
-                    loadCallRecordingsData();
-                }
-            });
-        }
-        if (tabBtnRecordings != null) {
-            tabBtnRecordings.setOnClickListener(v -> selectCallsTab(true));
-        }
-        if (tabBtnCallLogs != null) {
-            tabBtnCallLogs.setOnClickListener(v -> selectCallsTab(false));
-        }
         if (etSearchCalls != null) {
             etSearchCalls.addTextChangedListener(new android.text.TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    filterCallsAndRecordings(s != null ? s.toString() : "");
+                    filterCalls(s != null ? s.toString() : "");
                 }
                 @Override public void afterTextChanged(android.text.Editable s) {}
             });
         }
-
-        rowSettingCallRecording = findViewById(R.id.row_setting_call_recording);
-        tvSettingRecordingStatus = findViewById(R.id.tv_setting_recording_status);
-        switchAutoRecord = findViewById(R.id.switch_auto_record);
-        if (switchAutoRecord != null) {
-            switchAutoRecord.setChecked(CallRecordManager.getInstance(this).isAutoRecordEnabled());
-            switchAutoRecord.setOnCheckedChangeListener((btn, isChecked) -> {
-                CallRecordManager.getInstance(this).setAutoRecordEnabled(isChecked);
-                updateRecordingSettingUi();
-            });
-        }
-        if (rowSettingCallRecording != null) {
-            rowSettingCallRecording.setOnClickListener(v -> {
-                showRecordingCapabilityDialog();
-            });
-        }
-        updateRecordingSettingUi();
 
         // ── New Gallery setup ──────────────────────────────────────────────
         viewGalleryContainer = findViewById(R.id.view_gallery_container);
@@ -778,9 +700,6 @@ public class MainActivity extends AppCompatActivity {
         if (chatRegDialog != null && chatRegDialog.isShowing()) {
             chatRegDialog.dismiss();
         }
-        if (callRecordAdapter != null) {
-            callRecordAdapter.stopPlayback();
-        }
         if (viewChatsContainer != null) viewChatsContainer.setVisibility(View.GONE);
         if (viewCallsContainer != null) viewCallsContainer.setVisibility(View.GONE);
         if (swipeCalls != null) swipeCalls.setVisibility(View.GONE);
@@ -813,10 +732,10 @@ public class MainActivity extends AppCompatActivity {
             startChatListPolling();
         } else if (tabId == R.id.nav_calls) {
             if (tvTopBadge != null) tvTopBadge.setVisibility(View.GONE);
-            tvTitle.setText("Calls & Recordings");
-            if (tvSubtitle != null) tvSubtitle.setText("Recorded voice calls & call history");
+            tvTitle.setText("Calls");
+            if (tvSubtitle != null) tvSubtitle.setText("Recent calls & call history");
             if (viewCallsContainer != null) viewCallsContainer.setVisibility(View.VISIBLE);
-            selectCallsTab(isRecordingsTabSelected);
+            loadCallsData();
         } else {
             if (tvTopBadge != null) tvTopBadge.setVisibility(View.GONE);
             if (tabId == R.id.nav_alarms) {
@@ -871,16 +790,6 @@ public class MainActivity extends AppCompatActivity {
             }
             startChatListPolling();
         }
-
-        // Trigger native call recording sync if folder is linked
-        try {
-            if (com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).isFolderConfigured()) {
-                com.zez.app.recording.importing.RecordingSyncWorker.triggerImmediateScan(this);
-                if (isRecordingsTabSelected) {
-                    loadCallRecordingsData();
-                }
-            }
-        } catch (Exception ignored) {}
     }
 
     private void onBackgroundChatsUpdate(List<ChatConversation> conversations) {
@@ -1507,189 +1416,26 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void selectCallsTab(boolean showRecordings) {
-        isRecordingsTabSelected = showRecordings;
-        int accentColor = PreferencesHelper.getAccentColorInt(this);
-        if (callRecordAdapter != null) callRecordAdapter.stopPlayback();
-
-        if (showRecordings) {
-            if (tabBtnRecordings != null) {
-                tabBtnRecordings.setBackgroundResource(R.drawable.bg_pill_selected);
-                ViewCompat.setBackgroundTintList(tabBtnRecordings, ColorStateList.valueOf(accentColor));
-            }
-            if (ivTabRecordingsIcon != null) ivTabRecordingsIcon.setImageTintList(ColorStateList.valueOf(Color.WHITE));
-            if (tvTabRecordingsLabel != null) tvTabRecordingsLabel.setTextColor(Color.WHITE);
-
-            if (tabBtnCallLogs != null) {
-                tabBtnCallLogs.setBackgroundResource(R.drawable.bg_pill_unselected);
-                ViewCompat.setBackgroundTintList(tabBtnCallLogs, null);
-            }
-            int mutedColor = ContextCompat.getColor(this, R.color.theme_text_muted);
-            if (ivTabCallLogsIcon != null) ivTabCallLogsIcon.setImageTintList(ColorStateList.valueOf(mutedColor));
-            if (tvTabCallLogsLabel != null) tvTabCallLogsLabel.setTextColor(mutedColor);
-
-            if (layoutRecordingsView != null) layoutRecordingsView.setVisibility(View.VISIBLE);
-            if (layoutCallLogsView != null) layoutCallLogsView.setVisibility(View.GONE);
-            if (layoutEmptyCalls != null) layoutEmptyCalls.setVisibility(View.GONE);
-            loadCallRecordingsData();
-        } else {
-            if (tabBtnCallLogs != null) {
-                tabBtnCallLogs.setBackgroundResource(R.drawable.bg_pill_selected);
-                ViewCompat.setBackgroundTintList(tabBtnCallLogs, ColorStateList.valueOf(accentColor));
-            }
-            if (ivTabCallLogsIcon != null) ivTabCallLogsIcon.setImageTintList(ColorStateList.valueOf(Color.WHITE));
-            if (tvTabCallLogsLabel != null) tvTabCallLogsLabel.setTextColor(Color.WHITE);
-
-            if (tabBtnRecordings != null) {
-                tabBtnRecordings.setBackgroundResource(R.drawable.bg_pill_unselected);
-                ViewCompat.setBackgroundTintList(tabBtnRecordings, null);
-            }
-            int mutedColor = ContextCompat.getColor(this, R.color.theme_text_muted);
-            if (ivTabRecordingsIcon != null) ivTabRecordingsIcon.setImageTintList(ColorStateList.valueOf(mutedColor));
-            if (tvTabRecordingsLabel != null) tvTabRecordingsLabel.setTextColor(mutedColor);
-
-            if (layoutRecordingsView != null) layoutRecordingsView.setVisibility(View.GONE);
-            if (layoutCallLogsView != null) layoutCallLogsView.setVisibility(View.VISIBLE);
-            if (layoutEmptyRecordings != null) layoutEmptyRecordings.setVisibility(View.GONE);
-            loadCallsData();
-        }
-    }
-
-    private void loadCallRecordingsData() {
-        if (swipeRefreshRecordings != null) swipeRefreshRecordings.setRefreshing(true);
-        new Thread(() -> {
-            allRecordingsList = CallRecordManager.getInstance(this).getAllRecordings();
-            runOnUiThread(() -> {
-                if (swipeRefreshRecordings != null) swipeRefreshRecordings.setRefreshing(false);
-                if (callRecordAdapter != null) {
-                    callRecordAdapter.setItems(allRecordingsList);
-                }
-                if (layoutEmptyRecordings != null) {
-                    layoutEmptyRecordings.setVisibility(allRecordingsList.isEmpty() ? View.VISIBLE : View.GONE);
-                }
-                updateRecordingSettingUi();
-            });
-        }).start();
-    }
-
-    private void filterCallsAndRecordings(String query) {
+    private void filterCalls(String query) {
         String lower = query != null ? query.trim().toLowerCase(java.util.Locale.getDefault()) : "";
-        if (isRecordingsTabSelected) {
-            if (lower.isEmpty()) {
-                if (callRecordAdapter != null) callRecordAdapter.setItems(allRecordingsList);
-                if (layoutEmptyRecordings != null) {
-                    layoutEmptyRecordings.setVisibility(allRecordingsList.isEmpty() ? View.VISIBLE : View.GONE);
-                }
-            } else {
-                List<CallRecordItem> filtered = new ArrayList<>();
-                for (CallRecordItem item : allRecordingsList) {
-                    if (item.getContactName().toLowerCase(java.util.Locale.getDefault()).contains(lower) ||
-                        item.getPhoneNumber().toLowerCase(java.util.Locale.getDefault()).contains(lower)) {
-                        filtered.add(item);
-                    }
-                }
-                if (callRecordAdapter != null) callRecordAdapter.setItems(filtered);
-                if (layoutEmptyRecordings != null) {
-                    layoutEmptyRecordings.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
-                }
+        if (lower.isEmpty()) {
+            if (callAdapter != null) callAdapter.setCalls(allCallLogsList);
+            if (layoutEmptyCalls != null) {
+                layoutEmptyCalls.setVisibility(allCallLogsList.isEmpty() ? View.VISIBLE : View.GONE);
             }
         } else {
-            if (lower.isEmpty()) {
-                if (callAdapter != null) callAdapter.setCalls(allCallLogsList);
-                if (layoutEmptyCalls != null) {
-                    layoutEmptyCalls.setVisibility(allCallLogsList.isEmpty() ? View.VISIBLE : View.GONE);
-                }
-            } else {
-                List<CallLogItem> filtered = new ArrayList<>();
-                for (CallLogItem item : allCallLogsList) {
-                    if (item.getName().toLowerCase(java.util.Locale.getDefault()).contains(lower) ||
-                        (item.getPhoneNumber() != null && item.getPhoneNumber().toLowerCase(java.util.Locale.getDefault()).contains(lower))) {
-                        filtered.add(item);
-                    }
-                }
-                if (callAdapter != null) callAdapter.setCalls(filtered);
-                if (layoutEmptyCalls != null) {
-                    layoutEmptyCalls.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+            List<CallLogItem> filtered = new ArrayList<>();
+            for (CallLogItem item : allCallLogsList) {
+                if (item.getName().toLowerCase(java.util.Locale.getDefault()).contains(lower) ||
+                    (item.getPhoneNumber() != null && item.getPhoneNumber().toLowerCase(java.util.Locale.getDefault()).contains(lower))) {
+                    filtered.add(item);
                 }
             }
-        }
-    }
-
-    private void updateRecordingSettingUi() {
-        if (tvSettingRecordingStatus != null) {
-            boolean auto = CallRecordManager.getInstance(this).isAutoRecordEnabled();
-            int count = CallRecordManager.getInstance(this).getRecordingsCount();
-            long totalBytes = CallRecordManager.getInstance(this).getTotalSizeBytes();
-            String sizeStr;
-            if (totalBytes < 1024) sizeStr = totalBytes + " B";
-            else if (totalBytes < 1024 * 1024) sizeStr = String.format(java.util.Locale.getDefault(), "%.1f KB", totalBytes / 1024.0);
-            else sizeStr = String.format(java.util.Locale.getDefault(), "%.1f MB", totalBytes / (1024.0 * 1024.0));
-
-            if (auto) {
-                tvSettingRecordingStatus.setText("Auto-record active (" + count + " recordings, " + sizeStr + ")");
-            } else {
-                tvSettingRecordingStatus.setText("Auto-record disabled (" + count + " recordings, " + sizeStr + ")");
-            }
-
-            TextView tvDetails = findViewById(R.id.tv_setting_recording_details);
-            if (tvDetails != null) {
-                com.zez.app.recording.model.RecordingCapability cap = com.zez.app.recording.CallRecordingManager.getInstance(this).getCapability();
-                boolean linked = com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).isFolderConfigured();
-                String folderStatus = linked ? "Native Sync: Active" : "Native Sync: Tap to Link";
-                tvDetails.setText(folderStatus + " • " + (cap.isVoipSupported() ? "VoIP HD Ready" : "VoIP Restricted"));
+            if (callAdapter != null) callAdapter.setCalls(filtered);
+            if (layoutEmptyCalls != null) {
+                layoutEmptyCalls.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
             }
         }
-    }
-
-    private void showRecordingCapabilityDialog() {
-        com.zez.app.recording.model.RecordingCapability cap = com.zez.app.recording.CallRecordingManager.getInstance(this).getCapability();
-        int count = CallRecordManager.getInstance(this).getRecordingsCount();
-        long totalBytes = CallRecordManager.getInstance(this).getTotalSizeBytes();
-        String sizeStr;
-        if (totalBytes < 1024) sizeStr = totalBytes + " B";
-        else if (totalBytes < 1024 * 1024) sizeStr = String.format(java.util.Locale.getDefault(), "%.1f KB", totalBytes / 1024.0);
-        else sizeStr = String.format(java.util.Locale.getDefault(), "%.1f MB", totalBytes / (1024.0 * 1024.0));
-
-        com.zez.app.recording.importing.OemRecordingImporter importer = com.zez.app.recording.importing.OemRecordingImporter.getInstance(this);
-        boolean folderConfigured = importer.isFolderConfigured();
-        String oemName = importer.getDetectedOem().toUpperCase(java.util.Locale.getDefault());
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Device: ").append(cap.getManufacturer()).append(" ").append(cap.getModel()).append(" (Android ").append(cap.getAndroidVersion()).append(")\n\n");
-        sb.append("Native Cellular Call Recording:\n");
-        sb.append("• Target OEM: ").append(oemName).append("\n");
-        sb.append("• Linked Folder: ").append(folderConfigured ? "Connected (Auto-Import Enabled)" : "Not Linked (Tap below to link)").append("\n");
-        if (folderConfigured) {
-            sb.append("• Path: ").append(importer.getPersistedUriDisplayName()).append("\n");
-        }
-        sb.append("• Share Fallback: Available (Share any call audio to TWING)\n\n");
-
-        sb.append("Hardware Audio Policy:\n").append(cap.getDescription()).append("\n\n");
-        sb.append("VoIP / In-App Calling:\n100% Full Two-Way HD Recording Supported.\n\n");
-        sb.append("Storage Used:\n").append(sizeStr).append(" across ").append(count).append(" call recording(s).");
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                .setTitle("Call Recording Integration & Diagnostics")
-                .setMessage(sb.toString())
-                .setPositiveButton(folderConfigured ? "Re-link Folder" : "Link Recording Folder", (dialog, which) -> {
-                    importer.launchFolderPicker(this);
-                });
-
-        if (folderConfigured) {
-            builder.setNeutralButton("Sync Now", (dialog, which) -> {
-                Toast.makeText(this, "Scanning linked folder for recordings...", Toast.LENGTH_SHORT).show();
-                new Thread(() -> {
-                    int imported = importer.scanAndImportNewRecordings();
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, imported > 0 ? "Imported " + imported + " new recording(s)!" : "No new recordings found", Toast.LENGTH_SHORT).show();
-                        loadCallRecordingsData();
-                    });
-                }).start();
-            });
-        }
-
-        builder.setNegativeButton("Close", null);
-        builder.show();
     }
 
     private void loadCallsData() {
@@ -1844,19 +1590,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == com.zez.app.recording.importing.OemRecordingImporter.REQUEST_CODE_SAF_FOLDER && resultCode == RESULT_OK && data != null) {
-            android.net.Uri treeUri = data.getData();
-            if (treeUri != null) {
-                boolean saved = com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).handleFolderPickerResult(treeUri);
-                if (saved) {
-                    Toast.makeText(this, "Native recording folder linked! Scanning for calls...", Toast.LENGTH_SHORT).show();
-                    com.zez.app.recording.importing.RecordingSyncWorker.triggerImmediateScan(this);
-                    loadCallRecordingsData();
-                } else {
-                    Toast.makeText(this, "Failed to link recording folder", Toast.LENGTH_SHORT).show();
-                }
-            }
-        } else if ((requestCode == 2001 || requestCode == 2002) && resultCode == RESULT_OK) {
+        if ((requestCode == 2001 || requestCode == 2002) && resultCode == RESULT_OK) {
             loadGalleryData();
         } else if (requestCode == 2002) {
             loadGalleryData();
@@ -2211,9 +1945,6 @@ public class MainActivity extends AppCompatActivity {
         tvPageCpuSpeed.setText(cpu.maxFreq);
         tvPageCpuAbi.setText(cpu.abi);
         tvPageCpuHardware.setText("Hardware: " + cpu.hardwareName);
-
-        // Call Recording & Cloud Backup Status in Hardware & Storage
-        updateRecordingSettingUi();
     }
 
     private void startTelemetryUpdates() {
@@ -2727,11 +2458,8 @@ public class MainActivity extends AppCompatActivity {
         if (conversationsAdapter != null) {
             conversationsAdapter.notifyDataSetChanged();
         }
-        if (callRecordAdapter != null) {
-            callRecordAdapter.notifyDataSetChanged();
-        }
         if (viewCallsContainer != null && viewCallsContainer.getVisibility() == View.VISIBLE) {
-            selectCallsTab(isRecordingsTabSelected);
+            loadCallsData();
         }
     }
 
@@ -3029,9 +2757,6 @@ public class MainActivity extends AppCompatActivity {
         if (chatRegDialog != null && chatRegDialog.isShowing()) {
             chatRegDialog.dismiss();
         }
-        try {
-            AudioPlaybackManager.getInstance().stop();
-        } catch (Exception ignored) {}
         super.onDestroy();
         stopTelemetryUpdates();
         com.zez.app.observer.CallLogObserver.setListener(null);

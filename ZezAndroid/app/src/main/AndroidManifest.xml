@@ -24,7 +24,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -108,23 +107,6 @@
             android:showOnLockScreen="true"
             android:theme="@style/Theme.Zez" />
 
-        <activity
-            android:name=".recording.importing.RecordingShareActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Zez"
-            android:label="@string/app_name">
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="audio/*" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.SEND_MULTIPLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="audio/*" />
-            </intent-filter>
-        </activity>
-
         <service
             android:name=".service.AlarmRingingService"
             android:exported="false"
@@ -163,12 +145,6 @@
                 <action android:name="android.intent.action.NEW_OUTGOING_CALL" />
             </intent-filter>
         </receiver>
-
-        <service
-            android:name=".service.CallRecordService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="microphone|dataSync" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
