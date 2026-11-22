@@ -15,7 +15,8 @@ When a cellular call is active, Android transitions to `AUDIO_MODE_IN_CALL`.
 Under this mode:
 1. The cellular modem hardware (RIL) maintains a dedicated hardware audio path to the earpiece/speaker and microphone.
 2. The Android audio framework executes `AudioPolicyService::setRecordSilenced(portId, true)` on all non-privileged clients attempting to record from the hardware microphone or any audio source.
-3. `AudioFlinger` overwrites the application's audio buffer with blocks of zeroes (`0x0000`), yielding digital silence (`-91.0 dB`).
+3. `AudioFlinger` overwrites the application's audio buffer with blocks of zeroes (`0x0000`), yielding digital silence (`-96.0 dB`).
+4. In Android 10+ (API 29+), `AudioRecordingConfiguration.isClientSilenced()` explicitly flags this condition.
 
 ### 1.3 Android 11+ "While-In-Use" Microphone Restrictions
 Starting in Android 11 (API level 30):
@@ -36,4 +37,4 @@ Historically, several utilities (e.g., Cube ACR, Boldbeast) used Android's Acces
 | **In-App VoIP Calls (TWING Voice)** | ✅ **100% Fully Supported** | App manages the WebRTC/Twilio audio stream; no OS-level cellular restriction applies. |
 | **Local Voice / Mic Capture (Idle or In-App)** | ✅ **100% Fully Supported** | Standard microphone permissions (`RECORD_AUDIO`) are respected. |
 | **PSTN Cellular Call (Direct 2-Way Stream)** | ❌ **Restricted by Android OS** | Requires `CAPTURE_AUDIO_OUTPUT` (system/privileged permission). |
-| **PSTN Cellular Call (Ambient via Speakerphone)**| ⚠️ **Acoustically Limited** | Captures only sound physically reaching the bottom microphone; remote audio quality depends on phone volume. |
+| **PSTN Cellular Call (Third-Party Mic)** | ⚠️ **Silenced by OS Policy** | `AudioPolicyService` silences third-party capture (`isClientSilenced=true`). |

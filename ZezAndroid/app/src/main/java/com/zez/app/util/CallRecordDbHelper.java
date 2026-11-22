@@ -16,7 +16,7 @@ import java.util.List;
 public class CallRecordDbHelper extends SQLiteOpenHelper {
     private static final String TAG = "CallRecordDbHelper";
     private static final String DATABASE_NAME = "twing_call_recordings.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE_RECORDINGS = "call_recordings";
     private static final String COL_ID = "id";
@@ -30,6 +30,9 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
     private static final String COL_FILE_SIZE = "file_size";
     private static final String COL_CLOUD_URL = "cloud_url";
     private static final String COL_IS_SYNCED = "is_synced";
+    private static final String COL_STATUS = "status";
+    private static final String COL_SILENCE_REASON = "silence_reason";
+    private static final String COL_PEAK_AMPLITUDE = "peak_amplitude";
 
     private static volatile CallRecordDbHelper instance;
 
@@ -57,7 +60,10 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
                 + COL_FILE_PATH + " TEXT, "
                 + COL_FILE_SIZE + " INTEGER, "
                 + COL_CLOUD_URL + " TEXT, "
-                + COL_IS_SYNCED + " INTEGER DEFAULT 0"
+                + COL_IS_SYNCED + " INTEGER DEFAULT 0, "
+                + COL_STATUS + " TEXT DEFAULT 'COMPLETED', "
+                + COL_SILENCE_REASON + " TEXT, "
+                + COL_PEAK_AMPLITUDE + " INTEGER DEFAULT 0"
                 + ");";
         db.execSQL(createSql);
         db.execSQL("CREATE INDEX idx_rec_time ON " + TABLE_RECORDINGS + "(" + COL_TIMESTAMP + " DESC);");
@@ -70,6 +76,13 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
             try {
                 db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_CLOUD_URL + " TEXT;");
                 db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_IS_SYNCED + " INTEGER DEFAULT 0;");
+            } catch (Exception ignored) {}
+        }
+        if (oldVersion < 3) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_STATUS + " TEXT DEFAULT 'COMPLETED';");
+                db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_SILENCE_REASON + " TEXT;");
+                db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_PEAK_AMPLITUDE + " INTEGER DEFAULT 0;");
             } catch (Exception ignored) {}
         }
     }
@@ -90,6 +103,9 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
             cv.put(COL_FILE_SIZE, item.getFileSize());
             cv.put(COL_CLOUD_URL, item.getCloudUrl());
             cv.put(COL_IS_SYNCED, item.isSynced() ? 1 : 0);
+            cv.put(COL_STATUS, item.getStatus());
+            cv.put(COL_SILENCE_REASON, item.getSilenceReason());
+            cv.put(COL_PEAK_AMPLITUDE, item.getPeakAmplitude());
             db.insertWithOnConflict(TABLE_RECORDINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
         } catch (Exception e) {
             Log.e(TAG, "Error inserting recording: " + e.getMessage(), e);
@@ -97,11 +113,23 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
     }
 
     public synchronized void updateDurationAndSize(String id, int durationSeconds, long fileSize) {
+        updateDurationSizeAndStatus(id, durationSeconds, fileSize, "COMPLETED", null, 0);
+    }
+
+    public synchronized void updateDurationSizeAndStatus(String id, int durationSeconds, long fileSize,
+                                                         String status, String silenceReason, int peakAmplitude) {
         try {
             SQLiteDatabase db = getWritableDatabase();
             ContentValues cv = new ContentValues();
             cv.put(COL_DURATION_SECONDS, durationSeconds);
             cv.put(COL_FILE_SIZE, fileSize);
+            if (status != null) {
+                cv.put(COL_STATUS, status);
+            }
+            if (silenceReason != null) {
+                cv.put(COL_SILENCE_REASON, silenceReason);
+            }
+            cv.put(COL_PEAK_AMPLITUDE, peakAmplitude);
             db.update(TABLE_RECORDINGS, cv, COL_ID + " = ?", new String[]{id});
         } catch (Exception e) {
             Log.e(TAG, "Error updating recording: " + e.getMessage(), e);
@@ -265,6 +293,25 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
         if (syncCol != -1 && !c.isNull(syncCol)) {
             isSynced = c.getInt(syncCol) == 1;
         }
-        return new CallRecordItem(id, phone, name, type, direction, time, duration, path, size, cloudUrl, isSynced);
+
+        String status = "COMPLETED";
+        int statusCol = c.getColumnIndex(COL_STATUS);
+        if (statusCol != -1 && !c.isNull(statusCol)) {
+            status = c.getString(statusCol);
+        }
+
+        String silenceReason = "";
+        int silenceCol = c.getColumnIndex(COL_SILENCE_REASON);
+        if (silenceCol != -1 && !c.isNull(silenceCol)) {
+            silenceReason = c.getString(silenceCol);
+        }
+
+        int peakAmplitude = 0;
+        int peakCol = c.getColumnIndex(COL_PEAK_AMPLITUDE);
+        if (peakCol != -1 && !c.isNull(peakCol)) {
+            peakAmplitude = c.getInt(peakCol);
+        }
+
+        return new CallRecordItem(id, phone, name, type, direction, time, duration, path, size, cloudUrl, isSynced, status, silenceReason, peakAmplitude);
     }
 }

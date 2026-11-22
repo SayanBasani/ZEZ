@@ -6,7 +6,6 @@ import com.zez.app.model.CallRecordItem;
 import com.zez.app.recording.model.RecordingMetadata;
 import com.zez.app.util.CallRecordDbHelper;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class RecordingDatabaseManager {
@@ -29,13 +28,21 @@ public class RecordingDatabaseManager {
                 metadata.getFilePath(),
                 metadata.getFileSize(),
                 metadata.getCloudUrl(),
-                metadata.isSynced()
+                metadata.isSynced(),
+                metadata.getRecordingStatus(),
+                metadata.getSilenceReason(),
+                metadata.getPeakAmplitude()
         );
         dbHelper.insertRecord(item);
     }
 
     public void updateDurationAndSize(String recordId, int durationSec, long fileSize) {
         dbHelper.updateDurationAndSize(recordId, durationSec, fileSize);
+    }
+
+    public void updateDurationSizeAndStatus(String recordId, int durationSec, long fileSize,
+                                            String status, String silenceReason, int peakAmplitude) {
+        dbHelper.updateDurationSizeAndStatus(recordId, durationSec, fileSize, status, silenceReason, peakAmplitude);
     }
 
     public void updateContactAndPhone(String recordId, String phone, String contactName) {

@@ -33,22 +33,32 @@ import java.util.List;
 import java.util.Locale;
 
 public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.RecordViewHolder> {
-    private List<CallRecordItem> items = new ArrayList<>();
-    private final Context context;
-    private String currentlyPlayingId = null;
-    private OnRecordDeletedListener onRecordDeletedListener;
 
     public interface OnRecordDeletedListener {
         void onRecordDeleted(CallRecordItem item);
     }
 
+    private final Context context;
+    private List<CallRecordItem> items;
+    private String currentlyPlayingId = null;
+    private OnRecordDeletedListener onRecordDeletedListener;
+
     public CallRecordAdapter(Context context) {
+        this(context, new ArrayList<>());
+    }
+
+    public CallRecordAdapter(Context context, List<CallRecordItem> items) {
         this.context = context;
+        this.items = items != null ? items : new ArrayList<>();
     }
 
     public void setItems(List<CallRecordItem> list) {
         this.items = list != null ? list : new ArrayList<>();
         notifyDataSetChanged();
+    }
+
+    public void updateList(List<CallRecordItem> list) {
+        setItems(list);
     }
 
     public void setOnRecordDeletedListener(OnRecordDeletedListener listener) {
@@ -86,6 +96,8 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
         TextView tvTimeCurrent, tvTimeTotal, tvSize;
         View btnShare, btnRename, btnDelete;
         ImageView ivTypeIcon, ivCloudStatus;
+        View layoutSilencedBanner;
+        TextView tvSilencedMsg, btnInfo;
 
         public RecordViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -95,6 +107,10 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
             tvTypeBadge = itemView.findViewById(R.id.tv_rec_type_badge);
             tvDate = itemView.findViewById(R.id.tv_rec_date);
             ivCloudStatus = itemView.findViewById(R.id.iv_rec_cloud_status);
+
+            layoutSilencedBanner = itemView.findViewById(R.id.layout_rec_silenced_banner);
+            tvSilencedMsg = itemView.findViewById(R.id.tv_rec_silenced_msg);
+            btnInfo = itemView.findViewById(R.id.btn_rec_info);
 
             btnPlayPause = itemView.findViewById(R.id.btn_rec_play_pause);
             sbProgress = itemView.findViewById(R.id.sb_rec_progress);
@@ -142,6 +158,21 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
                 tvDirection.setTextColor(Color.parseColor("#3B82F6"));
             }
 
+            // Silenced Audio Notice
+            if (layoutSilencedBanner != null) {
+                if (item.isSilenced()) {
+                    layoutSilencedBanner.setVisibility(View.VISIBLE);
+                    if (tvSilencedMsg != null) {
+                        tvSilencedMsg.setText("Audio capture silenced by Android OS");
+                    }
+                    if (btnInfo != null) {
+                        btnInfo.setOnClickListener(v -> showSilencedExplanation(item));
+                    }
+                } else {
+                    layoutSilencedBanner.setVisibility(View.GONE);
+                }
+            }
+
             ViewCompat.setBackgroundTintList(btnPlayPause, ColorStateList.valueOf(accentColor));
             sbProgress.setProgressTintList(ColorStateList.valueOf(accentColor));
             sbProgress.setThumbTintList(ColorStateList.valueOf(accentColor));
@@ -161,6 +192,10 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
             }
 
             btnPlayPause.setOnClickListener(v -> {
+                if (item.isSilenced() && !isPlayingThis && !isPausedThis) {
+                    Toast.makeText(context, "Note: Recording audio was silenced by Android OS during this call", Toast.LENGTH_SHORT).show();
+                }
+
                 if (isPlayingThis) {
                     AudioPlaybackManager.getInstance().pause();
                     btnPlayPause.setImageResource(R.drawable.ic_play_arrow);
@@ -240,6 +275,28 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
             btnShare.setOnClickListener(v -> shareRecording(item));
             if (btnRename != null) btnRename.setOnClickListener(v -> promptRename(item, getBindingAdapterPosition()));
             btnDelete.setOnClickListener(v -> confirmDelete(item, getBindingAdapterPosition()));
+        }
+
+        private void showSilencedExplanation(CallRecordItem item) {
+            String reason = item.getSilenceReason();
+            if (reason == null || reason.isEmpty()) {
+                reason = "Android AudioPolicyService muted the microphone during this cellular call.";
+            }
+
+            String msg = "Why is this recording silent?\n\n"
+                    + "During an active cellular phone call, Android OS AudioPolicyService strictly silences third-party audio recording to protect call privacy.\n\n"
+                    + "Diagnostic Report:\n"
+                    + "• Status: AUDIO_CAPTURE_SILENCED\n"
+                    + "• Peak Amplitude: " + item.getPeakAmplitude() + "\n"
+                    + "• Cause: " + reason + "\n\n"
+                    + "Standard user apps are prohibited by Android platform security from intercepting cellular baseband calls without system platform firmware signing.\n\n"
+                    + "Tip: For 100% two-way crystal clear call recording, use TWING's in-app Voice Calling.";
+
+            new AlertDialog.Builder(context)
+                    .setTitle("Audio Silenced by Android")
+                    .setMessage(msg)
+                    .setPositiveButton("Understood", null)
+                    .show();
         }
 
         private void promptRename(CallRecordItem item, int position) {

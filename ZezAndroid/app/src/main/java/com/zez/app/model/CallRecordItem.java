@@ -18,6 +18,9 @@ public class CallRecordItem implements Serializable {
     private long fileSize;
     private String cloudUrl;
     private boolean isSynced;
+    private String status = "COMPLETED"; // "COMPLETED", "SILENCED", "FAILED"
+    private String silenceReason = "";
+    private int peakAmplitude = 0;
 
     public CallRecordItem(String id, String phoneNumber, String contactName, String callType,
                           String direction, long timestamp, int durationSeconds, String filePath, long fileSize) {
@@ -27,6 +30,12 @@ public class CallRecordItem implements Serializable {
     public CallRecordItem(String id, String phoneNumber, String contactName, String callType,
                           String direction, long timestamp, int durationSeconds, String filePath, long fileSize,
                           String cloudUrl, boolean isSynced) {
+        this(id, phoneNumber, contactName, callType, direction, timestamp, durationSeconds, filePath, fileSize, cloudUrl, isSynced, "COMPLETED", "", 0);
+    }
+
+    public CallRecordItem(String id, String phoneNumber, String contactName, String callType,
+                          String direction, long timestamp, int durationSeconds, String filePath, long fileSize,
+                          String cloudUrl, boolean isSynced, String status, String silenceReason, int peakAmplitude) {
         this.id = id;
         this.phoneNumber = phoneNumber;
         this.contactName = contactName;
@@ -38,6 +47,9 @@ public class CallRecordItem implements Serializable {
         this.fileSize = fileSize;
         this.cloudUrl = cloudUrl;
         this.isSynced = isSynced;
+        this.status = (status != null && !status.isEmpty()) ? status : "COMPLETED";
+        this.silenceReason = silenceReason != null ? silenceReason : "";
+        this.peakAmplitude = peakAmplitude;
     }
 
     public String getId() { return id; }
@@ -62,6 +74,19 @@ public class CallRecordItem implements Serializable {
     public void setFileSize(long fileSize) { this.fileSize = fileSize; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     public void setContactName(String contactName) { this.contactName = contactName; }
+
+    public String getStatus() { return status != null ? status : "COMPLETED"; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getSilenceReason() { return silenceReason != null ? silenceReason : ""; }
+    public void setSilenceReason(String silenceReason) { this.silenceReason = silenceReason; }
+
+    public int getPeakAmplitude() { return peakAmplitude; }
+    public void setPeakAmplitude(int peakAmplitude) { this.peakAmplitude = peakAmplitude; }
+
+    public boolean isSilenced() {
+        return "SILENCED".equalsIgnoreCase(status) || "AUDIO_CAPTURE_SILENCED".equalsIgnoreCase(status);
+    }
 
     public boolean fileExists() {
         if (filePath == null) return false;

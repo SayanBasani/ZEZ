@@ -19,15 +19,27 @@ public class RecordingMetadata implements Serializable {
     private String filePath;
     private long fileSize;
     private String mimeType;
-    private String recordingStatus; // "COMPLETED", "IN_PROGRESS", "FAILED"
+    private String recordingStatus; // "COMPLETED", "SILENCED", "IN_PROGRESS", "FAILED"
     private String recordingSource; // "VOIP_STREAM", "MIC_AMBIENT", "RESTRICTED_CELLULAR"
     private String cloudUrl;
     private boolean isSynced;
+    private int peakAmplitude;
+    private String silenceReason;
+    private double rmsLevelDb;
 
     public RecordingMetadata(String recordingId, String callId, String phoneNumber, String contactName,
                              String callType, String direction, long startedAt, long endedAt,
                              int durationSeconds, String filePath, long fileSize, String mimeType,
                              String recordingStatus, String recordingSource, String cloudUrl, boolean isSynced) {
+        this(recordingId, callId, phoneNumber, contactName, callType, direction, startedAt, endedAt,
+                durationSeconds, filePath, fileSize, mimeType, recordingStatus, recordingSource, cloudUrl, isSynced, 0, "", -96.0);
+    }
+
+    public RecordingMetadata(String recordingId, String callId, String phoneNumber, String contactName,
+                             String callType, String direction, long startedAt, long endedAt,
+                             int durationSeconds, String filePath, long fileSize, String mimeType,
+                             String recordingStatus, String recordingSource, String cloudUrl, boolean isSynced,
+                             int peakAmplitude, String silenceReason, double rmsLevelDb) {
         this.recordingId = recordingId;
         this.callId = callId;
         this.phoneNumber = phoneNumber;
@@ -44,6 +56,9 @@ public class RecordingMetadata implements Serializable {
         this.recordingSource = recordingSource;
         this.cloudUrl = cloudUrl;
         this.isSynced = isSynced;
+        this.peakAmplitude = peakAmplitude;
+        this.silenceReason = silenceReason;
+        this.rmsLevelDb = rmsLevelDb;
     }
 
     public String getRecordingId() { return recordingId; }
@@ -70,6 +85,9 @@ public class RecordingMetadata implements Serializable {
     public String getRecordingSource() { return recordingSource != null ? recordingSource : "MIC_AMBIENT"; }
     public String getCloudUrl() { return cloudUrl; }
     public boolean isSynced() { return isSynced; }
+    public int getPeakAmplitude() { return peakAmplitude; }
+    public String getSilenceReason() { return silenceReason != null ? silenceReason : ""; }
+    public double getRmsLevelDb() { return rmsLevelDb; }
 
     public void setDurationSeconds(int durationSeconds) { this.durationSeconds = durationSeconds; }
     public void setFileSize(long fileSize) { this.fileSize = fileSize; }
@@ -79,6 +97,9 @@ public class RecordingMetadata implements Serializable {
     public void setRecordingStatus(String recordingStatus) { this.recordingStatus = recordingStatus; }
     public void setCloudUrl(String cloudUrl) { this.cloudUrl = cloudUrl; }
     public void setSynced(boolean synced) { isSynced = synced; }
+    public void setPeakAmplitude(int peakAmplitude) { this.peakAmplitude = peakAmplitude; }
+    public void setSilenceReason(String silenceReason) { this.silenceReason = silenceReason; }
+    public void setRmsLevelDb(double rmsLevelDb) { this.rmsLevelDb = rmsLevelDb; }
 
     public boolean fileExists() {
         if (filePath == null) return false;

@@ -5,8 +5,10 @@ import android.util.Log;
 
 import com.zez.app.model.CallLogItem;
 import com.zez.app.model.CallRecordItem;
+import com.zez.app.recording.model.AudioDiagnostics;
 import com.zez.app.recording.model.RecordingCapability;
 import com.zez.app.recording.model.RecordingMetadata;
+import com.zez.app.recording.model.RecordingState;
 import com.zez.app.util.CallLogHelper;
 
 import java.io.File;
@@ -14,6 +16,10 @@ import java.util.List;
 
 public class CallRecordingManager {
     private static final String TAG = "CallRecordingManager";
+
+    public interface RecordingStateListener {
+        void onStateChanged(RecordingState state, AudioDiagnostics diagnostics);
+    }
 
     private static volatile CallRecordingManager instance;
 
@@ -28,6 +34,7 @@ public class CallRecordingManager {
 
     private RecordingMetadata activeMetadata;
     private long recordingStartTime = 0;
+    private RecordingStateListener stateListener;
 
     public static synchronized CallRecordingManager getInstance(Context context) {
         if (instance == null) {
@@ -45,6 +52,28 @@ public class CallRecordingManager {
         this.notificationManager = new RecordingNotificationManager(context);
         this.recordingEngine = new RecordingEngine(context);
         this.stateMonitor = new CallStateMonitor(context);
+
+        this.recordingEngine.setDiagnosticListener((state, diagnostics) -> {
+            String contact = (activeMetadata != null) ? activeMetadata.getContactName() : "Active Call";
+            notificationManager.updateNotification(contact, state);
+            if (stateListener != null) {
+                try {
+                    stateListener.onStateChanged(state, diagnostics);
+                } catch (Exception ignored) {}
+            }
+        });
+    }
+
+    public void setStateListener(RecordingStateListener listener) {
+        this.stateListener = listener;
+    }
+
+    public AudioDiagnostics getDiagnostics() {
+        return recordingEngine.getDiagnostics();
+    }
+
+    public RecordingState getCurrentState() {
+        return recordingEngine.getDiagnostics().getCurrentState();
     }
 
     public RecordingCapability getCapability() {
@@ -141,7 +170,10 @@ public class CallRecordingManager {
                     "IN_PROGRESS",
                     source,
                     null,
-                    false
+                    false,
+                    0,
+                    "",
+                    -96.0
             );
 
             databaseManager.insertRecord(activeMetadata);
@@ -161,6 +193,7 @@ public class CallRecordingManager {
 
         RecordingMetadata finished = activeMetadata;
         recordingEngine.stop();
+        AudioDiagnostics diagnostics = recordingEngine.getDiagnostics();
 
         long durationSec = (System.currentTimeMillis() - recordingStartTime) / 1000;
         if (durationSec < 1) durationSec = 1;
@@ -177,7 +210,30 @@ public class CallRecordingManager {
                 finished.setDurationSeconds((int) durationSec);
                 finished.setFileSize(fileSize);
                 finished.setEndedAt(System.currentTimeMillis());
-                finished.setRecordingStatus("COMPLETED");
+                finished.setPeakAmplitude(diagnostics.getPeakAmplitude());
+                finished.setRmsLevelDb(diagnostics.getRmsLevelDb());
+
+                // Determine true recording status:
+                // Distinguish genuine conversational pauses from OS-level audio muting
+                String finalStatus;
+                String silenceReason = diagnostics.getSilenceReason();
+
+                if (diagnostics.isClientSilenced()) {
+                    finalStatus = "SILENCED";
+                    silenceReason = "Muted by Android AudioPolicyService (isClientSilenced=true)";
+                    Log.w(TAG, "Recording finalized with status SILENCED: OS capture policy muted third-party mic.");
+                } else if (!diagnostics.hasConfirmedAudio() && diagnostics.getPeakAmplitude() == 0) {
+                    finalStatus = "SILENCED";
+                    silenceReason = "Zero audio amplitude captured across entire duration (" + durationSec + "s)";
+                    Log.w(TAG, "Recording finalized with status SILENCED: 100% zero audio samples.");
+                } else {
+                    finalStatus = "COMPLETED";
+                    silenceReason = "";
+                    Log.d(TAG, "Recording finalized with status COMPLETED: Verified audio present (Peak=" + diagnostics.getPeakAmplitude() + ").");
+                }
+
+                finished.setRecordingStatus(finalStatus);
+                finished.setSilenceReason(silenceReason);
 
                 // Resolve real number from CallLog if initially unknown
                 if (finished.getPhoneNumber().isEmpty() || finished.getPhoneNumber().equalsIgnoreCase("unknown")) {
@@ -198,7 +254,14 @@ public class CallRecordingManager {
                     }
                 }
 
-                databaseManager.updateDurationAndSize(finished.getRecordingId(), (int) durationSec, fileSize);
+                databaseManager.updateDurationSizeAndStatus(
+                        finished.getRecordingId(),
+                        (int) durationSec,
+                        fileSize,
+                        finalStatus,
+                        silenceReason,
+                        diagnostics.getPeakAmplitude()
+                );
 
                 resultItem = new CallRecordItem(
                         finished.getRecordingId(),
@@ -211,10 +274,13 @@ public class CallRecordingManager {
                         finished.getFilePath(),
                         finished.getFileSize(),
                         finished.getCloudUrl(),
-                        finished.isSynced()
+                        finished.isSynced(),
+                        finalStatus,
+                        silenceReason,
+                        diagnostics.getPeakAmplitude()
                 );
 
-                Log.d(TAG, "Call recording saved: " + finished.getFilePath() + " (" + fileSize + " bytes, " + durationSec + "s)");
+                Log.d(TAG, "Call recording saved: " + finished.getFilePath() + " (" + fileSize + " bytes, " + durationSec + "s, status=" + finalStatus + ")");
             }
         }
 
@@ -232,7 +298,6 @@ public class CallRecordingManager {
     }
 
     public boolean deleteRecording(String id) {
-        // Delete from database and disk
         return databaseManager.deleteRecord(id);
     }
 

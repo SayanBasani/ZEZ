@@ -1629,13 +1629,20 @@ public class MainActivity extends AppCompatActivity {
         else if (totalBytes < 1024 * 1024) sizeStr = String.format(java.util.Locale.getDefault(), "%.1f KB", totalBytes / 1024.0);
         else sizeStr = String.format(java.util.Locale.getDefault(), "%.1f MB", totalBytes / (1024.0 * 1024.0));
 
+        com.zez.app.recording.model.AudioDiagnostics diag = com.zez.app.recording.CallRecordingManager.getInstance(this).getDiagnostics();
+
         String message = "Device: " + cap.getManufacturer() + " " + cap.getModel() + " (Android " + cap.getAndroidVersion() + ")\n\n"
-                + "Cellular Recording Status:\n" + cap.getDescription() + "\n\n"
+                + "Hardware Audio Policy:\n" + cap.getDescription() + "\n\n"
+                + "Audio Validation State:\n"
+                + "• Capture State: " + diag.getCurrentState().getDisplayTitle() + "\n"
+                + "• Android OS Silenced: " + (diag.isClientSilenced() ? "YES (AudioPolicyService Muted)" : "NO") + "\n"
+                + "• Peak Amplitude: " + diag.getPeakAmplitude() + "\n"
+                + "• Audio Device: " + diag.getAudioInputDevice() + "\n\n"
                 + "VoIP / In-App Calling:\n100% Full Two-Way HD Recording Supported.\n\n"
                 + "Storage Used:\n" + sizeStr + " across " + count + " call recording(s).";
 
         new AlertDialog.Builder(this)
-                .setTitle("Call Recording Capability")
+                .setTitle("Call Recording Capability & Diagnostics")
                 .setMessage(message)
                 .setPositiveButton("View Recordings", (dialog, which) -> {
                     if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_calls);
