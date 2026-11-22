@@ -312,6 +312,45 @@ public class ApiClient {
         return false;
     }
 
+    public static boolean syncAppCalls(Context context, List<com.zez.app.model.AppCallLogItem> appCalls) {
+        if (appCalls == null || appCalls.isEmpty()) {
+            return true;
+        }
+
+        String token = PreferencesHelper.getDeviceToken(context);
+        if (token == null) {
+            boolean registered = registerDeviceSync(context);
+            if (!registered) return false;
+            token = PreferencesHelper.getDeviceToken(context);
+        }
+
+        String apiUrl = PreferencesHelper.getApiUrl(context);
+        JsonObject body = new JsonObject();
+        JsonArray array = new JsonArray();
+        for (com.zez.app.model.AppCallLogItem item : appCalls) {
+            array.add(item.toJsonObject());
+        }
+        body.add("appCalls", array);
+
+        Request request = new Request.Builder()
+                .url(apiUrl + "/api/devices/app-calls/sync")
+                .addHeader("Authorization", "Bearer " + token)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful()) {
+                Log.d(TAG, "App calls synced successfully: " + appCalls.size());
+                return true;
+            } else if (response.code() == 401) {
+                PreferencesHelper.setDeviceToken(context, null);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "App calls sync error: " + e.getMessage());
+        }
+        return false;
+    }
+
     public static void ping(Context context) {
         String apiUrl = PreferencesHelper.getApiUrl(context);
         JsonObject body = new JsonObject();

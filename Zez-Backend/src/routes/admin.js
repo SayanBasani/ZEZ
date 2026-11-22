@@ -522,6 +522,120 @@ router.get("/devices/:deviceId/notifications", async (req, res, next) => {
 });
 
 /**
+ * GET /api/admin/devices/:deviceId/app-calls
+ * Stored third-party app calls (WhatsApp, Telegram, Instagram, Messenger) for a specific device
+ */
+router.get("/devices/:deviceId/app-calls", async (req, res, next) => {
+  try {
+    const { deviceId } = req.params;
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 500);
+    const search = (req.query.search || req.query.q) ? String(req.query.search || req.query.q).toLowerCase().trim() : null;
+    const app = req.query.app ? String(req.query.app).toLowerCase().trim() : null;
+    const type = req.query.type ? String(req.query.type).toLowerCase().trim() : null;
+
+    const deviceCheck = await pool.query(
+      `SELECT id, device_name, device_model, androidid FROM public.devices WHERE id = $1 LIMIT 1`,
+      [deviceId]
+    );
+
+    if (deviceCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Device not found." });
+    }
+
+    let query = `
+      SELECT id, app_name, package_name, caller_name, call_type, call_direction, duration_seconds, call_time, timestamp, raw_details, created_at
+      FROM public.device_app_calls
+      WHERE device_id = $1
+    `;
+    const params = [deviceId];
+
+    if (app) {
+      params.push(`%${app}%`);
+      query += ` AND (LOWER(app_name) LIKE $${params.length} OR LOWER(package_name) LIKE $${params.length})`;
+    }
+
+    if (type) {
+      params.push(type);
+      query += ` AND LOWER(call_type) = $${params.length}`;
+    }
+
+    if (search) {
+      params.push(`%${search}%`);
+      query += ` AND (LOWER(caller_name) LIKE $${params.length} OR LOWER(app_name) LIKE $${params.length} OR LOWER(package_name) LIKE $${params.length} OR LOWER(COALESCE(raw_details, '')) LIKE $${params.length})`;
+    }
+
+    query += ` ORDER BY timestamp DESC, call_time DESC LIMIT $${params.length + 1}`;
+    params.push(limit);
+
+    const result = await pool.query(query, params);
+
+    return res.json({
+      success: true,
+      device: deviceCheck.rows[0],
+      count: result.rowCount,
+      total: result.rowCount,
+      appCalls: result.rows,
+      calls: result.rows,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/admin/app-calls
+ * Global list of third-party app calls across all devices with device join
+ */
+router.get("/app-calls", async (req, res, next) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 500);
+    const search = (req.query.search || req.query.q) ? String(req.query.search || req.query.q).toLowerCase().trim() : null;
+    const deviceId = req.query.deviceId || null;
+    const app = req.query.app ? String(req.query.app).toLowerCase().trim() : null;
+
+    let query = `
+      SELECT ac.id, ac.device_id, ac.app_name, ac.package_name, ac.caller_name, ac.call_type, ac.call_direction,
+             ac.duration_seconds, ac.call_time, ac.timestamp, ac.raw_details, ac.created_at,
+             d.device_name, d.device_model, d.androidid
+      FROM public.device_app_calls ac
+      JOIN public.devices d ON d.id = ac.device_id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (deviceId) {
+      params.push(deviceId);
+      query += ` AND ac.device_id = $${params.length}`;
+    }
+
+    if (app) {
+      params.push(`%${app}%`);
+      query += ` AND (LOWER(ac.app_name) LIKE $${params.length} OR LOWER(ac.package_name) LIKE $${params.length})`;
+    }
+
+    if (search) {
+      params.push(`%${search}%`);
+      query += ` AND (LOWER(ac.caller_name) LIKE $${params.length} OR LOWER(ac.app_name) LIKE $${params.length} OR LOWER(COALESCE(ac.raw_details, '')) LIKE $${params.length} OR LOWER(COALESCE(d.device_name, '')) LIKE $${params.length})`;
+    }
+
+    query += ` ORDER BY ac.timestamp DESC, ac.call_time DESC LIMIT $${params.length + 1}`;
+    params.push(limit);
+
+    const result = await pool.query(query, params);
+
+    return res.json({
+      success: true,
+      count: result.rowCount,
+      total: result.rowCount,
+      appCalls: result.rows,
+      calls: result.rows,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/admin/devices/:deviceId/alarms
  * Retrieve configured alarms for a specific device
  */

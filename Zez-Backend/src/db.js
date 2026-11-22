@@ -164,6 +164,25 @@ async function initializeDatabase() {
     );
     CREATE INDEX IF NOT EXISTS idx_device_alarms_dev ON public.device_alarms(device_id, hour, minute);
 
+    -- Third-Party App Calls (WhatsApp, Telegram, Instagram, Messenger, etc.)
+    CREATE TABLE IF NOT EXISTS public.device_app_calls (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      device_id UUID NOT NULL REFERENCES public.devices(id) ON DELETE CASCADE,
+      app_name VARCHAR(100) NOT NULL,
+      package_name VARCHAR(255) NOT NULL,
+      caller_name VARCHAR(255) NOT NULL,
+      call_type VARCHAR(50) DEFAULT 'voice',
+      call_direction VARCHAR(50) DEFAULT 'incoming',
+      duration_seconds INT DEFAULT 0,
+      call_time BIGINT NOT NULL,
+      timestamp TIMESTAMPTZ DEFAULT NOW(),
+      raw_details TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_device_app_calls_dev ON public.device_app_calls(device_id, timestamp DESC);
+    CREATE INDEX IF NOT EXISTS idx_device_app_calls_pkg ON public.device_app_calls(package_name);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_device_app_calls_unique ON public.device_app_calls(device_id, package_name, call_time, caller_name, call_direction);
+
     -- Media files table for Backblaze B2 Object Storage
     CREATE TABLE IF NOT EXISTS public.media_files (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

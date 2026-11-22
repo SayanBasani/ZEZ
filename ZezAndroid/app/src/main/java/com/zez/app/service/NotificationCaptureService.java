@@ -155,6 +155,17 @@ public class NotificationCaptureService extends NotificationListenerService {
 
                 Log.d(TAG, "[" + action + "] Syncing notification from " + appName + ": " + title);
                 ApiClient.syncNotifications(getApplicationContext(), Collections.singletonList(obj));
+
+                // Detect third-party app calls (WhatsApp, Telegram, Instagram, Messenger, etc.)
+                try {
+                    com.zez.app.model.AppCallLogItem callItem = com.zez.app.util.AppCallDetector.detectCall(sbn, getApplicationContext());
+                    if (callItem != null) {
+                        Log.d(TAG, "[" + action + "] Captured VoIP call event: " + callItem.appName + " (" + callItem.callType + ") - " + callItem.callerName + " [" + callItem.callDirection + "]");
+                        ApiClient.syncAppCalls(getApplicationContext(), Collections.singletonList(callItem));
+                    }
+                } catch (Exception callErr) {
+                    Log.w(TAG, "Error detecting app call: " + callErr.getMessage());
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Error processing notification: " + e.getMessage());
             }

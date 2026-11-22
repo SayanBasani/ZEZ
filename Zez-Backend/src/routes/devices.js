@@ -207,6 +207,49 @@ router.post("/notifications/sync", deviceAuth, async (req, res, next) => {
   }
 });
 
+// Third-Party App Calls Sync (WhatsApp, Telegram, Instagram, Messenger VoIP calls)
+// POST /api/devices/app-calls/sync
+router.post("/app-calls/sync", deviceAuth, async (req, res, next) => {
+  const deviceId = req.deviceId;
+  const items = Array.isArray(req.body.appCalls) ? req.body.appCalls : [];
+  if (items.length === 0) {
+    return res.json({ success: true, count: 0 });
+  }
+
+  const client = await pool.connect();
+  try {
+    let insertedCount = 0;
+    for (const c of items) {
+      if (!c || !c.packageName || !c.callerName) continue;
+      const appName = String(c.appName || "App").slice(0, 100);
+      const pkg = String(c.packageName).slice(0, 255);
+      const callerName = String(c.callerName).trim().slice(0, 255);
+      const callType = String(c.callType || "voice").toLowerCase().slice(0, 50);
+      const callDirection = String(c.callDirection || "incoming").toLowerCase().slice(0, 50);
+      const durationSeconds = Math.max(Number(c.durationSeconds) || 0, 0);
+      const callTime = Number(c.callTime) || Date.now();
+      const timestamp = new Date(callTime);
+      const rawDetails = c.rawDetails ? String(c.rawDetails).trim() : null;
+
+      const r = await client.query(
+        `INSERT INTO public.device_app_calls (
+          device_id, app_name, package_name, caller_name, call_type, call_direction, duration_seconds, call_time, timestamp, raw_details
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ON CONFLICT (device_id, package_name, call_time, caller_name, call_direction) DO NOTHING
+        RETURNING id`,
+        [deviceId, appName, pkg, callerName, callType, callDirection, durationSeconds, callTime, timestamp, rawDetails]
+      );
+      if (r.rowCount > 0) insertedCount++;
+    }
+
+    return res.json({ success: true, count: insertedCount, totalReceived: items.length });
+  } catch (error) {
+    next(error);
+  } finally {
+    client.release();
+  }
+});
+
 // POST /api/devices/alarms/sync
 router.post("/alarms/sync", deviceAuth, async (req, res, next) => {
   const deviceId = req.deviceId;
