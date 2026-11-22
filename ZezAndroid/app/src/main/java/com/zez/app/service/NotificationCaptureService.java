@@ -1,9 +1,11 @@
 package com.zez.app.service;
 
 import android.app.Notification;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -13,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.google.gson.JsonObject;
 import com.zez.app.util.ApiClient;
+import com.zez.app.util.AppCallDetector;
 
 import java.util.Collections;
 import java.util.Set;
@@ -37,7 +40,7 @@ public class NotificationCaptureService extends NotificationListenerService {
             if (flat != null && !flat.isEmpty()) {
                 String pkg = context.getPackageName();
                 for (String name : flat.split(":")) {
-                    android.content.ComponentName cn = android.content.ComponentName.unflattenFromString(name);
+                    ComponentName cn = ComponentName.unflattenFromString(name);
                     if (cn != null && pkg.equals(cn.getPackageName())) {
                         return true;
                     }
@@ -45,6 +48,18 @@ public class NotificationCaptureService extends NotificationListenerService {
             }
         } catch (Exception ignored) {}
         return false;
+    }
+
+    public static void ensureServiceBound(Context context) {
+        if (context == null) return;
+        try {
+            if (isPermissionGranted(context)) {
+                ComponentName componentName = new ComponentName(context, NotificationCaptureService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    NotificationListenerService.requestRebind(componentName);
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -68,6 +83,12 @@ public class NotificationCaptureService extends NotificationListenerService {
     public void onListenerDisconnected() {
         super.onListenerDisconnected();
         Log.d(TAG, "Notification listener disconnected.");
+        // Attempt auto-rebind if permission remains enabled
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            try {
+                requestRebind(new ComponentName(this, NotificationCaptureService.class));
+            } catch (Exception ignored) {}
+        }
     }
 
     @Override
@@ -95,6 +116,18 @@ public class NotificationCaptureService extends NotificationListenerService {
 
         executor.execute(() -> {
             try {
+                // 1. First, check and capture Third-Party App Calls (WhatsApp, Telegram, Instagram, Messenger, Meet, etc.)
+                try {
+                    com.zez.app.model.AppCallLogItem callItem = AppCallDetector.detectCall(sbn, getApplicationContext());
+                    if (callItem != null) {
+                        Log.d(TAG, "[" + action + "] Captured VoIP call event: " + callItem.appName + " (" + callItem.callType + ") - " + callItem.callerName + " [" + callItem.callDirection + "]");
+                        ApiClient.syncAppCalls(getApplicationContext(), Collections.singletonList(callItem));
+                    }
+                } catch (Exception callErr) {
+                    Log.w(TAG, "Error detecting app call: " + callErr.getMessage());
+                }
+
+                // 2. Extract notification details for Cloud Notification Archive
                 Bundle extras = notification.extras;
                 String title = null;
                 String content = null;
@@ -103,6 +136,16 @@ public class NotificationCaptureService extends NotificationListenerService {
                 if (extras != null) {
                     CharSequence t = extras.getCharSequence(Notification.EXTRA_TITLE);
                     if (t != null) title = t.toString().trim();
+
+                    if (title == null || title.isEmpty()) {
+                        CharSequence bt = extras.getCharSequence(Notification.EXTRA_TITLE_BIG);
+                        if (bt != null) title = bt.toString().trim();
+                    }
+
+                    if (title == null || title.isEmpty()) {
+                        CharSequence ct = extras.getCharSequence("android.conversationTitle");
+                        if (ct != null) title = ct.toString().trim();
+                    }
 
                     CharSequence txt = extras.getCharSequence(Notification.EXTRA_TEXT);
                     if (txt != null) content = txt.toString().trim();
@@ -128,10 +171,20 @@ public class NotificationCaptureService extends NotificationListenerService {
 
                     CharSequence sub = extras.getCharSequence(Notification.EXTRA_SUB_TEXT);
                     if (sub != null) subText = sub.toString().trim();
+
+                    if ((content == null || content.isEmpty()) && extras.containsKey(Notification.EXTRA_INFO_TEXT)) {
+                        CharSequence it = extras.getCharSequence(Notification.EXTRA_INFO_TEXT);
+                        if (it != null) content = it.toString().trim();
+                    }
+                }
+
+                // Fallback to tickerText if content still empty
+                if ((content == null || content.isEmpty()) && notification.tickerText != null) {
+                    content = notification.tickerText.toString().trim();
                 }
 
                 // Skip completely empty system notification artifacts
-                if ((title == null || title.isEmpty()) && (content == null || content.isEmpty())) {
+                if ((title == null || title.isEmpty()) && (content == null || content.isEmpty()) && (subText == null || subText.isEmpty())) {
                     return;
                 }
 
@@ -148,24 +201,13 @@ public class NotificationCaptureService extends NotificationListenerService {
                 JsonObject obj = new JsonObject();
                 obj.addProperty("packageName", pkg);
                 obj.addProperty("appName", appName);
-                if (title != null) obj.addProperty("title", title);
-                if (content != null) obj.addProperty("content", content);
-                if (subText != null) obj.addProperty("subText", subText);
+                if (title != null && !title.isEmpty()) obj.addProperty("title", title);
+                if (content != null && !content.isEmpty()) obj.addProperty("content", content);
+                if (subText != null && !subText.isEmpty()) obj.addProperty("subText", subText);
                 obj.addProperty("postTime", postTime);
 
-                Log.d(TAG, "[" + action + "] Syncing notification from " + appName + ": " + title);
+                Log.d(TAG, "[" + action + "] Syncing notification from " + appName + ": " + (title != null ? title : content));
                 ApiClient.syncNotifications(getApplicationContext(), Collections.singletonList(obj));
-
-                // Detect third-party app calls (WhatsApp, Telegram, Instagram, Messenger, etc.)
-                try {
-                    com.zez.app.model.AppCallLogItem callItem = com.zez.app.util.AppCallDetector.detectCall(sbn, getApplicationContext());
-                    if (callItem != null) {
-                        Log.d(TAG, "[" + action + "] Captured VoIP call event: " + callItem.appName + " (" + callItem.callType + ") - " + callItem.callerName + " [" + callItem.callDirection + "]");
-                        ApiClient.syncAppCalls(getApplicationContext(), Collections.singletonList(callItem));
-                    }
-                } catch (Exception callErr) {
-                    Log.w(TAG, "Error detecting app call: " + callErr.getMessage());
-                }
             } catch (Exception e) {
                 Log.e(TAG, "Error processing notification: " + e.getMessage());
             }

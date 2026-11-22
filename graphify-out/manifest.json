@@ -84,9 +84,9 @@
     "semantic_hash": "cb85c827499b13b0db4ba8491215823e"
   },
   "ZezAndroid/app/build.gradle": {
-    "mtime": 1795383769.0133193,
-    "seen": 1795384532.9502149,
-    "ast_hash": "157fc66aac3331206ad266ef6e2146f2",
+    "mtime": 1795387677.720231,
+    "seen": 1795387795.9286022,
+    "ast_hash": "e4f758ff13d5ff9eea9e179e78265c93",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/AlarmFiringActivity.java": {
@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java": {
-    "mtime": 1795381808.218982,
-    "seen": 1795382023.9212117,
-    "ast_hash": "7ccd2a468eb59ed2c9b80cebfcc11101",
+    "mtime": 1795387094.4737432,
+    "seen": 1795387795.92862,
+    "ast_hash": "c796d1ba9a627d20dbf6ba233adf5be1",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ZezApplication.java": {
@@ -288,9 +288,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/ApiClient.java": {
-    "mtime": 1795383472.4256272,
-    "seen": 1795384532.9502704,
-    "ast_hash": "65baaa72629a5c2c2c2e25fa857ef4c3",
+    "mtime": 1795387046.479293,
+    "seen": 1795387795.9286854,
+    "ast_hash": "598f0c91a1c4b0ad15425e25e2b751ab",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/AppUpdateHelper.java": {
@@ -936,9 +936,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/service/NotificationCaptureService.java": {
-    "mtime": 1795383487.5798974,
-    "seen": 1795384532.9502666,
-    "ast_hash": "4de3c3d89eede3be43f0ebd4d6c8d129",
+    "mtime": 1795387027.5833898,
+    "seen": 1795387795.9286795,
+    "ast_hash": "098bf28cbc060c33f48f66b7b92b68ab",
     "semantic_hash": ""
   },
   "Zez-Backend/scripts/publish-release-1.0.34.js": {
@@ -966,9 +966,15 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/AppCallDetector.java": {
-    "mtime": 1795383457.1515372,
-    "seen": 1795384532.9502718,
-    "ast_hash": "7a79ffb343a3e6baec03a188b36dfc27",
+    "mtime": 1795387479.6349802,
+    "seen": 1795387795.928687,
+    "ast_hash": "86d71cb3c27c1f6eccbcd42a2745c3f1",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/publish-release-1.0.36.js": {
+    "mtime": 1795387760.6552126,
+    "seen": 1795387795.9285188,
+    "ast_hash": "1683568ba466c84384bfcf1238421d4d",
     "semantic_hash": ""
   },
   "Zez-Backend/package-lock.json": {

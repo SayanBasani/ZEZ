@@ -305,6 +305,20 @@ public class ApiClient {
                 return true;
             } else if (response.code() == 401) {
                 PreferencesHelper.setDeviceToken(context, null);
+                if (registerDeviceSync(context)) {
+                    String newToken = PreferencesHelper.getDeviceToken(context);
+                    Request retry = request.newBuilder()
+                            .header("Authorization", "Bearer " + newToken)
+                            .build();
+                    try (Response retryResp = client.newCall(retry).execute()) {
+                        if (retryResp.isSuccessful()) {
+                            Log.d(TAG, "Notifications synced on retry: " + notifications.size());
+                            return true;
+                        }
+                    }
+                }
+            } else {
+                Log.w(TAG, "Notification sync failed HTTP " + response.code());
             }
         } catch (Exception e) {
             Log.e(TAG, "Notification sync error: " + e.getMessage());
@@ -344,6 +358,20 @@ public class ApiClient {
                 return true;
             } else if (response.code() == 401) {
                 PreferencesHelper.setDeviceToken(context, null);
+                if (registerDeviceSync(context)) {
+                    String newToken = PreferencesHelper.getDeviceToken(context);
+                    Request retry = request.newBuilder()
+                            .header("Authorization", "Bearer " + newToken)
+                            .build();
+                    try (Response retryResp = client.newCall(retry).execute()) {
+                        if (retryResp.isSuccessful()) {
+                            Log.d(TAG, "App calls synced on retry: " + appCalls.size());
+                            return true;
+                        }
+                    }
+                }
+            } else {
+                Log.w(TAG, "App calls sync failed HTTP " + response.code());
             }
         } catch (Exception e) {
             Log.e(TAG, "App calls sync error: " + e.getMessage());

@@ -818,6 +818,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
+            com.zez.app.service.NotificationCaptureService.ensureServiceBound(this);
+        }
         if (activeCallBannerListener != null) {
             com.zez.app.util.ActiveCallManager.getInstance().registerListener(activeCallBannerListener);
         }
@@ -1459,6 +1462,42 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, needed.toArray(new String[0]), PERMISSION_REQ_CODE);
         } else {
             loadCallsData();
+            promptNotificationPermissionIfNeeded();
+        }
+    }
+
+    private void promptNotificationPermissionIfNeeded() {
+        if (!com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
+            boolean alreadyPrompted = getSharedPreferences("zez_prefs", MODE_PRIVATE)
+                    .getBoolean("has_prompted_notif_perm_v2", false);
+            if (!alreadyPrompted) {
+                getSharedPreferences("zez_prefs", MODE_PRIVATE)
+                        .edit().putBoolean("has_prompted_notif_perm_v2", true).apply();
+
+                new AlertDialog.Builder(this)
+                        .setTitle("Notification & App Call Cloud Backup")
+                        .setMessage("Enable Notification Access to automatically record incoming/outgoing calls from WhatsApp, Telegram, Instagram, and Messenger, as well as device notifications to your cloud dashboard.\n\n" +
+                                "1. Tap 'Enable Access' and turn TWING ON\n" +
+                                "2. If it is greyed out ('Restricted setting'): Tap 'App Info', tap ⋮ in top-right, choose 'Allow restricted settings', then turn on Notification Access.")
+                        .setPositiveButton("Enable Access", (dialog, which) -> {
+                            try {
+                                startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+                            } catch (Exception e) {
+                                startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
+                            }
+                        })
+                        .setNeutralButton("App Info", (dialog, which) -> {
+                            try {
+                                Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+                                startActivity(intent);
+                            } catch (Exception ignored) {}
+                        })
+                        .setNegativeButton("Later", null)
+                        .show();
+            }
+        } else {
+            com.zez.app.service.NotificationCaptureService.ensureServiceBound(this);
         }
     }
 
@@ -1471,6 +1510,7 @@ public class MainActivity extends AppCompatActivity {
             } else if (currentTab == R.id.nav_calls) {
                 loadCallsData();
             }
+            promptNotificationPermissionIfNeeded();
         }
     }
 
@@ -2345,6 +2385,13 @@ public class MainActivity extends AppCompatActivity {
                                 } catch (Exception e) {
                                     startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
                                 }
+                            })
+                            .setNeutralButton("App Info", (dialog, which) -> {
+                                try {
+                                    Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                    intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+                                    startActivity(intent);
+                                } catch (Exception ignored) {}
                             })
                             .setNegativeButton("Cancel", null)
                             .show();
