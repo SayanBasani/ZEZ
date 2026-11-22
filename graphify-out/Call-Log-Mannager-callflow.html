@@ -60,7 +60,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 <div class="container">
 
 <h1>Call Log Mannager — Complete Call Flow &amp; Architecture Documentation</h1>
-<p class="subtitle">Generated from graphify knowledge graph: 2169 nodes, 5544 edges, 120 communities. Commit: 13e3984</p>
+<p class="subtitle">Generated from graphify knowledge graph: 2189 nodes, 5571 edges, 120 communities. Commit: 1eacfb3</p>
 
 <div class="nav">
     <a href="#overview">Architecture Overview</a>
@@ -73,11 +73,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
     <a href="#b2storageservicejs-zez-backend">B2Storageservicejs Zez Backend</a>
     <a href="#zez-backend-adminjs">Zez Backend Adminjs</a>
     <a href="#indexdts-zez-backend">Indexdts Zez Backend</a>
-    <a href="#call-recording-implementation">Call Recording Implementation</a>
+    <a href="#call-recording-compatibilitymd">Call Recording Compatibilitymd</a>
+    <a href="#recording-twing-call">Recording Twing Call</a>
     <a href="#gradlew-script-module-c40">Gradlew Script Module (C40)</a>
     <a href="#editable">Editable</a>
     <a href="#viewholder">Viewholder</a>
-    <a href="#comzezapputilcallrecorddbhelper">Comzezapputilcallrecorddbhelper</a>
     <a href="#other">Other</a>
 </div>
 
@@ -88,17 +88,17 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    EXTRACT_PIPELINE_5F350230("Extraction Pipeline<br/><small>1676 nodes</small>")
+    EXTRACT_PIPELINE_5F350230("Extraction Pipeline<br/><small>1687 nodes</small>")
     class EXTRACT_PIPELINE_5F350230 module;
-    BUILD_GRAPH_321CBB04("Graph Build<br/><small>127 nodes</small>")
+    BUILD_GRAPH_321CBB04("Graph Build<br/><small>136 nodes</small>")
     class BUILD_GRAPH_321CBB04 module;
     ANALYSIS_CLUSTERING_C79796DA("Analysis &amp; Clustering<br/><small>25 nodes</small>")
     class ANALYSIS_CLUSTERING_C79796DA module;
-    INGEST_CACHE_UPDATE_FF457338("Ingestion &amp; Updates<br/><small>26 nodes</small>")
+    INGEST_CACHE_UPDATE_FF457338("Ingestion &amp; Updates<br/><small>41 nodes</small>")
     class INGEST_CACHE_UPDATE_FF457338 module;
     SERVE_API_35EC8E86("Serving API<br/><small>11 nodes</small>")
     class SERVE_API_35EC8E86 module;
-    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>204 nodes</small>")
+    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>185 nodes</small>")
     class TESTS_FIXTURES_B84B1DCC module;
     B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B("B2Storageservicejs Zez Backend<br/><small>23 nodes</small>")
     class B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B module;
@@ -106,30 +106,30 @@ flowchart LR
     class ZEZ_BACKEND_ADMINJS_420B968F module;
     INDEXDTS_ZEZ_BACKEND_8715DDD7("Indexdts Zez Backend<br/><small>16 nodes</small>")
     class INDEXDTS_ZEZ_BACKEND_8715DDD7 module;
-    CALL_RECORDING_IMPLEMENTATION_8E86DB6B("Call Recording Implementation<br/><small>10 nodes</small>")
-    class CALL_RECORDING_IMPLEMENTATION_8E86DB6B module;
+    CALL_RECORDING_COMPATIBILITYMD_DAC7CB46("Call Recording Compatibilitymd<br/><small>9 nodes</small>")
+    class CALL_RECORDING_COMPATIBILITYMD_DAC7CB46 module;
+    RECORDING_TWING_CALL_6F359CCD("Recording Twing Call<br/><small>5 nodes</small>")
+    class RECORDING_TWING_CALL_6F359CCD module;
     GRADLEW_SCRIPT_MODULE_C40_516C8B5E("Gradlew Script Module (C40)<br/><small>4 nodes</small>")
     class GRADLEW_SCRIPT_MODULE_C40_516C8B5E module;
     EDITABLE_50C2168C("Editable<br/><small>1 nodes</small>")
     class EDITABLE_50C2168C module;
     VIEWHOLDER_5FA2D467("Viewholder<br/><small>1 nodes</small>")
     class VIEWHOLDER_5FA2D467 module;
-    COMZEZAPPUTILCALLRECORDDBHELPER_D52A5EC5("Comzezapputilcallrecorddbhelper<br/><small>1 nodes</small>")
-    class COMZEZAPPUTILCALLRECORDDBHELPER_D52A5EC5 module;
-    OTHER_D0941E68("Other<br/><small>21 nodes</small>")
+    OTHER_D0941E68("Other<br/><small>22 nodes</small>")
     class OTHER_D0941E68 module;
     BUILD_GRAPH_321CBB04 -->|imports x15| TESTS_FIXTURES_B84B1DCC
     TESTS_FIXTURES_B84B1DCC -->|imports x12| BUILD_GRAPH_321CBB04
     ANALYSIS_CLUSTERING_C79796DA -->|imports x10| TESTS_FIXTURES_B84B1DCC
     ZEZ_BACKEND_ADMINJS_420B968F -->|imports x6| TESTS_FIXTURES_B84B1DCC
     ANALYSIS_CLUSTERING_C79796DA -->|imports x5| B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B
-    TESTS_FIXTURES_B84B1DCC -->|references x4| EXTRACT_PIPELINE_5F350230
     ZEZ_BACKEND_ADMINJS_420B968F -->|imports x4| BUILD_GRAPH_321CBB04
-    CALL_RECORDING_IMPLEMENTATION_8E86DB6B -->|references x3| EXTRACT_PIPELINE_5F350230
     B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B -->|imports x3| BUILD_GRAPH_321CBB04
     TESTS_FIXTURES_B84B1DCC -->|imports x3| B2STORAGESERVICEJS_ZEZ_BACKEND_88029F3B
     TESTS_FIXTURES_B84B1DCC -->|imports x3| ANALYSIS_CLUSTERING_C79796DA
     SERVE_API_35EC8E86 -->|imports x3| TESTS_FIXTURES_B84B1DCC
+    BUILD_GRAPH_321CBB04 -->|contains x3| EXTRACT_PIPELINE_5F350230
+    TESTS_FIXTURES_B84B1DCC -->|references x2| EXTRACT_PIPELINE_5F350230
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -146,23 +146,23 @@ flowchart LR
     <h4>Architecture Layers</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
-      <tr><td>Extraction Pipeline</td><td>1676</td><td><code>66, 0, 86, 34, 61, 6, 23, 5, 1, 77, 9, 29, 54, 31, 33, 71, 37, 12, 38, 55, 56, 70, 79, 8, 93, 18, 3, 63, 35, 72, 17, 69, 21, 73, 24, 28, 95, 14, 97, 19, 11, 98, 64, 7, 90, 103, 78, 10, 101, 25, 58, 102, 51, 60, 81, 96, 27, 108, 99, 114, 115, 91, 116, 117, 106, 119, 89, 92, 109, 53, 88, 111</code></td></tr><tr><td>Graph Build</td><td>127</td><td><code>15, 67, 36, 13, 48, 49</code></td></tr><tr><td>Analysis &amp; Clustering</td><td>25</td><td><code>52, 74</code></td></tr><tr><td>Ingestion &amp; Updates</td><td>26</td><td><code>30, 100</code></td></tr><tr><td>Serving API</td><td>11</td><td><code>68, 107</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>204</td><td><code>20, 22, 32, 4, 94, 118, 59</code></td></tr><tr><td>B2Storageservicejs Zez Backend</td><td>23</td><td><code>2</code></td></tr><tr><td>Zez Backend Adminjs</td><td>23</td><td><code>26</code></td></tr><tr><td>Indexdts Zez Backend</td><td>16</td><td><code>16</code></td></tr><tr><td>Call Recording Implementation</td><td>10</td><td><code>110</code></td></tr><tr><td>Gradlew Script Module (C40)</td><td>4</td><td><code>40</code></td></tr><tr><td>Editable</td><td>1</td><td><code>104</code></td></tr><tr><td>Viewholder</td><td>1</td><td><code>105</code></td></tr><tr><td>Comzezapputilcallrecorddbhelper</td><td>1</td><td><code>112</code></td></tr><tr><td>Other</td><td>21</td><td><code>113, 39, 41, 42, 43, 44, 45, 46, 47, 50, 57, 62, 65, 75, 76, 80, 82, 83, 84, 85, 87</code></td></tr>
+      <tr><td>Extraction Pipeline</td><td>1687</td><td><code>0, 66, 6, 86, 34, 21, 33, 9, 5, 61, 1, 29, 3, 12, 23, 77, 19, 31, 93, 71, 37, 8, 60, 35, 54, 55, 56, 38, 58, 90, 79, 69, 72, 28, 103, 17, 24, 73, 64, 70, 18, 95, 11, 14, 7, 78, 92, 10, 25, 51, 63, 96, 97, 27, 91, 98, 53, 101, 117, 116, 89, 106, 109, 108, 111, 88, 114, 115, 119</code></td></tr><tr><td>Graph Build</td><td>136</td><td><code>15, 67, 36, 13, 99, 48, 49</code></td></tr><tr><td>Analysis &amp; Clustering</td><td>25</td><td><code>52, 74</code></td></tr><tr><td>Ingestion &amp; Updates</td><td>41</td><td><code>30, 94, 100</code></td></tr><tr><td>Serving API</td><td>11</td><td><code>68, 107</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>185</td><td><code>20, 22, 32, 4, 59, 102, 118</code></td></tr><tr><td>B2Storageservicejs Zez Backend</td><td>23</td><td><code>2</code></td></tr><tr><td>Zez Backend Adminjs</td><td>23</td><td><code>26</code></td></tr><tr><td>Indexdts Zez Backend</td><td>16</td><td><code>16</code></td></tr><tr><td>Call Recording Compatibilitymd</td><td>9</td><td><code>81</code></td></tr><tr><td>Recording Twing Call</td><td>5</td><td><code>110</code></td></tr><tr><td>Gradlew Script Module (C40)</td><td>4</td><td><code>40</code></td></tr><tr><td>Editable</td><td>1</td><td><code>104</code></td></tr><tr><td>Viewholder</td><td>1</td><td><code>105</code></td></tr><tr><td>Other</td><td>22</td><td><code>112, 113, 39, 41, 42, 43, 44, 45, 46, 47, 50, 57, 62, 65, 75, 76, 80, 82, 83, 84, 85, 87</code></td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Core Flow</h4>
-    <div class="arrow-chain">Ingestion &amp; Updates -&gt; Extraction Pipeline -&gt; Tests &amp; Fixtures -&gt; Graph Build -&gt; B2Storageservicejs Zez Backend -&gt; Analysis &amp; Clustering -&gt; Serving API</div>
+    <div class="arrow-chain">Ingestion &amp; Updates -&gt; Extraction Pipeline -&gt; Graph Build -&gt; Tests &amp; Fixtures -&gt; B2Storageservicejs Zez Backend -&gt; Analysis &amp; Clustering -&gt; Serving API</div>
   </div>
 </div>
 <div class="grid">
   <div class="card">
     <h4>Graph Report Highlights</h4>
     <ul>
-      <li>2169 nodes · 5544 edges · 120 communities (45 shown, 75 thin omitted)</li>
-      <li>Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 644 edges (avg confidence: 0.85)</li>
+      <li>2189 nodes · 5571 edges · 120 communities (55 shown, 65 thin omitted)</li>
+      <li>Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 652 edges (avg confidence: 0.85)</li>
       <li>Token cost: 0 input · 0 output</li>
       <li>1. `MainActivity` - 110 edges</li>
-      <li>2. `ChatActivity` - 71 edges</li>
+      <li>2. `ChatActivity` - 72 edges</li>
       <li>3. `CallRecordItem` - 58 edges</li>
     </ul>
   </div>
@@ -170,12 +170,12 @@ flowchart LR
 <hr>
 <!-- ====== 2. Extraction Pipeline ====== -->
 <h2 id="extract-pipeline">2. Extraction Pipeline</h2>
-<p>Extraction Pipeline groups implementation around app, zezandroid, com, zez, mostly in zez/app/MainActivity.java, zez/app/ChatActivity.java, app/util/ChatApiClient.java. This section covers 1676 nodes and 4793 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Extraction Pipeline groups implementation around app, zezandroid, com, zez, mostly in zez/app/MainActivity.java, zez/app/ChatActivity.java, app/util/ChatApiClient.java. This section covers 1687 nodes and 4815 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Extraction Pipeline (1676 nodes, 4793 edges)
+    %% Section: Extraction Pipeline (1687 nodes, 4815 edges)
     subgraph extract_pipeline_zez_app_CallActivity_java_1a82fe40["zez/app/CallActivity.java"]
         zezandroid_app_src_main_java_com_zez_app_callact_85017d74("CallActivity.java")
         zezandroid_app_src_main_java_com_zez_app_callact_8b27302c("CallActivity<br/><small>zez/app/CallActivity.java</small>")
@@ -221,7 +221,7 @@ flowchart LR
     zezandroid_app_src_main_java_com_zez_app_callact_6749a31b -->|calls| zezandroid_app_src_main_java_com_zez_app_callact_779ae56d
     zezandroid_app_src_main_java_com_zez_app_callact_06dec989 -->|calls| zezandroid_app_src_main_java_com_zez_app_callact_ac1e08b0
     zezandroid_app_src_main_java_com_zez_app_callact_ea8fd5ff -->|calls| zezandroid_app_src_main_java_com_zez_app_callact_bae24a17
-    %% Omitted for readability: 1658 nodes, 0 edges
+    %% Omitted for readability: 1669 nodes, 0 edges
     class zezandroid_app_src_main_java_com_zez_app_callact_85017d74 klass;
     class zezandroid_app_src_main_java_com_zez_app_callact_8b27302c klass;
     class zezandroid_app_src_main_java_com_zez_app_callact_6749a31b function;
@@ -263,243 +263,243 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>clearSelection()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>ConversationsAdapter()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>getItemCount()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br>+12 more</td>
-  <td>ConversationsAdapter node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>checkPermissionsAndStart()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>closeCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>endCall()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+20 more</td>
+  <td>CallActivity node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>2</td>
-  <td><code>androidx.recyclerview.widget.DiffUtil.Callback</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>areContentsTheSame()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>areItemsTheSame()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>getNewListSize()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br>+1 more</td>
-  <td>androidx.recyclerview.widget.DiffUtil.Callback node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>run()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>run()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>Callback node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>3</td>
-  <td><code>OnAvatarClickListener</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
+  <td><code>TextureView.SurfaceTextureListener</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>onAvatarClick()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>OnAvatarClickListener node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>onSurfaceTextureAvailable()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onSurfaceTextureDestroyed()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onSurfaceTextureSizeChanged()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+1 more</td>
+  <td>TextureView.SurfaceTextureListener node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>4</td>
-  <td><code>OnConversationClickListener</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
+  <td><code>CameraDevice.StateCallback</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>onConversationClick()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>OnConversationClickListener node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>onDisconnected()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onError()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onOpened()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>CameraDevice.StateCallback node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>5</td>
-  <td><code>OnSelectionListener</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>CameraCaptureSession.StateCallback</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>onSelectionChanged()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>OnSelectionListener node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>onConfigured()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onConfigureFailed()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>CameraCaptureSession.StateCallback node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>6</td>
-  <td><code>ChatConversation</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small></td>
+  <td><code>Runnable</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>ChatConversation()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br><code>getConversationId()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br><code>getLastMessageText()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br>+16 more</td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+  <td><code>run()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>Runnable node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>7</td>
-  <td><code>ChatApiClient.ChatCallback&lt;List&lt;ChatConversation&gt;&gt;</code><br><small style="color:var(--muted)">app/util/ChatNotificationManager.java</small></td>
-  <td><span class="tag tag-endpoint">API</span></td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>onError()</code><br><small style="color:var(--muted)">app/util/ChatNotificationManager.java</small><br><code>onSuccess()</code><br><small style="color:var(--muted)">app/util/ChatNotificationManager.java</small></td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>Callback node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>8</td>
-  <td><code>PhoneHelper</code><br><small style="color:var(--muted)">app/util/PhoneHelper.java</small></td>
+  <td><code>Runnable</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>isSamePhone()</code><br><small style="color:var(--muted)">app/util/PhoneHelper.java</small><br><code>matchesSearch()</code><br><small style="color:var(--muted)">app/util/PhoneHelper.java</small><br><code>normalize()</code><br><small style="color:var(--muted)">app/util/PhoneHelper.java</small><br>+1 more</td>
-  <td>PhoneHelper node in app/util/PhoneHelper.java.</td>
+  <td><code>run()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>Runnable node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>9</td>
-  <td><code>.clearSelection()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small><br><code>onBackPressed()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small><br>+3 more</td>
-  <td><code>onSelectionChanged()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>.clearSelection() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>onFailure()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onResponse()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>Callback node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>10</td>
-  <td><code>.ConversationsAdapter()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.ConversationsAdapter() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallRecordManager</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>CallActivity.java</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>CallRecordService.java</code><br><small style="color:var(--muted)">app/service/CallRecordService.java</small><br><code>CallStateReceiver.java</code><br><small style="color:var(--muted)">app/receiver/CallStateReceiver.java</small><br>+1 more</td>
+  <td><code>CallRecordManager()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small><br><code>deleteRecording()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small><br><code>getAllRecordings()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small><br>+10 more</td>
+  <td>CallRecordManager node in app/util/CallRecordManager.java.</td>
 </tr>
 <tr>
   <td>11</td>
-  <td><code>.getItemCount()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.stopRecording()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.getItemCount() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallRecordManager</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small><br><code>endCall()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onDestroy()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+3 more</td>
+  <td><code>stopRecording()</code><br><small style="color:var(--muted)">app/recording/CallRecordingManager.java</small></td>
+  <td>.stopRecording() node in app/util/CallRecordManager.java.</td>
 </tr>
 <tr>
   <td>12</td>
-  <td><code>.getItemId()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.getInstance()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.getItemId() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallRecordManager</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small><br><code>confirmDelete()</code><br><small style="color:var(--muted)">app/adapter/CallRecordAdapter.java</small><br><code>endCall()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+11 more</td>
+  <td><code>CallRecordManager()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small></td>
+  <td>.getInstance() node in app/util/CallRecordManager.java.</td>
 </tr>
 <tr>
   <td>13</td>
-  <td><code>.getSelectedConversations()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.checkPermissionsAndStart()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>showChatsSelectionOverflowMenu()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small><br><code>showDeleteConversationsDialog()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.getSelectedConversations() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onCreate()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>initCameraAndLifecycle()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>.checkPermissionsAndStart() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>14</td>
-  <td><code>.getSelectedCount()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.closeCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>endCall()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onDestroy()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+2 more</td>
   <td>No direct outbound edge</td>
-  <td>.getSelectedCount() node in app/adapter/ConversationsAdapter.java.</td>
+  <td>.closeCamera() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>15</td>
-  <td><code>.isSameConversation()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.endCall()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>areContentsTheSame()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><code>getConversationId()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br><code>getLastMessageText()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br><code>getLastMessageTime()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br>+3 more</td>
-  <td>.isSameConversation() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onBackPressed()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>closeCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>getBaseUrl()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br><code>getInstance()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small><br>+2 more</td>
+  <td>.endCall() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>16</td>
-  <td><code>.onBindViewHolder()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.onFailure()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><code>getConversationId()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small></td>
-  <td>.onBindViewHolder() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>Callback</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>No direct outbound edge</td>
+  <td>.onFailure() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>17</td>
-  <td><code>.selectAll()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.flipCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>showChatsSelectionOverflowMenu()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
-  <td><code>onSelectionChanged()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>.selectAll() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>openCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>.flipCamera() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>18</td>
-  <td><code>.setConversations()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.initCameraAndLifecycle()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>filterChats()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small><br><code>onBackgroundChatsUpdate()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small><br>+1 more</td>
-  <td>No direct outbound edge</td>
-  <td>.setConversations() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>checkPermissionsAndStart()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onRequestPermissionsResult()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>onCallConnected()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>openCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>setupCameraIds()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+2 more</td>
+  <td>.initCameraAndLifecycle() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>19</td>
-  <td><code>.areContentsTheSame()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.onSurfaceTextureAvailable()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>androidx.recyclerview.widget.DiffUtil.C...</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><code>isSameConversation()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>.areContentsTheSame() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>TextureView.SurfaceTextureListener</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>openCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>.onSurfaceTextureAvailable() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>20</td>
-  <td><code>.areItemsTheSame()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.onSurfaceTextureDestroyed()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>androidx.recyclerview.widget.DiffUtil.C...</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><code>getConversationId()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br><code>getOtherUserId()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small></td>
-  <td>.areItemsTheSame() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>TextureView.SurfaceTextureListener</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>No direct outbound edge</td>
+  <td>.onSurfaceTextureDestroyed() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>21</td>
-  <td><code>.getNewListSize()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.onSurfaceTextureSizeChanged()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>androidx.recyclerview.widget.DiffUtil.C...</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>TextureView.SurfaceTextureListener</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td>No direct outbound edge</td>
-  <td>.getNewListSize() node in app/adapter/ConversationsAdapter.java.</td>
+  <td>.onSurfaceTextureSizeChanged() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>22</td>
-  <td><code>.getOldListSize()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.onSurfaceTextureUpdated()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>androidx.recyclerview.widget.DiffUtil.C...</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>TextureView.SurfaceTextureListener</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td>No direct outbound edge</td>
-  <td>.getOldListSize() node in app/adapter/ConversationsAdapter.java.</td>
+  <td>.onSurfaceTextureUpdated() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>23</td>
-  <td><code>.setOnAvatarClickListener()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.setOnAvatarClickListener() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>.initViews()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>onCreate()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>endCall()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>flipCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>getAbsoluteMediaUrl()</code><br><small style="color:var(--muted)">app/util/ChatApiClient.java</small><br>+3 more</td>
+  <td>.initViews() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>24</td>
-  <td><code>.setOnSelectionListener()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.setOnSelectionListener() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>.onBackPressed()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>endCall()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>.onBackPressed() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>25</td>
-  <td><code>.toggleSelection()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.onCallConnected()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>bind()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>ConversationsAdapter</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><code>getConversationId()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br><code>onSelectionChanged()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>.toggleSelection() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>initCameraAndLifecycle()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>getInstance()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small><br><code>isAutoRecordEnabled()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small><br><code>startEndCallWatcher()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+2 more</td>
+  <td>.onCallConnected() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>26</td>
-  <td><code>.onAvatarClick()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td><code>OnAvatarClickListener</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.onAvatarClick() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>.onCreate()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>checkPermissionsAndStart()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>getUserId()</code><br><small style="color:var(--muted)">app/util/ChatPreferencesHelper.java</small><br><code>initViews()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+1 more</td>
+  <td>.onCreate() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>27</td>
-  <td><code>.onConversationClick()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td><code>bind()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>OnConversationClickListener</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>No direct outbound edge</td>
-  <td>.onConversationClick() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>.onDestroy()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>closeCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>getInstance()</code><br><small style="color:var(--muted)">app/util/CallRecordManager.java</small><br><code>stopOutgoingTone()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+1 more</td>
+  <td>.onDestroy() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>28</td>
-  <td><code>.onSelectionChanged()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.onRequestPermissionsResult()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>clearSelection()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>OnSelectionListener</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br><code>selectAll()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small><br>+1 more</td>
-  <td>No direct outbound edge</td>
-  <td>.onSelectionChanged() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td><code>initCameraAndLifecycle()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>.onRequestPermissionsResult() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>29</td>
-  <td><code>.bind()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
+  <td><code>.openCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>ViewHolder</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td><code>getLastMessageText()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br><code>getLastMessageTime()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br><code>getOtherUserAvatar()</code><br><small style="color:var(--muted)">app/model/ChatConversation.java</small><br>+7 more</td>
-  <td>.bind() node in app/adapter/ConversationsAdapter.java.</td>
+  <td><code>CallActivity</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>flipCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br><code>initCameraAndLifecycle()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small><br>+2 more</td>
+  <td><code>closeCamera()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>.openCamera() node in zez/app/CallActivity.java.</td>
 </tr>
 <tr>
   <td>30</td>
-  <td><code>.onBackgroundChatsUpdate()</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
+  <td><code>.onDisconnected()</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>MainActivity</code><br><small style="color:var(--muted)">zez/app/MainActivity.java</small></td>
-  <td><code>setConversations()</code><br><small style="color:var(--muted)">app/adapter/ConversationsAdapter.java</small></td>
-  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+  <td><code>CameraDevice.StateCallback</code><br><small style="color:var(--muted)">zez/app/CallActivity.java</small></td>
+  <td>No direct outbound edge</td>
+  <td>.onDisconnected() node in zez/app/CallActivity.java.</td>
 </tr>
 </table>
 
@@ -520,19 +520,19 @@ flowchart LR
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: calls x1375, references x1089, method x1068, imports x982. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x1375, references x1103, method x1069, imports x982. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
 <!-- ====== 3. Graph Build ====== -->
 <h2 id="build-graph">3. Graph Build</h2>
-<p>Graph Build groups implementation around zez, backend, packagejson, routes, mostly in Zez-Backend/package.json, Zez-Backend/tsconfig.json, src/routes/chat.js. This section covers 127 nodes and 160 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Graph Build groups implementation around zez, backend, packagejson, routes, mostly in Zez-Backend/package.json, Zez-Backend/tsconfig.json, src/routes/chat.js. This section covers 136 nodes and 168 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Graph Build (127 nodes, 160 edges)
+    %% Section: Graph Build (136 nodes, 168 edges)
     subgraph build_graph_Zez_Backend_src_crypto_js_b406b781["Zez-Backend/src/crypto.js"]
         zez_backend_src_crypto_decryptjson_ef26d76b("decryptJson()<br/><small>Zez-Backend/src/crypto.js</small>")
         zez_backend_src_crypto_getkey_c19267e5("getKey()<br/><small>Zez-Backend/src/crypto.js</small>")
@@ -570,7 +570,7 @@ flowchart LR
     zez_backend_src_routes_callsync_normalizecall_150bf10e -->|calls| zez_backend_src_routes_callsync_gettimestamp_d6bb9b15
     zez_backend_src_routes_callsync_4d656e2a -->|calls| zez_backend_src_crypto_encryptjson_042f4800
     zez_backend_src_routes_callread_9b576910 -->|imports| zez_backend_src_crypto_decryptstoredpayload_e030bb61
-    %% Omitted for readability: 109 nodes, 0 edges
+    %% Omitted for readability: 118 nodes, 0 edges
     class zez_backend_src_crypto_decryptjson_ef26d76b function;
     class zez_backend_src_crypto_getkey_c19267e5 function;
     class zez_backend_src_crypto_decryptportablehex_a812897b function;
@@ -862,14 +862,14 @@ flowchart LR
 <tr><td><code>src/routes/chat.js</code></td><td>13 nodes</td></tr>
 <tr><td><code>Zez-Backend/src/crypto.js</code></td><td>10 nodes</td></tr>
 <tr><td><code>src/routes/storage.js</code></td><td>10 nodes</td></tr>
+<tr><td><code>TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</code></td><td>9 nodes</td></tr>
 <tr><td><code>src/routes/callRead.js</code></td><td>8 nodes</td></tr>
 <tr><td><code>src/routes/callSync.js</code></td><td>7 nodes</td></tr>
-<tr><td><code>src/routes/devices.js</code></td><td>5 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x91, imports x19, imports x17, declares x14. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x99, imports x19, imports x17, declares x14. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -1184,12 +1184,12 @@ flowchart LR
 
 <!-- ====== 5. Ingestion & Updates ====== -->
 <h2 id="ingest-cache-update">5. Ingestion &amp; Updates</h2>
-<p>Ingestion &amp; Updates groups implementation around recording, call, audio, diagnosticsmd, mostly in CALL_RECORDING_AUDIO_DIAGNOSTICS.md, CALL_RECORDING_KNOWN_LIMITATIONS.md. This section covers 26 nodes and 24 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Ingestion &amp; Updates groups implementation around diagnosticsmd, call, recording, audio, mostly in CALL_RECORDING_AUDIO_DIAGNOSTICS.md, TWING_ANDROID16_DEVICE_DIAGNOSTICS.md, CALL_RECORDING_KNOWN_LIMITATIONS.md. This section covers 41 nodes and 38 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Ingestion &amp; Updates (26 nodes, 24 edges)
+    %% Section: Ingestion &amp; Updates (41 nodes, 38 edges)
     subgraph ingest_cache_update_CALL_RECORDING_AUDIO_DIAGNOS_4d6000ce["CALL_RECORDING_AUDIO_DIAGNOSTICS.md"]
         call_recording_audio_diagnostics_call_recording_d2585cba("Call Recording Audio Diagnostics &amp; Root...<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
         call_recording_audio_diagnostics_3_real_audio_va_82fd0027("3. Real Audio Validation &amp; Diagnostic A...<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
@@ -1202,11 +1202,13 @@ flowchart LR
         call_recording_audio_diagnostics_3_2_real_time_p_d26043c2("3.2 Real-Time Peak &amp; Silence Monitor<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
         call_recording_audio_diagnostics_3_3_post_record_2ef4d51f("3.3 Post-Recording Frame Decoded Sample...<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
         call_recording_audio_diagnostics_3_4_elimination_443b85e8("3.4 Elimination of False Recordings<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
-        call_recording_audio_diagnostics_4_1_samsung_one_12c45431("4.1 Samsung (One UI 4 / 5 / 6, Android...<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
-        call_recording_audio_diagnostics_4_2_xiaomi_redm_c25d30c3("4.2 Xiaomi / Redmi / POCO (MIUI 13 / 14...<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
-        call_recording_audio_diagnostics_4_3_oneplus_opp_e4ee8c44("4.3 OnePlus / OPPO / Realme (OxygenOS /...<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
-        call_recording_audio_diagnostics_4_4_vivo_iqoo_f_f538077f("4.4 Vivo / iQOO (Funtouch OS / OriginOS...<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
-        call_recording_audio_diagnostics_5_summary_of_su_10049330("5. Summary of Supported vs Unsupported...<br/><small>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</small>")
+    end
+    subgraph ingest_cache_update_TWING_ANDROID16_DEVICE_DIAGN_cf784c8f["TWING_ANDROID16_DEVICE_DIAGNOSTICS.md"]
+        twing_android16_device_diagnostics_twing_device_6ebdeb45("TWING: Device-Specific Zero-Audio Inves...<br/><small>TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small>")
+        twing_android16_device_diagnostics_2_exact_devic_66d74548("2. Exact Device Profiles &amp; Specifications<br/><small>TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small>")
+        twing_android16_device_diagnostics_4_deep_inspec_c88568ff("4. Deep Inspection of Android Recording...<br/><small>TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small>")
+        twing_android16_device_diagnostics_5_investigati_ddc715d3("5. Investigation of OEM-Supported Call...<br/><small>TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small>")
+        twing_android16_device_diagnostics_1_executive_s_28ac5c73("1. Executive Summary<br/><small>TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small>")
     end
     subgraph ingest_cache_update_CALL_RECORDING_KNOWN_LIMITAT_5b812a9a["CALL_RECORDING_KNOWN_LIMITATIONS.md"]
         call_recording_known_limitations_1_system_level_574b7ddd("1. System-Level Architectural Limitations<br/><small>CALL_RECORDING_KNOWN_LIMITATIONS.md</small>")
@@ -1219,16 +1221,15 @@ flowchart LR
     call_recording_audio_diagnostics_3_real_audio_va_82fd0027 -->|contains| call_recording_audio_diagnostics_3_2_real_time_p_d26043c2
     call_recording_audio_diagnostics_3_real_audio_va_82fd0027 -->|contains| call_recording_audio_diagnostics_3_3_post_record_2ef4d51f
     call_recording_audio_diagnostics_3_real_audio_va_82fd0027 -->|contains| call_recording_audio_diagnostics_3_4_elimination_443b85e8
-    call_recording_audio_diagnostics_4_oem_manufactu_5287a669 -->|contains| call_recording_audio_diagnostics_4_2_xiaomi_redm_c25d30c3
-    call_recording_audio_diagnostics_4_oem_manufactu_5287a669 -->|contains| call_recording_audio_diagnostics_4_3_oneplus_opp_e4ee8c44
-    call_recording_audio_diagnostics_4_oem_manufactu_5287a669 -->|contains| call_recording_audio_diagnostics_4_4_vivo_iqoo_f_f538077f
-    call_recording_audio_diagnostics_4_oem_manufactu_5287a669 -->|contains| call_recording_audio_diagnostics_4_1_samsung_one_12c45431
-    call_recording_audio_diagnostics_call_recording_d2585cba -->|contains| call_recording_audio_diagnostics_5_summary_of_su_10049330
     call_recording_audio_diagnostics_call_recording_d2585cba -->|contains| call_recording_audio_diagnostics_2_audio_source_8d57fb6c
     call_recording_audio_diagnostics_call_recording_d2585cba -->|contains| call_recording_audio_diagnostics_1_executive_sum_7c441b4b
     call_recording_audio_diagnostics_call_recording_d2585cba -->|contains| call_recording_audio_diagnostics_3_real_audio_va_82fd0027
     call_recording_audio_diagnostics_call_recording_d2585cba -->|contains| call_recording_audio_diagnostics_4_oem_manufactu_5287a669
-    %% Omitted for readability: 8 nodes, 0 edges
+    twing_android16_device_diagnostics_twing_device_6ebdeb45 -->|contains| twing_android16_device_diagnostics_1_executive_s_28ac5c73
+    twing_android16_device_diagnostics_twing_device_6ebdeb45 -->|contains| twing_android16_device_diagnostics_4_deep_inspec_c88568ff
+    twing_android16_device_diagnostics_twing_device_6ebdeb45 -->|contains| twing_android16_device_diagnostics_5_investigati_ddc715d3
+    twing_android16_device_diagnostics_twing_device_6ebdeb45 -->|contains| twing_android16_device_diagnostics_2_exact_devic_66d74548
+    %% Omitted for readability: 23 nodes, 0 edges
     class call_recording_audio_diagnostics_call_recording_d2585cba concept;
     class call_recording_audio_diagnostics_3_real_audio_va_82fd0027 concept;
     class call_recording_audio_diagnostics_4_oem_manufactu_5287a669 concept;
@@ -1240,11 +1241,11 @@ flowchart LR
     class call_recording_audio_diagnostics_3_2_real_time_p_d26043c2 concept;
     class call_recording_audio_diagnostics_3_3_post_record_2ef4d51f concept;
     class call_recording_audio_diagnostics_3_4_elimination_443b85e8 concept;
-    class call_recording_audio_diagnostics_4_1_samsung_one_12c45431 concept;
-    class call_recording_audio_diagnostics_4_2_xiaomi_redm_c25d30c3 concept;
-    class call_recording_audio_diagnostics_4_3_oneplus_opp_e4ee8c44 concept;
-    class call_recording_audio_diagnostics_4_4_vivo_iqoo_f_f538077f concept;
-    class call_recording_audio_diagnostics_5_summary_of_su_10049330 concept;
+    class twing_android16_device_diagnostics_twing_device_6ebdeb45 concept;
+    class twing_android16_device_diagnostics_2_exact_devic_66d74548 concept;
+    class twing_android16_device_diagnostics_4_deep_inspec_c88568ff concept;
+    class twing_android16_device_diagnostics_5_investigati_ddc715d3 concept;
+    class twing_android16_device_diagnostics_1_executive_s_28ac5c73 concept;
     class call_recording_known_limitations_1_system_level_574b7ddd concept;
     class call_recording_known_limitations_call_recording_9a078ecf concept;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
@@ -1414,67 +1415,99 @@ flowchart LR
 </tr>
 <tr>
   <td>19</td>
-  <td><code>CALL_RECORDING_KNOWN_LIMITATIONS.md</code><br><small style="color:var(--muted)">CALL_RECORDING_KNOWN_LIMITATIONS.md</small></td>
+  <td><code>TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing CALL_RECORDING_KNOWN_LIMITATIONS.md.</td>
+  <td>Documentation node describing TWING_ANDROID16_DEVICE_DIAGNOSTICS.md.</td>
 </tr>
 <tr>
   <td>20</td>
-  <td><code>1.1 The `CAPTURE_AUDIO_OUTPUT` Security Boundary</code><br><small style="color:var(--muted)">CALL_RECORDING_KNOWN_LIMITATIONS.md</small></td>
+  <td><code>1. Executive Summary</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 1.1 The `CAPTURE_AUDIO_OUTPUT` Security Boundary.</td>
+  <td>Documentation node describing 1. Executive Summary.</td>
 </tr>
 <tr>
   <td>21</td>
-  <td><code>1.2 Android `AudioPolicyService` &amp; `AudioFlinger` Silencing</code><br><small style="color:var(--muted)">CALL_RECORDING_KNOWN_LIMITATIONS.md</small></td>
+  <td><code>2. Exact Device Profiles &amp; Specifications</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 1.2 Android `AudioPolicyService` &amp; `AudioFlinger` Silencing.</td>
+  <td>Documentation node describing 2. Exact Device Profiles &amp; Specifications.</td>
 </tr>
 <tr>
   <td>22</td>
-  <td><code>1.3 Android 11+ &quot;While-In-Use&quot; Microphone Restrictions</code><br><small style="color:var(--muted)">CALL_RECORDING_KNOWN_LIMITATIONS.md</small></td>
+  <td><code>4.1 Telephony Audio Mode Transition</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 1.3 Android 11+ &quot;While-In-Use&quot; Microphone Restrictions.</td>
+  <td>Documentation node describing 4.1 Telephony Audio Mode Transition.</td>
 </tr>
 <tr>
   <td>23</td>
-  <td><code>1.4 Google Play Policy Regarding Accessibility Services</code><br><small style="color:var(--muted)">CALL_RECORDING_KNOWN_LIMITATIONS.md</small></td>
+  <td><code>4.2 `AudioRecordingConfiguration` Parameters During Call</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 1.4 Google Play Policy Regarding Accessibility Services.</td>
+  <td>Documentation node describing 4.2 `AudioRecordingConfiguration` Parameters During Call.</td>
 </tr>
 <tr>
   <td>24</td>
-  <td><code>1. System-Level Architectural Limitations</code><br><small style="color:var(--muted)">CALL_RECORDING_KNOWN_LIMITATIONS.md</small></td>
+  <td><code>4. Deep Inspection of Android Recording Configuration</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 1. System-Level Architectural Limitations.</td>
+  <td>Documentation node describing 4. Deep Inspection of Android Recording Configuration.</td>
 </tr>
 <tr>
   <td>25</td>
-  <td><code>2. Summary for End Users &amp; Operators</code><br><small style="color:var(--muted)">CALL_RECORDING_KNOWN_LIMITATIONS.md</small></td>
+  <td><code>5.1 Vivo (Funtouch OS) Native Call Recorder</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 2. Summary for End Users &amp; Operators.</td>
+  <td>Documentation node describing 5.1 Vivo (Funtouch OS) Native Call Recorder.</td>
 </tr>
 <tr>
   <td>26</td>
-  <td><code>Call Recording Known Limitations &amp; Technical Explanations</code><br><small style="color:var(--muted)">CALL_RECORDING_KNOWN_LIMITATIONS.md</small></td>
+  <td><code>5.2 OnePlus (OxygenOS / ColorOS) Native Call Recorder</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing Call Recording Known Limitations &amp; Technical Explanations.</td>
+  <td>Documentation node describing 5.2 OnePlus (OxygenOS / ColorOS) Native Call Recorder.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>5. Investigation of OEM-Supported Call Recording Mechanisms</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing 5. Investigation of OEM-Supported Call Recording Mechanisms.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>6. Factual Diagnosis for Both Devices</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing 6. Factual Diagnosis for Both Devices.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>Device 1: Vivo T3x 5G</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Device 1: Vivo T3x 5G.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>Device 2: OnePlus Nord CE 3 Lite 5G</code><br><small style="color:var(--muted)">TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Device 2: OnePlus Nord CE 3 Lite 5G.</td>
 </tr>
 </table>
 
@@ -1484,12 +1517,13 @@ flowchart LR
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
       <tr><td><code>CALL_RECORDING_AUDIO_DIAGNOSTICS.md</code></td><td>18 nodes</td></tr>
+<tr><td><code>TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</code></td><td>15 nodes</td></tr>
 <tr><td><code>CALL_RECORDING_KNOWN_LIMITATIONS.md</code></td><td>8 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x24. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x38. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -1657,12 +1691,12 @@ flowchart LR
 
 <!-- ====== 7. Tests & Fixtures ====== -->
 <h2 id="tests-fixtures">7. Tests &amp; Fixtures</h2>
-<p>Tests &amp; Fixtures groups implementation around backend, zez, scripts, test, mostly in TWING_ANDROID16_DEVICE_DIAGNOSTICS.md, Zez-Backend/src/server.js, Zez-Backend/test_backend_suite.js. This section covers 204 nodes and 331 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Tests &amp; Fixtures groups implementation around backend, zez, scripts, test, mostly in Zez-Backend/src/server.js, Zez-Backend/test_backend_suite.js, Zez-Backend/tests/test-b2-integration.js. This section covers 185 nodes and 311 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Tests &amp; Fixtures (204 nodes, 331 edges)
+    %% Section: Tests &amp; Fixtures (185 nodes, 311 edges)
     subgraph tests_fixtures_Zez_Backend_src_db_js_3656947b["Zez-Backend/src/db.js"]
         zez_backend_src_db_initializedatabase_7b4e5dd9("initializeDatabase()<br/><small>Zez-Backend/src/db.js</small>")
         zez_backend_src_db_hashpassword_87239947("hashPassword()<br/><small>Zez-Backend/src/db.js</small>")
@@ -1707,7 +1741,7 @@ flowchart LR
     zez_backend_test_backend_suite_01cb7d0a -->|imports| zez_backend_src_db_closedatabase_b73dc8d4
     zez_backend_test_backend_suite_01cb7d0a -->|imports| zez_backend_src_db_initializedatabase_7b4e5dd9
     zez_backend_test_backend_suite_01cb7d0a -->|imports| zez_backend_src_server_2df91fdf
-    %% Omitted for readability: 186 nodes, 0 edges
+    %% Omitted for readability: 167 nodes, 0 edges
     class zez_backend_src_db_initializedatabase_7b4e5dd9 function;
     class zez_backend_src_db_hashpassword_87239947 function;
     class zez_backend_src_db_closedatabase_b73dc8d4 function;
@@ -1994,19 +2028,19 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>TWING_ANDROID16_DEVICE_DIAGNOSTICS.md</code></td><td>23 nodes</td></tr>
-<tr><td><code>src/middleware/adminAuth.js</code></td><td>8 nodes</td></tr>
+      <tr><td><code>src/middleware/adminAuth.js</code></td><td>8 nodes</td></tr>
 <tr><td><code>Zez-Backend/src/server.js</code></td><td>8 nodes</td></tr>
 <tr><td><code>Zez-Backend/test_backend_suite.js</code></td><td>8 nodes</td></tr>
 <tr><td><code>Zez-Backend/tests/test-b2-integration.js</code></td><td>8 nodes</td></tr>
 <tr><td><code>scripts/e2e_device_test.py</code></td><td>7 nodes</td></tr>
 <tr><td><code>scripts/test_offline_retry.py</code></td><td>7 nodes</td></tr>
 <tr><td><code>scripts/test_secret_mode_sync.py</code></td><td>7 nodes</td></tr>
+<tr><td><code>CALL_RECORDING_TEST_REPORT.md</code></td><td>6 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x142, imports x66, calls x58, imports x56. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x125, imports x66, calls x58, imports x56. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -2813,43 +2847,40 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 11. Call Recording Implementation ====== -->
-<h2 id="call-recording-implementation">11. Call Recording Implementation</h2>
-<p>Call Recording Implementation groups implementation around call, recording, implementation, auditmd, mostly in CALL_RECORDING_IMPLEMENTATION_AUDIT.md. This section covers 10 nodes and 9 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 11. Call Recording Compatibilitymd ====== -->
+<h2 id="call-recording-compatibilitymd">11. Call Recording Compatibilitymd</h2>
+<p>Call Recording Compatibilitymd groups implementation around call, recording, compatibilitymd, android, mostly in CALL_RECORDING_COMPATIBILITY.md. This section covers 9 nodes and 8 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Call Recording Implementation (10 nodes, 9 edges)
-    call_recording_implementation_audit_call_recordi_e8a979e9("Call Recording Implementation Audit<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_1_existing_a_3fff333f("1. Existing Architecture &amp; Baseline<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_3c0befab("RECORDING IMPLEMENTATION AUDIT.md<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_5_proposed_m_b62e2e49("5. Proposed Modular Integration Strategy<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_1_1_project_77fc0979("1.1 Project Structure &amp; Build Configura...<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_1_2_core_fun_5f654a78("1.2 Core Functional Modules<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_2_inventory_7db21639("2. Inventory of Existing Call Recording...<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_3_untouchabl_9d7a7b36("3. Untouchable Files &amp; Subsystems<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_4_android_se_9370ef91("4. Android Security &amp; Hardware Restrict...<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_integration_184905fa("Integration Points:<br/><small>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small>")
-    call_recording_implementation_audit_3c0befab -->|contains| call_recording_implementation_audit_call_recordi_e8a979e9
-    call_recording_implementation_audit_1_existing_a_3fff333f -->|contains| call_recording_implementation_audit_1_1_project_77fc0979
-    call_recording_implementation_audit_1_existing_a_3fff333f -->|contains| call_recording_implementation_audit_1_2_core_fun_5f654a78
-    call_recording_implementation_audit_5_proposed_m_b62e2e49 -->|contains| call_recording_implementation_audit_integration_184905fa
-    call_recording_implementation_audit_call_recordi_e8a979e9 -->|contains| call_recording_implementation_audit_2_inventory_7db21639
-    call_recording_implementation_audit_call_recordi_e8a979e9 -->|contains| call_recording_implementation_audit_3_untouchabl_9d7a7b36
-    call_recording_implementation_audit_call_recordi_e8a979e9 -->|contains| call_recording_implementation_audit_4_android_se_9370ef91
-    call_recording_implementation_audit_call_recordi_e8a979e9 -->|contains| call_recording_implementation_audit_5_proposed_m_b62e2e49
-    call_recording_implementation_audit_call_recordi_e8a979e9 -->|contains| call_recording_implementation_audit_1_existing_a_3fff333f
-    class call_recording_implementation_audit_call_recordi_e8a979e9 concept;
-    class call_recording_implementation_audit_1_existing_a_3fff333f concept;
-    class call_recording_implementation_audit_3c0befab concept;
-    class call_recording_implementation_audit_5_proposed_m_b62e2e49 concept;
-    class call_recording_implementation_audit_1_1_project_77fc0979 concept;
-    class call_recording_implementation_audit_1_2_core_fun_5f654a78 concept;
-    class call_recording_implementation_audit_2_inventory_7db21639 concept;
-    class call_recording_implementation_audit_3_untouchabl_9d7a7b36 concept;
-    class call_recording_implementation_audit_4_android_se_9370ef91 concept;
-    class call_recording_implementation_audit_integration_184905fa concept;
+    %% Section: Call Recording Compatibilitymd (9 nodes, 8 edges)
+    call_recording_compatibility_2_manufacturer_by_m_1aa09d9b("2. Manufacturer-by-Manufacturer Breakdown<br/><small>CALL_RECORDING_COMPATIBILITY.md</small>")
+    call_recording_compatibility_call_recording_comp_dc7a3520("Call Recording Compatibility Matrix &amp; O...<br/><small>CALL_RECORDING_COMPATIBILITY.md</small>")
+    call_recording_compatibility_49d24098("CALL RECORDING COMPATIBILITY.md<br/><small>CALL_RECORDING_COMPATIBILITY.md</small>")
+    call_recording_compatibility_2_1_samsung_one_ui_d51ef739("2.1 Samsung (One UI / Android 10–14)<br/><small>CALL_RECORDING_COMPATIBILITY.md</small>")
+    call_recording_compatibility_2_2_xiaomi_redmi_po_c6be4302("2.2 Xiaomi / Redmi / POCO (MIUI / Hyper...<br/><small>CALL_RECORDING_COMPATIBILITY.md</small>")
+    call_recording_compatibility_2_3_oneplus_oppo_re_ea87b87d("2.3 OnePlus / Oppo / Realme (ColorOS /...<br/><small>CALL_RECORDING_COMPATIBILITY.md</small>")
+    call_recording_compatibility_1_overview_55ba25d2("1. Overview<br/><small>CALL_RECORDING_COMPATIBILITY.md</small>")
+    call_recording_compatibility_2_4_vivo_iqoo_funto_a01ada55("2.4 Vivo / iQOO (Funtouch OS / OriginOS...<br/><small>CALL_RECORDING_COMPATIBILITY.md</small>")
+    call_recording_compatibility_3_comprehensive_dev_53e2e60a("3. Comprehensive Device Capability Matrix<br/><small>CALL_RECORDING_COMPATIBILITY.md</small>")
+    call_recording_compatibility_49d24098 -->|contains| call_recording_compatibility_call_recording_comp_dc7a3520
+    call_recording_compatibility_2_manufacturer_by_m_1aa09d9b -->|contains| call_recording_compatibility_2_1_samsung_one_ui_d51ef739
+    call_recording_compatibility_2_manufacturer_by_m_1aa09d9b -->|contains| call_recording_compatibility_2_2_xiaomi_redmi_po_c6be4302
+    call_recording_compatibility_2_manufacturer_by_m_1aa09d9b -->|contains| call_recording_compatibility_2_3_oneplus_oppo_re_ea87b87d
+    call_recording_compatibility_2_manufacturer_by_m_1aa09d9b -->|contains| call_recording_compatibility_2_4_vivo_iqoo_funto_a01ada55
+    call_recording_compatibility_call_recording_comp_dc7a3520 -->|contains| call_recording_compatibility_2_manufacturer_by_m_1aa09d9b
+    call_recording_compatibility_call_recording_comp_dc7a3520 -->|contains| call_recording_compatibility_1_overview_55ba25d2
+    call_recording_compatibility_call_recording_comp_dc7a3520 -->|contains| call_recording_compatibility_3_comprehensive_dev_53e2e60a
+    class call_recording_compatibility_2_manufacturer_by_m_1aa09d9b concept;
+    class call_recording_compatibility_call_recording_comp_dc7a3520 concept;
+    class call_recording_compatibility_49d24098 concept;
+    class call_recording_compatibility_2_1_samsung_one_ui_d51ef739 concept;
+    class call_recording_compatibility_2_2_xiaomi_redmi_po_c6be4302 concept;
+    class call_recording_compatibility_2_3_oneplus_oppo_re_ea87b87d concept;
+    class call_recording_compatibility_1_overview_55ba25d2 concept;
+    class call_recording_compatibility_2_4_vivo_iqoo_funto_a01ada55 concept;
+    class call_recording_compatibility_3_comprehensive_dev_53e2e60a concept;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -2873,83 +2904,75 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
-  <td><code>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
+  <td><code>CALL_RECORDING_COMPATIBILITY.md</code><br><small style="color:var(--muted)">CALL_RECORDING_COMPATIBILITY.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing CALL_RECORDING_IMPLEMENTATION_AUDIT.md.</td>
+  <td>Documentation node describing CALL_RECORDING_COMPATIBILITY.md.</td>
 </tr>
 <tr>
   <td>2</td>
-  <td><code>1.1 Project Structure &amp; Build Configuration</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
+  <td><code>1. Overview</code><br><small style="color:var(--muted)">CALL_RECORDING_COMPATIBILITY.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 1.1 Project Structure &amp; Build Configuration.</td>
+  <td>Documentation node describing 1. Overview.</td>
 </tr>
 <tr>
   <td>3</td>
-  <td><code>1.2 Core Functional Modules</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
+  <td><code>2.1 Samsung (One UI / Android 10–14)</code><br><small style="color:var(--muted)">CALL_RECORDING_COMPATIBILITY.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 1.2 Core Functional Modules.</td>
+  <td>Documentation node describing 2.1 Samsung (One UI / Android 10–14).</td>
 </tr>
 <tr>
   <td>4</td>
-  <td><code>1. Existing Architecture &amp; Baseline</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
+  <td><code>2.2 Xiaomi / Redmi / POCO (MIUI / HyperOS / Android 10–14)</code><br><small style="color:var(--muted)">CALL_RECORDING_COMPATIBILITY.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 1. Existing Architecture &amp; Baseline.</td>
+  <td>Documentation node describing 2.2 Xiaomi / Redmi / POCO (MIUI / HyperOS / Android 10–14).</td>
 </tr>
 <tr>
   <td>5</td>
-  <td><code>2. Inventory of Existing Call Recording Files</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
+  <td><code>2.3 OnePlus / Oppo / Realme (ColorOS / OxygenOS / Android 10–14)</code><br><small style="color:var(--muted)">CALL_RECORDING_COMPATIBILITY.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 2. Inventory of Existing Call Recording Files.</td>
+  <td>Documentation node describing 2.3 OnePlus / Oppo / Realme (ColorOS / OxygenOS / Android 10–14).</td>
 </tr>
 <tr>
   <td>6</td>
-  <td><code>3. Untouchable Files &amp; Subsystems</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
+  <td><code>2.4 Vivo / iQOO (Funtouch OS / OriginOS / Android 10–14)</code><br><small style="color:var(--muted)">CALL_RECORDING_COMPATIBILITY.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 3. Untouchable Files &amp; Subsystems.</td>
+  <td>Documentation node describing 2.4 Vivo / iQOO (Funtouch OS / OriginOS / Android 10–14).</td>
 </tr>
 <tr>
   <td>7</td>
-  <td><code>4. Android Security &amp; Hardware Restrictions Analysis</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
+  <td><code>2. Manufacturer-by-Manufacturer Breakdown</code><br><small style="color:var(--muted)">CALL_RECORDING_COMPATIBILITY.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 4. Android Security &amp; Hardware Restrictions Analysis.</td>
+  <td>Documentation node describing 2. Manufacturer-by-Manufacturer Breakdown.</td>
 </tr>
 <tr>
   <td>8</td>
-  <td><code>5. Proposed Modular Integration Strategy</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
+  <td><code>3. Comprehensive Device Capability Matrix</code><br><small style="color:var(--muted)">CALL_RECORDING_COMPATIBILITY.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing 5. Proposed Modular Integration Strategy.</td>
+  <td>Documentation node describing 3. Comprehensive Device Capability Matrix.</td>
 </tr>
 <tr>
   <td>9</td>
-  <td><code>Call Recording Implementation Audit</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
+  <td><code>Call Recording Compatibility Matrix &amp; OEM Analysis</code><br><small style="color:var(--muted)">CALL_RECORDING_COMPATIBILITY.md</small></td>
   <td><span class="tag tag-func">Concept</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>Documentation node describing Call Recording Implementation Audit.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>Integration Points:</code><br><small style="color:var(--muted)">CALL_RECORDING_IMPLEMENTATION_AUDIT.md</small></td>
-  <td><span class="tag tag-func">Concept</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Documentation node describing Integration Points:.</td>
+  <td>Documentation node describing Call Recording Compatibility Matrix &amp; OEM Analysis.</td>
 </tr>
 </table>
 
@@ -2958,18 +2981,118 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>CALL_RECORDING_IMPLEMENTATION_AUDIT.md</code></td><td>10 nodes</td></tr>
+      <tr><td><code>CALL_RECORDING_COMPATIBILITY.md</code></td><td>9 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x9. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x8. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
-<!-- ====== 12. Gradlew Script Module (C40) ====== -->
-<h2 id="gradlew-script-module-c40">12. Gradlew Script Module (C40)</h2>
+<!-- ====== 12. Recording Twing Call ====== -->
+<h2 id="recording-twing-call">12. Recording Twing Call</h2>
+<p>Recording Twing Call groups implementation around recording, twing, call, integration, mostly in TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md. This section covers 5 nodes and 4 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Recording Twing Call (5 nodes, 4 edges)
+    twing_call_recording_integration_proposal_3_manu_5695fb23("3. Manufacturer-by-Manufacturer Native...<br/><small>TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small>")
+    twing_call_recording_integration_proposal_3_1_vi_930f7430("3.1 Vivo (Target: Vivo T3x 5G / Funtouc...<br/><small>TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small>")
+    twing_call_recording_integration_proposal_3_2_on_d6cd32bb("3.2 OnePlus / OPPO / Realme (Target: On...<br/><small>TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small>")
+    twing_call_recording_integration_proposal_3_3_sa_cf51fcab("3.3 Samsung (Galaxy S, A, M, F Series /...<br/><small>TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small>")
+    twing_call_recording_integration_proposal_3_4_xi_fd42c266("3.4 Xiaomi / Redmi / POCO (MIUI 13/14 &amp;...<br/><small>TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small>")
+    twing_call_recording_integration_proposal_3_manu_5695fb23 -->|contains| twing_call_recording_integration_proposal_3_1_vi_930f7430
+    twing_call_recording_integration_proposal_3_manu_5695fb23 -->|contains| twing_call_recording_integration_proposal_3_2_on_d6cd32bb
+    twing_call_recording_integration_proposal_3_manu_5695fb23 -->|contains| twing_call_recording_integration_proposal_3_3_sa_cf51fcab
+    twing_call_recording_integration_proposal_3_manu_5695fb23 -->|contains| twing_call_recording_integration_proposal_3_4_xi_fd42c266
+    class twing_call_recording_integration_proposal_3_manu_5695fb23 concept;
+    class twing_call_recording_integration_proposal_3_1_vi_930f7430 concept;
+    class twing_call_recording_integration_proposal_3_2_on_d6cd32bb concept;
+    class twing_call_recording_integration_proposal_3_3_sa_cf51fcab concept;
+    class twing_call_recording_integration_proposal_3_4_xi_fd42c266 concept;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>3.1 Vivo (Target: Vivo T3x 5G / Funtouch OS 14–16 &amp; OriginOS)</code><br><small style="color:var(--muted)">TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing 3.1 Vivo (Target: Vivo T3x 5G / Funtouch OS 14–16 &amp; OriginOS).</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>3.2 OnePlus / OPPO / Realme (Target: OnePlus Nord CE 3 Lite 5G / OxygenOS &amp; ColorOS 13–16)</code><br><small style="color:var(--muted)">TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing 3.2 OnePlus / OPPO / Realme (Target: OnePlus Nord CE 3 Lite 5G / OxygenOS &amp; ColorOS 13–16).</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>3.3 Samsung (Galaxy S, A, M, F Series / One UI 4–7 on Android 12–16)</code><br><small style="color:var(--muted)">TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing 3.3 Samsung (Galaxy S, A, M, F Series / One UI 4–7 on Android 12–16).</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>3.4 Xiaomi / Redmi / POCO (MIUI 13/14 &amp; HyperOS 1/2 on Android 12–16)</code><br><small style="color:var(--muted)">TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing 3.4 Xiaomi / Redmi / POCO (MIUI 13/14 &amp; HyperOS 1/2 on Android 12–16).</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>3. Manufacturer-by-Manufacturer Native Recording Breakdown</code><br><small style="color:var(--muted)">TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing 3. Manufacturer-by-Manufacturer Native Recording Breakdown.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md</code></td><td>5 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x4. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 13. Gradlew Script Module (C40) ====== -->
+<h2 id="gradlew-script-module-c40">13. Gradlew Script Module (C40)</h2>
 <p>Gradlew Script Module (C40) groups implementation around gradlew, zezandroid, script, die, mostly in ZezAndroid/gradlew. This section covers 4 nodes and 5 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3056,8 +3179,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 13. Editable ====== -->
-<h2 id="editable">13. Editable</h2>
+<!-- ====== 14. Editable ====== -->
+<h2 id="editable">14. Editable</h2>
 <p>Editable groups implementation around editable, mostly in unmapped files. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3112,8 +3235,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 14. Viewholder ====== -->
-<h2 id="viewholder">14. Viewholder</h2>
+<!-- ====== 15. Viewholder ====== -->
+<h2 id="viewholder">15. Viewholder</h2>
 <p>Viewholder groups implementation around viewholder, mostly in unmapped files. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3168,16 +3291,53 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 15. Comzezapputilcallrecorddbhelper ====== -->
-<h2 id="comzezapputilcallrecorddbhelper">15. Comzezapputilcallrecorddbhelper</h2>
-<p>Comzezapputilcallrecorddbhelper groups implementation around comzezapputilcallrecorddbhelper, mostly in unmapped files. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 16. Other ====== -->
+<h2 id="other">16. Other</h2>
+<p>Other groups implementation around emulatorps1, scripts, new, system, mostly in New_requirnment.md, README.md, SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md. This section covers 22 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Comzezapputilcallrecorddbhelper (1 nodes, 0 edges)
-    com_zez_app_util_callrecorddbhelper_c33d1821("com.zez.app.util.CallRecordDbHelper")
+    %% Section: Other (22 nodes, 0 edges)
+    subgraph other_External_generated_9e8859fa["External / generated"]
+        zezandroid_app_src_main_java_com_zez_app_mainact_f071262c("Button")
+        button_7b7fcc78("Button")
+        zezandroid_app_src_main_java_com_zez_app_mainact_4eef26f9("Call")
+        zezandroid_app_src_main_java_com_zez_app_mainact_06784e8d("Chip")
+        handler_31a81ec9("Handler")
+        zezandroid_app_src_main_java_com_zez_app_mainact_7cb8c538("MaterialButton")
+        zezandroid_app_src_main_java_com_zez_app_imagevi_846e1275("Override")
+        radiobutton_9454b401("RadioButton")
+        radiogroup_a4b33ab4("RadioGroup")
+        seekbar_ed6d8054("SeekBar")
+        android_graphics_pointf_6a3d36b8("android.graphics.PointF")
+        com_zez_app_adapter_chatmessageadapter_b57cbe63("com.zez.app.adapter.ChatMessageAdapter")
+        com_zez_app_adapter_contactsadapter_e0ba4ebf("com.zez.app.adapter.ContactsAdapter")
+        com_zez_app_util_callrecorddbhelper_c33d1821("com.zez.app.util.CallRecordDbHelper")
+    end
+    doc_New_requirnment_md_cb51fa46("New Requirements Specification<br/><small>New_requirnment.md</small>")
+    doc_README_md_e6c686bc("Project README<br/><small>README.md</small>")
+    doc_SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE_md_9b6a5463("System Architecture and Sync Guide<br/><small>SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md</small>")
+    zezandroid_gradlew_ps1_zezandroid_gradlew_911d2e93("gradlew.ps1")
+    %% Omitted for readability: 4 nodes, 0 edges
+    class zezandroid_app_src_main_java_com_zez_app_mainact_f071262c klass;
+    class button_7b7fcc78 klass;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_4eef26f9 klass;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_06784e8d klass;
+    class handler_31a81ec9 klass;
+    class zezandroid_app_src_main_java_com_zez_app_mainact_7cb8c538 klass;
+    class zezandroid_app_src_main_java_com_zez_app_imagevi_846e1275 klass;
+    class radiobutton_9454b401 klass;
+    class radiogroup_a4b33ab4 klass;
+    class seekbar_ed6d8054 klass;
+    class android_graphics_pointf_6a3d36b8 function;
+    class com_zez_app_adapter_chatmessageadapter_b57cbe63 function;
+    class com_zez_app_adapter_contactsadapter_e0ba4ebf function;
     class com_zez_app_util_callrecorddbhelper_c33d1821 function;
+    class doc_New_requirnment_md_cb51fa46 klass;
+    class doc_README_md_e6c686bc klass;
+    class doc_SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE_md_9b6a5463 klass;
+    class zezandroid_gradlew_ps1_zezandroid_gradlew_911d2e93 function;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -3207,93 +3367,8 @@ flowchart LR
   <td>No direct outbound edge</td>
   <td>com.zez.app.util.CallRecordDbHelper node in project.</td>
 </tr>
-</table>
-
-<div class="grid">
-  <div class="card">
-    <h4>Key Files</h4>
-    <table style="width:100%;font-size:0.85rem;">
-      <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td colspan="2">No source file mapping</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
-  </div>
-</div>
-<hr>
-
-<!-- ====== 16. Other ====== -->
-<h2 id="other">16. Other</h2>
-<p>Other groups implementation around emulatorps1, scripts, new, system, mostly in New_requirnment.md, README.md, SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md. This section covers 21 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
-
-<div class="mermaid">
-%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
-flowchart LR
-    %% Section: Other (21 nodes, 0 edges)
-    subgraph other_External_generated_9e8859fa["External / generated"]
-        zezandroid_app_src_main_java_com_zez_app_mainact_f071262c("Button")
-        button_7b7fcc78("Button")
-        zezandroid_app_src_main_java_com_zez_app_mainact_4eef26f9("Call")
-        zezandroid_app_src_main_java_com_zez_app_mainact_06784e8d("Chip")
-        handler_31a81ec9("Handler")
-        zezandroid_app_src_main_java_com_zez_app_mainact_7cb8c538("MaterialButton")
-        zezandroid_app_src_main_java_com_zez_app_imagevi_846e1275("Override")
-        radiobutton_9454b401("RadioButton")
-        radiogroup_a4b33ab4("RadioGroup")
-        seekbar_ed6d8054("SeekBar")
-        android_graphics_pointf_6a3d36b8("android.graphics.PointF")
-        com_zez_app_adapter_chatmessageadapter_b57cbe63("com.zez.app.adapter.ChatMessageAdapter")
-        com_zez_app_adapter_contactsadapter_e0ba4ebf("com.zez.app.adapter.ContactsAdapter")
-    end
-    doc_New_requirnment_md_cb51fa46("New Requirements Specification<br/><small>New_requirnment.md</small>")
-    doc_README_md_e6c686bc("Project README<br/><small>README.md</small>")
-    doc_SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE_md_9b6a5463("System Architecture and Sync Guide<br/><small>SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md</small>")
-    zezandroid_gradlew_ps1_zezandroid_gradlew_911d2e93("gradlew.ps1")
-    doc_admin_index_html_d66718ae("Admin Dashboard Web Interface<br/><small>public/admin/index.html</small>")
-    %% Omitted for readability: 3 nodes, 0 edges
-    class zezandroid_app_src_main_java_com_zez_app_mainact_f071262c klass;
-    class button_7b7fcc78 klass;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_4eef26f9 klass;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_06784e8d klass;
-    class handler_31a81ec9 klass;
-    class zezandroid_app_src_main_java_com_zez_app_mainact_7cb8c538 klass;
-    class zezandroid_app_src_main_java_com_zez_app_imagevi_846e1275 klass;
-    class radiobutton_9454b401 klass;
-    class radiogroup_a4b33ab4 klass;
-    class seekbar_ed6d8054 klass;
-    class android_graphics_pointf_6a3d36b8 function;
-    class com_zez_app_adapter_chatmessageadapter_b57cbe63 function;
-    class com_zez_app_adapter_contactsadapter_e0ba4ebf function;
-    class doc_New_requirnment_md_cb51fa46 klass;
-    class doc_README_md_e6c686bc klass;
-    class doc_SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE_md_9b6a5463 klass;
-    class zezandroid_gradlew_ps1_zezandroid_gradlew_911d2e93 function;
-    class doc_admin_index_html_d66718ae klass;
-    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
-    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
-    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
-    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
-    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
-    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
-    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
-    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
-    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
-</div>
-
-<h3>Call Details</h3>
-<table class="call-table">
 <tr>
-  <th style="width:5%">#</th>
-  <th style="width:28%">Node</th>
-  <th style="width:10%">Type</th>
-  <th style="width:17%">Caller</th>
-  <th style="width:20%">Callees</th>
-  <th style="width:20%">Description</th>
-</tr>
-<tr>
-  <td>1</td>
+  <td>2</td>
   <td><code>Handler</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3301,7 +3376,7 @@ flowchart LR
   <td>Handler node in project.</td>
 </tr>
 <tr>
-  <td>2</td>
+  <td>3</td>
   <td><code>Chip</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3309,7 +3384,7 @@ flowchart LR
   <td>Chip node in project.</td>
 </tr>
 <tr>
-  <td>3</td>
+  <td>4</td>
   <td><code>New Requirements Specification</code><br><small style="color:var(--muted)">New_requirnment.md</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3317,7 +3392,7 @@ flowchart LR
   <td>New Requirements Specification node in New_requirnment.md.</td>
 </tr>
 <tr>
-  <td>4</td>
+  <td>5</td>
   <td><code>Project README</code><br><small style="color:var(--muted)">README.md</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3325,7 +3400,7 @@ flowchart LR
   <td>Project README node in README.md.</td>
 </tr>
 <tr>
-  <td>5</td>
+  <td>6</td>
   <td><code>System Architecture and Sync Guide</code><br><small style="color:var(--muted)">SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3333,7 +3408,7 @@ flowchart LR
   <td>System Architecture and Sync Guide node in SYSTEM_ARCHITECTURE_AND_SYNC_GUIDE.md.</td>
 </tr>
 <tr>
-  <td>6</td>
+  <td>7</td>
   <td><code>Admin Dashboard Web Interface</code><br><small style="color:var(--muted)">public/admin/index.html</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3341,7 +3416,7 @@ flowchart LR
   <td>Admin Dashboard Web Interface node in public/admin/index.html.</td>
 </tr>
 <tr>
-  <td>7</td>
+  <td>8</td>
   <td><code>reset-emulator.ps1</code><br><small style="color:var(--muted)">scripts/reset-emulator.ps1</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3349,7 +3424,7 @@ flowchart LR
   <td>reset-emulator.ps1 node in scripts/reset-emulator.ps1.</td>
 </tr>
 <tr>
-  <td>8</td>
+  <td>9</td>
   <td><code>run-android.ps1</code><br><small style="color:var(--muted)">scripts/run-android.ps1</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3357,7 +3432,7 @@ flowchart LR
   <td>run-android.ps1 node in scripts/run-android.ps1.</td>
 </tr>
 <tr>
-  <td>9</td>
+  <td>10</td>
   <td><code>start-emulator.ps1</code><br><small style="color:var(--muted)">scripts/start-emulator.ps1</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3365,7 +3440,7 @@ flowchart LR
   <td>start-emulator.ps1 node in scripts/start-emulator.ps1.</td>
 </tr>
 <tr>
-  <td>10</td>
+  <td>11</td>
   <td><code>gradlew.ps1</code><br><small style="color:var(--muted)">ZezAndroid/gradlew.ps1</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3373,7 +3448,7 @@ flowchart LR
   <td>gradlew.ps1 node in ZezAndroid/gradlew.ps1.</td>
 </tr>
 <tr>
-  <td>11</td>
+  <td>12</td>
   <td><code>Button</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3381,7 +3456,7 @@ flowchart LR
   <td>Button node in project.</td>
 </tr>
 <tr>
-  <td>12</td>
+  <td>13</td>
   <td><code>android.graphics.PointF</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3389,7 +3464,7 @@ flowchart LR
   <td>Builds dependency relationships and graph data.</td>
 </tr>
 <tr>
-  <td>13</td>
+  <td>14</td>
   <td><code>Call</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3397,7 +3472,7 @@ flowchart LR
   <td>Call node in project.</td>
 </tr>
 <tr>
-  <td>14</td>
+  <td>15</td>
   <td><code>Override</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3405,7 +3480,7 @@ flowchart LR
   <td>Override node in project.</td>
 </tr>
 <tr>
-  <td>15</td>
+  <td>16</td>
   <td><code>com.zez.app.adapter.ContactsAdapter</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3413,7 +3488,7 @@ flowchart LR
   <td>com.zez.app.adapter.ContactsAdapter node in project.</td>
 </tr>
 <tr>
-  <td>16</td>
+  <td>17</td>
   <td><code>com.zez.app.adapter.ChatMessageAdapter</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3421,7 +3496,7 @@ flowchart LR
   <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
 </tr>
 <tr>
-  <td>17</td>
+  <td>18</td>
   <td><code>Button</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3429,7 +3504,7 @@ flowchart LR
   <td>Button node in project.</td>
 </tr>
 <tr>
-  <td>18</td>
+  <td>19</td>
   <td><code>RadioButton</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3437,7 +3512,7 @@ flowchart LR
   <td>RadioButton node in project.</td>
 </tr>
 <tr>
-  <td>19</td>
+  <td>20</td>
   <td><code>RadioGroup</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3445,7 +3520,7 @@ flowchart LR
   <td>RadioGroup node in project.</td>
 </tr>
 <tr>
-  <td>20</td>
+  <td>21</td>
   <td><code>SeekBar</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3453,7 +3528,7 @@ flowchart LR
   <td>SeekBar node in project.</td>
 </tr>
 <tr>
-  <td>21</td>
+  <td>22</td>
   <td><code>MaterialButton</code><br><small style="color:var(--muted)"></small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3490,8 +3565,8 @@ flowchart LR
   <div class="card">
     <h4>Graph</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>Nodes</td><td>2169</td></tr>
-      <tr><td>Edges</td><td>5544</td></tr>
+      <tr><td>Nodes</td><td>2189</td></tr>
+      <tr><td>Edges</td><td>5571</td></tr>
       <tr><td>Hyperedges</td><td>0</td></tr>
       <tr><td>Communities</td><td>120</td></tr>
       <tr><td>Documented Sections</td><td>15</td></tr>
@@ -3500,8 +3575,8 @@ flowchart LR
   <div class="card">
     <h4>Edge Confidence</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>EXTRACTED</td><td>4900</td></tr>
-      <tr><td>INFERRED</td><td>644</td></tr>
+      <tr><td>EXTRACTED</td><td>4919</td></tr>
+      <tr><td>INFERRED</td><td>652</td></tr>
       <tr><td>AMBIGUOUS</td><td>0</td></tr>
     </table>
   </div>
@@ -3509,7 +3584,7 @@ flowchart LR
 
 <div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
   <p>Call Log Mannager — Architecture Documentation</p>
-  <p>Generated: 2026-11-22 06:16 UTC · graphify callflow-html</p>
+  <p>Generated: 2026-11-22 06:28 UTC · graphify callflow-html</p>
 </div>
 
 </div><!-- .container -->
