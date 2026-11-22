@@ -223,17 +223,35 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 16px;
       position: sticky;
       top: 0;
       z-index: 40;
     }
 
-    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-top-row {
+      display: contents;
+    }
+
+    .header-left {
+      order: 1;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
     .header-logo-group { display: flex; align-items: center; gap: 10px; }
-    .header-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .header-title { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
     .header-separator { width: 1px; height: 16px; background: var(--hairline); }
 
-    .header-nav { display: flex; gap: 2px; }
+    .header-nav {
+      order: 2;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      flex-wrap: nowrap;
+    }
     .nav-link {
       height: 34px;
       padding: 0 12px;
@@ -245,13 +263,49 @@
       color: var(--text-secondary);
       border-radius: 6px;
       background: transparent;
-      border: none;
+      border: 1px solid transparent;
       cursor: pointer;
+      white-space: nowrap !important;
+      flex-shrink: 0;
+      transition: all 0.12s ease;
+      text-decoration: none;
     }
     .nav-link:hover { color: var(--text-primary); background: var(--surface-raised); }
-    .nav-link.active { color: var(--text-primary); background: var(--surface-raised); border: 1px solid var(--hairline); }
+    .nav-link.active {
+      color: var(--text-primary);
+      background: var(--surface-raised);
+      border-color: var(--hairline);
+      font-weight: 600;
+    }
 
-    .header-right { display: flex; align-items: center; gap: 12px; }
+    .nav-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+      color: var(--text-secondary);
+      line-height: 1.3;
+      margin-left: 2px;
+    }
+    .nav-link.active .nav-badge {
+      background: var(--surface-deep);
+      color: var(--text-primary);
+      border-color: var(--hairline-hover);
+    }
+
+    .header-right {
+      order: 3;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
 
     .system-status {
       display: inline-flex;
@@ -397,22 +451,6 @@
     .search-clear-btn:hover { color: var(--text-primary); }
     .filter-select { min-width: 140px; height: 34px; }
     .filter-select-sm { min-width: 80px; height: 34px; }
-    .filter-date { width: 130px; height: 34px; padding: 0 8px; font-size: 12px; }
-    .date-sep { color: var(--text-muted); font-size: 11px; }
-    .btn-clear-date {
-      background: var(--surface-deep);
-      border: 1px solid var(--hairline);
-      color: var(--text-muted);
-      border-radius: 4px;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 11px;
-    }
-    .btn-clear-date:hover { color: var(--negative); border-color: var(--negative); }
     .btn-ghost {
       background: transparent;
       border: 1px solid var(--hairline);
@@ -451,11 +489,72 @@
     .search-input:focus { border-color: var(--hairline-hover); }
 
     .control-item {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .control-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+    /* Unified Date Range Input Group */
+    .date-inputs-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+      border-radius: 6px;
+      padding: 0 6px;
+      height: 34px;
+      box-sizing: border-box;
+    }
+    .date-inputs-row .filter-date {
+      width: 120px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      padding: 0 2px;
+      font-size: 12px;
+      color: var(--text-primary);
+      outline: none;
+      box-shadow: none;
+    }
+    .date-inputs-row .filter-date:focus {
+      outline: none;
+      box-shadow: none;
+      border: none;
+    }
+    .date-inputs-row .date-sep {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      user-select: none;
+      padding: 0 1px;
+    }
+    .date-inputs-row .btn-clear-date {
+      background: var(--surface-raised);
+      border: 1px solid var(--hairline);
+      color: var(--text-muted);
+      border-radius: 4px;
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      padding: 0;
+      line-height: 1;
+      transition: all 0.15s ease;
+    }
+    .date-inputs-row .btn-clear-date:hover {
+      color: var(--negative);
+      border-color: var(--negative);
+      background: var(--negative-bg);
+    }
 
     /* Tables */
     .table-container {
@@ -690,7 +789,7 @@
       padding: 10px 12px;
     }
     .meta-key { font-size: 11px; color: var(--text-muted); }
-    .meta-val { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px; word-break: break-all; }
+    .meta-val { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px; word-break: normal; overflow-wrap: anywhere; }
 
     #toast {
       position: fixed;
@@ -784,10 +883,6 @@
 
       .filter-row-controls {
         gap: 8px;
-      }
-
-      .control-item {
-        flex: 1 1 auto;
       }
 
       .filter-select {
@@ -1047,6 +1142,430 @@
         gap: 6px;
       }
     }
+
+    /* ========================================================
+       ENHANCED RESPONSIVE SYSTEM: MOBILE & TABLET UX
+       ======================================================== */
+    /* Utility visibility classes */
+    .mobile-only {
+      display: none !important;
+    }
+    .desktop-only {
+      display: inline-flex !important;
+    }
+
+    /* View Mode Switcher Pill (Cards vs Table) */
+    .view-mode-toggle {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .view-mode-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 4px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+    .view-mode-btn:hover {
+      color: var(--text-primary);
+    }
+    .view-mode-btn.active {
+      background: var(--surface-raised);
+      color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    }
+
+    /* Cards Grid Containers */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+
+    /* Responsive Device Card */
+    .device-card {
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .device-card:hover {
+      border-color: var(--hairline-hover);
+    }
+    .device-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .device-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+    .device-card-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .device-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 12px;
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .card-grid-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .card-cell-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .card-cell-value {
+      font-size: 12px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .device-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--hairline);
+      padding-top: 10px;
+    }
+    .device-card-actions {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .device-card-actions .btn {
+      flex: 1;
+      max-width: 90px;
+      justify-content: center;
+      height: 34px;
+    }
+
+    /* Responsive Call Card */
+    .call-card {
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .call-card:hover {
+      border-color: var(--hairline-hover);
+    }
+    .call-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .call-card-contact-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+    .call-card-contact {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .call-card-duration {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      background: var(--surface-deep);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--hairline);
+      white-space: nowrap;
+    }
+    .call-card-mid {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .call-card-phone {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .device-chip {
+      font-size: 11px;
+      background: var(--surface-raised);
+      color: var(--text-secondary);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--hairline);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+      cursor: pointer;
+    }
+    .call-card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--hairline);
+      padding-top: 8px;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Mobile Drawer & Overlay */
+    .mobile-drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .mobile-drawer-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .mobile-nav-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 290px;
+      max-width: 85vw;
+      background: var(--card-bg);
+      border-left: 1px solid var(--hairline);
+      z-index: 2001;
+      transform: translateX(100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
+    }
+    .mobile-nav-drawer.active {
+      transform: translateX(0);
+    }
+    .drawer-header {
+      padding: 18px 16px;
+      border-bottom: 1px solid var(--hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .drawer-user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .drawer-user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      color: var(--accent-ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .drawer-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+    }
+    .drawer-nav-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .drawer-nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+    .drawer-nav-item:hover, .drawer-nav-item.active {
+      background: var(--surface-raised);
+      color: var(--text-primary);
+    }
+    .drawer-nav-item.active {
+      font-weight: 600;
+      border-left: 3px solid var(--accent);
+    }
+    .drawer-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--hairline);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--surface-deep);
+    }
+
+    /* Mobile Bottom Navigation Bar */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--hairline);
+      z-index: 1000;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
+    }
+    .bottom-nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 4px 0;
+      transition: color 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bottom-nav-btn svg {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.15s ease;
+    }
+    .bottom-nav-btn.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .bottom-nav-btn.active svg {
+      transform: translateY(-1px);
+    }
+
+    /* Mobile Specific Adaptive Overrides */
+    @media (max-width: 768px) {
+      .mobile-only {
+        display: inline-flex !important;
+      }
+      .desktop-only {
+        display: none !important;
+      }
+      .mobile-bottom-nav {
+        display: flex;
+      }
+      main {
+        padding-bottom: 78px !important;
+      }
+      .header-nav {
+        display: none !important;
+      }
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Chat Master-Detail Responsive Overrides */
+    @media (max-width: 960px) {
+      .chat-inspector-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+      }
+      .chat-inspector-grid > .chat-card-panel:first-child {
+        display: flex !important;
+        width: 100% !important;
+        height: calc(100vh - 220px) !important;
+        max-height: none !important;
+      }
+      .chat-inspector-grid > .chat-card-panel:last-child {
+        display: none !important;
+        width: 100% !important;
+        height: calc(100vh - 220px) !important;
+      }
+      .chat-inspector-grid.mobile-show-messages > .chat-card-panel:first-child {
+        display: none !important;
+      }
+      .chat-inspector-grid.mobile-show-messages > .chat-card-panel:last-child {
+        display: flex !important;
+      }
+      #btnMobileChatBack {
+        display: inline-flex !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1119,9 +1638,14 @@
 
           <span style="font-size: 12px; color: var(--text-secondary);" id="adminUsernameDisplay">admin</span>
 
-          <button class="btn btn-secondary btn-sm" id="logoutBtn" title="Sign out">
+          <button class="btn btn-secondary btn-sm desktop-only" id="logoutBtn" title="Sign out">
             <svg class="logout-icon" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
             <span class="btn-label-desktop">Sign out</span>
+          </button>
+
+          <!-- Mobile Hamburger Toggle -->
+          <button class="btn btn-secondary btn-icon mobile-only" id="btnMobileMenuToggle" title="Open navigation menu" aria-label="Open navigation menu">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
           </button>
         </div>
       </div>
@@ -1129,15 +1653,15 @@
       <nav class="header-nav">
         <button class="nav-link active" id="tabDevicesBtn">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
-          Devices (<span id="devicesBadge">0</span>)
+          Devices <span class="nav-badge" id="devicesBadge">0</span>
         </button>
         <button class="nav-link" id="tabAllCallsBtn">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          Call feed (<span id="callsBadge">0</span>)
+          Call feed <span class="nav-badge" id="callsBadge">0</span>
         </button>
         <button class="nav-link" id="tabChatsBtn">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          Chat Monitor (<span id="chatsBadge">0</span>)
+          Chat Monitor <span class="nav-badge" id="chatsBadge">0</span>
         </button>
         <button class="nav-link" id="tabSettingsBtn">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1153,6 +1677,73 @@
         </button>
       </nav>
     </header>
+
+    <!-- Mobile Navigation Drawer Overlay & Drawer -->
+    <div class="mobile-drawer-overlay" id="mobileDrawerOverlay"></div>
+    <aside class="mobile-nav-drawer" id="mobileNavDrawer" aria-label="Mobile Navigation">
+      <div class="drawer-header">
+        <div class="drawer-user-info">
+          <div class="drawer-user-avatar">A</div>
+          <div>
+            <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);" id="drawerUsernameDisplay">admin</div>
+            <div style="font-size: 11px; color: var(--positive); display: flex; align-items: center; gap: 4px;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--positive);"></span>
+              Active Session
+            </div>
+          </div>
+        </div>
+        <button class="drawer-close-btn" id="btnCloseMobileDrawer" aria-label="Close menu">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="drawer-nav-list">
+        <button class="drawer-nav-item active" id="drawerTabDevices">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+            <span>Devices</span>
+          </div>
+          <span class="badge badge-neutral" id="drawerDevicesBadge">0</span>
+        </button>
+        <button class="drawer-nav-item" id="drawerTabCalls">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>Call Feed</span>
+          </div>
+          <span class="badge badge-neutral" id="drawerCallsBadge">0</span>
+        </button>
+        <button class="drawer-nav-item" id="drawerTabChats">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <span>Chat Monitoring</span>
+          </div>
+          <span class="badge badge-neutral" id="drawerChatsBadge">0</span>
+        </button>
+        <button class="drawer-nav-item" id="drawerTabSettings">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Admin Settings</span>
+          </div>
+        </button>
+        <button class="drawer-nav-item" id="drawerTabReleases">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            <span>App Releases</span>
+          </div>
+        </button>
+        <button class="drawer-nav-item" id="drawerTabSystem">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            <span>System &amp; Storage</span>
+          </div>
+        </button>
+      </div>
+      <div class="drawer-footer">
+        <button class="btn btn-secondary btn-sm" id="drawerBtnLogout" style="width: 100%; justify-content: center; gap: 8px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
 
     <main>
       <!-- Asymmetric Hero: Stats + Telemetry Moment -->
@@ -1205,10 +1796,22 @@
             <input type="text" id="deviceSearchInput" class="search-input" placeholder="Search devices by name, model, hardware ID...">
           </div>
 
-          <div style="margin-left: auto; display: flex; gap: 8px;">
+          <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <!-- View Mode Switcher -->
+            <div class="view-mode-toggle" id="devicesViewModeToggle">
+              <button type="button" class="view-mode-btn" id="btnDevModeCards" onclick="setDevicesViewMode('cards')" title="Cards View">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <span>Cards</span>
+              </button>
+              <button type="button" class="view-mode-btn active" id="btnDevModeTable" onclick="setDevicesViewMode('table')" title="Table View">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18"/></svg>
+                <span>Table</span>
+              </button>
+            </div>
+
             <button class="btn btn-secondary btn-sm" id="btnRefreshDevices" title="Refresh registered devices">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              Refresh devices
+              <span>Refresh</span>
             </button>
             <button class="btn btn-danger btn-sm" id="btnDeleteSelectedDevices" style="display: none;">
               Delete selected (<span id="selectedDevicesCount">0</span>)
@@ -1216,11 +1819,15 @@
           </div>
         </div>
 
-        <div class="table-scroll-hint">
+        <!-- Cards Container (for Mobile / Card Mode) -->
+        <div id="devicesCardsContainer" class="cards-grid" style="display: none; margin-bottom: 16px;"></div>
+
+        <!-- Table Container (for Desktop / Table Mode) -->
+        <div class="table-scroll-hint" id="devicesTableScrollHint">
           <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="m14 18 6-6-6-6M10 6l-6 6 6 6"/></svg>
           <span>Scroll horizontally to view all columns</span>
         </div>
-        <div class="table-container">
+        <div class="table-container" id="devicesTableContainer">
           <table>
             <thead>
               <tr>
@@ -1253,18 +1860,36 @@
             </div>
 
             <div class="filter-actions-group">
+              <!-- View Mode Switcher -->
+              <div class="view-mode-toggle" id="callsViewModeToggle">
+                <button type="button" class="view-mode-btn" id="btnCallModeCards" onclick="setCallsViewMode('cards')" title="Cards View">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                  <span>Cards</span>
+                </button>
+                <button type="button" class="view-mode-btn active" id="btnCallModeTable" onclick="setCallsViewMode('table')" title="Table View">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18"/></svg>
+                  <span>Table</span>
+                </button>
+              </div>
+
+              <!-- Mobile Filters Toggle -->
+              <button class="btn btn-secondary btn-sm mobile-only" id="btnToggleMobileCallFilters" type="button" title="Toggle Filters">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                <span>Filters</span>
+              </button>
+
               <button class="btn btn-secondary btn-sm" id="btnRefreshCalls" title="Refresh call feed">
                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                 <span>Refresh</span>
               </button>
-              <button class="btn btn-secondary btn-sm" id="btnExportFullCallsCsv" title="Export all call records with full device metadata as CSV">
+              <button class="btn btn-secondary btn-sm desktop-only" id="btnExportFullCallsCsv" title="Export all call records with full device metadata as CSV">
                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                 <span>Export Calls (CSV)</span>
               </button>
-              <button class="btn btn-secondary btn-sm" id="btnExportFullCallsJson" title="Export all call records with full device metadata as JSON">
+              <button class="btn btn-secondary btn-sm desktop-only" id="btnExportFullCallsJson" title="Export all call records with full device metadata as JSON">
                 <span>Export Calls (JSON)</span>
               </button>
-              <button class="btn btn-secondary btn-sm" id="btnExportContactsSummary" title="Export unique contacts with call statistics and device associations">
+              <button class="btn btn-secondary btn-sm desktop-only" id="btnExportContactsSummary" title="Export unique contacts with call statistics and device associations">
                 <span>Export Contacts</span>
               </button>
               <button class="btn btn-ghost btn-sm" id="btnResetAllFilters" title="Clear all active filters">
@@ -1330,11 +1955,14 @@
           </div>
         </div>
 
-        <div class="table-scroll-hint">
+        <!-- Cards Container (for Mobile / Card Mode) -->
+        <div id="callsCardsContainer" class="cards-grid" style="display: none; margin-bottom: 16px;"></div>
+
+        <div class="table-scroll-hint" id="callsTableScrollHint">
           <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="m14 18 6-6-6-6M10 6l-6 6 6 6"/></svg>
           <span>Scroll horizontally to view all columns</span>
         </div>
-        <div class="table-container">
+        <div class="table-container" id="callsTableContainer">
           <table>
             <thead>
               <tr>
@@ -1702,8 +2330,14 @@ versionName "1.0.1"</pre>
           <div class="chat-card-panel">
             <!-- Header -->
             <div id="chatInspectorHeader" style="padding: 12px 18px; border-bottom: 1px solid var(--hairline); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 54px;">
-              <div id="chatSelectedParticipantInfo" style="display: flex; align-items: center; gap: 12px;">
-                <span style="color: var(--text-muted); font-size: 13px;">Select a conversation on the left to inspect full messages</span>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="btn btn-secondary btn-sm mobile-only" id="btnMobileChatBack" onclick="closeMobileChatMessages()" style="display: none; padding: 4px 8px;" title="Back to conversations">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  <span>Chats</span>
+                </button>
+                <div id="chatSelectedParticipantInfo">
+                  <span style="color: var(--text-muted); font-size: 13px;">Select a conversation on the left to inspect full messages</span>
+                </div>
               </div>
               <div id="chatExportActions" style="display: none; align-items: center; gap: 6px;">
                 <button class="btn btn-secondary btn-sm" id="btnExportChatTxt" title="Export formatted transcript (.txt)">
@@ -2064,6 +2698,29 @@ versionName "1.0.1"</pre>
         </div>
       </div>
     </main>
+    <!-- Fixed Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile Navigation Bar">
+      <button class="bottom-nav-btn active" id="bnavDevices" title="Devices">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+        <span>Devices</span>
+      </button>
+      <button class="bottom-nav-btn" id="bnavCalls" title="Call Feed">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span>Calls</span>
+      </button>
+      <button class="bottom-nav-btn" id="bnavChats" title="Chat Monitor">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <span>Chats</span>
+      </button>
+      <button class="bottom-nav-btn" id="bnavReleases" title="App Releases">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        <span>Releases</span>
+      </button>
+      <button class="bottom-nav-btn" id="bnavMore" title="More Menu">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        <span>More</span>
+      </button>
+    </nav>
   </div>
 
   <!-- Device Metadata Modal -->
@@ -2089,8 +2746,11 @@ versionName "1.0.1"</pre>
   <div id="deviceCallsModal" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
-        <span class="modal-title" id="devCallsModalTitle">Device call records</span>
-        <button class="modal-close" onclick="closeDeviceCallsModal()">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="modal-title" id="devCallsModalTitle">Device call records</span>
+          <span class="badge badge-neutral" id="dcmCallsBadge" style="font-size: 11px;">0</span>
+        </div>
+        <button class="modal-close" onclick="closeDeviceCallsModal()" aria-label="Close modal">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
@@ -2102,24 +2762,38 @@ versionName "1.0.1"</pre>
           <div class="meta-cell"><div class="meta-key">Total records</div><div class="meta-val cell-mono" id="dcmTotalCalls">-</div></div>
         </div>
 
-        <div class="toolbar" style="margin-bottom: 12px; padding: 8px 12px;">
-          <div class="search-wrap" style="min-width: 180px;">
-            <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="text" id="devCallSearchInput" class="search-input" placeholder="Filter phone number or name...">
+        <div class="toolbar" style="margin-bottom: 12px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 220px; flex-wrap: wrap;">
+            <div class="search-wrap" style="min-width: 180px; flex: 1; max-width: 320px;">
+              <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="devCallSearchInput" class="search-input" placeholder="Filter phone number or name...">
+            </div>
+
+            <div class="control-item">
+              <span class="control-label">Type</span>
+              <select id="devCallTypeFilter" class="form-select" style="width: 110px; height: 34px;">
+                <option value="ALL">All types</option>
+                <option value="INCOMING">Incoming</option>
+                <option value="OUTGOING">Outgoing</option>
+                <option value="MISSED">Missed</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
           </div>
 
-          <div class="control-item">
-            <span class="control-label">Type</span>
-            <select id="devCallTypeFilter" class="form-select" style="width: 110px; height: 34px;">
-              <option value="ALL">All types</option>
-              <option value="INCOMING">Incoming</option>
-              <option value="OUTGOING">Outgoing</option>
-              <option value="MISSED">Missed</option>
-              <option value="REJECTED">Rejected</option>
-            </select>
-          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap;">
+            <!-- View Mode Switcher for Device Calls Modal -->
+            <div class="view-mode-toggle" id="devCallsViewModeToggle">
+              <button class="view-mode-btn active" id="btnDevCallsCards" onclick="setDevCallsViewMode('cards')" title="Cards view">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <span>Cards</span>
+              </button>
+              <button class="view-mode-btn" id="btnDevCallsTable" onclick="setDevCallsViewMode('table')" title="Table view">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                <span>Table</span>
+              </button>
+            </div>
 
-          <div style="margin-left: auto; display: flex; gap: 8px;">
             <button class="btn btn-secondary btn-sm" id="btnExportDevCallsCsv">Export CSV</button>
             <button class="btn btn-danger btn-sm" id="btnDeleteSelectedDevCalls" style="display: none;">
               Delete (<span id="selectedDevCallsCount">0</span>)
@@ -2127,11 +2801,15 @@ versionName "1.0.1"</pre>
           </div>
         </div>
 
-        <div class="table-scroll-hint">
+        <!-- Device Calls Cards Container -->
+        <div id="devCallsCardsContainer" class="cards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin-bottom: 8px;"></div>
+
+        <!-- Device Calls Modal Table Container -->
+        <div class="table-scroll-hint" id="devCallsTableScrollHint" style="display: none;">
           <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="m14 18 6-6-6-6M10 6l-6 6 6 6"/></svg>
           <span>Scroll horizontally to view all columns</span>
         </div>
-        <div class="table-container">
+        <div class="table-container" id="devCallsTableContainer" style="display: none;">
           <table>
             <thead>
               <tr>
@@ -2147,6 +2825,152 @@ versionName "1.0.1"</pre>
             </thead>
             <tbody id="devCallsTableBody">
               <tr><td colspan="8" class="empty-state">Loading call records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Device Specific Notifications Modal -->
+  <div id="deviceNotificationsModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="modal-title" id="devNotifsModalTitle">Stored device notifications</span>
+          <span class="badge badge-neutral" id="dcmNotifsBadge" style="font-size: 11px;">0</span>
+        </div>
+        <button class="modal-close" onclick="closeDeviceNotificationsModal()" aria-label="Close modal">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="meta-grid" style="margin-bottom: 12px;">
+          <div class="meta-cell"><div class="meta-key">Device</div><div class="meta-val" id="dnmName">-</div></div>
+          <div class="meta-cell"><div class="meta-key">Hardware ID</div><div class="meta-val cell-mono" id="dnmAndroidId">-</div></div>
+          <div class="meta-cell"><div class="meta-key">Permission Status</div><div class="meta-val" style="color:var(--positive);">Authorized Listener</div></div>
+          <div class="meta-cell"><div class="meta-key">Captured Count</div><div class="meta-val cell-mono" id="dnmTotalNotifs">0</div></div>
+        </div>
+
+        <div class="toolbar" style="margin-bottom: 12px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+          <div class="search-wrap" style="min-width: 240px; flex: 1; max-width: 400px;">
+            <svg class="search-icon-svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="devNotifSearchInput" class="search-input" placeholder="Search title, content, or package...">
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadDeviceNotifications()">Refresh</button>
+        </div>
+
+        <div class="table-container" style="max-height: 480px; overflow-y: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 140px;">App</th>
+                <th style="width: 180px;">Title</th>
+                <th>Content</th>
+                <th style="width: 160px;">Received At</th>
+              </tr>
+            </thead>
+            <tbody id="devNotifsTableBody">
+              <tr><td colspan="4" class="empty-state">Loading notifications...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Device Specific Alarms Modal (View, Set, and Delete Device Alarms with Jit Mode) -->
+  <div id="deviceAlarmsModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="modal-title">Device Alarms &amp; Remote Scheduler</span>
+          <span class="badge badge-neutral" id="damAlarmsBadge" style="font-size: 11px;">0</span>
+        </div>
+        <button class="modal-close" onclick="closeDeviceAlarmsModal()" aria-label="Close modal">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="meta-grid" style="margin-bottom: 14px;">
+          <div class="meta-cell"><div class="meta-key">Device</div><div class="meta-val" id="damDeviceName">-</div></div>
+          <div class="meta-cell"><div class="meta-key">Hardware ID</div><div class="meta-val cell-mono" id="damAndroidId">-</div></div>
+          <div class="meta-cell"><div class="meta-key">Remote Sync</div><div class="meta-val" style="color:var(--positive);">Active · Auto Push</div></div>
+          <div class="meta-cell"><div class="meta-key">Total Alarms</div><div class="meta-val cell-mono" id="damTotalAlarms">0</div></div>
+        </div>
+
+        <!-- Alarm Creation Section -->
+        <div style="background: var(--surface-deep); border: 1px solid var(--hairline); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3"/></svg>
+              Set New Alarm on Device
+            </div>
+            <button class="btn btn-secondary btn-xs" onclick="toggleNewAlarmForm()" id="btnToggleNewAlarmForm">Toggle Form</button>
+          </div>
+
+          <div id="newAlarmFormContainer" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 140px;">
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Alarm Time</label>
+                <input type="time" id="newAlarmTime" class="search-input" value="07:00" style="width: 100%; height: 34px;">
+              </div>
+              <div style="flex: 2; min-width: 200px;">
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Alarm Label</label>
+                <input type="text" id="newAlarmLabel" class="search-input" placeholder="e.g. Morning Wakeup Call" value="Morning Alarm" style="width: 100%; height: 34px;">
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; padding: 8px 12px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <strong style="color: #ef4444; font-size: 12px;">⚡ Jit Mode (Relentless Morning Wakeup)</strong>
+                  <span style="font-size: 10px; background: #ef4444; color: white; padding: 1px 6px; border-radius: 4px; font-weight: 600;">Morning Saver</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Rings &amp; alerts repeatedly every 1 minute if user doesn't wake up</div>
+              </div>
+              <input type="checkbox" id="newAlarmJitMode" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: #ef4444;">
+            </div>
+
+            <div>
+              <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 6px;">Repeat Days</label>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="0"> Sun</label>
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="1" checked> Mon</label>
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="2" checked> Tue</label>
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="3" checked> Wed</label>
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="4" checked> Thu</label>
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="5" checked> Fri</label>
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="6"> Sat</label>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px;">
+              <button class="btn btn-primary btn-sm" onclick="saveAdminDeviceAlarm()">Deploy Alarm to Device</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alarms List -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Configured Alarms on Device</span>
+          <button class="btn btn-secondary btn-xs" onclick="loadDeviceAlarms()">Refresh</button>
+        </div>
+
+        <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 100px;">Time</th>
+                <th>Label</th>
+                <th style="width: 130px;">Repeat Days</th>
+                <th style="width: 110px;">Jit Mode</th>
+                <th style="width: 90px;">Source</th>
+                <th style="width: 80px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="devAlarmsTableBody">
+              <tr><td colspan="6" class="empty-state">Loading device alarms...</td></tr>
             </tbody>
           </table>
         </div>
@@ -2174,6 +2998,38 @@ versionName "1.0.1"</pre>
     var cachedDeviceRoster = null;
     var currentChatTargetDevice = null;
     var currentChatTargetUser = null;
+
+    // Adaptive View Mode (Cards vs Table)
+    let currentDevicesViewMode = localStorage.getItem('admin_devices_view_mode') || (window.innerWidth <= 768 ? 'cards' : 'table');
+    let currentCallsViewMode = localStorage.getItem('admin_calls_view_mode') || (window.innerWidth <= 768 ? 'cards' : 'table');
+
+    function setDevicesViewMode(mode) {
+      currentDevicesViewMode = mode;
+      localStorage.setItem('admin_devices_view_mode', mode);
+      const isCards = mode === 'cards';
+      document.getElementById('btnDevModeCards')?.classList.toggle('active', isCards);
+      document.getElementById('btnDevModeTable')?.classList.toggle('active', !isCards);
+      const cardsCont = document.getElementById('devicesCardsContainer');
+      const tableCont = document.getElementById('devicesTableContainer');
+      const hint = document.getElementById('devicesTableScrollHint');
+      if (cardsCont) cardsCont.style.display = isCards ? 'grid' : 'none';
+      if (tableCont) tableCont.style.display = isCards ? 'none' : 'block';
+      if (hint) hint.style.display = isCards ? 'none' : (window.innerWidth <= 820 ? 'flex' : 'none');
+    }
+
+    function setCallsViewMode(mode) {
+      currentCallsViewMode = mode;
+      localStorage.setItem('admin_calls_view_mode', mode);
+      const isCards = mode === 'cards';
+      document.getElementById('btnCallModeCards')?.classList.toggle('active', isCards);
+      document.getElementById('btnCallModeTable')?.classList.toggle('active', !isCards);
+      const cardsCont = document.getElementById('callsCardsContainer');
+      const tableCont = document.getElementById('callsTableContainer');
+      const hint = document.getElementById('callsTableScrollHint');
+      if (cardsCont) cardsCont.style.display = isCards ? 'grid' : 'none';
+      if (tableCont) tableCont.style.display = isCards ? 'none' : 'block';
+      if (hint) hint.style.display = isCards ? 'none' : (window.innerWidth <= 820 ? 'flex' : 'none');
+    }
 
     // Theme setup
     let currentTheme = localStorage.getItem('zez_theme') || 'dark';
@@ -2298,8 +3154,15 @@ versionName "1.0.1"</pre>
     function showDashboard(username) {
       authOverlay.style.display = 'none';
       appContainer.style.display = 'flex';
-      document.getElementById('adminUsernameDisplay').textContent = username || 'admin';
+      const u = username || 'admin';
+      document.getElementById('adminUsernameDisplay').textContent = u;
+      const drawerUser = document.getElementById('drawerUsernameDisplay');
+      if (drawerUser) drawerUser.textContent = u;
+      const avatarEl = document.querySelector('.drawer-user-avatar');
+      if (avatarEl) avatarEl.textContent = u[0].toUpperCase();
       loadAllData();
+      setDevicesViewMode(currentDevicesViewMode);
+      setCallsViewMode(currentCallsViewMode);
     }
 
     // Navigation Tabs
@@ -2317,12 +3180,28 @@ versionName "1.0.1"</pre>
     const sectionSystem = document.getElementById('sectionSystem');
 
     function setActiveTab(tab) {
+      // Desktop top nav
       tabDevicesBtn.classList.toggle('active', tab === 'devices');
       tabAllCallsBtn.classList.toggle('active', tab === 'calls');
       tabChatsBtn.classList.toggle('active', tab === 'chats');
       tabSettingsBtn.classList.toggle('active', tab === 'settings');
       tabReleasesBtn.classList.toggle('active', tab === 'releases');
       tabSystemBtn.classList.toggle('active', tab === 'system');
+
+      // Mobile Drawer nav
+      document.getElementById('drawerTabDevices')?.classList.toggle('active', tab === 'devices');
+      document.getElementById('drawerTabCalls')?.classList.toggle('active', tab === 'calls');
+      document.getElementById('drawerTabChats')?.classList.toggle('active', tab === 'chats');
+      document.getElementById('drawerTabSettings')?.classList.toggle('active', tab === 'settings');
+      document.getElementById('drawerTabReleases')?.classList.toggle('active', tab === 'releases');
+      document.getElementById('drawerTabSystem')?.classList.toggle('active', tab === 'system');
+
+      // Mobile Bottom nav
+      document.getElementById('bnavDevices')?.classList.toggle('active', tab === 'devices');
+      document.getElementById('bnavCalls')?.classList.toggle('active', tab === 'calls');
+      document.getElementById('bnavChats')?.classList.toggle('active', tab === 'chats');
+      document.getElementById('bnavReleases')?.classList.toggle('active', tab === 'releases');
+      document.getElementById('bnavMore')?.classList.toggle('active', tab === 'settings' || tab === 'system');
 
       sectionDevices.style.display = tab === 'devices' ? 'block' : 'none';
       sectionAllCalls.style.display = tab === 'calls' ? 'block' : 'none';
@@ -2343,6 +3222,28 @@ versionName "1.0.1"</pre>
       }
     }
 
+    // Mobile Drawer Controls
+    function openMobileDrawer() {
+      document.getElementById('mobileNavDrawer')?.classList.add('active');
+      document.getElementById('mobileDrawerOverlay')?.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileDrawer() {
+      document.getElementById('mobileNavDrawer')?.classList.remove('active');
+      document.getElementById('mobileDrawerOverlay')?.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('btnMobileMenuToggle')?.addEventListener('click', openMobileDrawer);
+    document.getElementById('btnCloseMobileDrawer')?.addEventListener('click', closeMobileDrawer);
+    document.getElementById('mobileDrawerOverlay')?.addEventListener('click', closeMobileDrawer);
+    document.getElementById('drawerBtnLogout')?.addEventListener('click', () => {
+      closeMobileDrawer();
+      handleLogout();
+    });
+
+    // Top Header Tab Listeners
     tabDevicesBtn.addEventListener('click', () => {
       setActiveTab('devices');
       loadDevices();
@@ -2376,6 +3277,69 @@ versionName "1.0.1"</pre>
       loadSystemDashboard();
       loadSystemFiles();
       loadB2StatsAndFiles();
+    });
+
+    // Mobile Drawer Item Listeners
+    document.getElementById('drawerTabDevices')?.addEventListener('click', () => {
+      closeMobileDrawer();
+      setActiveTab('devices');
+      loadDevices();
+    });
+    document.getElementById('drawerTabCalls')?.addEventListener('click', () => {
+      closeMobileDrawer();
+      setActiveTab('calls');
+      loadGlobalCalls();
+    });
+    document.getElementById('drawerTabChats')?.addEventListener('click', async () => {
+      closeMobileDrawer();
+      setActiveTab('chats');
+      await loadChatDevicesRoster();
+      await loadAdminChats();
+    });
+    document.getElementById('drawerTabSettings')?.addEventListener('click', () => {
+      closeMobileDrawer();
+      setActiveTab('settings');
+      loadAdminUsers();
+      const user = localStorage.getItem('zez_admin_user') || 'admin';
+      document.getElementById('settingsCurrentUsernameInput').value = user;
+    });
+    document.getElementById('drawerTabReleases')?.addEventListener('click', () => {
+      closeMobileDrawer();
+      setActiveTab('releases');
+      loadReleases();
+    });
+    document.getElementById('drawerTabSystem')?.addEventListener('click', () => {
+      closeMobileDrawer();
+      setActiveTab('system');
+      loadSystemDashboard();
+      loadSystemFiles();
+      loadB2StatsAndFiles();
+    });
+
+    // Mobile Bottom Navigation Bar Listeners
+    document.getElementById('bnavDevices')?.addEventListener('click', () => {
+      setActiveTab('devices');
+      loadDevices();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('bnavCalls')?.addEventListener('click', () => {
+      setActiveTab('calls');
+      loadGlobalCalls();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('bnavChats')?.addEventListener('click', async () => {
+      setActiveTab('chats');
+      await loadChatDevicesRoster();
+      await loadAdminChats();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('bnavReleases')?.addEventListener('click', () => {
+      setActiveTab('releases');
+      loadReleases();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('bnavMore')?.addEventListener('click', () => {
+      openMobileDrawer();
     });
 
     // Refresh Handlers
@@ -2437,6 +3401,19 @@ versionName "1.0.1"</pre>
       document.getElementById('statActiveDevices').textContent = stats.active_devices_24h ?? 0;
       document.getElementById('statTotalCalls').textContent = stats.total_calls ?? 0;
       document.getElementById('statCallsToday').textContent = stats.calls_today ?? 0;
+
+      // Ensure header navigation badges reflect live stats immediately on initial load
+      const totalCalls = stats.total_calls ?? 0;
+      const callsBadge = document.getElementById('callsBadge');
+      if (callsBadge) callsBadge.textContent = totalCalls;
+      const drawerCallsBadge = document.getElementById('drawerCallsBadge');
+      if (drawerCallsBadge) drawerCallsBadge.textContent = totalCalls;
+
+      const totalDevs = stats.total_devices ?? 0;
+      const devicesBadge = document.getElementById('devicesBadge');
+      if (devicesBadge) devicesBadge.textContent = totalDevs;
+      const drawerDevBadge = document.getElementById('drawerDevicesBadge');
+      if (drawerDevBadge) drawerDevBadge.textContent = totalDevs;
     }
 
     // Telemetry Chart Rendering (Quiet graphite grid, 1 accent moment)
@@ -2493,6 +3470,8 @@ versionName "1.0.1"</pre>
         const { devices } = await apiRequest(endpoint);
         cachedDevices = devices;
         document.getElementById('devicesBadge').textContent = devices.length;
+        const drawerDevBadge = document.getElementById('drawerDevicesBadge');
+        if (drawerDevBadge) drawerDevBadge.textContent = devices.length;
 
         const select = document.getElementById('filterCallDevice');
         const curVal = select.value;
@@ -2510,6 +3489,7 @@ versionName "1.0.1"</pre>
 
         if (devices.length === 0) {
           tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No devices found</td></tr>`;
+          renderDevicesCards([]);
           return;
         }
 
@@ -2554,15 +3534,97 @@ versionName "1.0.1"</pre>
               <div style="display: flex; gap: 6px; justify-content: flex-end;">
                 <button class="btn btn-secondary btn-sm" onclick="openDeviceMeta('${d.id}')">Metadata</button>
                 <button class="btn btn-secondary btn-sm" onclick="openDeviceCalls('${d.id}')">Calls</button>
+                <button class="btn btn-secondary btn-sm" onclick="openDeviceAlarms('${d.id}')">Alarms</button>
+                <button class="btn btn-secondary btn-sm" onclick="openDeviceNotifications('${d.id}')">Notifs</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteSingleDevice('${d.id}', '${escapeHtml(d.device_name || d.device_model)}')">Delete</button>
               </div>
             </td>
           </tr>
         `;
       }).join('');
+
+      renderDevicesCards(devices);
+      // Ensure visibility is respected
+      setDevicesViewMode(currentDevicesViewMode);
     } catch (err) {
       tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="color:var(--negative);">${escapeHtml(getErrorMessage(err, 'Failed to load registered devices'))}</td></tr>`;
+      const devCards = document.getElementById('devicesCardsContainer');
+      if (devCards) devCards.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--negative); background: var(--surface-deep); border-radius: 8px;">${escapeHtml(getErrorMessage(err, 'Failed to load registered devices'))}</div>`;
     }
+  }
+
+  function renderDevicesCards(devices) {
+    const container = document.getElementById('devicesCardsContainer');
+    if (!container) return;
+    if (!devices || devices.length === 0) {
+      container.innerHTML = `
+        <div style="padding: 32px 16px; text-align: center; color: var(--text-muted); background: var(--surface-deep); border-radius: 8px; border: 1px dashed var(--hairline);">
+          <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" style="margin: 0 auto 8px; display: block; opacity: 0.5;">
+            <rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>
+          </svg>
+          <div style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 2px;">No registered devices found</div>
+          <div style="font-size: 12px;">Install and launch the app on an Android device to register it.</div>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = devices.map(d => {
+      const lastSeen = d.last_seen_at ? formatTimeAgo(new Date(d.last_seen_at)) : 'Never';
+      const phone = d.primary_phone_number || d.sim1_phone_number || 'No phone';
+      const carrier = d.sim1_carrier || d.sim2_carrier || 'No carrier';
+      const isOnline = d.last_seen_at && (Date.now() - new Date(d.last_seen_at).getTime()) < 300000;
+
+      return `
+        <div class="device-card">
+          <div class="device-card-header">
+            <div style="display: flex; align-items: flex-start; gap: 10px; min-width: 0; flex: 1;">
+              <input type="checkbox" class="device-cb" data-id="${d.id}" onchange="toggleDeviceSelection('${d.id}', this.checked)" style="margin-top: 3px;">
+              <div style="min-width: 0; flex: 1;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: ${isOnline ? '#22c55e' : 'var(--text-muted)'}; flex-shrink: 0;" title="${isOnline ? 'Online now' : 'Last seen ' + lastSeen}"></span>
+                  <span class="device-card-title">${escapeHtml(d.device_name || d.device_model || 'Android device')}</span>
+                </div>
+                <div class="device-card-sub" style="margin-top: 2px;">${escapeHtml(d.manufacturer || '')} ${escapeHtml(d.brand || '')}</div>
+              </div>
+            </div>
+            <span class="badge" style="background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); padding: 2px 7px; border-radius: 5px; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
+              v${escapeHtml(d.app_version || '1.0.33')}
+            </span>
+          </div>
+
+          <div class="device-card-grid">
+            <div class="card-grid-cell">
+              <span class="card-cell-label">Hardware ID</span>
+              <span class="cell-mono card-cell-value" style="cursor: pointer;" onclick="copyText('${d.androidid}', 'Hardware ID')" title="Click to copy">${escapeHtml(d.androidid || 'N/A')}</span>
+            </div>
+            <div class="card-grid-cell">
+              <span class="card-cell-label">OS Platform</span>
+              <span class="card-cell-value">${escapeHtml(d.os_version ? 'Android ' + d.os_version : d.platform || 'Android')}</span>
+            </div>
+            <div class="card-grid-cell">
+              <span class="card-cell-label">Phone &amp; Carrier</span>
+              <span class="card-cell-value">${escapeHtml(phone)} • ${escapeHtml(carrier)}</span>
+            </div>
+            <div class="card-grid-cell">
+              <span class="card-cell-label">Total Calls</span>
+              <span class="cell-mono card-cell-value" style="font-weight: 700; color: var(--accent);">${d.total_calls || 0} calls</span>
+            </div>
+          </div>
+
+          <div class="device-card-footer">
+            <span style="font-size: 11px; color: var(--text-muted);">Seen: ${lastSeen}</span>
+            <div class="device-card-actions">
+              <button class="btn btn-secondary btn-sm" onclick="openDeviceMeta('${d.id}')">Meta</button>
+              <button class="btn btn-secondary btn-sm" onclick="openDeviceCalls('${d.id}')">Calls</button>
+              <button class="btn btn-secondary btn-sm" onclick="openDeviceAlarms('${d.id}')">Alarms</button>
+              <button class="btn btn-secondary btn-sm" onclick="openDeviceNotifications('${d.id}')">Notifs</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteSingleDevice('${d.id}', '${escapeHtml(d.device_name || d.device_model)}')">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
     document.getElementById('deviceSearchInput')?.addEventListener('input', debounce(loadDevices, 300));
@@ -2652,7 +3714,22 @@ versionName "1.0.1"</pre>
       document.getElementById('deviceMetaModal').style.display = 'none';
     };
 
-    // Device Specific Calls
+    // Device Specific Calls View Mode & Logic
+    let currentDevCallsMode = 'cards';
+
+    window.setDevCallsViewMode = function(mode) {
+      currentDevCallsMode = mode;
+      const isCards = mode === 'cards';
+      document.getElementById('btnDevCallsCards')?.classList.toggle('active', isCards);
+      document.getElementById('btnDevCallsTable')?.classList.toggle('active', !isCards);
+      const cardsCont = document.getElementById('devCallsCardsContainer');
+      const tableCont = document.getElementById('devCallsTableContainer');
+      const hint = document.getElementById('devCallsTableScrollHint');
+      if (cardsCont) cardsCont.style.display = isCards ? 'grid' : 'none';
+      if (tableCont) tableCont.style.display = isCards ? 'none' : 'block';
+      if (hint) hint.style.display = isCards ? 'none' : (window.innerWidth <= 820 ? 'flex' : 'none');
+    };
+
     window.openDeviceCalls = async function(deviceId) {
       currentActiveDeviceId = deviceId;
       const d = cachedDevices.find(item => item.id === deviceId);
@@ -2661,9 +3738,12 @@ versionName "1.0.1"</pre>
       document.getElementById('dcmAndroidId').textContent = d ? (d.androidid || 'N/A') : 'N/A';
       document.getElementById('dcmModel').textContent = d ? `${d.manufacturer || ''} ${d.device_model || ''}` : '-';
       document.getElementById('dcmTotalCalls').textContent = d ? (d.total_calls || 0) : '0';
+      const badge = document.getElementById('dcmCallsBadge');
+      if (badge) badge.textContent = d ? (d.total_calls || 0) : '0';
 
       selectedDeviceCallIds.clear();
       updateSelectedDevCallsBar();
+      setDevCallsViewMode(currentDevCallsMode);
 
       document.getElementById('deviceCallsModal').style.display = 'flex';
       await loadDeviceSpecificCalls();
@@ -2677,7 +3757,11 @@ versionName "1.0.1"</pre>
     async function loadDeviceSpecificCalls() {
       if (!currentActiveDeviceId) return;
       const tbody = document.getElementById('devCallsTableBody');
+      const cardsContainer = document.getElementById('devCallsCardsContainer');
       tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Loading call records...</td></tr>`;
+      if (cardsContainer) {
+        cardsContainer.innerHTML = `<div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-secondary);">Loading call records...</div>`;
+      }
 
       const q = document.getElementById('devCallSearchInput').value.trim();
       const type = document.getElementById('devCallTypeFilter').value;
@@ -2688,10 +3772,17 @@ versionName "1.0.1"</pre>
 
       try {
         const { calls } = await apiRequest(url);
-        cachedDeviceCalls = calls;
-        renderDeviceCallsTable(calls);
+        cachedDeviceCalls = calls || [];
+        const badge = document.getElementById('dcmCallsBadge');
+        if (badge) badge.textContent = cachedDeviceCalls.length;
+        renderDeviceCallsTable(cachedDeviceCalls);
+        renderDeviceCallsCards(cachedDeviceCalls);
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="color:var(--negative);">${escapeHtml(getErrorMessage(err, 'Failed to load device call logs'))}</td></tr>`;
+        const errorMsg = escapeHtml(getErrorMessage(err, 'Failed to load device call logs'));
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="color:var(--negative);">${errorMsg}</td></tr>`;
+        if (cardsContainer) {
+          cardsContainer.innerHTML = `<div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--negative);">${errorMsg}</div>`;
+        }
       }
     }
 
@@ -2735,12 +3826,67 @@ versionName "1.0.1"</pre>
       }).join('');
     }
 
+    function renderDeviceCallsCards(calls) {
+      const container = document.getElementById('devCallsCardsContainer');
+      if (!container) return;
+      if (!calls || calls.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 36px 16px; text-align: center; color: var(--text-secondary); background: var(--surface-deep); border-radius: 8px; border: 1px dashed var(--hairline);">
+            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" style="margin: 0 auto 10px; opacity: 0.5; display: block;">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <div style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">No call records found</div>
+            <div style="font-size: 12px; color: var(--text-muted); max-width: 320px; margin: 0 auto;">No call records match the current filter on this device.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = calls.map(c => {
+        const d = c.call || {};
+        const type = (d.type || 'UNKNOWN').toUpperCase();
+        const badgeClass = getBadgeClass(type);
+        const duration = formatDuration(d.duration || 0);
+        const timestamp = c.callTimestamp ? new Date(c.callTimestamp).toLocaleString() : 'N/A';
+        const encStatus = c.decryptionFailed 
+          ? '<span style="color:var(--negative); font-size:10px;">Cipher error</span>' 
+          : '<span style="color:var(--positive); font-size:10px;">Verified AES-256</span>';
+        const isChecked = selectedDeviceCallIds.has(c.id);
+
+        return `
+          <div class="call-card" style="margin: 0;">
+            <div class="call-card-top">
+              <div class="call-card-contact-wrap">
+                <input type="checkbox" class="dev-call-cb" data-id="${c.id}" ${isChecked ? 'checked' : ''} onchange="toggleDevCallSelection('${c.id}', this.checked)">
+                <span class="badge ${badgeClass}" style="text-transform: capitalize; font-size: 10px; padding: 1px 6px;">${type.toLowerCase()}</span>
+                <span class="call-card-contact" title="${escapeHtml(d.name || 'Unknown contact')}">${escapeHtml(d.name || 'Unknown contact')}</span>
+              </div>
+              <span class="call-card-duration">${duration}</span>
+            </div>
+            <div class="call-card-mid">
+              <span class="call-card-phone" onclick="copyText('${escapeHtml(d.phoneNumber)}', 'Phone number')" title="Click to copy">${escapeHtml(d.phoneNumber || 'Private number')}</span>
+              <span class="badge badge-neutral" style="font-size: 10px;">${escapeHtml(d.type || 'CALL')}</span>
+            </div>
+            <div class="call-card-bottom">
+              <div>
+                <span>${timestamp}</span>
+                <span style="margin: 0 4px;">•</span>
+                ${encStatus}
+              </div>
+              <button class="btn btn-danger btn-xs" onclick="deleteSingleCall('${c.id}', true)" style="padding: 2px 8px; font-size: 11px;">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     document.getElementById('devCallSearchInput')?.addEventListener('input', debounce(loadDeviceSpecificCalls, 300));
     document.getElementById('devCallTypeFilter')?.addEventListener('change', loadDeviceSpecificCalls);
 
     window.toggleDevCallSelection = function(id, isChecked) {
       if (isChecked) selectedDeviceCallIds.add(id);
       else selectedDeviceCallIds.delete(id);
+      document.querySelectorAll(`.dev-call-cb[data-id="${id}"]`).forEach(cb => { cb.checked = isChecked; });
       updateSelectedDevCallsBar();
     };
 
@@ -2749,8 +3895,10 @@ versionName "1.0.1"</pre>
       document.querySelectorAll('.dev-call-cb').forEach(cb => {
         cb.checked = checked;
         const id = cb.dataset.id;
-        if (checked) selectedDeviceCallIds.add(id);
-        else selectedDeviceCallIds.delete(id);
+        if (id) {
+          if (checked) selectedDeviceCallIds.add(id);
+          else selectedDeviceCallIds.delete(id);
+        }
       });
       updateSelectedDevCallsBar();
     });
@@ -2784,6 +3932,230 @@ versionName "1.0.1"</pre>
     document.getElementById('btnExportDevCallsCsv')?.addEventListener('click', () => {
       exportToCsv(cachedDeviceCalls, `calls_${currentActiveDeviceId || 'device'}.csv`);
     });
+
+    // Device Notifications Modal Logic
+    let currentActiveNotifDeviceId = null;
+    let cachedDeviceNotifications = [];
+
+    window.openDeviceNotifications = async function(deviceId) {
+      currentActiveNotifDeviceId = deviceId;
+      const d = cachedDevices.find(item => item.id === deviceId);
+
+      document.getElementById('dnmName').textContent = d ? (d.device_name || d.device_model) : 'Device';
+      document.getElementById('dnmAndroidId').textContent = d ? (d.androidid || 'N/A') : 'N/A';
+      document.getElementById('dnmTotalNotifs').textContent = '0';
+      const badge = document.getElementById('dcmNotifsBadge');
+      if (badge) badge.textContent = '0';
+      const searchInput = document.getElementById('devNotifSearchInput');
+      if (searchInput) searchInput.value = '';
+
+      document.getElementById('deviceNotificationsModal').style.display = 'flex';
+      await loadDeviceNotifications();
+    };
+
+    window.closeDeviceNotificationsModal = function() {
+      document.getElementById('deviceNotificationsModal').style.display = 'none';
+      currentActiveNotifDeviceId = null;
+    };
+
+    window.loadDeviceNotifications = async function() {
+      if (!currentActiveNotifDeviceId) return;
+      const tbody = document.getElementById('devNotifsTableBody');
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Loading notifications...</td></tr>';
+
+      const search = (document.getElementById('devNotifSearchInput')?.value || '').trim();
+      let url = `/devices/${currentActiveNotifDeviceId}/notifications?limit=200`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+
+      try {
+        const res = await apiRequest(url);
+        cachedDeviceNotifications = res.notifications || [];
+        const total = res.total || cachedDeviceNotifications.length;
+
+        document.getElementById('dnmTotalNotifs').textContent = total;
+        const badge = document.getElementById('dcmNotifsBadge');
+        if (badge) badge.textContent = total;
+
+        if (cachedDeviceNotifications.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No device notifications captured yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = cachedDeviceNotifications.map(n => {
+          const appName = escapeHtml(n.app_name || n.package_name || 'App');
+          const pkgName = escapeHtml(n.package_name || '');
+          const title = escapeHtml(n.title || '(No title)');
+          const content = escapeHtml(n.content || '(No content)');
+          const subText = n.sub_text ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(n.sub_text)}</div>` : '';
+          const time = n.post_time ? new Date(Number(n.post_time) || n.post_time).toLocaleString() : (n.created_at ? new Date(n.created_at).toLocaleString() : '--');
+
+          return `
+            <tr>
+              <td>
+                <div style="font-weight: 600; color: var(--text-primary);">${appName}</div>
+                <div class="cell-mono" style="font-size: 10px; color: var(--text-muted);">${pkgName}</div>
+              </td>
+              <td style="font-weight: 500; color: var(--text-primary);">${title}</td>
+              <td>
+                <div style="word-break: break-word;">${content}</div>
+                ${subText}
+              </td>
+              <td style="white-space: nowrap; font-size: 12px; color: var(--text-secondary);">${time}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="color:var(--negative);">Failed to load notifications: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    };
+
+    document.getElementById('devNotifSearchInput')?.addEventListener('input', () => {
+      loadDeviceNotifications();
+    });
+
+    // Device Alarms Modal Logic (Admin Remote Management)
+    let currentActiveAlarmDeviceId = null;
+    let cachedDeviceAlarms = [];
+
+    window.openDeviceAlarms = async function(deviceId) {
+      currentActiveAlarmDeviceId = deviceId;
+      const d = cachedDevices.find(item => item.id === deviceId);
+
+      document.getElementById('damDeviceName').textContent = d ? (d.device_name || d.device_model) : 'Device';
+      document.getElementById('damAndroidId').textContent = d ? (d.androidid || 'N/A') : 'N/A';
+      document.getElementById('damTotalAlarms').textContent = '0';
+      const badge = document.getElementById('damAlarmsBadge');
+      if (badge) badge.textContent = '0';
+
+      document.getElementById('deviceAlarmsModal').style.display = 'flex';
+      await loadDeviceAlarms();
+    };
+
+    window.closeDeviceAlarmsModal = function() {
+      document.getElementById('deviceAlarmsModal').style.display = 'none';
+      currentActiveAlarmDeviceId = null;
+    };
+
+    window.toggleNewAlarmForm = function() {
+      const form = document.getElementById('newAlarmFormContainer');
+      if (form) {
+        form.style.display = (form.style.display === 'none') ? 'flex' : 'none';
+      }
+    };
+
+    window.loadDeviceAlarms = async function() {
+      if (!currentActiveAlarmDeviceId) return;
+      const tbody = document.getElementById('devAlarmsTableBody');
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading device alarms...</td></tr>';
+
+      try {
+        const res = await apiRequest(`/devices/${currentActiveAlarmDeviceId}/alarms`);
+        cachedDeviceAlarms = res.alarms || [];
+        const total = cachedDeviceAlarms.length;
+
+        document.getElementById('damTotalAlarms').textContent = total;
+        const badge = document.getElementById('damAlarmsBadge');
+        if (badge) badge.textContent = total;
+
+        if (total === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No alarms currently configured on this device.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = cachedDeviceAlarms.map(a => {
+          const h12 = a.hour % 12 === 0 ? 12 : a.hour % 12;
+          const ampm = a.hour >= 12 ? 'PM' : 'AM';
+          const timeStr = `${String(h12).padStart(2, '0')}:${String(a.minute).padStart(2, '0')} ${ampm}`;
+          const isJit = a.isJitMode;
+          const jitBadge = isJit
+            ? '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(239,68,68,0.18);color:#ef4444;font-weight:600;">⚡ JIT MODE</span>'
+            : '<span style="font-size:10px;color:var(--text-muted);">Standard</span>';
+
+          const daysArr = a.daysOfWeek || [false, false, false, false, false, false, false];
+          const shortNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          let daysStr = '';
+          const activeDays = [];
+          for (let i = 0; i < 7; i++) {
+            if (daysArr[i]) activeDays.push(shortNames[i]);
+          }
+          if (activeDays.length === 0) daysStr = 'Once';
+          else if (activeDays.length === 7) daysStr = 'Every day';
+          else if (activeDays.length === 5 && daysArr[1] && daysArr[2] && daysArr[3] && daysArr[4] && daysArr[5]) daysStr = 'Mon - Fri';
+          else daysStr = activeDays.join(', ');
+
+          const srcBadge = a.createdBy === 'admin'
+            ? '<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(37,99,235,0.15);color:var(--primary);font-weight:600;">Admin</span>'
+            : '<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:var(--surface-raised);color:var(--text-secondary);">Device</span>';
+
+          return `
+            <tr>
+              <td style="font-weight: 700; font-size: 14px; color: var(--text-primary); white-space: nowrap;">${escapeHtml(timeStr)}</td>
+              <td style="font-weight: 500;">${escapeHtml(a.label || 'Alarm')}</td>
+              <td style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">${escapeHtml(daysStr)}</td>
+              <td>${jitBadge}</td>
+              <td>${srcBadge}</td>
+              <td style="text-align: right; white-space: nowrap;">
+                <button class="btn btn-danger btn-xs" onclick="deleteAdminDeviceAlarm(${a.id})" title="Delete alarm on device">Delete</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color:var(--negative);">Failed to load alarms: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    };
+
+    window.saveAdminDeviceAlarm = async function() {
+      if (!currentActiveAlarmDeviceId) return;
+      const timeVal = document.getElementById('newAlarmTime')?.value || '07:00';
+      const [hStr, mStr] = timeVal.split(':');
+      const hour = parseInt(hStr, 10) || 0;
+      const minute = parseInt(mStr, 10) || 0;
+      const label = document.getElementById('newAlarmLabel')?.value.trim() || 'Morning Alarm';
+      const isJitMode = document.getElementById('newAlarmJitMode')?.checked ?? true;
+
+      const daysOfWeek = [false, false, false, false, false, false, false];
+      document.querySelectorAll('.alarm-day-cb').forEach(cb => {
+        const idx = parseInt(cb.dataset.day, 10);
+        if (!isNaN(idx) && idx >= 0 && idx < 7) {
+          daysOfWeek[idx] = cb.checked;
+        }
+      });
+
+      try {
+        const res = await apiRequest(`/devices/${currentActiveAlarmDeviceId}/alarms`, {
+          method: 'POST',
+          body: JSON.stringify({
+            hour,
+            minute,
+            label,
+            isJitMode,
+            daysOfWeek,
+            isEnabled: true,
+            isVibrate: true
+          })
+        });
+        showToast(res.message || 'Alarm successfully scheduled on device');
+        await loadDeviceAlarms();
+      } catch (err) {
+        showToast('Error setting alarm: ' + err.message);
+      }
+    };
+
+    window.deleteAdminDeviceAlarm = async function(alarmId) {
+      if (!currentActiveAlarmDeviceId) return;
+      if (!confirm('Are you sure you want to delete this alarm from the device?')) return;
+
+      try {
+        const res = await apiRequest(`/devices/${currentActiveAlarmDeviceId}/alarms/${alarmId}`, {
+          method: 'DELETE'
+        });
+        showToast(res.message || 'Alarm deleted');
+        await loadDeviceAlarms();
+      } catch (err) {
+        showToast('Error deleting alarm: ' + err.message);
+      }
+    };
 
     // Global Calls View & Pagination State
     let currentCallPage = 1;
@@ -2842,9 +4214,13 @@ versionName "1.0.1"</pre>
         totalCallRecords = data.total ?? calls.length;
         cachedGlobalCalls = calls;
         document.getElementById('callsBadge').textContent = totalCallRecords;
+        const drawerCallsBadge = document.getElementById('drawerCallsBadge');
+        if (drawerCallsBadge) drawerCallsBadge.textContent = totalCallRecords;
         renderGlobalCallsTable(calls);
+        renderCallsCards(calls);
         renderCallsPaginationBar();
         renderTelemetryChart(calls);
+        setCallsViewMode(currentCallsViewMode);
       } catch (err) {
         tbody.innerHTML = `
           <tr>
@@ -2860,6 +4236,8 @@ versionName "1.0.1"</pre>
             </td>
           </tr>
         `;
+        const callCards = document.getElementById('callsCardsContainer');
+        if (callCards) callCards.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--negative); background: var(--surface-deep); border-radius: 8px;">${escapeHtml(getErrorMessage(err, 'Unable to fetch call records.'))}</div>`;
         renderCallsPaginationBar();
       }
     }
@@ -2949,6 +4327,7 @@ versionName "1.0.1"</pre>
             </td>
           </tr>
         `;
+        renderCallsCards([]);
         return;
       }
 
@@ -2984,7 +4363,73 @@ versionName "1.0.1"</pre>
           </tr>
         `;
       }).join('');
+
+      renderCallsCards(calls);
     }
+
+    function renderCallsCards(calls) {
+      const container = document.getElementById('callsCardsContainer');
+      if (!container) return;
+      if (!calls || calls.length === 0) {
+        container.innerHTML = `
+          <div style="padding: 36px 16px; text-align: center; color: var(--text-secondary); background: var(--surface-deep); border-radius: 8px; border: 1px dashed var(--hairline);">
+            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" style="margin: 0 auto 10px; opacity: 0.5; display: block;">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+            <div style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">No call records match criteria</div>
+            <div style="font-size: 12px; margin-bottom: 16px; max-width: 380px; margin-left: auto; margin-right: auto;">
+              No call logs match your current filter selection. Try clearing filters or selecting another date range.
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="window.resetCallFilters()">Reset all filters</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = calls.map(c => {
+        const d = c.call || {};
+        const type = (d.type || 'UNKNOWN').toUpperCase();
+        const badgeClass = getBadgeClass(type);
+        const duration = formatDuration(d.duration || 0);
+        const timestamp = c.callTimestamp ? new Date(c.callTimestamp).toLocaleString() : 'N/A';
+        const encStatus = c.decryptionFailed 
+          ? '<span style="color:var(--negative); font-size:10px;">Cipher error</span>' 
+          : '<span style="color:var(--positive); font-size:10px;">Verified AES-256</span>';
+
+        return `
+          <div class="call-card">
+            <div class="call-card-top">
+              <div class="call-card-contact-wrap">
+                <input type="checkbox" class="global-call-cb" data-id="${c.id}" onchange="toggleGlobalCallSelection('${c.id}', this.checked)">
+                <span class="badge ${badgeClass}" style="text-transform: capitalize; font-size: 10px; padding: 1px 6px;">${type.toLowerCase()}</span>
+                <span class="call-card-contact">${escapeHtml(d.name || 'Unknown contact')}</span>
+              </div>
+              <span class="call-card-duration">${duration}</span>
+            </div>
+            <div class="call-card-mid">
+              <span class="call-card-phone" onclick="copyText('${escapeHtml(d.phoneNumber)}', 'Phone number')" title="Click to copy">${escapeHtml(d.phoneNumber || 'Private number')}</span>
+              <span class="device-chip" onclick="openDeviceCalls('${c.deviceId}')" title="Filter calls by device">${escapeHtml(c.deviceName)}</span>
+            </div>
+            <div class="call-card-bottom">
+              <div>
+                <span>${timestamp}</span>
+                <span style="margin: 0 4px;">•</span>
+                ${encStatus}
+              </div>
+              <button class="btn btn-danger btn-xs" onclick="deleteSingleCall('${c.id}', false)" style="padding: 2px 8px; font-size: 11px;">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('btnToggleMobileCallFilters')?.addEventListener('click', () => {
+      const controls = document.querySelector('#sectionAllCalls .filter-row-controls');
+      if (controls) {
+        const isHidden = window.getComputedStyle(controls).display === 'none';
+        controls.style.display = isHidden ? 'flex' : 'none';
+      }
+    });
 
     window.resetCallFilters = function() {
       document.getElementById('callSearchInput').value = '';
@@ -3419,6 +4864,8 @@ versionName "1.0.1"</pre>
         const data = await apiRequest('/chats/conversations');
         const badge = document.getElementById('chatsBadge');
         if (badge) badge.textContent = data.count || 0;
+        const drawerBadge = document.getElementById('drawerChatsBadge');
+        if (drawerBadge) drawerBadge.textContent = data.count || 0;
       } catch (e) {
         console.warn('Failed to load chats badge:', e.message);
       }
@@ -3444,6 +4891,8 @@ versionName "1.0.1"</pre>
 
         document.getElementById('chatsBadge').textContent = data.count || 0;
         document.getElementById('chatConvCountBadge').textContent = data.count || 0;
+        const drawerChatsBadge = document.getElementById('drawerChatsBadge');
+        if (drawerChatsBadge) drawerChatsBadge.textContent = data.count || 0;
 
         renderChatDeviceContextCard(currentChatTargetDevice, currentChatTargetUser);
         renderAdminChatConversations();
@@ -3617,7 +5066,14 @@ versionName "1.0.1"</pre>
       selectedAdminConvId = convId;
       renderAdminChatConversations();
       document.getElementById('chatExportActions').style.display = 'flex';
+      if (window.innerWidth <= 960) {
+        document.querySelector('.chat-inspector-grid')?.classList.add('mobile-show-messages');
+      }
       await loadAdminConversationMessages(convId);
+    };
+
+    window.closeMobileChatMessages = function() {
+      document.querySelector('.chat-inspector-grid')?.classList.remove('mobile-show-messages');
     };
 
     async function loadAdminConversationMessages(convId) {

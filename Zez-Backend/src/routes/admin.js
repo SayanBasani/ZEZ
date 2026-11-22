@@ -475,6 +475,193 @@ router.get("/devices/:deviceId/calls", async (req, res, next) => {
 });
 
 /**
+ * GET /api/admin/devices/:deviceId/notifications
+ * Stored device notifications archive with search and pagination
+ */
+router.get("/devices/:deviceId/notifications", async (req, res, next) => {
+  try {
+    const { deviceId } = req.params;
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 500);
+    const search = req.query.q ? String(req.query.q).toLowerCase().trim() : null;
+
+    const deviceCheck = await pool.query(
+      `SELECT id, device_name, device_model, androidid FROM public.devices WHERE id = $1 LIMIT 1`,
+      [deviceId]
+    );
+
+    if (deviceCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Device not found." });
+    }
+
+    let query = `
+      SELECT id, package_name, app_name, title, content, sub_text, post_time, posted_at, created_at
+      FROM public.device_notifications
+      WHERE device_id = $1
+    `;
+    const params = [deviceId];
+
+    if (search) {
+      params.push(`%${search}%`);
+      query += ` AND (LOWER(title) LIKE $${params.length} OR LOWER(content) LIKE $${params.length} OR LOWER(package_name) LIKE $${params.length} OR LOWER(COALESCE(app_name, '')) LIKE $${params.length})`;
+    }
+
+    query += ` ORDER BY posted_at DESC, post_time DESC LIMIT $${params.length + 1}`;
+    params.push(limit);
+
+    const result = await pool.query(query, params);
+
+    return res.json({
+      success: true,
+      device: deviceCheck.rows[0],
+      count: result.rowCount,
+      notifications: result.rows,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/admin/devices/:deviceId/alarms
+ * Retrieve configured alarms for a specific device
+ */
+router.get("/devices/:deviceId/alarms", async (req, res, next) => {
+  try {
+    const { deviceId } = req.params;
+
+    const deviceCheck = await pool.query(
+      `SELECT id, device_name, device_model, androidid FROM public.devices WHERE id = $1 LIMIT 1`,
+      [deviceId]
+    );
+
+    if (deviceCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Device not found." });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT id, alarm_id, hour, minute, label, is_enabled, is_vibrate, is_jit_mode, days_of_week, ringtone_title, created_by, status, created_at, updated_at
+       FROM public.device_alarms
+       WHERE device_id = $1 AND status != 'deleted'
+       ORDER BY hour ASC, minute ASC`,
+      [deviceId]
+    );
+
+    return res.json({
+      success: true,
+      device: deviceCheck.rows[0],
+      count: rows.length,
+      alarms: rows.map(r => ({
+        id: Number(r.alarm_id),
+        dbId: r.id,
+        hour: r.hour,
+        minute: r.minute,
+        label: r.label,
+        isEnabled: r.is_enabled,
+        isVibrate: r.is_vibrate,
+        isJitMode: r.is_jit_mode,
+        daysOfWeek: r.days_of_week,
+        ringtoneTitle: r.ringtone_title,
+        createdBy: r.created_by,
+        status: r.status,
+        updatedAt: r.updated_at
+      }))
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/devices/:deviceId/alarms
+ * Admin sets / schedules an alarm on a target device
+ */
+router.post("/devices/:deviceId/alarms", async (req, res, next) => {
+  try {
+    const { deviceId } = req.params;
+    const { hour, minute, label, isEnabled, isVibrate, isJitMode, daysOfWeek, ringtoneTitle } = req.body;
+
+    const deviceCheck = await pool.query(
+      `SELECT id FROM public.devices WHERE id = $1 LIMIT 1`,
+      [deviceId]
+    );
+
+    if (deviceCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Device not found." });
+    }
+
+    const parsedHour = Math.min(Math.max(parseInt(hour, 10) || 0, 0), 23);
+    const parsedMinute = Math.min(Math.max(parseInt(minute, 10) || 0, 0), 59);
+    const alarmLabel = String(label || "Alarm").slice(0, 255);
+    const alarmId = Date.now();
+    const enabled = isEnabled !== false;
+    const vibrate = isVibrate !== false;
+    const jitMode = isJitMode === true;
+    const daysJson = JSON.stringify(Array.isArray(daysOfWeek) ? daysOfWeek : [false, true, true, true, true, true, false]);
+    const ringTitle = String(ringtoneTitle || "Default Alarm Ringtone").slice(0, 255);
+
+    const { rows } = await pool.query(
+      `INSERT INTO public.device_alarms (
+        device_id, alarm_id, hour, minute, label, is_enabled, is_vibrate, is_jit_mode, days_of_week, ringtone_title, ringtone_uri, created_by, status, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, '', 'admin', 'active', NOW()
+      )
+      RETURNING id, alarm_id, hour, minute, label, is_enabled, is_vibrate, is_jit_mode, days_of_week, ringtone_title, created_by, status`,
+      [deviceId, alarmId, parsedHour, parsedMinute, alarmLabel, enabled, vibrate, jitMode, daysJson, ringTitle]
+    );
+
+    return res.json({
+      success: true,
+      message: "Alarm created successfully by admin.",
+      alarm: {
+        id: Number(rows[0].alarm_id),
+        dbId: rows[0].id,
+        hour: rows[0].hour,
+        minute: rows[0].minute,
+        label: rows[0].label,
+        isEnabled: rows[0].is_enabled,
+        isVibrate: rows[0].is_vibrate,
+        isJitMode: rows[0].is_jit_mode,
+        daysOfWeek: rows[0].days_of_week,
+        ringtoneTitle: rows[0].ringtone_title,
+        createdBy: rows[0].created_by,
+        status: rows[0].status
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/admin/devices/:deviceId/alarms/:alarmId
+ * Admin deletes a specific alarm of a specific device
+ */
+router.delete("/devices/:deviceId/alarms/:alarmId", async (req, res, next) => {
+  try {
+    const { deviceId, alarmId } = req.params;
+
+    const r = await pool.query(
+      `UPDATE public.device_alarms
+       SET status = 'deleted', updated_at = NOW()
+       WHERE device_id = $1 AND alarm_id = $2
+       RETURNING id, alarm_id`,
+      [deviceId, alarmId]
+    );
+
+    if (r.rowCount === 0) {
+      return res.status(404).json({ success: false, error: "Alarm not found for device." });
+    }
+
+    return res.json({
+      success: true,
+      message: `Alarm ${alarmId} marked deleted for device.`
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/admin/calls
  * Global feed of calls across all registered devices with filtering.
  */

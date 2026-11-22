@@ -99,7 +99,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:padding="12dp"
-        android:layout_marginBottom="14dp">
+        android:layout_marginBottom="10dp">
 
         <TextView
             android:layout_width="0dp"
@@ -114,6 +114,63 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true" />
+    </LinearLayout>
+
+    <!-- Jit Mode (Relentless Wakeup) Section -->
+    <LinearLayout
+        android:id="@+id/card_jit_mode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_jit_container">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚡ Jit Mode (ज़िद)"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#DC2626" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Relentless Morning Wakeup"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/theme_text_primary"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_jit_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="When enabled, this alarm refuses to let you oversleep. If not dismissed, it calls and rings repeatedly every 1 minute until you wake up and explicitly turn it off."
+            android:textSize="11sp"
+            android:textColor="@color/theme_text_secondary"
+            android:lineSpacingExtra="2dp"
+            android:layout_marginTop="6dp" />
     </LinearLayout>
 
     <!-- Repeat Days Selector -->

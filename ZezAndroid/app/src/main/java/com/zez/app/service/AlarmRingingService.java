@@ -52,11 +52,15 @@ public class AlarmRingingService extends Service {
         if (label == null || label.trim().isEmpty()) label = "Alarm";
         String ringtoneUri = intent.getStringExtra(AlarmReceiver.EXTRA_RINGTONE_URI);
         boolean isVibrate = intent.getBooleanExtra(AlarmReceiver.EXTRA_VIBRATE, true);
+        boolean isJitMode = intent.getBooleanExtra(AlarmReceiver.EXTRA_IS_JIT_MODE, false);
 
         // Foreground notification for alarm
         Intent fullScreenIntent = new Intent(this, AlarmFiringActivity.class);
         fullScreenIntent.putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId);
         fullScreenIntent.putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, label);
+        fullScreenIntent.putExtra(AlarmReceiver.EXTRA_IS_JIT_MODE, isJitMode);
+        fullScreenIntent.putExtra(AlarmReceiver.EXTRA_RINGTONE_URI, ringtoneUri);
+        fullScreenIntent.putExtra(AlarmReceiver.EXTRA_VIBRATE, isVibrate);
         fullScreenIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(
@@ -68,6 +72,7 @@ public class AlarmRingingService extends Service {
 
         Intent dismissIntent = new Intent(this, AlarmReceiver.class);
         dismissIntent.setAction(AlarmReceiver.ACTION_DISMISS_ALARM);
+        dismissIntent.putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId);
         PendingIntent dismissPendingIntent = PendingIntent.getBroadcast(
                 this,
                 (int) (alarmId % Integer.MAX_VALUE) + 1,
@@ -75,10 +80,13 @@ public class AlarmRingingService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        String notifTitle = isJitMode ? "⚡ JIT MODE ALARM: " + label : label;
+        String notifDesc = isJitMode ? "Relentless Morning Wakeup · Ringing repeatedly" : "Alarm is ringing";
+
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .setContentTitle(label)
-                .setContentText("Alarm is ringing")
+                .setContentTitle(notifTitle)
+                .setContentText(notifDesc)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setFullScreenIntent(fullScreenPendingIntent, true)

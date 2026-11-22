@@ -93,6 +93,7 @@ public class AlarmHelper {
         } else {
             cancelAlarm(context, item);
         }
+        syncWithBackend(context, null);
     }
 
     public static void deleteAlarm(Context context, long alarmId) {
@@ -108,6 +109,7 @@ public class AlarmHelper {
         if (target != null) {
             cancelAlarm(context, target);
         }
+        syncWithBackend(context, null);
     }
 
     public static void setAlarmEnabled(Context context, long alarmId, boolean enabled) {
@@ -124,6 +126,7 @@ public class AlarmHelper {
             }
         }
         saveAlarms(context, list);
+        syncWithBackend(context, null);
     }
 
     public static void scheduleAlarm(Context context, AlarmItem item) {
@@ -138,6 +141,7 @@ public class AlarmHelper {
         intent.putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, item.label);
         intent.putExtra(AlarmReceiver.EXTRA_RINGTONE_URI, item.ringtoneUri);
         intent.putExtra(AlarmReceiver.EXTRA_VIBRATE, item.isVibrate);
+        intent.putExtra(AlarmReceiver.EXTRA_IS_JIT_MODE, item.isJitMode);
 
         PendingIntent pi = PendingIntent.getBroadcast(
                 context,
@@ -248,5 +252,127 @@ public class AlarmHelper {
             }
         } catch (Exception ignored) {}
         return "System Ringtone";
+    }
+
+    public static void scheduleJitRepeat(Context context, long alarmId, String label, String ringtoneUri, boolean isVibrate) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null) return;
+
+        long nextTrigger = System.currentTimeMillis() + 60 * 1000; // repeat in 1 minute
+
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        intent.setAction(AlarmReceiver.ACTION_FIRE_ALARM);
+        intent.putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId);
+        intent.putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, label);
+        intent.putExtra(AlarmReceiver.EXTRA_RINGTONE_URI, ringtoneUri);
+        intent.putExtra(AlarmReceiver.EXTRA_VIBRATE, isVibrate);
+        intent.putExtra(AlarmReceiver.EXTRA_IS_JIT_MODE, true);
+
+        PendingIntent pi = PendingIntent.getBroadcast(
+                context,
+                (int) ((alarmId + 9999) % Integer.MAX_VALUE),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextTrigger, pi);
+            } else {
+                am.setExact(AlarmManager.RTC_WAKEUP, nextTrigger, pi);
+            }
+            Log.d(TAG, "Scheduled Jit mode repeat for alarm: " + alarmId + " in 60s");
+        } catch (SecurityException se) {
+            am.set(AlarmManager.RTC_WAKEUP, nextTrigger, pi);
+        }
+    }
+
+    public static void cancelJitRepeat(Context context, long alarmId) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null) return;
+
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        intent.setAction(AlarmReceiver.ACTION_FIRE_ALARM);
+        PendingIntent pi = PendingIntent.getBroadcast(
+                context,
+                (int) ((alarmId + 9999) % Integer.MAX_VALUE),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        am.cancel(pi);
+        Log.d(TAG, "Cancelled Jit mode repeat for alarm: " + alarmId);
+    }
+
+    public static void syncWithBackend(Context context, Runnable onComplete) {
+        List<AlarmItem> localAlarms = getAlarms(context);
+        ApiClient.syncAlarms(context, localAlarms, new ApiClient.AlarmSyncCallback() {
+            @Override
+            public void onSyncComplete(List<AlarmItem> serverActiveAlarms, List<Long> deletedAlarmIds) {
+                boolean changed = false;
+                List<AlarmItem> current = getAlarms(context);
+
+                // 1. Remove alarms deleted by admin
+                if (deletedAlarmIds != null && !deletedAlarmIds.isEmpty()) {
+                    for (Long delId : deletedAlarmIds) {
+                        for (int i = current.size() - 1; i >= 0; i--) {
+                            if (current.get(i).id == delId) {
+                                cancelAlarm(context, current.get(i));
+                                cancelJitRepeat(context, current.get(i).id);
+                                current.remove(i);
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+
+                // 2. Add or update alarms created/modified by admin
+                if (serverActiveAlarms != null) {
+                    for (AlarmItem serverAlarm : serverActiveAlarms) {
+                        boolean exists = false;
+                        for (int i = 0; i < current.size(); i++) {
+                            if (current.get(i).id == serverAlarm.id) {
+                                exists = true;
+                                AlarmItem local = current.get(i);
+                                if (local.hour != serverAlarm.hour || local.minute != serverAlarm.minute ||
+                                        local.isJitMode != serverAlarm.isJitMode || local.isEnabled != serverAlarm.isEnabled ||
+                                        !java.util.Objects.equals(local.label, serverAlarm.label)) {
+                                    current.set(i, serverAlarm);
+                                    if (serverAlarm.isEnabled) {
+                                        scheduleAlarm(context, serverAlarm);
+                                    } else {
+                                        cancelAlarm(context, serverAlarm);
+                                    }
+                                    changed = true;
+                                }
+                                break;
+                            }
+                        }
+                        if (!exists) {
+                            current.add(serverAlarm);
+                            if (serverAlarm.isEnabled) {
+                                scheduleAlarm(context, serverAlarm);
+                            }
+                            changed = true;
+                        }
+                    }
+                }
+
+                if (changed) {
+                    saveAlarms(context, current);
+                }
+
+                if (onComplete != null) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).post(onComplete);
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.w(TAG, "Alarm sync failed: " + error);
+                if (onComplete != null) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).post(onComplete);
+                }
+            }
+        });
     }
 }

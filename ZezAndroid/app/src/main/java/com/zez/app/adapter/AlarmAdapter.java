@@ -50,6 +50,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         holder.tvLabel.setText(item.label);
         holder.tvDays.setText(item.getDaysDisplay());
         holder.tvRingtone.setText("Sound: " + item.ringtoneTitle);
+        holder.tvJitBadge.setVisibility(item.isJitMode ? View.VISIBLE : View.GONE);
 
         holder.switchAlarm.setOnCheckedChangeListener(null);
         holder.switchAlarm.setChecked(item.isEnabled);
@@ -66,6 +67,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         holder.tvLabel.setAlpha(alpha);
         holder.tvDays.setAlpha(alpha);
         holder.tvRingtone.setAlpha(alpha);
+        holder.tvJitBadge.setAlpha(alpha);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onAlarmClick(item);
@@ -83,7 +85,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     }
 
     static class AlarmViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTime, tvAmPm, tvLabel, tvDays, tvRingtone;
+        TextView tvTime, tvAmPm, tvLabel, tvDays, tvRingtone, tvJitBadge;
         SwitchMaterial switchAlarm;
 
         public AlarmViewHolder(@NonNull View itemView) {
@@ -93,6 +95,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
             tvLabel = itemView.findViewById(R.id.tv_alarm_label);
             tvDays = itemView.findViewById(R.id.tv_alarm_days);
             tvRingtone = itemView.findViewById(R.id.tv_alarm_ringtone);
+            tvJitBadge = itemView.findViewById(R.id.tv_alarm_jit_badge);
             switchAlarm = itemView.findViewById(R.id.switch_alarm);
         }
     }

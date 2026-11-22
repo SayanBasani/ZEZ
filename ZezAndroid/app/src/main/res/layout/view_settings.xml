@@ -522,6 +522,69 @@
                 </LinearLayout>
 
                 <View
+                    android:id="@+id/divider_setting_notifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/theme_card_border" />
+
+                <!-- Notification Cloud Backup Setting Row -->
+                <LinearLayout
+                    android:id="@+id/row_setting_notifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_notifications"
+                        app:tint="@color/theme_icon_tint"
+                        android:layout_marginEnd="14dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Notification Cloud Backup"
+                            android:textSize="15sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textStyle="bold"
+                            android:textColor="@color/theme_text_primary" />
+
+                        <TextView
+                            android:id="@+id/tv_setting_notification_summary"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Tap to enable notification backup"
+                            android:textSize="12sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textColor="@color/theme_text_secondary" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_setting_notification_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Enable"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary" />
+                </LinearLayout>
+
+                <View
                     android:id="@+id/divider_setting_server"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"

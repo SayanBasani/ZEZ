@@ -71,4 +71,29 @@ public class ChatConversation implements Serializable {
 
     public int getUnreadCount() { return unreadCount; }
     public void setUnreadCount(int unreadCount) { this.unreadCount = unreadCount; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChatConversation that = (ChatConversation) o;
+        if (conversationId != null && that.conversationId != null) {
+            return conversationId.equals(that.conversationId);
+        }
+        if (otherUserId != null && that.otherUserId != null) {
+            return otherUserId.equals(that.otherUserId);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        if (conversationId != null) {
+            return conversationId.hashCode();
+        }
+        if (otherUserId != null) {
+            return otherUserId.hashCode();
+        }
+        return 0;
+    }
 }

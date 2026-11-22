@@ -1,6 +1,7 @@
 const express = require("express");
 const crypto = require("node:crypto");
 const { pool } = require("../db");
+const { deviceAuth } = require("../middleware/deviceAuth");
 
 const router = express.Router();
 
@@ -156,6 +157,129 @@ router.post("/register", async (req, res, next) => {
       token,
       androidId,
       persistentId,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    next(error);
+  } finally {
+    client.release();
+  }
+});
+
+// Device Notification Sync (captures & stores device notifications with user permission)
+// POST /api/devices/notifications/sync
+router.post("/notifications/sync", deviceAuth, async (req, res, next) => {
+  const deviceId = req.deviceId;
+  const items = Array.isArray(req.body.notifications) ? req.body.notifications : [];
+  if (items.length === 0) {
+    return res.json({ success: true, count: 0 });
+  }
+
+  const client = await pool.connect();
+  try {
+    let insertedCount = 0;
+    for (const n of items) {
+      if (!n || !n.packageName) continue;
+      const pkg = String(n.packageName).slice(0, 255);
+      const appName = n.appName ? String(n.appName).slice(0, 255) : null;
+      const title = n.title ? String(n.title).trim() : null;
+      const content = n.content ? String(n.content).trim() : null;
+      const subText = n.subText ? String(n.subText).trim() : null;
+      const postTime = Number(n.postTime) || Date.now();
+      const postedAt = new Date(postTime);
+
+      const r = await client.query(
+        `INSERT INTO public.device_notifications (
+          device_id, package_name, app_name, title, content, sub_text, post_time, posted_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (device_id, package_name, post_time, title) DO NOTHING
+        RETURNING id`,
+        [deviceId, pkg, appName, title, content, subText, postTime, postedAt]
+      );
+      if (r.rowCount > 0) insertedCount++;
+    }
+
+    return res.json({ success: true, count: insertedCount, totalReceived: items.length });
+  } catch (error) {
+    next(error);
+  } finally {
+    client.release();
+  }
+});
+
+// POST /api/devices/alarms/sync
+router.post("/alarms/sync", deviceAuth, async (req, res, next) => {
+  const deviceId = req.deviceId;
+  const localAlarms = Array.isArray(req.body.alarms) ? req.body.alarms : [];
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    for (const a of localAlarms) {
+      if (!a || !a.id) continue;
+      const alarmId = Number(a.id);
+      const hour = Number(a.hour) || 0;
+      const minute = Number(a.minute) || 0;
+      const label = String(a.label || "Alarm").slice(0, 255);
+      const isEnabled = a.isEnabled !== false;
+      const isVibrate = a.isVibrate !== false;
+      const isJitMode = a.isJitMode === true;
+      const daysOfWeek = JSON.stringify(Array.isArray(a.daysOfWeek) ? a.daysOfWeek : [false, true, true, true, true, true, false]);
+      const ringtoneTitle = String(a.ringtoneTitle || "Default Alarm Ringtone").slice(0, 255);
+      const ringtoneUri = String(a.ringtoneUri || "");
+
+      await client.query(
+        `INSERT INTO public.device_alarms (
+          device_id, alarm_id, hour, minute, label, is_enabled, is_vibrate, is_jit_mode, days_of_week, ringtone_title, ringtone_uri, created_by, status, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, 'device', 'active', NOW()
+        )
+        ON CONFLICT (device_id, alarm_id) DO UPDATE SET
+          hour = EXCLUDED.hour,
+          minute = EXCLUDED.minute,
+          label = EXCLUDED.label,
+          is_enabled = EXCLUDED.is_enabled,
+          is_vibrate = EXCLUDED.is_vibrate,
+          is_jit_mode = EXCLUDED.is_jit_mode,
+          days_of_week = EXCLUDED.days_of_week,
+          ringtone_title = EXCLUDED.ringtone_title,
+          ringtone_uri = EXCLUDED.ringtone_uri,
+          updated_at = NOW()
+        WHERE device_alarms.status != 'deleted'`,
+        [deviceId, alarmId, hour, minute, label, isEnabled, isVibrate, isJitMode, daysOfWeek, ringtoneTitle, ringtoneUri]
+      );
+    }
+
+    await client.query("COMMIT");
+
+    // Fetch server state for this device (including admin-created or admin-deleted alarms)
+    const { rows } = await client.query(
+      `SELECT alarm_id, hour, minute, label, is_enabled, is_vibrate, is_jit_mode, days_of_week, ringtone_title, ringtone_uri, created_by, status
+       FROM public.device_alarms
+       WHERE device_id = $1`,
+      [deviceId]
+    );
+
+    const activeAlarms = rows.filter(r => r.status === 'active');
+    const deletedAlarmIds = rows.filter(r => r.status === 'deleted').map(r => r.alarm_id);
+
+    return res.json({
+      success: true,
+      activeAlarms: activeAlarms.map(r => ({
+        id: Number(r.alarm_id),
+        hour: r.hour,
+        minute: r.minute,
+        label: r.label,
+        isEnabled: r.is_enabled,
+        isVibrate: r.is_vibrate,
+        isJitMode: r.is_jit_mode,
+        daysOfWeek: r.days_of_week,
+        ringtoneTitle: r.ringtone_title,
+        ringtoneUri: r.ringtone_uri,
+        createdBy: r.created_by
+      })),
+      deletedAlarmIds: deletedAlarmIds.map(Number)
     });
   } catch (error) {
     await client.query("ROLLBACK");

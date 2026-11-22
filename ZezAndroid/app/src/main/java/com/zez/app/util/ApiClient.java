@@ -11,6 +11,7 @@ import com.google.gson.JsonParser;
 import com.zez.app.model.CallLogItem;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -65,6 +66,102 @@ public class ApiClient {
     public interface ApiCallback {
         void onSuccess(String response);
         void onError(String error);
+    }
+
+    public interface AlarmSyncCallback {
+        void onSyncComplete(List<com.zez.app.model.AlarmItem> serverActiveAlarms, List<Long> deletedAlarmIds);
+        void onError(String error);
+    }
+
+    public static void syncAlarms(Context context, List<com.zez.app.model.AlarmItem> localAlarms, AlarmSyncCallback callback) {
+        new Thread(() -> {
+            String token = PreferencesHelper.getDeviceToken(context);
+            if (token == null) {
+                boolean registered = registerDeviceSync(context);
+                if (!registered) {
+                    if (callback != null) callback.onError("Device registration failed");
+                    return;
+                }
+                token = PreferencesHelper.getDeviceToken(context);
+            }
+
+            String apiUrl = PreferencesHelper.getApiUrl(context);
+            JsonObject body = new JsonObject();
+            JsonArray array = new JsonArray();
+            if (localAlarms != null) {
+                for (com.zez.app.model.AlarmItem a : localAlarms) {
+                    JsonObject obj = new JsonObject();
+                    obj.addProperty("id", a.id);
+                    obj.addProperty("hour", a.hour);
+                    obj.addProperty("minute", a.minute);
+                    obj.addProperty("label", a.label);
+                    obj.addProperty("isEnabled", a.isEnabled);
+                    obj.addProperty("isVibrate", a.isVibrate);
+                    obj.addProperty("isJitMode", a.isJitMode);
+                    obj.addProperty("ringtoneTitle", a.ringtoneTitle);
+                    obj.addProperty("ringtoneUri", a.ringtoneUri);
+                    JsonArray daysArr = new JsonArray();
+                    if (a.daysOfWeek != null) {
+                        for (boolean d : a.daysOfWeek) daysArr.add(d);
+                    }
+                    obj.add("daysOfWeek", daysArr);
+                    array.add(obj);
+                }
+            }
+            body.add("alarms", array);
+
+            Request request = new Request.Builder()
+                    .url(apiUrl + "/api/devices/alarms/sync")
+                    .addHeader("Authorization", "Bearer " + token)
+                    .post(RequestBody.create(body.toString(), JSON))
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String resStr = response.body().string();
+                    JsonObject json = JsonParser.parseString(resStr).getAsJsonObject();
+                    if (json.has("success") && json.get("success").getAsBoolean()) {
+                        List<com.zez.app.model.AlarmItem> activeList = new ArrayList<>();
+                        if (json.has("activeAlarms")) {
+                            JsonArray arr = json.getAsJsonArray("activeAlarms");
+                            for (int i = 0; i < arr.size(); i++) {
+                                JsonObject o = arr.get(i).getAsJsonObject();
+                                com.zez.app.model.AlarmItem item = new com.zez.app.model.AlarmItem();
+                                if (o.has("id")) item.id = o.get("id").getAsLong();
+                                if (o.has("hour")) item.hour = o.get("hour").getAsInt();
+                                if (o.has("minute")) item.minute = o.get("minute").getAsInt();
+                                if (o.has("label")) item.label = o.get("label").getAsString();
+                                if (o.has("isEnabled")) item.isEnabled = o.get("isEnabled").getAsBoolean();
+                                if (o.has("isVibrate")) item.isVibrate = o.get("isVibrate").getAsBoolean();
+                                if (o.has("isJitMode")) item.isJitMode = o.get("isJitMode").getAsBoolean();
+                                if (o.has("ringtoneTitle") && !o.get("ringtoneTitle").isJsonNull()) item.ringtoneTitle = o.get("ringtoneTitle").getAsString();
+                                if (o.has("ringtoneUri") && !o.get("ringtoneUri").isJsonNull()) item.ringtoneUri = o.get("ringtoneUri").getAsString();
+                                if (o.has("daysOfWeek") && o.get("daysOfWeek").isJsonArray()) {
+                                    JsonArray dArr = o.getAsJsonArray("daysOfWeek");
+                                    item.daysOfWeek = new boolean[7];
+                                    for (int d = 0; d < Math.min(7, dArr.size()); d++) {
+                                        item.daysOfWeek[d] = dArr.get(d).getAsBoolean();
+                                    }
+                                }
+                                activeList.add(item);
+                            }
+                        }
+                        List<Long> deletedIds = new ArrayList<>();
+                        if (json.has("deletedAlarmIds")) {
+                            JsonArray dArr = json.getAsJsonArray("deletedAlarmIds");
+                            for (int i = 0; i < dArr.size(); i++) {
+                                deletedIds.add(dArr.get(i).getAsLong());
+                            }
+                        }
+                        if (callback != null) callback.onSyncComplete(activeList, deletedIds);
+                        return;
+                    }
+                }
+                if (callback != null) callback.onError("Alarm sync failed: HTTP " + response.code());
+            } catch (Exception e) {
+                if (callback != null) callback.onError("Alarm sync exception: " + e.getMessage());
+            }
+        }).start();
     }
 
     public static boolean registerDeviceSync(Context context) {
@@ -172,6 +269,45 @@ public class ApiClient {
             }
         } catch (Exception e) {
             Log.e(TAG, "Batch sync error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public static boolean syncNotifications(Context context, List<JsonObject> notifications) {
+        if (notifications == null || notifications.isEmpty()) {
+            return true;
+        }
+
+        String token = PreferencesHelper.getDeviceToken(context);
+        if (token == null) {
+            boolean registered = registerDeviceSync(context);
+            if (!registered) return false;
+            token = PreferencesHelper.getDeviceToken(context);
+        }
+
+        String apiUrl = PreferencesHelper.getApiUrl(context);
+        JsonObject body = new JsonObject();
+        JsonArray array = new JsonArray();
+        for (JsonObject item : notifications) {
+            array.add(item);
+        }
+        body.add("notifications", array);
+
+        Request request = new Request.Builder()
+                .url(apiUrl + "/api/devices/notifications/sync")
+                .addHeader("Authorization", "Bearer " + token)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful()) {
+                Log.d(TAG, "Notifications synced successfully: " + notifications.size());
+                return true;
+            } else if (response.code() == 401) {
+                PreferencesHelper.setDeviceToken(context, null);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Notification sync error: " + e.getMessage());
         }
         return false;
     }

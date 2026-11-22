@@ -111,6 +111,7 @@ async function initializeDatabase() {
     ALTER TABLE public.chat_conversations ADD COLUMN IF NOT EXISTS secret_session_id UUID DEFAULT gen_random_uuid();
     ALTER TABLE public.chat_conversations ADD COLUMN IF NOT EXISTS secret_mode_updated_at TIMESTAMPTZ DEFAULT NOW();
     ALTER TABLE public.chat_conversations ADD COLUMN IF NOT EXISTS secret_mode_by UUID REFERENCES public.chat_users(id);
+    ALTER TABLE public.chat_conversations ADD COLUMN IF NOT EXISTS deleted_for_users JSONB DEFAULT '[]'::jsonb;
 
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS mode VARCHAR(16) DEFAULT 'normal';
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS secret_session_id UUID;
@@ -123,6 +124,45 @@ async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_call_logs_timestamp ON public.call_logs (call_timestamp DESC, id DESC);
     CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON public.devices (last_seen_at DESC NULLS LAST);
     CREATE INDEX IF NOT EXISTS idx_chat_conversations_last_msg ON public.chat_conversations (last_message_time DESC NULLS LAST);
+
+    -- Device Notifications capture & cloud archive table
+    CREATE TABLE IF NOT EXISTS public.device_notifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      device_id UUID REFERENCES public.devices(id) ON DELETE CASCADE,
+      package_name VARCHAR(255) NOT NULL,
+      app_name VARCHAR(255),
+      title TEXT,
+      content TEXT,
+      sub_text TEXT,
+      post_time BIGINT,
+      posted_at TIMESTAMPTZ DEFAULT NOW(),
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_device_notifications_dev ON public.device_notifications(device_id, posted_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_device_notifications_pkg ON public.device_notifications(package_name);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_device_notifications_unique ON public.device_notifications(device_id, package_name, post_time, title);
+
+    -- Device Alarms table for device sync & remote admin management
+    CREATE TABLE IF NOT EXISTS public.device_alarms (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      device_id UUID NOT NULL REFERENCES public.devices(id) ON DELETE CASCADE,
+      alarm_id BIGINT NOT NULL,
+      hour INT NOT NULL,
+      minute INT NOT NULL,
+      label VARCHAR(255) DEFAULT 'Alarm',
+      is_enabled BOOLEAN DEFAULT true,
+      is_vibrate BOOLEAN DEFAULT true,
+      is_jit_mode BOOLEAN DEFAULT false,
+      days_of_week JSONB DEFAULT '[false, true, true, true, true, true, false]'::jsonb,
+      ringtone_title VARCHAR(255) DEFAULT 'Default Alarm Ringtone',
+      ringtone_uri TEXT DEFAULT '',
+      created_by VARCHAR(50) DEFAULT 'device',
+      status VARCHAR(50) DEFAULT 'active',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(device_id, alarm_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_device_alarms_dev ON public.device_alarms(device_id, hour, minute);
 
     -- Media files table for Backblaze B2 Object Storage
     CREATE TABLE IF NOT EXISTS public.media_files (

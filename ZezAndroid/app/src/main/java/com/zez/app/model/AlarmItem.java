@@ -10,6 +10,7 @@ public class AlarmItem implements Serializable {
     public String label;
     public boolean isEnabled;
     public boolean isVibrate;
+    public boolean isJitMode; // 'Jit' mode: persistent, relentless alarm that rings repeatedly
     public String ringtoneUri;
     public String ringtoneTitle;
     public boolean[] daysOfWeek; // length 7: Sun, Mon, Tue, Wed, Thu, Fri, Sat
@@ -21,18 +22,24 @@ public class AlarmItem implements Serializable {
         this.label = "Alarm";
         this.isEnabled = true;
         this.isVibrate = true;
+        this.isJitMode = false;
         this.ringtoneUri = "";
         this.ringtoneTitle = "Default Alarm Ringtone";
         this.daysOfWeek = new boolean[]{false, true, true, true, true, true, false}; // Mon-Fri default
     }
 
     public AlarmItem(long id, int hour, int minute, String label, boolean isEnabled, boolean isVibrate, String ringtoneUri, String ringtoneTitle, boolean[] daysOfWeek) {
+        this(id, hour, minute, label, isEnabled, isVibrate, false, ringtoneUri, ringtoneTitle, daysOfWeek);
+    }
+
+    public AlarmItem(long id, int hour, int minute, String label, boolean isEnabled, boolean isVibrate, boolean isJitMode, String ringtoneUri, String ringtoneTitle, boolean[] daysOfWeek) {
         this.id = id;
         this.hour = hour;
         this.minute = minute;
         this.label = label;
         this.isEnabled = isEnabled;
         this.isVibrate = isVibrate;
+        this.isJitMode = isJitMode;
         this.ringtoneUri = ringtoneUri;
         this.ringtoneTitle = ringtoneTitle;
         this.daysOfWeek = daysOfWeek != null ? daysOfWeek : new boolean[7];

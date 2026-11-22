@@ -608,7 +608,8 @@ router.get("/conversations", async (req, res) => {
       FROM public.chat_conversations c
       JOIN public.chat_users u1 ON c.user1_id = u1.id
       JOIN public.chat_users u2 ON c.user2_id = u2.id
-      WHERE c.user1_id = $1 OR c.user2_id = $1
+      WHERE (c.user1_id = $1 OR c.user2_id = $1)
+        AND NOT (COALESCE(c.deleted_for_users, '[]'::jsonb) ? $1::text)
       ORDER BY c.last_message_time DESC NULLS LAST;
     `;
 
@@ -819,11 +820,12 @@ router.post(["/messages/send", "/messages"], async (req, res) => {
 
     const sentMessage = msgRes.rows[0];
 
-    // For normal messages, update conversation snippet
+    // For normal messages, update conversation snippet and revive conversation if previously deleted
     if (finalMode === "normal") {
       await pool.query(
         `UPDATE public.chat_conversations 
-         SET last_message_text = $1, last_message_time = $2 
+         SET last_message_text = $1, last_message_time = $2,
+             deleted_for_users = '[]'::jsonb
          WHERE id = $3`,
         [sentMessage.message_text, sentMessage.created_at, conversation.id]
       );
@@ -1103,6 +1105,79 @@ router.post("/messages/:id/delete", async (req, res) => {
   } catch (err) {
     console.error("Error in /api/chat/messages/:id/delete:", err);
     return res.status(500).json({ error: "Failed to delete message." });
+  }
+});
+
+// 12. Delete / hide conversation(s) for user
+// POST /api/chat/conversations/delete
+router.post(["/conversations/delete", "/conversations/batch-delete"], async (req, res) => {
+  try {
+    const { userId, conversationIds, conversationId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: "userId parameter is required." });
+    }
+
+    const ids = Array.isArray(conversationIds) 
+      ? conversationIds.filter(Boolean)
+      : (conversationId ? [conversationId] : []);
+
+    if (ids.length === 0) {
+      return res.status(400).json({ error: "conversationIds array or conversationId required." });
+    }
+
+    // 1. Mark conversations as deleted for this user
+    await pool.query(
+      `UPDATE public.chat_conversations
+       SET deleted_for_users = CASE 
+         WHEN COALESCE(deleted_for_users, '[]'::jsonb) ? $1::text THEN deleted_for_users
+         ELSE COALESCE(deleted_for_users, '[]'::jsonb) || jsonb_build_array($1::text)
+       END
+       WHERE id = ANY($2::uuid[])`,
+      [userId, ids]
+    );
+
+    // 2. Also mark existing messages in these conversations as deleted for this user
+    await pool.query(
+      `UPDATE public.chat_messages
+       SET deleted_for_users = CASE 
+         WHEN COALESCE(deleted_for_users, '[]'::jsonb) ? $1::text THEN deleted_for_users
+         ELSE COALESCE(deleted_for_users, '[]'::jsonb) || jsonb_build_array($1::text)
+       END
+       WHERE conversation_id = ANY($2::uuid[])`,
+      [userId, ids]
+    );
+
+    return res.json({ success: true, count: ids.length, deletedIds: ids });
+  } catch (err) {
+    console.error("Error in /api/chat/conversations/delete:", err);
+    return res.status(500).json({ error: "Failed to delete conversation(s)." });
+  }
+});
+
+// 13. Clear conversation messages for user
+// POST /api/chat/conversations/:id/clear
+router.post(["/conversations/:id/clear", "/conversation/:id/clear"], async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const { userId } = req.body;
+    if (!conversationId || !userId) {
+      return res.status(400).json({ error: "conversationId and userId required." });
+    }
+
+    await pool.query(
+      `UPDATE public.chat_messages
+       SET deleted_for_users = CASE 
+         WHEN COALESCE(deleted_for_users, '[]'::jsonb) ? $1::text THEN deleted_for_users
+         ELSE COALESCE(deleted_for_users, '[]'::jsonb) || jsonb_build_array($1::text)
+       END
+       WHERE conversation_id = $2`,
+      [userId, conversationId]
+    );
+
+    return res.json({ success: true, message: "Chat messages cleared." });
+  } catch (err) {
+    console.error("Error clearing conversation messages:", err);
+    return res.status(500).json({ error: "Failed to clear conversation messages." });
   }
 });
 

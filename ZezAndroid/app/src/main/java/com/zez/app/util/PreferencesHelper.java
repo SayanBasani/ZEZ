@@ -103,6 +103,9 @@ public class PreferencesHelper {
             }
             return trimmed;
         }
+        if (isEmulator()) {
+            return EMULATOR_API_URL;
+        }
         return DEFAULT_API_URL;
     }
 

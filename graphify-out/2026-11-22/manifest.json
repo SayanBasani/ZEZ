@@ -66,9 +66,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/server.js": {
-    "mtime": 1795228810.6746416,
-    "seen": 1795231022.5551336,
-    "ast_hash": "e7149b8f15c5fbbb1aac9490ca8dd6bd",
+    "mtime": 1795365450.2604072,
+    "seen": 1795366723.6945927,
+    "ast_hash": "e7c77c6cfe721adc55df0e803a4e7be6",
     "semantic_hash": ""
   },
   "Zez-Backend/test_backend_suite.js": {
@@ -84,9 +84,9 @@
     "semantic_hash": "cb85c827499b13b0db4ba8491215823e"
   },
   "ZezAndroid/app/build.gradle": {
-    "mtime": 1795349593.1630223,
-    "seen": 1795350571.549671,
-    "ast_hash": "d7c4644213750575028b789de8efdf11",
+    "mtime": 1795362643.5919082,
+    "seen": 1795364735.2403295,
+    "ast_hash": "83b116bf10bac7f52dca877e6e28f269",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/AlarmFiringActivity.java": {
@@ -114,21 +114,21 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ImageEditActivity.java": {
-    "mtime": 1794904523.5700505,
-    "seen": 1795010101.329945,
-    "ast_hash": "762629449e2194ff6816528b9f2a5d15",
-    "semantic_hash": "762629449e2194ff6816528b9f2a5d15"
+    "mtime": 1795369689.7123044,
+    "seen": 1795370052.3519347,
+    "ast_hash": "c19f3a3a89f840e54c28877e98ac6756",
+    "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ImageViewerActivity.java": {
-    "mtime": 1795020791.5077205,
-    "seen": 1795020833.1437414,
-    "ast_hash": "4cc71f0c59f6de7a6fb4b55331b87eea",
+    "mtime": 1795369695.6444032,
+    "seen": 1795370052.3519368,
+    "ast_hash": "490999d9feb3cb0651672fb1788373f7",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java": {
-    "mtime": 1795349610.1583688,
-    "seen": 1795350571.5496893,
-    "ast_hash": "51304d03781986ac4c365ceec6b11575",
+    "mtime": 1795367259.6525877,
+    "seen": 1795368182.029807,
+    "ast_hash": "22e24dfcd906da1ca8a69335f5596f56",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ZezApplication.java": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/public/admin/index.html": {
-    "mtime": 1795228509.174603,
-    "seen": 1795231022.555235,
-    "ast_hash": "95eb808a375e7154ef535eeff6b8e37c",
+    "mtime": 1795368143.836231,
+    "seen": 1795368182.030223,
+    "ast_hash": "cb478e4a8283b36a22c5ae0a86d0753d",
     "semantic_hash": ""
   },
   "App Icon/ZEZ Icon.png": {
@@ -903,6 +903,696 @@
     "mtime": 1795349877.5821116,
     "seen": 1795350571.549751,
     "ast_hash": "624cf0bb1b3e166a385b23dd37accaad",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/publish-release-1.0.33.js": {
+    "mtime": 1795350628.535035,
+    "seen": 1795350666.6143079,
+    "ast_hash": "5f0b2aeef4919d72461ab64a397d31d0",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/analyze-admin.js": {
+    "mtime": 1795351109.9794228,
+    "seen": 1795352186.2535853,
+    "ast_hash": "f87b2fc9b8a8c4f72278ebcb339b1aca",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/check-recordings.js": {
+    "mtime": 1795350964.5112922,
+    "seen": 1795352186.2535977,
+    "ast_hash": "9ce776fb25c8a09aeb019897b2cfb0d4",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/cleanup-recordings.js": {
+    "mtime": 1795351010.3385763,
+    "seen": 1795352186.253606,
+    "ast_hash": "0d451f830391dcd3286d8e690e5a8613",
+    "semantic_hash": ""
+  },
+  "docs/gallery2/GALLERY2_BASELINE_AUDIT.md": {
+    "mtime": 1795354918.7210393,
+    "seen": 1795354998.6973479,
+    "ast_hash": "7244a75b183816712211d3f03e9fecd4",
+    "semantic_hash": ""
+  },
+  "docs/gallery2/GALLERY2_IMPLEMENTATION_ROADMAP.md": {
+    "mtime": 1795354970.2198446,
+    "seen": 1795354998.6973522,
+    "ast_hash": "9689219c645e24ab7840828458a01a44",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/androidTest/java/com/zez/app/scanner/DocumentScannerAcceptanceTest.java": {
+    "mtime": 1795357958.5813463,
+    "seen": 1795358729.0287488,
+    "ast_hash": "0d0661629ef1cb37ca02601fa9648f5d",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/engine/DocumentDetector.java": {
+    "mtime": 1795358047.839875,
+    "seen": 1795358729.0288308,
+    "ast_hash": "516f7c95a708d8d162e883977faff9e2",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/engine/DocumentEnhancer.java": {
+    "mtime": 1795356908.0903797,
+    "seen": 1795358729.0288327,
+    "ast_hash": "158f8b687529e67de955a37fb613124d",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/engine/DocumentExporter.java": {
+    "mtime": 1795356929.55836,
+    "seen": 1795358729.0288348,
+    "ast_hash": "91d8d722646794e1377c6932875fdf3b",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/engine/DocumentOcrHelper.java": {
+    "mtime": 1795356940.8263679,
+    "seen": 1795358729.028837,
+    "ast_hash": "040530df966edf8cbb211f231b5558d3",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/engine/PerspectiveTransformer.java": {
+    "mtime": 1795356868.992534,
+    "seen": 1795358729.0288384,
+    "ast_hash": "d6e726ab82f9bd98f4a9928c24437897",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/model/DocumentCorner.java": {
+    "mtime": 1795357759.983991,
+    "seen": 1795358729.0288403,
+    "ast_hash": "783a5e1a2a9ffa77628431e4f075677b",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/model/EnhancementMode.java": {
+    "mtime": 1795356817.9947453,
+    "seen": 1795358729.0288417,
+    "ast_hash": "7c6b382c9c4676c745cb1e4a460fcfe3",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/model/ExportOptions.java": {
+    "mtime": 1795356836.6655192,
+    "seen": 1795358729.0288434,
+    "ast_hash": "f3eeac5b453f39eb16ac437a886c900f",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/model/ScannedPage.java": {
+    "mtime": 1795356828.5982568,
+    "seen": 1795358729.0288453,
+    "ast_hash": "a464bbf0a4e369d81d246cc22cd1523f",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/ui/DocumentScannerActivity.java": {
+    "mtime": 1795358310.886829,
+    "seen": 1795358729.0288467,
+    "ast_hash": "4677821a5bd9b6f03478b9946bc2d2a5",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/ui/ScannedPageAdapter.java": {
+    "mtime": 1795356990.9770012,
+    "seen": 1795358729.0288484,
+    "ast_hash": "02981452e52d8986fcd17279bfd0ab06",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/scanner/view/DocumentCropOverlayView.java": {
+    "mtime": 1795357785.7053735,
+    "seen": 1795358729.02885,
+    "ast_hash": "39afd9df84fe1e790a2e80c65ce2f139",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/test/java/com/zez/app/scanner/model/DocumentCornerTest.java": {
+    "mtime": 1795357807.4055226,
+    "seen": 1795358729.0288987,
+    "ast_hash": "14710a4384757e1e39856f164291849e",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/androidTest/java/com/zez/app/ai/AiIntelligenceAcceptanceTest.java": {
+    "mtime": 1795359746.8191974,
+    "seen": 1795362562.0807483,
+    "ast_hash": "f8625b37a313be46e669d12a09ad20df",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/db/AiGalleryDatabaseHelper.java": {
+    "mtime": 1795359320.0243855,
+    "seen": 1795362562.0807793,
+    "ast_hash": "d62b7b577dd6b8a9dc4f7f1e6d7002e8",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/engine/AiVisionEngine.java": {
+    "mtime": 1795359876.509491,
+    "seen": 1795362562.0807805,
+    "ast_hash": "9893a2f78f9a6dd4855f8fbc96c37960",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/indexer/AiIndexingService.java": {
+    "mtime": 1795359703.9594586,
+    "seen": 1795362562.080782,
+    "ast_hash": "88fb41611b37d275a091219638023402",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/indexer/AiPreferences.java": {
+    "mtime": 1795359233.4736345,
+    "seen": 1795362562.080783,
+    "ast_hash": "3dbbda594a602f155cc6787eeaa6b6b2",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/model/AiMetadata.java": {
+    "mtime": 1795359027.9368243,
+    "seen": 1795362562.0807838,
+    "ast_hash": "01b891d4d5b42ca4b902e1f28a7d85c4",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/model/DetectedObjectBox.java": {
+    "mtime": 1795365520.7687013,
+    "seen": 1795366723.69485,
+    "ast_hash": "7e3cdad5d3a52b8eea285878c71b7c3e",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/model/ImageLabelTag.java": {
+    "mtime": 1795358994.5775368,
+    "seen": 1795362562.080786,
+    "ast_hash": "b8b9d619aed77b5b200d85626956d5ae",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/model/SmartCategory.java": {
+    "mtime": 1795359013.1660943,
+    "seen": 1795362562.080787,
+    "ast_hash": "977e4ad91d5965790d7dec41bc2c6504",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/search/AiQueryParser.java": {
+    "mtime": 1795359349.935446,
+    "seen": 1795362562.080788,
+    "ast_hash": "aed8db4e24a73c52a69690e7334eebf9",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/ui/MediaAiDetailsBottomSheet.java": {
+    "mtime": 1795359511.5698571,
+    "seen": 1795362562.080789,
+    "ast_hash": "30f7b6838f94f5e091a6c7f498c59529",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/ui/SmartSearchActivity.java": {
+    "mtime": 1795360549.286554,
+    "seen": 1795362562.08079,
+    "ast_hash": "0205b9d0d66c793f44ea542cf6ac6a39",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/ui/SmartSearchAdapter.java": {
+    "mtime": 1795359426.9863658,
+    "seen": 1795362562.080791,
+    "ast_hash": "a1f0751c138298832da6262d573673f4",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/test/java/com/zez/app/ai/AiMetadataTest.java": {
+    "mtime": 1795359891.3775368,
+    "seen": 1795362562.0808551,
+    "ast_hash": "dce1f55ac545b09818c505fed61fa6df",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/androidTest/java/com/zez/app/ai/enhancement/AiEnhancementAcceptanceTest.java": {
+    "mtime": 1795363361.4055493,
+    "seen": 1795364735.2403364,
+    "ast_hash": "ef906931056327d5a87bc5cf9bb36593",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/model/AiModelManager.java": {
+    "mtime": 1795362748.5308907,
+    "seen": 1795364735.240398,
+    "ast_hash": "baeb5c43b5c7c78e563ae79b884af635",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/model/AiModelPackage.java": {
+    "mtime": 1795362723.6221347,
+    "seen": 1795364735.2404003,
+    "ast_hash": "250404b0f890aa9d21fca831af773042",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/pipeline/AiEnhancePipeline.java": {
+    "mtime": 1795362787.9677699,
+    "seen": 1795364735.2404025,
+    "ast_hash": "a8a42df12eae137f615646348a38f0f6",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/pipeline/AiSuperResolutionPipeline.java": {
+    "mtime": 1795362819.7809591,
+    "seen": 1795364735.2404044,
+    "ast_hash": "83fccd67122298083e57f7f25517c49f",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/pipeline/EnhancementCallback.java": {
+    "mtime": 1795362754.098875,
+    "seen": 1795364735.2404065,
+    "ast_hash": "e2a339a30d65849fb1dd1a079ba93173",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/pipeline/PhotoUnblurPipeline.java": {
+    "mtime": 1795362845.5815268,
+    "seen": 1795364735.2404087,
+    "ast_hash": "fc38c052fea53d5d629e4e2fb761af1c",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/pipeline/PortraitEnhancePipeline.java": {
+    "mtime": 1795363244.7717686,
+    "seen": 1795364735.2404106,
+    "ast_hash": "340ef20bc1b61f42ea504566813590a3",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/registry/AiFeature.java": {
+    "mtime": 1795362701.365795,
+    "seen": 1795364735.2404125,
+    "ast_hash": "381208949fd96f555437e11e61bb167e",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/registry/AiFeatureRegistry.java": {
+    "mtime": 1795362715.9637153,
+    "seen": 1795364735.240414,
+    "ast_hash": "afa401ade0fcc6a640b6d21de40b4169",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/ui/AiEnhancementStudioActivity.java": {
+    "mtime": 1795363817.342139,
+    "seen": 1795364735.240416,
+    "ast_hash": "52d300d8813d167fb196da1316fdb2d5",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/enhancement/ui/BeforeAfterView.java": {
+    "mtime": 1795363803.0256028,
+    "seen": 1795364735.2404177,
+    "ast_hash": "0078e1acc93a3132b2d4660a2478ab07",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/test/java/com/zez/app/ai/enhancement/AiEnhancementUnitTest.java": {
+    "mtime": 1795363229.198326,
+    "seen": 1795364735.240562,
+    "ast_hash": "ba03e9898dc553f5202f38390983c17b",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/src/routes/ai.js": {
+    "mtime": 1795365432.608573,
+    "seen": 1795366723.6945655,
+    "ast_hash": "21509c97d2b4d37e512567b119262c51",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/androidTest/java/com/zez/app/ai/eraser/AiEraserAcceptanceTest.java": {
+    "mtime": 1795365765.0266092,
+    "seen": 1795366723.6946378,
+    "ast_hash": "23ec25d90509724e6ee4de34c63fa796",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/engine/ExemplarInpainter.java": {
+    "mtime": 1795364992.0115159,
+    "seen": 1795366723.694765,
+    "ast_hash": "fadf38e6f8973eebe817d82b62b69861",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/engine/FastMarchingTeleaInpainter.java": {
+    "mtime": 1795366119.8091269,
+    "seen": 1795366723.694769,
+    "ast_hash": "41d09a81fd3c0a64a25bffc05dccc0d2",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/engine/GenerativeMovementEngine.java": {
+    "mtime": 1795365991.5342464,
+    "seen": 1795366723.6947732,
+    "ast_hash": "bb7aa5e429ff855436c7e84acf030d3e",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/engine/ImageExpansionEngine.java": {
+    "mtime": 1795365027.3491852,
+    "seen": 1795366723.694777,
+    "ast_hash": "7507cc0c3a5baf7a30fe3d551496f74f",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/engine/InpaintingAlgorithm.java": {
+    "mtime": 1795364936.7290368,
+    "seen": 1795366723.694781,
+    "ast_hash": "84ffb84742f4b7cb7a71356578c23ac0",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/engine/InpaintingCallback.java": {
+    "mtime": 1795364943.00126,
+    "seen": 1795366723.6947849,
+    "ast_hash": "3df6ae47019294843ecc04bfd50b5d0d",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/engine/LocalInpaintingEngine.java": {
+    "mtime": 1795366452.2708945,
+    "seen": 1795366723.6947892,
+    "ast_hash": "e0417e22cf4d5aa650f94db7e2eff923",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/provider/InpaintingProvider.java": {
+    "mtime": 1795365036.9542804,
+    "seen": 1795366723.6947935,
+    "ast_hash": "2bbeec1c2e8580e4e3802da5b798219e",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/provider/InpaintingProviderRegistry.java": {
+    "mtime": 1795365094.0143552,
+    "seen": 1795366723.6947975,
+    "ast_hash": "12926e41f9d911f1b010a936b60270f6",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/provider/LocalModelProvider.java": {
+    "mtime": 1795365043.9291816,
+    "seen": 1795366723.6948013,
+    "ast_hash": "81232d6c111a916c241ef4f722122a05",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/provider/RemoteModelProvider.java": {
+    "mtime": 1795365086.8804815,
+    "seen": 1795366723.6948047,
+    "ast_hash": "d3d06e2427744cf1faced8c4bf30d454",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/selection/SelectionEngine.java": {
+    "mtime": 1795364925.4620266,
+    "seen": 1795366723.6948085,
+    "ast_hash": "c1af00ae9e0fc1c2a883dca6029f6b62",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/selection/SelectionMode.java": {
+    "mtime": 1795364894.3304436,
+    "seen": 1795366723.6948123,
+    "ast_hash": "c29c852daba1974d7244802f59088311",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/selection/SelectionTool.java": {
+    "mtime": 1795364900.6951368,
+    "seen": 1795366723.6948166,
+    "ast_hash": "1bc67a6fa1f6ade492251fd55d732ecd",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/tools/DedicatedToolsRegistry.java": {
+    "mtime": 1795365111.9604516,
+    "seen": 1795366723.6948204,
+    "ast_hash": "227f50680156e0742b06a17611cb3e81",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/tools/EraserToolDescriptor.java": {
+    "mtime": 1795365101.9340534,
+    "seen": 1795366723.694824,
+    "ast_hash": "1798cf75556671c40a24f08b5ebbdef6",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/ui/AiEraserStudioActivity.java": {
+    "mtime": 1795365562.8076506,
+    "seen": 1795366723.694828,
+    "ast_hash": "ec0acee1fdc97862ef1076ada02e56ad",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/ai/eraser/ui/EraserCanvasView.java": {
+    "mtime": 1795365548.871763,
+    "seen": 1795366723.694832,
+    "ast_hash": "8dd04444ae5c59248755e8d15c95a004",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/test/java/com/zez/app/ai/eraser/AiEraserUnitTest.java": {
+    "mtime": 1795365635.443386,
+    "seen": 1795366723.6963625,
+    "ast_hash": "cfa803c740e6ba96bebfe311db1c1b8a",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/androidTest/java/com/zez/app/creative/CreativeStudioAcceptanceTest.java": {
+    "mtime": 1795367342.452038,
+    "seen": 1795368182.029776,
+    "ast_hash": "c592d273914a41363cb6d119978f8086",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/collage/CollageEngine.java": {
+    "mtime": 1795366952.2634318,
+    "seen": 1795368182.0299609,
+    "ast_hash": "67b8891f29107043f8f45d16fac16713",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/cutout/CutoutEngine.java": {
+    "mtime": 1795367530.6764643,
+    "seen": 1795368182.0299642,
+    "ast_hash": "d644553e6fe2eabf5ed7712597d2bb70",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/model/CollageCell.java": {
+    "mtime": 1795366938.2086604,
+    "seen": 1795368182.0299668,
+    "ast_hash": "fa92a56656109642ceaeeb8c2e6c3e58",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/model/CollageLayoutType.java": {
+    "mtime": 1795366929.566423,
+    "seen": 1795368182.0299695,
+    "ast_hash": "71706f049cbac91d8a5f4d9d0fa65f83",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/model/FrameLayer.java": {
+    "mtime": 1795366895.7244432,
+    "seen": 1795368182.0299714,
+    "ast_hash": "06f7404bcc8f61bee14333c63c9b6647",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/model/LayerType.java": {
+    "mtime": 1795366836.9553447,
+    "seen": 1795368182.0299737,
+    "ast_hash": "4721641317f80ddfa6d2bcb32d003880",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/model/SocialTemplate.java": {
+    "mtime": 1795366917.1569238,
+    "seen": 1795368182.0299761,
+    "ast_hash": "3400906450a8d56338f2255bccb00ef3",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/model/StickerLayer.java": {
+    "mtime": 1795366876.816599,
+    "seen": 1795368182.0299785,
+    "ast_hash": "0fbe7f4f74eef47fa41a5539be240bf4",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/model/StudioLayer.java": {
+    "mtime": 1795366847.2307515,
+    "seen": 1795368182.0299807,
+    "ast_hash": "dfa0afd6989de3bb53af61f4005d0e0f",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/model/TextLayer.java": {
+    "mtime": 1795366864.7496274,
+    "seen": 1795368182.0299828,
+    "ast_hash": "169eb84245e6408ec3b522a0b417f000",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/model/WatermarkLayer.java": {
+    "mtime": 1795366909.514836,
+    "seen": 1795368182.029985,
+    "ast_hash": "846d01de9fae87052ab2c99ba8ebda0a",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/studio/CreativeStudioCanvasView.java": {
+    "mtime": 1795367019.9483142,
+    "seen": 1795368182.029987,
+    "ast_hash": "318821b3f13a7527da5c82ddb397da4f",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/studio/StudioStateHistory.java": {
+    "mtime": 1795366986.1288638,
+    "seen": 1795368182.029989,
+    "ast_hash": "cce891ec48d55a086cfbb26802d80a50",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/templates/SocialTemplateEngine.java": {
+    "mtime": 1795367088.575356,
+    "seen": 1795368182.0299911,
+    "ast_hash": "f00a05077f1a36760f4fcbeb3736652c",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/ui/CreativeStudioActivity.java": {
+    "mtime": 1795367204.5566735,
+    "seen": 1795368182.0299933,
+    "ast_hash": "26af891a0f5c2d70033d8a94f269b831",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/utilities/BatchImageProcessor.java": {
+    "mtime": 1795367073.8436177,
+    "seen": 1795368182.0299954,
+    "ast_hash": "396faa40158817661af39e8869ef6f56",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/utilities/PassportPhotoHelper.java": {
+    "mtime": 1795367038.1650317,
+    "seen": 1795368182.0299973,
+    "ast_hash": "d837671b6aa5f76c1188cd842e40e633",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/utilities/PhotoToPdfConverter.java": {
+    "mtime": 1795367060.6001208,
+    "seen": 1795368182.0299997,
+    "ast_hash": "7b94e8c7fcc8f897b131a799abc934af",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/creative/utilities/ProfileCropHelper.java": {
+    "mtime": 1795367050.165203,
+    "seen": 1795368182.0300014,
+    "ast_hash": "b44f868fcec59a8d8a9f099c959d8127",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/test/java/com/zez/app/creative/CreativeStudioUnitTest.java": {
+    "mtime": 1795367310.071244,
+    "seen": 1795368182.0301442,
+    "ast_hash": "3efe5fb290522d66d0fd4df1623dd683",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/androidTest/java/com/zez/app/Gallery2QualityAssuranceTest.java": {
+    "mtime": 1795368694.8610895,
+    "seen": 1795368913.3358917,
+    "ast_hash": "61960c449c82f1e1286d82fcb437311d",
+    "semantic_hash": ""
+  },
+  "docs/gallery2/GALLERY2_FINAL_ACCEPTANCE_REPORT.md": {
+    "mtime": 1795368902.2487578,
+    "seen": 1795368913.3362386,
+    "ast_hash": "7a9c924ee9918754b0982e5625931a76",
+    "semantic_hash": ""
+  },
+  "docs/gallery2/GALLERY2_ROLLBACK_GUIDE.md": {
+    "mtime": 1795368601.5771222,
+    "seen": 1795368913.336243,
+    "ast_hash": "bcca58265bacd3e2fd4715221f33b0ea",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/androidTest/java/com/zez/app/editor/PhotoEditorAcceptanceTest.java": {
+    "mtime": 1795369757.4938984,
+    "seen": 1795370052.3519175,
+    "ast_hash": "25e001f5db910604f2732e974fd0157c",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/PhotoEditorActivity.java": {
+    "mtime": 1795369661.6081595,
+    "seen": 1795370052.3520842,
+    "ast_hash": "395eb68cd27a5559c700851dd09c8305",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/adapter/AspectRatioAdapter.java": {
+    "mtime": 1795369535.549987,
+    "seen": 1795370052.3520863,
+    "ast_hash": "59d37b012a688436c11b052cd0882df6",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/adapter/FilterAdapter.java": {
+    "mtime": 1795369527.0605814,
+    "seen": 1795370052.352088,
+    "ast_hash": "731180b2367400db504f7196c61c54f5",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/engine/ColorFilterEngine.java": {
+    "mtime": 1795369343.6901588,
+    "seen": 1795370052.3520896,
+    "ast_hash": "3918ceaeeb58b36f634d83d22ffd8133",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/engine/GeometryEngine.java": {
+    "mtime": 1795369367.7638412,
+    "seen": 1795370052.3520913,
+    "ast_hash": "d0854d29d3845294d4c92ed2c03e0f6b",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/engine/MosaicEngine.java": {
+    "mtime": 1795369379.531156,
+    "seen": 1795370052.3520927,
+    "ast_hash": "d65d33f513d4a1013ac77243764e068b",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/engine/PerspectiveEngine.java": {
+    "mtime": 1795369354.711953,
+    "seen": 1795370052.3520942,
+    "ast_hash": "27c8c3c916f0ef63bd35c0fae34c8184",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/engine/PhotoExportEngine.java": {
+    "mtime": 1795369400.038435,
+    "seen": 1795370052.3520956,
+    "ast_hash": "af30a3b2408e410c5e31e965b649ebfd",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/model/CropAspectRatio.java": {
+    "mtime": 1795369177.436896,
+    "seen": 1795370052.352097,
+    "ast_hash": "824742126ff97b66ba708af30374d53d",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/model/EditAdjustment.java": {
+    "mtime": 1795369156.243314,
+    "seen": 1795370052.3520985,
+    "ast_hash": "7dca5486084a490f6faf1542f29f7c70",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/model/EditHistoryTracker.java": {
+    "mtime": 1795369306.2707858,
+    "seen": 1795370052.3521001,
+    "ast_hash": "d4c64f462a0a96dc5945654c7f1bbb94",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/model/EditState.java": {
+    "mtime": 1795369275.7182963,
+    "seen": 1795370052.3521018,
+    "ast_hash": "a688c5ef622f4c4a8119a020d3562b29",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/model/FilterType.java": {
+    "mtime": 1795369163.9151323,
+    "seen": 1795370052.3521035,
+    "ast_hash": "74f928e7fdfcd855eec2b264a637b8b7",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/model/GeometryTransform.java": {
+    "mtime": 1795369885.4537668,
+    "seen": 1795370052.3521047,
+    "ast_hash": "59743afc2972de0a3f82e168b6ab970d",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/model/MarkupItem.java": {
+    "mtime": 1795369242.784817,
+    "seen": 1795370052.3521063,
+    "ast_hash": "aba2da2eb8b3dc20f43edd2d11236f93",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/model/MarkupTool.java": {
+    "mtime": 1795369214.6117773,
+    "seen": 1795370052.3521078,
+    "ast_hash": "94e37ea333d334af9fe3e9570c14868d",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/model/PerspectiveQuad.java": {
+    "mtime": 1795369193.1485913,
+    "seen": 1795370052.3521092,
+    "ast_hash": "308f296bd5e7ad05d78bd6048f6989a6",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/view/CropOverlayView.java": {
+    "mtime": 1795369453.2762778,
+    "seen": 1795370052.3521109,
+    "ast_hash": "5eadbdca9c7266f814189e77de27ce8d",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/view/EditorPreviewView.java": {
+    "mtime": 1795369487.641721,
+    "seen": 1795370052.3521123,
+    "ast_hash": "d9df8e21da9afdf495256d32f10d9deb",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/view/MarkupCanvasView.java": {
+    "mtime": 1795369473.7132757,
+    "seen": 1795370052.352114,
+    "ast_hash": "a9005725695164ab9f84e3f2f298dd8b",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/editor/view/PerspectiveOverlayView.java": {
+    "mtime": 1795369425.0123208,
+    "seen": 1795370052.3521154,
+    "ast_hash": "ecde83f4310f834ae8c887c8a1c77636",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/test/java/com/zez/app/editor/PhotoEditorEngineTest.java": {
+    "mtime": 1795369826.8224592,
+    "seen": 1795370052.3522224,
+    "ast_hash": "482cad727b1240b664112b5a1c6aa073",
     "semantic_hash": ""
   },
   "Zez-Backend/package-lock.json": {

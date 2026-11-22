@@ -1509,6 +1509,9 @@ public class ChatActivity extends AppCompatActivity {
                         if (chatDb != null) {
                             chatDb.clearConversation(conversationId != null ? conversationId : otherUserId);
                         }
+                        if (conversationId != null && currentUserId != null) {
+                            com.zez.app.util.ChatApiClient.clearConversation(this, conversationId, currentUserId, null);
+                        }
                     }
                     adapter.setMessages(new ArrayList<>());
                     Toast.makeText(this, "Chat cleared", Toast.LENGTH_SHORT).show();

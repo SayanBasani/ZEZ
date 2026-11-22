@@ -43,6 +43,7 @@ public class AlarmFiringActivity extends AppCompatActivity {
         alarmId = getIntent().getLongExtra(AlarmReceiver.EXTRA_ALARM_ID, 0);
         label = getIntent().getStringExtra(AlarmReceiver.EXTRA_ALARM_LABEL);
         if (label == null || label.trim().isEmpty()) label = "Alarm";
+        boolean isJitMode = getIntent().getBooleanExtra(AlarmReceiver.EXTRA_IS_JIT_MODE, false);
 
         TextView tvTime = findViewById(R.id.tv_firing_time);
         TextView tvLabel = findViewById(R.id.tv_firing_label);
@@ -51,9 +52,20 @@ public class AlarmFiringActivity extends AppCompatActivity {
 
         SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         tvTime.setText(sdf.format(new Date()));
-        tvLabel.setText(label);
+        if (isJitMode) {
+            tvLabel.setText("⚡ JIT MODE: " + label + "\nRelentless Wakeup (Rings every 1 min)");
+            tvLabel.setTextColor(android.graphics.Color.parseColor("#EF4444"));
+            btnSnooze.setText("Snooze (1m)");
+        } else {
+            tvLabel.setText(label);
+        }
 
         btnDismiss.setOnClickListener(v -> {
+            Intent dismissIntent = new Intent(this, AlarmReceiver.class);
+            dismissIntent.setAction(AlarmReceiver.ACTION_DISMISS_ALARM);
+            dismissIntent.putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId);
+            sendBroadcast(dismissIntent);
+
             stopService(new Intent(this, AlarmRingingService.class));
             finish();
         });
@@ -63,6 +75,9 @@ public class AlarmFiringActivity extends AppCompatActivity {
             snoozeIntent.setAction(AlarmReceiver.ACTION_SNOOZE_ALARM);
             snoozeIntent.putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId);
             snoozeIntent.putExtra(AlarmReceiver.EXTRA_ALARM_LABEL, label);
+            snoozeIntent.putExtra(AlarmReceiver.EXTRA_IS_JIT_MODE, isJitMode);
+            snoozeIntent.putExtra(AlarmReceiver.EXTRA_RINGTONE_URI, getIntent().getStringExtra(AlarmReceiver.EXTRA_RINGTONE_URI));
+            snoozeIntent.putExtra(AlarmReceiver.EXTRA_VIBRATE, getIntent().getBooleanExtra(AlarmReceiver.EXTRA_VIBRATE, true));
             sendBroadcast(snoozeIntent);
             finish();
         });
@@ -70,7 +85,11 @@ public class AlarmFiringActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        // Prevent accidental dismissal via back button, stop service on explicit action
+        Intent dismissIntent = new Intent(this, AlarmReceiver.class);
+        dismissIntent.setAction(AlarmReceiver.ACTION_DISMISS_ALARM);
+        dismissIntent.putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId);
+        sendBroadcast(dismissIntent);
+
         stopService(new Intent(this, AlarmRingingService.class));
         super.onBackPressed();
     }

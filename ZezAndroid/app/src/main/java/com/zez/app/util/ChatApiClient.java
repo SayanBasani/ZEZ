@@ -899,6 +899,77 @@ public class ChatApiClient {
         });
     }
 
+    // Delete Conversations (Batch or Single) for a user
+    public static void deleteConversations(Context context, String userId, List<String> conversationIds, ChatCallback<Void> callback) {
+        if (userId == null || conversationIds == null || conversationIds.isEmpty()) {
+            postError(callback, "userId and conversationIds required");
+            return;
+        }
+        String url = getBaseUrl(context) + "/api/chat/conversations/delete";
+        JsonObject body = new JsonObject();
+        body.addProperty("userId", userId);
+        JsonArray arr = new JsonArray();
+        for (String id : conversationIds) {
+            if (id != null && !id.trim().isEmpty()) {
+                arr.add(id.trim());
+            }
+        }
+        body.add("conversationIds", arr);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Failed to delete chat: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    postError(callback, "Delete chat HTTP " + response.code());
+                    return;
+                }
+                postSuccess(callback, null);
+            }
+        });
+    }
+
+    // Clear messages for a conversation
+    public static void clearConversation(Context context, String conversationId, String userId, ChatCallback<Void> callback) {
+        if (conversationId == null || userId == null) {
+            postError(callback, "conversationId and userId required");
+            return;
+        }
+        String url = getBaseUrl(context) + "/api/chat/conversations/" + Uri.encode(conversationId) + "/clear";
+        JsonObject body = new JsonObject();
+        body.addProperty("userId", userId);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Failed to clear chat: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    postError(callback, "Clear chat HTTP " + response.code());
+                    return;
+                }
+                postSuccess(callback, null);
+            }
+        });
+    }
+
     private static <T> void postSuccess(ChatCallback<T> callback, T data) {
         if (callback != null) {
             mainHandler.post(() -> callback.onSuccess(data));

@@ -834,8 +834,12 @@ public class MainActivity extends AppCompatActivity {
                 loadChatsData();
             } else if (currentTab == R.id.nav_calls) {
                 loadCallsData();
+            } else if (currentTab == R.id.nav_settings) {
+                loadSettingsData();
             }
             startChatListPolling();
+        } else if (currentTab == R.id.nav_settings) {
+            loadSettingsData();
         }
     }
 
@@ -911,15 +915,25 @@ public class MainActivity extends AppCompatActivity {
                 .setMessage("Messages will be removed from your device.")
                 .setPositiveButton("Delete", (d, w) -> {
                     com.zez.app.util.ChatLocalDbHelper db = com.zez.app.util.ChatLocalDbHelper.getInstance(this);
+                    List<String> toDeleteIds = new ArrayList<>();
                     for (ChatConversation c : selected) {
                         if (c.getConversationId() != null) {
+                            toDeleteIds.add(c.getConversationId());
                             db.deleteConversation(c.getConversationId());
-                            allLoadedConversations.remove(c);
                         }
                     }
+                    allLoadedConversations.removeAll(selected);
                     conversationsAdapter.clearSelection();
                     conversationsAdapter.setConversations(allLoadedConversations);
+                    if (allLoadedConversations.isEmpty() && layoutChatsEmpty != null) {
+                        layoutChatsEmpty.setVisibility(View.VISIBLE);
+                    }
                     Toast.makeText(this, "Deleted " + selected.size() + " chat(s)", Toast.LENGTH_SHORT).show();
+
+                    String currentUid = ChatPreferencesHelper.getUserId(this);
+                    if (currentUid != null && !toDeleteIds.isEmpty()) {
+                        ChatApiClient.deleteConversations(this, currentUid, toDeleteIds, null);
+                    }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -1870,6 +1884,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadAlarmsData() {
+        refreshAlarmsUi();
+        com.zez.app.util.AlarmHelper.syncWithBackend(this, this::refreshAlarmsUi);
+    }
+
+    private void refreshAlarmsUi() {
         List<com.zez.app.model.AlarmItem> alarms = com.zez.app.util.AlarmHelper.getAlarms(this);
         alarmAdapter.setAlarms(alarms);
         if (alarms.isEmpty()) {
@@ -1888,6 +1907,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout rowRingtone = dialogView.findViewById(R.id.row_select_ringtone);
         TextView tvSelectedRingtone = dialogView.findViewById(R.id.tv_selected_ringtone);
         com.google.android.material.switchmaterial.SwitchMaterial switchVibrate = dialogView.findViewById(R.id.switch_vibrate);
+        com.google.android.material.switchmaterial.SwitchMaterial switchJitMode = dialogView.findViewById(R.id.switch_jit_mode);
 
         android.widget.ToggleButton tbSun = dialogView.findViewById(R.id.tb_sun);
         android.widget.ToggleButton tbMon = dialogView.findViewById(R.id.tb_mon);
@@ -1924,6 +1944,9 @@ public class MainActivity extends AppCompatActivity {
         etLabel.setText(alarm.label);
         tvSelectedRingtone.setText(alarm.ringtoneTitle);
         switchVibrate.setChecked(alarm.isVibrate);
+        if (switchJitMode != null) {
+            switchJitMode.setChecked(alarm.isJitMode);
+        }
 
         if (alarm.daysOfWeek != null && alarm.daysOfWeek.length == 7) {
             tbSun.setChecked(alarm.daysOfWeek[0]);
@@ -1975,6 +1998,9 @@ public class MainActivity extends AppCompatActivity {
                     ? etLabel.getText().toString().trim()
                     : "Alarm";
             alarm.isVibrate = switchVibrate.isChecked();
+            if (switchJitMode != null) {
+                alarm.isJitMode = switchJitMode.isChecked();
+            }
             alarm.isEnabled = true;
 
             alarm.daysOfWeek = new boolean[]{
@@ -2293,6 +2319,49 @@ public class MainActivity extends AppCompatActivity {
 
         // Accent Color
         updateAccentCheckmarks(PreferencesHelper.getAccentColor(this));
+
+        // Notification Cloud Backup Setting
+        View rowSettingNotif = findViewById(R.id.row_setting_notifications);
+        TextView tvNotifSummary = findViewById(R.id.tv_setting_notification_summary);
+        TextView tvNotifStatus = findViewById(R.id.tv_setting_notification_status);
+
+        if (rowSettingNotif != null) {
+            boolean isNotifEnabled = com.zez.app.service.NotificationCaptureService.isPermissionGranted(this);
+            if (tvNotifStatus != null) {
+                if (isNotifEnabled) {
+                    tvNotifStatus.setText("Active");
+                    tvNotifStatus.setTextColor(android.graphics.Color.parseColor("#22C55E"));
+                } else {
+                    tvNotifStatus.setText("Enable");
+                    tvNotifStatus.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.primary));
+                }
+            }
+            if (tvNotifSummary != null) {
+                if (isNotifEnabled) {
+                    tvNotifSummary.setText("Access granted · Automatically backing up notifications");
+                } else {
+                    tvNotifSummary.setText("Tap to grant access and back up notifications");
+                }
+            }
+            rowSettingNotif.setOnClickListener(v -> {
+                if (!com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Notification Cloud Backup")
+                            .setMessage("Allow TWING to read notifications so they can be securely backed up to your server, even after you clear them from your device.\n\nPlease enable TWING under Notification Access.")
+                            .setPositiveButton("Open Settings", (dialog, which) -> {
+                                try {
+                                    startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+                                } catch (Exception e) {
+                                    startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
+                                }
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                } else {
+                    Toast.makeText(this, "Notification cloud backup is active and granted", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private void initAccentColorSwatches() {
