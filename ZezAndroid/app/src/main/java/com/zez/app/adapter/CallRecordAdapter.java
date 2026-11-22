@@ -140,9 +140,13 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
             tvSize.setText(item.getFormattedSize());
             tvTimeTotal.setText(item.getFormattedDuration());
 
-            boolean isVoip = "VOICE_CALL".equalsIgnoreCase(item.getCallType());
-            tvTypeBadge.setText(isVoip ? "TWING Voice" : "Phone Call");
-            tvTypeBadge.setTextColor(accentColor);
+            String badgeText = item.getSourceBadgeText();
+            tvTypeBadge.setText(badgeText);
+            if (item.isImported()) {
+                tvTypeBadge.setTextColor(Color.parseColor("#10B981")); // Emerald green for native cellular
+            } else {
+                tvTypeBadge.setTextColor(accentColor);
+            }
 
             if (ivCloudStatus != null) {
                 boolean hasCloud = item.isSynced() || (item.getCloudUrl() != null && !item.getCloudUrl().trim().isEmpty());
@@ -158,9 +162,9 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
                 tvDirection.setTextColor(Color.parseColor("#3B82F6"));
             }
 
-            // Silenced Audio Notice
+            // Silenced Audio Notice (not applicable for imported native dialer recordings)
             if (layoutSilencedBanner != null) {
-                if (item.isSilenced()) {
+                if (item.isSilenced() && !item.isImported()) {
                     layoutSilencedBanner.setVisibility(View.VISIBLE);
                     if (tvSilencedMsg != null) {
                         tvSilencedMsg.setText("Audio capture silenced by Android OS");
@@ -192,7 +196,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
             }
 
             btnPlayPause.setOnClickListener(v -> {
-                if (item.isSilenced() && !isPlayingThis && !isPausedThis) {
+                if (item.isSilenced() && !item.isImported() && !isPlayingThis && !isPausedThis) {
                     Toast.makeText(context, "Note: Recording audio was silenced by Android OS during this call", Toast.LENGTH_SHORT).show();
                 }
 

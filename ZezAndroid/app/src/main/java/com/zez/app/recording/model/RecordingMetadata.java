@@ -11,7 +11,7 @@ public class RecordingMetadata implements Serializable {
     private String callId;
     private String phoneNumber;
     private String contactName;
-    private String callType;        // "VOICE_CALL" or "PHONE_CALL"
+    private String callType;        // "VOICE_CALL" or "PHONE_CALL" or "CELLULAR_IMPORTED"
     private String direction;       // "INCOMING" or "OUTGOING"
     private long startedAt;
     private long endedAt;
@@ -20,12 +20,18 @@ public class RecordingMetadata implements Serializable {
     private long fileSize;
     private String mimeType;
     private String recordingStatus; // "COMPLETED", "SILENCED", "IN_PROGRESS", "FAILED"
-    private String recordingSource; // "VOIP_STREAM", "MIC_AMBIENT", "RESTRICTED_CELLULAR"
+    private String recordingSource; // "VOIP_STREAM", "MIC_AMBIENT", "OEM_IMPORT_VIVO", etc.
     private String cloudUrl;
     private boolean isSynced;
     private int peakAmplitude;
     private String silenceReason;
     private double rmsLevelDb;
+
+    // Additive fields for native OEM call recording import
+    private String importSource = "LOCAL_ENGINE";
+    private String oemFileUri = null;
+    private boolean isImported = false;
+    private String recordingType = "CELLULAR_LIVE";
 
     public RecordingMetadata(String recordingId, String callId, String phoneNumber, String contactName,
                              String callType, String direction, long startedAt, long endedAt,
@@ -40,6 +46,17 @@ public class RecordingMetadata implements Serializable {
                              int durationSeconds, String filePath, long fileSize, String mimeType,
                              String recordingStatus, String recordingSource, String cloudUrl, boolean isSynced,
                              int peakAmplitude, String silenceReason, double rmsLevelDb) {
+        this(recordingId, callId, phoneNumber, contactName, callType, direction, startedAt, endedAt,
+                durationSeconds, filePath, fileSize, mimeType, recordingStatus, recordingSource, cloudUrl, isSynced,
+                peakAmplitude, silenceReason, rmsLevelDb, "LOCAL_ENGINE", null, false, "CELLULAR_LIVE");
+    }
+
+    public RecordingMetadata(String recordingId, String callId, String phoneNumber, String contactName,
+                             String callType, String direction, long startedAt, long endedAt,
+                             int durationSeconds, String filePath, long fileSize, String mimeType,
+                             String recordingStatus, String recordingSource, String cloudUrl, boolean isSynced,
+                             int peakAmplitude, String silenceReason, double rmsLevelDb,
+                             String importSource, String oemFileUri, boolean isImported, String recordingType) {
         this.recordingId = recordingId;
         this.callId = callId;
         this.phoneNumber = phoneNumber;
@@ -59,6 +76,10 @@ public class RecordingMetadata implements Serializable {
         this.peakAmplitude = peakAmplitude;
         this.silenceReason = silenceReason;
         this.rmsLevelDb = rmsLevelDb;
+        this.importSource = importSource != null ? importSource : "LOCAL_ENGINE";
+        this.oemFileUri = oemFileUri;
+        this.isImported = isImported;
+        this.recordingType = recordingType != null ? recordingType : (isImported ? "CELLULAR_IMPORTED" : "CELLULAR_LIVE");
     }
 
     public String getRecordingId() { return recordingId; }
@@ -88,6 +109,18 @@ public class RecordingMetadata implements Serializable {
     public int getPeakAmplitude() { return peakAmplitude; }
     public String getSilenceReason() { return silenceReason != null ? silenceReason : ""; }
     public double getRmsLevelDb() { return rmsLevelDb; }
+
+    public String getImportSource() { return importSource; }
+    public void setImportSource(String importSource) { this.importSource = importSource; }
+
+    public String getOemFileUri() { return oemFileUri; }
+    public void setOemFileUri(String oemFileUri) { this.oemFileUri = oemFileUri; }
+
+    public boolean isImported() { return isImported; }
+    public void setImported(boolean imported) { isImported = imported; }
+
+    public String getRecordingType() { return recordingType; }
+    public void setRecordingType(String recordingType) { this.recordingType = recordingType; }
 
     public void setDurationSeconds(int durationSeconds) { this.durationSeconds = durationSeconds; }
     public void setFileSize(long fileSize) { this.fileSize = fileSize; }

@@ -16,7 +16,7 @@ import java.util.List;
 public class CallRecordDbHelper extends SQLiteOpenHelper {
     private static final String TAG = "CallRecordDbHelper";
     private static final String DATABASE_NAME = "twing_call_recordings.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     private static final String TABLE_RECORDINGS = "call_recordings";
     private static final String COL_ID = "id";
@@ -33,6 +33,12 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
     private static final String COL_STATUS = "status";
     private static final String COL_SILENCE_REASON = "silence_reason";
     private static final String COL_PEAK_AMPLITUDE = "peak_amplitude";
+
+    // Additive columns for native OEM recording import
+    private static final String COL_IMPORT_SOURCE = "import_source";
+    private static final String COL_OEM_FILE_URI = "oem_file_uri";
+    private static final String COL_IS_IMPORTED = "is_imported";
+    private static final String COL_RECORDING_TYPE = "recording_type";
 
     private static volatile CallRecordDbHelper instance;
 
@@ -63,11 +69,16 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
                 + COL_IS_SYNCED + " INTEGER DEFAULT 0, "
                 + COL_STATUS + " TEXT DEFAULT 'COMPLETED', "
                 + COL_SILENCE_REASON + " TEXT, "
-                + COL_PEAK_AMPLITUDE + " INTEGER DEFAULT 0"
+                + COL_PEAK_AMPLITUDE + " INTEGER DEFAULT 0, "
+                + COL_IMPORT_SOURCE + " TEXT DEFAULT 'LOCAL_ENGINE', "
+                + COL_OEM_FILE_URI + " TEXT, "
+                + COL_IS_IMPORTED + " INTEGER DEFAULT 0, "
+                + COL_RECORDING_TYPE + " TEXT DEFAULT 'CELLULAR_LIVE'"
                 + ");";
         db.execSQL(createSql);
         db.execSQL("CREATE INDEX idx_rec_time ON " + TABLE_RECORDINGS + "(" + COL_TIMESTAMP + " DESC);");
         db.execSQL("CREATE INDEX idx_rec_phone ON " + TABLE_RECORDINGS + "(" + COL_PHONE_NUMBER + ");");
+        db.execSQL("CREATE INDEX idx_rec_oem ON " + TABLE_RECORDINGS + "(" + COL_OEM_FILE_URI + ");");
     }
 
     @Override
@@ -83,6 +94,15 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
                 db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_STATUS + " TEXT DEFAULT 'COMPLETED';");
                 db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_SILENCE_REASON + " TEXT;");
                 db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_PEAK_AMPLITUDE + " INTEGER DEFAULT 0;");
+            } catch (Exception ignored) {}
+        }
+        if (oldVersion < 4) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_IMPORT_SOURCE + " TEXT DEFAULT 'LOCAL_ENGINE';");
+                db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_OEM_FILE_URI + " TEXT;");
+                db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_IS_IMPORTED + " INTEGER DEFAULT 0;");
+                db.execSQL("ALTER TABLE " + TABLE_RECORDINGS + " ADD COLUMN " + COL_RECORDING_TYPE + " TEXT DEFAULT 'CELLULAR_LIVE';");
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_rec_oem ON " + TABLE_RECORDINGS + "(" + COL_OEM_FILE_URI + ");");
             } catch (Exception ignored) {}
         }
     }
@@ -106,9 +126,27 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
             cv.put(COL_STATUS, item.getStatus());
             cv.put(COL_SILENCE_REASON, item.getSilenceReason());
             cv.put(COL_PEAK_AMPLITUDE, item.getPeakAmplitude());
+            cv.put(COL_IMPORT_SOURCE, item.getImportSource());
+            cv.put(COL_OEM_FILE_URI, item.getOemFileUri());
+            cv.put(COL_IS_IMPORTED, item.isImported() ? 1 : 0);
+            cv.put(COL_RECORDING_TYPE, item.getRecordingType());
             db.insertWithOnConflict(TABLE_RECORDINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
         } catch (Exception e) {
             Log.e(TAG, "Error inserting recording: " + e.getMessage(), e);
+        }
+    }
+
+    public synchronized boolean isOemFileAlreadyImported(String oemFileUriOrName) {
+        if (oemFileUriOrName == null || oemFileUriOrName.trim().isEmpty()) return false;
+        try {
+            SQLiteDatabase db = getReadableDatabase();
+            String query = "SELECT 1 FROM " + TABLE_RECORDINGS + " WHERE " + COL_OEM_FILE_URI + " = ? OR " + COL_FILE_PATH + " LIKE ?";
+            try (Cursor cursor = db.rawQuery(query, new String[]{oemFileUriOrName, "%" + oemFileUriOrName})) {
+                return (cursor != null && cursor.moveToFirst());
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error checking duplicate OEM file: " + e.getMessage());
+            return false;
         }
     }
 
@@ -312,6 +350,33 @@ public class CallRecordDbHelper extends SQLiteOpenHelper {
             peakAmplitude = c.getInt(peakCol);
         }
 
-        return new CallRecordItem(id, phone, name, type, direction, time, duration, path, size, cloudUrl, isSynced, status, silenceReason, peakAmplitude);
+        String importSource = "LOCAL_ENGINE";
+        int srcCol = c.getColumnIndex(COL_IMPORT_SOURCE);
+        if (srcCol != -1 && !c.isNull(srcCol)) {
+            importSource = c.getString(srcCol);
+        }
+
+        String oemFileUri = null;
+        int oemCol = c.getColumnIndex(COL_OEM_FILE_URI);
+        if (oemCol != -1 && !c.isNull(oemCol)) {
+            oemFileUri = c.getString(oemCol);
+        }
+
+        boolean isImported = false;
+        int impCol = c.getColumnIndex(COL_IS_IMPORTED);
+        if (impCol != -1 && !c.isNull(impCol)) {
+            isImported = c.getInt(impCol) == 1;
+        }
+
+        String recordingType = "CELLULAR_LIVE";
+        int recTypeCol = c.getColumnIndex(COL_RECORDING_TYPE);
+        if (recTypeCol != -1 && !c.isNull(recTypeCol)) {
+            recordingType = c.getString(recTypeCol);
+        }
+
+        return new CallRecordItem(
+                id, phone, name, type, direction, time, duration, path, size, cloudUrl, isSynced,
+                status, silenceReason, peakAmplitude, importSource, oemFileUri, isImported, recordingType
+        );
     }
 }

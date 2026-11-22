@@ -33,6 +33,29 @@ public class RecordingStorageManager {
         return new File(getStorageDirectory(), fileName);
     }
 
+    public File generateImportedOutputFile(String originalFileName) {
+        String safeName = "imported_call_" + System.currentTimeMillis() + ".m4a";
+        if (originalFileName != null && !originalFileName.trim().isEmpty()) {
+            // Strip any directory traversal characters
+            String base = new File(originalFileName).getName().replaceAll("[^0-9a-zA-Z._-]", "_");
+            String ext = ".m4a";
+            int dot = base.lastIndexOf('.');
+            if (dot > 0) {
+                ext = base.substring(dot).toLowerCase();
+                base = base.substring(0, dot);
+            }
+            safeName = "import_" + System.currentTimeMillis() + "_" + base + ext;
+        }
+        return new File(getStorageDirectory(), safeName);
+    }
+
+    public File createTempFile(String suffix) {
+        String ext = (suffix != null && !suffix.isEmpty()) ? suffix : ".tmp";
+        if (!ext.startsWith(".")) ext = "." + ext;
+        String name = "tmp_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6) + ext;
+        return new File(getStorageDirectory(), name);
+    }
+
     public String generateRecordId() {
         return "rec_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6);
     }

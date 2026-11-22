@@ -466,7 +466,16 @@ public class MainActivity extends AppCompatActivity {
             recyclerCallRecordings.setAdapter(callRecordAdapter);
         }
         if (swipeRefreshRecordings != null) {
-            swipeRefreshRecordings.setOnRefreshListener(this::loadCallRecordingsData);
+            swipeRefreshRecordings.setOnRefreshListener(() -> {
+                if (com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).isFolderConfigured()) {
+                    new Thread(() -> {
+                        com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).scanAndImportNewRecordings();
+                        runOnUiThread(this::loadCallRecordingsData);
+                    }).start();
+                } else {
+                    loadCallRecordingsData();
+                }
+            });
         }
         if (tabBtnRecordings != null) {
             tabBtnRecordings.setOnClickListener(v -> selectCallsTab(true));
@@ -862,6 +871,16 @@ public class MainActivity extends AppCompatActivity {
             }
             startChatListPolling();
         }
+
+        // Trigger native call recording sync if folder is linked
+        try {
+            if (com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).isFolderConfigured()) {
+                com.zez.app.recording.importing.RecordingSyncWorker.triggerImmediateScan(this);
+                if (isRecordingsTabSelected) {
+                    loadCallRecordingsData();
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     private void onBackgroundChatsUpdate(List<ChatConversation> conversations) {
@@ -1615,7 +1634,9 @@ public class MainActivity extends AppCompatActivity {
             TextView tvDetails = findViewById(R.id.tv_setting_recording_details);
             if (tvDetails != null) {
                 com.zez.app.recording.model.RecordingCapability cap = com.zez.app.recording.CallRecordingManager.getInstance(this).getCapability();
-                tvDetails.setText(cap.getSummaryTitle() + " • " + (cap.isVoipSupported() ? "VoIP HD Ready" : "VoIP Restricted"));
+                boolean linked = com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).isFolderConfigured();
+                String folderStatus = linked ? "Native Sync: Active" : "Native Sync: Tap to Link";
+                tvDetails.setText(folderStatus + " • " + (cap.isVoipSupported() ? "VoIP HD Ready" : "VoIP Restricted"));
             }
         }
     }
@@ -1629,26 +1650,46 @@ public class MainActivity extends AppCompatActivity {
         else if (totalBytes < 1024 * 1024) sizeStr = String.format(java.util.Locale.getDefault(), "%.1f KB", totalBytes / 1024.0);
         else sizeStr = String.format(java.util.Locale.getDefault(), "%.1f MB", totalBytes / (1024.0 * 1024.0));
 
-        com.zez.app.recording.model.AudioDiagnostics diag = com.zez.app.recording.CallRecordingManager.getInstance(this).getDiagnostics();
+        com.zez.app.recording.importing.OemRecordingImporter importer = com.zez.app.recording.importing.OemRecordingImporter.getInstance(this);
+        boolean folderConfigured = importer.isFolderConfigured();
+        String oemName = importer.getDetectedOem().toUpperCase(java.util.Locale.getDefault());
 
-        String message = "Device: " + cap.getManufacturer() + " " + cap.getModel() + " (Android " + cap.getAndroidVersion() + ")\n\n"
-                + "Hardware Audio Policy:\n" + cap.getDescription() + "\n\n"
-                + "Audio Validation State:\n"
-                + "• Capture State: " + diag.getCurrentState().getDisplayTitle() + "\n"
-                + "• Android OS Silenced: " + (diag.isClientSilenced() ? "YES (AudioPolicyService Muted)" : "NO") + "\n"
-                + "• Peak Amplitude: " + diag.getPeakAmplitude() + "\n"
-                + "• Audio Device: " + diag.getAudioInputDevice() + "\n\n"
-                + "VoIP / In-App Calling:\n100% Full Two-Way HD Recording Supported.\n\n"
-                + "Storage Used:\n" + sizeStr + " across " + count + " call recording(s).";
+        StringBuilder sb = new StringBuilder();
+        sb.append("Device: ").append(cap.getManufacturer()).append(" ").append(cap.getModel()).append(" (Android ").append(cap.getAndroidVersion()).append(")\n\n");
+        sb.append("Native Cellular Call Recording:\n");
+        sb.append("• Target OEM: ").append(oemName).append("\n");
+        sb.append("• Linked Folder: ").append(folderConfigured ? "Connected (Auto-Import Enabled)" : "Not Linked (Tap below to link)").append("\n");
+        if (folderConfigured) {
+            sb.append("• Path: ").append(importer.getPersistedUriDisplayName()).append("\n");
+        }
+        sb.append("• Share Fallback: Available (Share any call audio to TWING)\n\n");
 
-        new AlertDialog.Builder(this)
-                .setTitle("Call Recording Capability & Diagnostics")
-                .setMessage(message)
-                .setPositiveButton("View Recordings", (dialog, which) -> {
-                    if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_calls);
-                })
-                .setNegativeButton("Close", null)
-                .show();
+        sb.append("Hardware Audio Policy:\n").append(cap.getDescription()).append("\n\n");
+        sb.append("VoIP / In-App Calling:\n100% Full Two-Way HD Recording Supported.\n\n");
+        sb.append("Storage Used:\n").append(sizeStr).append(" across ").append(count).append(" call recording(s).");
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle("Call Recording Integration & Diagnostics")
+                .setMessage(sb.toString())
+                .setPositiveButton(folderConfigured ? "Re-link Folder" : "Link Recording Folder", (dialog, which) -> {
+                    importer.launchFolderPicker(this);
+                });
+
+        if (folderConfigured) {
+            builder.setNeutralButton("Sync Now", (dialog, which) -> {
+                Toast.makeText(this, "Scanning linked folder for recordings...", Toast.LENGTH_SHORT).show();
+                new Thread(() -> {
+                    int imported = importer.scanAndImportNewRecordings();
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, imported > 0 ? "Imported " + imported + " new recording(s)!" : "No new recordings found", Toast.LENGTH_SHORT).show();
+                        loadCallRecordingsData();
+                    });
+                }).start();
+            });
+        }
+
+        builder.setNegativeButton("Close", null);
+        builder.show();
     }
 
     private void loadCallsData() {
@@ -1803,7 +1844,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if ((requestCode == 2001 || requestCode == 2002) && resultCode == RESULT_OK) {
+        if (requestCode == com.zez.app.recording.importing.OemRecordingImporter.REQUEST_CODE_SAF_FOLDER && resultCode == RESULT_OK && data != null) {
+            android.net.Uri treeUri = data.getData();
+            if (treeUri != null) {
+                boolean saved = com.zez.app.recording.importing.OemRecordingImporter.getInstance(this).handleFolderPickerResult(treeUri);
+                if (saved) {
+                    Toast.makeText(this, "Native recording folder linked! Scanning for calls...", Toast.LENGTH_SHORT).show();
+                    com.zez.app.recording.importing.RecordingSyncWorker.triggerImmediateScan(this);
+                    loadCallRecordingsData();
+                } else {
+                    Toast.makeText(this, "Failed to link recording folder", Toast.LENGTH_SHORT).show();
+                }
+            }
+        } else if ((requestCode == 2001 || requestCode == 2002) && resultCode == RESULT_OK) {
             loadGalleryData();
         } else if (requestCode == 2002) {
             loadGalleryData();

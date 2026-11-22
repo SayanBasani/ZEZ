@@ -90,6 +90,13 @@ public class CallStateReceiver extends BroadcastReceiver {
                 savedNumber = "";
                 CallSyncWorker.syncNowAsync(context);
                 CallSyncWorker.scheduleImmediateSync(context);
+
+                // Trigger OEM native call recording import scan
+                try {
+                    com.zez.app.recording.importing.RecordingSyncWorker.triggerImmediateScan(context);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error triggering RecordingSyncWorker: " + e.getMessage());
+                }
             }
 
             if (state != null) {
