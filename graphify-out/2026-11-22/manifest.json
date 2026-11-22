@@ -84,9 +84,9 @@
     "semantic_hash": "cb85c827499b13b0db4ba8491215823e"
   },
   "ZezAndroid/app/build.gradle": {
-    "mtime": 1795326061.5877736,
-    "seen": 1795326325.2679577,
-    "ast_hash": "702d3bfe0497b11562efae81e41ee115",
+    "mtime": 1795327528.7656364,
+    "seen": 1795327848.3937984,
+    "ast_hash": "555d81e5406bf00dce252035df00f34c",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/AlarmFiringActivity.java": {
@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java": {
-    "mtime": 1795325982.5397863,
-    "seen": 1795326325.2679784,
-    "ast_hash": "3191f522ed5eefc8aadfd56f49690a16",
+    "mtime": 1795327519.5857587,
+    "seen": 1795327848.3938165,
+    "ast_hash": "3f75b94a701f7d50ee0be674826203b2",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ZezApplication.java": {
@@ -780,15 +780,15 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/adapter/CallRecordAdapter.java": {
-    "mtime": 1795326023.2100577,
-    "seen": 1795326325.2679899,
-    "ast_hash": "952c136b069d37aa203ff5bda6a072ac",
+    "mtime": 1795327565.1528063,
+    "seen": 1795327848.3938303,
+    "ast_hash": "0356f5a20144a1c88cde75e35b64a2a5",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/model/CallRecordItem.java": {
-    "mtime": 1795277298.1340601,
-    "seen": 1795278596.3576057,
-    "ast_hash": "5faf8e86cc79e337d3d96ec2a004b673",
+    "mtime": 1795327346.0157096,
+    "seen": 1795327848.3938544,
+    "ast_hash": "59337ec9dc9af933bff003cba16feeff",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/AudioPlaybackManager.java": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/CallRecordDbHelper.java": {
-    "mtime": 1795277279.3674164,
-    "seen": 1795278596.357632,
-    "ast_hash": "27ffd1e403ea27ea188072c9dc08f02b",
+    "mtime": 1795327376.117267,
+    "seen": 1795327848.393923,
+    "ast_hash": "f73fa182b53bc14474406597a7fbdfe7",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/CallRecordManager.java": {
@@ -840,9 +840,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/recording/CallRecordingManager.java": {
-    "mtime": 1795325675.4008274,
-    "seen": 1795326325.26804,
-    "ast_hash": "4400b2c3737fddd907309f2ff6fa1ffd",
+    "mtime": 1795327412.0914636,
+    "seen": 1795327848.3938806,
+    "ast_hash": "031b5fe36d53cc9d20f856ab239c2850",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/recording/CallStateMonitor.java": {
@@ -852,27 +852,27 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/recording/RecordingCapabilityDetector.java": {
-    "mtime": 1795325510.7538974,
-    "seen": 1795326325.2680442,
-    "ast_hash": "4f2826a0d32b95b3c494ecd17be869fa",
+    "mtime": 1795327426.0016778,
+    "seen": 1795327848.3938856,
+    "ast_hash": "ba8d76cadfb934595138b13964967e1f",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/recording/RecordingDatabaseManager.java": {
-    "mtime": 1795325573.1498423,
-    "seen": 1795326325.2680466,
-    "ast_hash": "061f2c40dd341ecc715a03c1810d4bab",
+    "mtime": 1795327387.856052,
+    "seen": 1795327848.393888,
+    "ast_hash": "63cb2aa1bff3c5715da3f6da0153b671",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/recording/RecordingEngine.java": {
-    "mtime": 1795325639.3007796,
-    "seen": 1795326325.2680485,
-    "ast_hash": "b47031313e8eca0e67f1eca563408b9b",
+    "mtime": 1795327308.554397,
+    "seen": 1795327848.39389,
+    "ast_hash": "5a75fd5c27f2e941c6142dcb01cd295f",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/recording/RecordingNotificationManager.java": {
-    "mtime": 1795325536.3938124,
-    "seen": 1795326325.2680504,
-    "ast_hash": "8d39aacd5171164e9e6bcdc992098a98",
+    "mtime": 1795327318.1486814,
+    "seen": 1795327848.3938916,
+    "ast_hash": "3cc7de445d4cfaac33934046ed910a24",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/recording/RecordingPermissionManager.java": {
@@ -894,9 +894,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/recording/model/RecordingMetadata.java": {
-    "mtime": 1795325497.8475046,
-    "seen": 1795326325.268058,
-    "ast_hash": "ca5071634eec51023a4a2739f20c8c9c",
+    "mtime": 1795327331.7237997,
+    "seen": 1795327848.3939025,
+    "ast_hash": "3c350c54b7fc1a6562137e75c2bbc7be",
     "semantic_hash": ""
   },
   "CALL_RECORDING_ARCHITECTURE.md": {
@@ -906,9 +906,9 @@
     "semantic_hash": ""
   },
   "CALL_RECORDING_COMPATIBILITY.md": {
-    "mtime": 1795325450.3756986,
-    "seen": 1795326325.2681484,
-    "ast_hash": "15661fee27c7cfb31b239490bbc0bd88",
+    "mtime": 1795327775.0056448,
+    "seen": 1795327848.3939874,
+    "ast_hash": "ae23d32524f95c6ce327679754c8fed8",
     "semantic_hash": ""
   },
   "CALL_RECORDING_IMPLEMENTATION_AUDIT.md": {
@@ -918,15 +918,45 @@
     "semantic_hash": ""
   },
   "CALL_RECORDING_KNOWN_LIMITATIONS.md": {
-    "mtime": 1795325464.232021,
-    "seen": 1795326325.2681522,
-    "ast_hash": "66285b83ccf43f98146d28b795440f1a",
+    "mtime": 1795327784.1748037,
+    "seen": 1795327848.3939915,
+    "ast_hash": "cf22d56e22301a69f4f6d6742d325e76",
     "semantic_hash": ""
   },
   "CALL_RECORDING_TEST_REPORT.md": {
-    "mtime": 1795326229.4966753,
-    "seen": 1795326325.2681541,
-    "ast_hash": "5959cb3f9859352eeff0051c2c201911",
+    "mtime": 1795327758.2299545,
+    "seen": 1795327848.3939934,
+    "ast_hash": "803cc9bdff14689f12191521cadaf6be",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/publish-release-1.0.30.js": {
+    "mtime": 1795327805.1010702,
+    "seen": 1795327848.3937123,
+    "ast_hash": "baa4c742f6d2cf0667753cd3341e513c",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/recording/AudioCaptureValidator.java": {
+    "mtime": 1795327254.1724586,
+    "seen": 1795327848.3938785,
+    "ast_hash": "bfbb35f1742097e0d37ad391370e64b9",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/recording/model/AudioDiagnostics.java": {
+    "mtime": 1795327231.7137947,
+    "seen": 1795327848.3938985,
+    "ast_hash": "1edbc3234796c3dfb81622d0acc80ac0",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/recording/model/RecordingState.java": {
+    "mtime": 1795327216.7365174,
+    "seen": 1795327848.3939044,
+    "ast_hash": "5bfb0df61081cd9f40690b3ccd977a90",
+    "semantic_hash": ""
+  },
+  "CALL_RECORDING_AUDIO_DIAGNOSTICS.md": {
+    "mtime": 1795327734.6701705,
+    "seen": 1795327848.3939853,
+    "ast_hash": "de9bfe59af71d7b97dd2cc295bc8de09",
     "semantic_hash": ""
   },
   "Zez-Backend/package-lock.json": {
