@@ -850,6 +850,55 @@ public class ChatApiClient {
         });
     }
 
+    public static void getCallHistory(Context context, String userId, ChatCallback<List<com.zez.app.model.AppCallItem>> callback) {
+        String url = getBaseUrl(context) + "/api/call/history?userId=" + Uri.encode(userId);
+        Request request = new Request.Builder().url(url).build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Network error: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    postError(callback, "HTTP " + response.code());
+                    return;
+                }
+                try {
+                    String str = response.body().string();
+                    JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                    if (!json.has("success") || !json.get("success").getAsBoolean()) {
+                        postError(callback, json.has("error") ? json.get("error").getAsString() : "Failed to load call history");
+                        return;
+                    }
+                    List<com.zez.app.model.AppCallItem> list = new ArrayList<>();
+                    if (json.has("calls") && json.get("calls").isJsonArray()) {
+                        JsonArray arr = json.getAsJsonArray("calls");
+                        for (int i = 0; i < arr.size(); i++) {
+                            JsonObject obj = arr.get(i).getAsJsonObject();
+                            com.zez.app.model.AppCallItem item = new com.zez.app.model.AppCallItem();
+                            if (obj.has("id")) item.setId(obj.get("id").getAsString());
+                            if (obj.has("callType")) item.setCallType(obj.get("callType").getAsString());
+                            if (obj.has("direction")) item.setDirection(obj.get("direction").getAsString());
+                            if (obj.has("status")) item.setStatus(obj.get("status").getAsString());
+                            if (obj.has("peerId") && !obj.get("peerId").isJsonNull()) item.setPeerId(obj.get("peerId").getAsString());
+                            if (obj.has("peerName") && !obj.get("peerName").isJsonNull()) item.setPeerName(obj.get("peerName").getAsString());
+                            if (obj.has("peerPhone") && !obj.get("peerPhone").isJsonNull()) item.setPeerPhone(obj.get("peerPhone").getAsString());
+                            if (obj.has("peerAvatar") && !obj.get("peerAvatar").isJsonNull()) item.setPeerAvatar(obj.get("peerAvatar").getAsString());
+                            if (obj.has("startedAt") && !obj.get("startedAt").isJsonNull()) item.setStartedAt(obj.get("startedAt").getAsString());
+                            if (obj.has("durationSeconds") && !obj.get("durationSeconds").isJsonNull()) item.setDurationSeconds(obj.get("durationSeconds").getAsInt());
+                            list.add(item);
+                        }
+                    }
+                    postSuccess(callback, list);
+                } catch (Exception e) {
+                    postError(callback, "Parse error: " + e.getMessage());
+                }
+            }
+        });
+    }
+
     private static <T> void postSuccess(ChatCallback<T> callback, T data) {
         if (callback != null) {
             mainHandler.post(() -> callback.onSuccess(data));

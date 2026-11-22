@@ -15,6 +15,19 @@
         android:scaleType="centerCrop"
         android:visibility="gone" />
 
+    <!-- Top Left Minimize Button (WhatsApp Style) -->
+    <ImageButton
+        android:id="@+id/btn_call_minimize"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_call_btn_round"
+        android:backgroundTint="#40202C33"
+        android:src="@drawable/ic_chevron_down"
+        app:tint="@android:color/white"
+        android:contentDescription="Minimize call"
+        android:padding="8dp" />
+
     <!-- Audio Call / Calling Overlay Content -->
     <LinearLayout
         android:id="@+id/layout_call_audio_content"
@@ -58,6 +71,7 @@
 
         <!-- Center Avatar Container -->
         <FrameLayout
+            android:id="@+id/layout_call_avatar_box"
             android:layout_width="140dp"
             android:layout_height="140dp"
             android:layout_marginTop="60dp">
@@ -79,6 +93,7 @@
 
         <!-- Encryption Note -->
         <TextView
+            android:id="@+id/tv_call_encryption_note"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"

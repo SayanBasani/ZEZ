@@ -19,75 +19,89 @@ public class MediaHelper {
 
     public static List<MediaItem> getImagesAndVideos(Context context) {
         List<MediaItem> items = new ArrayList<>();
+        if (context == null) return items;
+
         String sortOrder = MediaStore.MediaColumns.DATE_ADDED + " DESC";
 
-        // Images
+        // 1. Query Images safely
         Uri imagesUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] imgProj = {
-            MediaStore.Images.Media._ID,
-            MediaStore.Images.Media.DISPLAY_NAME,
-            MediaStore.Images.Media.SIZE,
-            MediaStore.Images.Media.DATE_ADDED,
-            MediaStore.Images.Media.WIDTH,
-            MediaStore.Images.Media.HEIGHT,
-            MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
-            MediaStore.Images.Media.BUCKET_ID
-        };
-        try (Cursor c = context.getContentResolver().query(imagesUri, imgProj, null, null, sortOrder)) {
-            if (c != null && c.moveToFirst()) {
-                int iId   = c.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
-                int iName = c.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
-                int iSize = c.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE);
-                int iDate = c.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED);
-                int iW    = c.getColumnIndexOrThrow(MediaStore.Images.Media.WIDTH);
-                int iH    = c.getColumnIndexOrThrow(MediaStore.Images.Media.HEIGHT);
-                int iBkt  = c.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
-                int iBktId= c.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID);
-                do {
-                    long id = c.getLong(iId);
-                    Uri uri = ContentUris.withAppendedId(imagesUri, id);
-                    long bktId = 0;
-                    try { bktId = c.getLong(iBktId); } catch (Exception ignored) {}
-                    items.add(new MediaItem(id, uri, c.getString(iName), c.getLong(iSize),
-                        c.getLong(iDate), false, 0, c.getInt(iW), c.getInt(iH), c.getString(iBkt), bktId));
-                } while (c.moveToNext());
-            }
-        } catch (Exception e) { e.printStackTrace(); }
+        Cursor cImg = null;
+        try {
+            cImg = context.getContentResolver().query(imagesUri, null, null, null, sortOrder);
+            if (cImg != null && cImg.moveToFirst()) {
+                int iId = cImg.getColumnIndex(MediaStore.Images.Media._ID);
+                int iName = cImg.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
+                int iSize = cImg.getColumnIndex(MediaStore.Images.Media.SIZE);
+                int iDate = cImg.getColumnIndex(MediaStore.Images.Media.DATE_ADDED);
+                int iW = cImg.getColumnIndex(MediaStore.Images.Media.WIDTH);
+                int iH = cImg.getColumnIndex(MediaStore.Images.Media.HEIGHT);
+                int iBkt = cImg.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
+                int iBktId = cImg.getColumnIndex(MediaStore.Images.Media.BUCKET_ID);
 
-        // Videos
-        Uri videosUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-        String[] vidProj = {
-            MediaStore.Video.Media._ID,
-            MediaStore.Video.Media.DISPLAY_NAME,
-            MediaStore.Video.Media.SIZE,
-            MediaStore.Video.Media.DATE_ADDED,
-            MediaStore.Video.Media.DURATION,
-            MediaStore.Video.Media.WIDTH,
-            MediaStore.Video.Media.HEIGHT,
-            MediaStore.Video.Media.BUCKET_DISPLAY_NAME,
-            MediaStore.Video.Media.BUCKET_ID
-        };
-        try (Cursor c = context.getContentResolver().query(videosUri, vidProj, null, null, sortOrder)) {
-            if (c != null && c.moveToFirst()) {
-                int iId   = c.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
-                int iName = c.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
-                int iSize = c.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE);
-                int iDate = c.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED);
-                int iDur  = c.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
-                int iW    = c.getColumnIndexOrThrow(MediaStore.Video.Media.WIDTH);
-                int iH    = c.getColumnIndexOrThrow(MediaStore.Video.Media.HEIGHT);
-                int iBkt  = c.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME);
-                int iBktId= c.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_ID);
                 do {
-                    long id = c.getLong(iId);
-                    Uri uri = ContentUris.withAppendedId(videosUri, id);
+                    long id = iId >= 0 ? cImg.getLong(iId) : -1;
+                    if (id < 0) continue;
+                    Uri uri = ContentUris.withAppendedId(imagesUri, id);
+                    String name = iName >= 0 ? cImg.getString(iName) : "Photo_" + id;
+                    long size = iSize >= 0 ? cImg.getLong(iSize) : 0;
+                    long date = iDate >= 0 ? cImg.getLong(iDate) : System.currentTimeMillis() / 1000;
+                    int w = iW >= 0 ? cImg.getInt(iW) : 0;
+                    int h = iH >= 0 ? cImg.getInt(iH) : 0;
+                    String bkt = iBkt >= 0 ? cImg.getString(iBkt) : "Photos";
+                    if (bkt == null || bkt.trim().isEmpty()) bkt = "Photos";
                     long bktId = 0;
-                    try { bktId = c.getLong(iBktId); } catch (Exception ignored) {}
-                    items.add(new MediaItem(id, uri, c.getString(iName), c.getLong(iSize),
-                        c.getLong(iDate), true, c.getLong(iDur), c.getInt(iW), c.getInt(iH), c.getString(iBkt), bktId));
-                } while (c.moveToNext());
+                    if (iBktId >= 0) {
+                        try { bktId = cImg.getLong(iBktId); } catch (Exception ignored) {}
+                    }
+                    items.add(new MediaItem(id, uri, name, size, date, false, 0, w, h, bkt, bktId));
+                } while (cImg.moveToNext());
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cImg != null) cImg.close();
+        }
+
+        // 2. Query Videos safely
+        Uri videosUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        Cursor cVid = null;
+        try {
+            cVid = context.getContentResolver().query(videosUri, null, null, null, sortOrder);
+            if (cVid != null && cVid.moveToFirst()) {
+                int iId = cVid.getColumnIndex(MediaStore.Video.Media._ID);
+                int iName = cVid.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME);
+                int iSize = cVid.getColumnIndex(MediaStore.Video.Media.SIZE);
+                int iDate = cVid.getColumnIndex(MediaStore.Video.Media.DATE_ADDED);
+                int iDur = cVid.getColumnIndex(MediaStore.Video.Media.DURATION);
+                int iW = cVid.getColumnIndex(MediaStore.Video.Media.WIDTH);
+                int iH = cVid.getColumnIndex(MediaStore.Video.Media.HEIGHT);
+                int iBkt = cVid.getColumnIndex(MediaStore.Video.Media.BUCKET_DISPLAY_NAME);
+                int iBktId = cVid.getColumnIndex(MediaStore.Video.Media.BUCKET_ID);
+
+                do {
+                    long id = iId >= 0 ? cVid.getLong(iId) : -1;
+                    if (id < 0) continue;
+                    Uri uri = ContentUris.withAppendedId(videosUri, id);
+                    String name = iName >= 0 ? cVid.getString(iName) : "Video_" + id;
+                    long size = iSize >= 0 ? cVid.getLong(iSize) : 0;
+                    long date = iDate >= 0 ? cVid.getLong(iDate) : System.currentTimeMillis() / 1000;
+                    long dur = iDur >= 0 ? cVid.getLong(iDur) : 0;
+                    int w = iW >= 0 ? cVid.getInt(iW) : 0;
+                    int h = iH >= 0 ? cVid.getInt(iH) : 0;
+                    String bkt = iBkt >= 0 ? cVid.getString(iBkt) : "Videos";
+                    if (bkt == null || bkt.trim().isEmpty()) bkt = "Videos";
+                    long bktId = 0;
+                    if (iBktId >= 0) {
+                        try { bktId = cVid.getLong(iBktId); } catch (Exception ignored) {}
+                    }
+                    items.add(new MediaItem(id, uri, name, size, date, true, dur, w, h, bkt, bktId));
+                } while (cVid.moveToNext());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cVid != null) cVid.close();
+        }
 
         items.sort((a, b) -> Long.compare(b.getDateAdded(), a.getDateAdded()));
         return items;

@@ -315,6 +315,13 @@
         </LinearLayout>
     </FrameLayout>
 
+    <!-- Active Call Floating Banner (WhatsApp Style) -->
+    <include
+        android:id="@+id/banner_active_call"
+        layout="@layout/view_active_call_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <!-- Secret Mode Ephemeral Warning Banner -->
     <LinearLayout
         android:id="@+id/layout_secret_mode_banner"

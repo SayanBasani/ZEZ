@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="16dp"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Contact Avatar -->
+    <FrameLayout
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="14dp">
+
+        <ImageView
+            android:id="@+id/iv_call_avatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_person"
+            android:background="@drawable/bg_circle_glass"
+            android:backgroundTint="#2022C55E"
+            android:padding="6dp"
+            app:tint="@color/theme_icon_tint" />
+
+        <TextView
+            android:id="@+id/tv_call_avatar_initials"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Caller Information & Time -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_call_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Contact Name"
+            android:textColor="@color/theme_text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:singleLine="true" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="3dp">
+
+            <!-- Direction Icon (Incoming, Outgoing, Missed) -->
+            <ImageView
+                android:id="@+id/iv_call_direction"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_call_missed"
+                app:tint="#EF4444"
+                android:layout_marginEnd="6dp" />
+
+            <!-- Call Type & Details -->
+            <TextView
+                android:id="@+id/tv_call_details"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Voice call · 2 min"
+                android:textColor="@color/theme_text_secondary"
+                android:textSize="12sp"
+                android:singleLine="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" · "
+                android:textColor="@color/theme_text_muted"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tv_call_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="11/22/26"
+                android:textColor="@color/theme_text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Action Buttons: Audio Call & Video Call -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btn_action_audiocall"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_call"
+            app:tint="#22C55E"
+            android:contentDescription="Voice Call"
+            android:padding="8dp" />
+
+        <ImageButton
+            android:id="@+id/btn_action_videocall"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_videocall"
+            app:tint="#22C55E"
+            android:contentDescription="Video Call"
+            android:padding="8dp"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -84,9 +84,9 @@
     "semantic_hash": "cb85c827499b13b0db4ba8491215823e"
   },
   "ZezAndroid/app/build.gradle": {
-    "mtime": 1795346141.656838,
-    "seen": 1795346625.5285077,
-    "ast_hash": "9918fc794db23ed18cb48b2b8e9dc478",
+    "mtime": 1795349593.1630223,
+    "seen": 1795350571.549671,
+    "ast_hash": "d7c4644213750575028b789de8efdf11",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/AlarmFiringActivity.java": {
@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ChatActivity.java": {
-    "mtime": 1795345651.6486225,
-    "seen": 1795346625.5285158,
-    "ast_hash": "f89582c46517787910f0ed2f5a5d1396",
+    "mtime": 1795348720.001114,
+    "seen": 1795350571.5496793,
+    "ast_hash": "c32b1141c35aac105f2a40de32df429e",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ContactsActivity.java": {
@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java": {
-    "mtime": 1795346097.8489404,
-    "seen": 1795346625.5285263,
-    "ast_hash": "ae47a11a06324f8229d2bca62794ac36",
+    "mtime": 1795349610.1583688,
+    "seen": 1795350571.5496893,
+    "ast_hash": "51304d03781986ac4c365ceec6b11575",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ZezApplication.java": {
@@ -306,9 +306,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/ChatApiClient.java": {
-    "mtime": 1795243378.191337,
-    "seen": 1795246858.9054692,
-    "ast_hash": "eadce24f704687455aa5109b9558bab2",
+    "mtime": 1795348053.482329,
+    "seen": 1795350571.549761,
+    "ast_hash": "322cb4c3dd2603c111686694e3f0ea98",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/ChatPreferencesHelper.java": {
@@ -342,10 +342,10 @@
     "semantic_hash": "f2282617302315a0c073dbfbc100924e"
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/MediaHelper.java": {
-    "mtime": 1795000901.4070525,
-    "seen": 1795010101.329984,
-    "ast_hash": "ed4cac5d218bafc01457892d77953389",
-    "semantic_hash": "ed4cac5d218bafc01457892d77953389"
+    "mtime": 1795347955.6266105,
+    "seen": 1795350571.5497804,
+    "ast_hash": "8b4ca4404d9c225647914e7705360db0",
+    "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/PreferencesHelper.java": {
     "mtime": 1795191628.0102153,
@@ -708,9 +708,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/util/ChatLocalDbHelper.java": {
-    "mtime": 1795240234.443424,
-    "seen": 1795241450.2821944,
-    "ast_hash": "0e089a5adc4b9c66abfb819f9e5e4d23",
+    "mtime": 1795348034.4615679,
+    "seen": 1795350571.549763,
+    "ast_hash": "dff23f835e395e2f8f4f72790d43d418",
     "semantic_hash": ""
   },
   "Zez-Backend/scripts/register-release-1.0.18.js": {
@@ -762,15 +762,15 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/callSignaling.js": {
-    "mtime": 1795229314.4635308,
-    "seen": 1795231022.5551274,
-    "ast_hash": "5dfc84b3b7d2b88ceccc9a5ebf90ab04",
+    "mtime": 1795347721.216254,
+    "seen": 1795350571.5496414,
+    "ast_hash": "93071a5de05ebc6455c900619bf6bdda",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/CallActivity.java": {
-    "mtime": 1795345569.7977538,
-    "seen": 1795346625.5285141,
-    "ast_hash": "f0ab182818759a5c1a4f548730f8c5a5",
+    "mtime": 1795350358.7895472,
+    "seen": 1795350571.5496776,
+    "ast_hash": "70b1cbfbbe09ea9aefbec0e06f860f3a",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/IncomingCallActivity.java": {
@@ -885,6 +885,30 @@
     "mtime": 1795346170.8187923,
     "seen": 1795346625.528426,
     "ast_hash": "edd4545447ec363c46db06593ed0bc39",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/adapter/AppCallAdapter.java": {
+    "mtime": 1795348083.1316786,
+    "seen": 1795350571.5496979,
+    "ast_hash": "59e898726a84348ef1526cf36a09d47f",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/model/AppCallItem.java": {
+    "mtime": 1795347965.7972786,
+    "seen": 1795350571.5497205,
+    "ast_hash": "f74eae5f9ca1e27f5703fecc8586c5a1",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/util/ActiveCallManager.java": {
+    "mtime": 1795349877.5821116,
+    "seen": 1795350571.549751,
+    "ast_hash": "624cf0bb1b3e166a385b23dd37accaad",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/scripts/publish-release-1.0.33.js": {
+    "mtime": 1795350628.535035,
+    "seen": 1795350666.6143079,
+    "ast_hash": "5f0b2aeef4919d72461ab64a397d31d0",
     "semantic_hash": ""
   },
   "Zez-Backend/package-lock.json": {

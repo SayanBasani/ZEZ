@@ -131,6 +131,73 @@ router.get("/incoming", async (req, res, next) => {
   }
 });
 
+// Helper to log call outcome directly as a chat message in the conversation
+async function logCallToChat(call, finalStatus, durationSeconds) {
+  try {
+    const callerId = call.caller_id;
+    const calleeId = call.callee_id;
+    if (!callerId || !calleeId) return;
+
+    const [u1, u2] = callerId < calleeId ? [callerId, calleeId] : [calleeId, callerId];
+    let convRes = await pool.query(
+      "SELECT id FROM public.chat_conversations WHERE user1_id = $1 AND user2_id = $2",
+      [u1, u2]
+    );
+    let convId;
+    if (convRes.rowCount > 0) {
+      convId = convRes.rows[0].id;
+    } else {
+      const createRes = await pool.query(
+        `INSERT INTO public.chat_conversations (user1_id, user2_id, last_message_text, last_message_time)
+         VALUES ($1, $2, '', NOW())
+         ON CONFLICT (user1_id, user2_id) DO UPDATE SET user1_id = EXCLUDED.user1_id
+         RETURNING id`,
+        [u1, u2]
+      );
+      convId = createRes.rows[0].id;
+    }
+
+    const isVideo = (call.call_type || "").toLowerCase() === "video";
+    const duration = durationSeconds || call.duration_seconds || 0;
+    
+    let text;
+    if (finalStatus === "ended" && duration > 0) {
+      const mins = Math.floor(duration / 60);
+      const secs = duration % 60;
+      const durStr = `${mins > 0 ? mins + 'm ' : ''}${secs}s`;
+      text = isVideo ? `📹 Video call (${durStr})` : `📞 Voice call (${durStr})`;
+    } else if (finalStatus === "rejected" || finalStatus === "busy") {
+      text = isVideo ? `📹 Declined video call` : `📞 Declined voice call`;
+    } else {
+      text = isVideo ? `📹 Missed video call` : `📞 Missed voice call`;
+    }
+
+    // Avoid duplicate insertions if call end is called multiple times
+    const existing = await pool.query(
+      `SELECT id FROM public.chat_messages 
+       WHERE conversation_id = $1 AND media_type = 'call_log' AND file_name = $2`,
+      [convId, String(call.id)]
+    );
+    if (existing.rowCount > 0) return;
+
+    await pool.query(
+      `INSERT INTO public.chat_messages 
+       (conversation_id, sender_id, receiver_id, message_text, media_type, file_name, file_size, mode, status, created_at)
+       VALUES ($1, $2, $3, $4, 'call_log', $5, $6, 'normal', 'sent', NOW())`,
+      [convId, callerId, calleeId, text, String(call.id), duration]
+    );
+
+    await pool.query(
+      `UPDATE public.chat_conversations
+       SET last_message_text = $1, last_message_time = NOW()
+       WHERE id = $2`,
+      [text, convId]
+    );
+  } catch (e) {
+    console.error("logCallToChat error:", e.message);
+  }
+}
+
 /**
  * POST /api/call/respond
  * Callee accepts, rejects, or reports busy
@@ -168,11 +235,14 @@ router.post("/respond", async (req, res, next) => {
 
     const call = updateRes.rows[0];
     
-    // Clean up in-memory media frame cache
-    for (const k of callMediaCache.keys()) {
-      if (k.startsWith(`${callId}_`)) {
-        callMediaCache.delete(k);
+    // Clean up in-memory media frame cache if not connected
+    if (!isConnected) {
+      for (const k of callMediaCache.keys()) {
+        if (k.startsWith(`${callId}_`)) {
+          callMediaCache.delete(k);
+        }
       }
+      await logCallToChat(call, newStatus, 0);
     }
 
     res.json({
@@ -281,11 +351,75 @@ router.post("/end", async (req, res, next) => {
       }
     }
 
+    // Automatically record call log entry into chat conversation
+    await logCallToChat(call, "ended", call.duration_seconds);
+
     res.json({
       success: true,
       callId: call.id,
       status: "ended",
       durationSeconds: call.duration_seconds
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/call/history?userId=...
+ * Returns in-app voice and video call history for the user
+ */
+router.get("/history", async (req, res, next) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: "userId query param required." });
+    }
+
+    const query = `
+      SELECT c.id, c.call_type, c.status, c.caller_id, c.callee_id,
+             c.caller_name, c.caller_avatar, c.caller_phone,
+             u_callee.name AS callee_name, u_callee.avatar_url AS callee_avatar, u_callee.phone_number AS callee_phone,
+             c.started_at, c.connected_at, c.ended_at, c.duration_seconds
+      FROM public.active_calls c
+      LEFT JOIN public.chat_users u_callee ON c.callee_id = u_callee.id
+      WHERE c.caller_id = $1 OR c.callee_id = $1
+      ORDER BY c.started_at DESC
+      LIMIT 100
+    `;
+
+    const result = await pool.query(query, [userId]);
+    const calls = result.rows.map(r => {
+      const isCaller = r.caller_id === userId;
+      const peerId = isCaller ? r.callee_id : r.caller_id;
+      const peerName = isCaller ? (r.callee_name || "TWING Contact") : (r.caller_name || "TWING Contact");
+      const peerAvatar = isCaller ? r.callee_avatar : r.caller_avatar;
+      const peerPhone = isCaller ? r.callee_phone : r.caller_phone;
+
+      let direction = "incoming";
+      if (isCaller) {
+        direction = "outgoing";
+      } else if (r.status === "missed" || r.status === "rejected") {
+        direction = "missed";
+      }
+
+      return {
+        id: r.id,
+        callType: r.call_type || "audio",
+        status: r.status,
+        direction: direction,
+        peerId: peerId,
+        peerName: peerName,
+        peerPhone: peerPhone,
+        peerAvatar: peerAvatar,
+        startedAt: r.started_at,
+        durationSeconds: r.duration_seconds || 0
+      };
+    });
+
+    res.json({
+      success: true,
+      calls: calls
     });
   } catch (err) {
     next(err);

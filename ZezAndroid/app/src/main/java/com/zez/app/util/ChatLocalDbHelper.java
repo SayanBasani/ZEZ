@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.zez.app.model.AppCallItem;
+import com.zez.app.model.ChatConversation;
 import com.zez.app.model.ChatMessage;
 
 import java.util.ArrayList;
@@ -16,7 +18,7 @@ import java.util.List;
 public class ChatLocalDbHelper extends SQLiteOpenHelper {
     private static final String TAG = "ChatLocalDbHelper";
     private static final String DATABASE_NAME = "zez_chat_local.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE_MESSAGES = "local_chat_messages";
     private static final String COL_ID = "id";
@@ -36,6 +38,31 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
     private static final String COL_DELETED_EVERYONE = "is_deleted_for_everyone";
     private static final String COL_CREATED_AT = "created_at";
 
+    // Conversations cache table
+    private static final String TABLE_CONV = "local_conversations";
+    private static final String COL_C_ID = "conversation_id";
+    private static final String COL_C_OTHER_ID = "other_user_id";
+    private static final String COL_C_OTHER_NAME = "other_user_name";
+    private static final String COL_C_OTHER_PHONE = "other_user_phone";
+    private static final String COL_C_OTHER_AVATAR = "other_user_avatar";
+    private static final String COL_C_OTHER_SEEN = "other_user_last_seen";
+    private static final String COL_C_LAST_TEXT = "last_message_text";
+    private static final String COL_C_LAST_TIME = "last_message_time";
+    private static final String COL_C_UNREAD = "unread_count";
+
+    // In-app calls table
+    private static final String TABLE_CALLS = "local_app_calls";
+    private static final String COL_K_ID = "id";
+    private static final String COL_K_TYPE = "call_type";
+    private static final String COL_K_DIRECTION = "direction";
+    private static final String COL_K_STATUS = "status";
+    private static final String COL_K_PEER_ID = "peer_id";
+    private static final String COL_K_PEER_NAME = "peer_name";
+    private static final String COL_K_PEER_PHONE = "peer_phone";
+    private static final String COL_K_PEER_AVATAR = "peer_avatar";
+    private static final String COL_K_STARTED = "started_at";
+    private static final String COL_K_DURATION = "duration_seconds";
+
     private static volatile ChatLocalDbHelper instance;
 
     public static synchronized ChatLocalDbHelper getInstance(Context context) {
@@ -51,7 +78,7 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String createTable = "CREATE TABLE " + TABLE_MESSAGES + " ("
+        String createMessages = "CREATE TABLE " + TABLE_MESSAGES + " ("
                 + COL_ID + " TEXT PRIMARY KEY, "
                 + COL_CONV_ID + " TEXT, "
                 + COL_SENDER_ID + " TEXT, "
@@ -69,8 +96,42 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
                 + COL_DELETED_EVERYONE + " INTEGER DEFAULT 0, "
                 + COL_CREATED_AT + " TEXT"
                 + ");";
-        db.execSQL(createTable);
-        db.execSQL("CREATE INDEX idx_conv_time ON " + TABLE_MESSAGES + "(" + COL_CONV_ID + ", " + COL_CREATED_AT + ");");
+        db.execSQL(createMessages);
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_conv_time ON " + TABLE_MESSAGES + "(" + COL_CONV_ID + ", " + COL_CREATED_AT + ");");
+
+        createConversationsTable(db);
+        createAppCallsTable(db);
+    }
+
+    private void createConversationsTable(SQLiteDatabase db) {
+        String sql = "CREATE TABLE IF NOT EXISTS " + TABLE_CONV + " ("
+                + COL_C_ID + " TEXT PRIMARY KEY, "
+                + COL_C_OTHER_ID + " TEXT, "
+                + COL_C_OTHER_NAME + " TEXT, "
+                + COL_C_OTHER_PHONE + " TEXT, "
+                + COL_C_OTHER_AVATAR + " TEXT, "
+                + COL_C_OTHER_SEEN + " TEXT, "
+                + COL_C_LAST_TEXT + " TEXT, "
+                + COL_C_LAST_TIME + " TEXT, "
+                + COL_C_UNREAD + " INTEGER DEFAULT 0"
+                + ");";
+        db.execSQL(sql);
+    }
+
+    private void createAppCallsTable(SQLiteDatabase db) {
+        String sql = "CREATE TABLE IF NOT EXISTS " + TABLE_CALLS + " ("
+                + COL_K_ID + " TEXT PRIMARY KEY, "
+                + COL_K_TYPE + " TEXT, "
+                + COL_K_DIRECTION + " TEXT, "
+                + COL_K_STATUS + " TEXT, "
+                + COL_K_PEER_ID + " TEXT, "
+                + COL_K_PEER_NAME + " TEXT, "
+                + COL_K_PEER_PHONE + " TEXT, "
+                + COL_K_PEER_AVATAR + " TEXT, "
+                + COL_K_STARTED + " TEXT, "
+                + COL_K_DURATION + " INTEGER DEFAULT 0"
+                + ");";
+        db.execSQL(sql);
     }
 
     @Override
@@ -79,6 +140,10 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
             try {
                 db.execSQL("ALTER TABLE " + TABLE_MESSAGES + " ADD COLUMN " + COL_LOCAL_URI + " TEXT;");
             } catch (Exception ignored) {}
+        }
+        if (oldVersion < 3) {
+            createConversationsTable(db);
+            createAppCallsTable(db);
         }
     }
 
@@ -112,21 +177,38 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
     }
 
     public synchronized List<ChatMessage> getMessages(String conversationId) {
-        return getMessages(conversationId, 200);
+        return getMessages(conversationId, null, 200);
     }
 
     public synchronized List<ChatMessage> getMessages(String conversationId, int limit) {
-        List<ChatMessage> list = new ArrayList<>();
-        if (conversationId == null) return list;
+        return getMessages(conversationId, null, limit);
+    }
 
+    public synchronized List<ChatMessage> getMessages(String conversationId, String otherUserId, int limit) {
+        List<ChatMessage> list = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = null;
         try {
+            String selection;
+            String[] args;
+            if (conversationId != null && otherUserId != null) {
+                selection = "(" + COL_CONV_ID + " = ? OR " + COL_SENDER_ID + " = ? OR " + COL_RECEIVER_ID + " = ?) AND " + COL_MODE + " = 'normal'";
+                args = new String[]{conversationId, otherUserId, otherUserId};
+            } else if (conversationId != null) {
+                selection = COL_CONV_ID + " = ? AND " + COL_MODE + " = 'normal'";
+                args = new String[]{conversationId};
+            } else if (otherUserId != null) {
+                selection = "(" + COL_SENDER_ID + " = ? OR " + COL_RECEIVER_ID + " = ?) AND " + COL_MODE + " = 'normal'";
+                args = new String[]{otherUserId, otherUserId};
+            } else {
+                return list;
+            }
+
             cursor = db.query(
                     TABLE_MESSAGES,
                     null,
-                    COL_CONV_ID + " = ? AND " + COL_MODE + " = 'normal'",
-                    new String[]{conversationId},
+                    selection,
+                    args,
                     null,
                     null,
                     COL_CREATED_AT + " DESC",
@@ -212,6 +294,155 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
 
     public synchronized void deleteConversation(String conversationId) {
         clearConversation(conversationId);
+        if (conversationId != null) {
+            SQLiteDatabase db = getWritableDatabase();
+            db.delete(TABLE_CONV, COL_C_ID + " = ?", new String[]{conversationId});
+        }
+    }
+
+    // ==========================================
+    // CONVERSATIONS CACHE METHODS
+    // ==========================================
+
+    public synchronized void saveConversations(List<ChatConversation> list) {
+        if (list == null) return;
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (ChatConversation c : list) {
+                if (c == null || c.getConversationId() == null) continue;
+                ContentValues cv = new ContentValues();
+                cv.put(COL_C_ID, c.getConversationId());
+                cv.put(COL_C_OTHER_ID, c.getOtherUserId());
+                cv.put(COL_C_OTHER_NAME, c.getOtherUserName());
+                cv.put(COL_C_OTHER_PHONE, c.getOtherUserPhone());
+                cv.put(COL_C_OTHER_AVATAR, c.getOtherUserAvatar());
+                cv.put(COL_C_OTHER_SEEN, c.getOtherUserLastSeen());
+                cv.put(COL_C_LAST_TEXT, c.getLastMessageText());
+                cv.put(COL_C_LAST_TIME, c.getLastMessageTime());
+                cv.put(COL_C_UNREAD, c.getUnreadCount());
+                db.insertWithOnConflict(TABLE_CONV, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            Log.e(TAG, "Error saving conversations: " + e.getMessage());
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public synchronized List<ChatConversation> getConversations() {
+        List<ChatConversation> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(TABLE_CONV, null, null, null, null, null, COL_C_LAST_TIME + " DESC");
+            if (cursor != null && cursor.moveToFirst()) {
+                int iId = cursor.getColumnIndexOrThrow(COL_C_ID);
+                int iOId = cursor.getColumnIndexOrThrow(COL_C_OTHER_ID);
+                int iOName = cursor.getColumnIndexOrThrow(COL_C_OTHER_NAME);
+                int iOPhone = cursor.getColumnIndexOrThrow(COL_C_OTHER_PHONE);
+                int iOAvatar = cursor.getColumnIndexOrThrow(COL_C_OTHER_AVATAR);
+                int iOSeen = cursor.getColumnIndexOrThrow(COL_C_OTHER_SEEN);
+                int iText = cursor.getColumnIndexOrThrow(COL_C_LAST_TEXT);
+                int iTime = cursor.getColumnIndexOrThrow(COL_C_LAST_TIME);
+                int iUnread = cursor.getColumnIndexOrThrow(COL_C_UNREAD);
+
+                do {
+                    ChatConversation c = new ChatConversation(
+                            cursor.getString(iId),
+                            cursor.getString(iOId),
+                            cursor.getString(iOName),
+                            cursor.getString(iOPhone),
+                            cursor.getString(iOAvatar),
+                            cursor.getString(iOSeen),
+                            cursor.getString(iText),
+                            cursor.getString(iTime),
+                            cursor.getInt(iUnread)
+                    );
+                    list.add(c);
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error reading cached conversations: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return list;
+    }
+
+    // ==========================================
+    // IN-APP CALL HISTORY METHODS
+    // ==========================================
+
+    public synchronized void saveAppCalls(List<AppCallItem> calls) {
+        if (calls == null) return;
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (AppCallItem item : calls) {
+                if (item == null || item.getId() == null) continue;
+                ContentValues cv = new ContentValues();
+                cv.put(COL_K_ID, item.getId());
+                cv.put(COL_K_TYPE, item.getCallType());
+                cv.put(COL_K_DIRECTION, item.getDirection());
+                cv.put(COL_K_STATUS, item.getStatus());
+                cv.put(COL_K_PEER_ID, item.getPeerId());
+                cv.put(COL_K_PEER_NAME, item.getPeerName());
+                cv.put(COL_K_PEER_PHONE, item.getPeerPhone());
+                cv.put(COL_K_PEER_AVATAR, item.getPeerAvatar());
+                cv.put(COL_K_STARTED, item.getStartedAt());
+                cv.put(COL_K_DURATION, item.getDurationSeconds());
+                db.insertWithOnConflict(TABLE_CALLS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            Log.e(TAG, "Error saving app calls: " + e.getMessage());
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public synchronized List<AppCallItem> getAppCalls() {
+        List<AppCallItem> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(TABLE_CALLS, null, null, null, null, null, COL_K_STARTED + " DESC", "100");
+            if (cursor != null && cursor.moveToFirst()) {
+                int iId = cursor.getColumnIndexOrThrow(COL_K_ID);
+                int iType = cursor.getColumnIndexOrThrow(COL_K_TYPE);
+                int iDir = cursor.getColumnIndexOrThrow(COL_K_DIRECTION);
+                int iStat = cursor.getColumnIndexOrThrow(COL_K_STATUS);
+                int iPId = cursor.getColumnIndexOrThrow(COL_K_PEER_ID);
+                int iPName = cursor.getColumnIndexOrThrow(COL_K_PEER_NAME);
+                int iPPhone = cursor.getColumnIndexOrThrow(COL_K_PEER_PHONE);
+                int iPAvatar = cursor.getColumnIndexOrThrow(COL_K_PEER_AVATAR);
+                int iStart = cursor.getColumnIndexOrThrow(COL_K_STARTED);
+                int iDur = cursor.getColumnIndexOrThrow(COL_K_DURATION);
+
+                do {
+                    AppCallItem item = new AppCallItem(
+                            cursor.getString(iId),
+                            cursor.getString(iType),
+                            cursor.getString(iDir),
+                            cursor.getString(iStat),
+                            cursor.getString(iPId),
+                            cursor.getString(iPName),
+                            cursor.getString(iPPhone),
+                            cursor.getString(iPAvatar),
+                            cursor.getString(iStart),
+                            cursor.getInt(iDur)
+                    );
+                    list.add(item);
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error reading cached app calls: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return list;
     }
 
     private ContentValues toContentValues(ChatMessage msg) {

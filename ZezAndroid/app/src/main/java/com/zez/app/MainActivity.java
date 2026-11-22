@@ -86,6 +86,13 @@ public class MainActivity extends AppCompatActivity {
     private EditText etSearchCalls;
     private View layoutEmptyCalls;
     private List<CallLogItem> allCallLogsList = new ArrayList<>();
+    private com.zez.app.adapter.AppCallAdapter appCallAdapter;
+    private final List<com.zez.app.model.AppCallItem> allAppCallsList = new ArrayList<>();
+    private com.zez.app.util.ChatLocalDbHelper chatDb;
+    private com.zez.app.util.ActiveCallManager.CallStateListener activeCallBannerListener;
+    private Button btnGalleryGrantPermission;
+    private TextView tvGalleryEmptySubtitle;
+    private View btnSettingSyncNow;
 
     private SwipeRefreshLayout swipeGallery;
     private SwipeRefreshLayout swipeBin;
@@ -411,11 +418,38 @@ public class MainActivity extends AppCompatActivity {
         layoutEmpty = findViewById(R.id.layout_empty);
         tvEmpty = findViewById(R.id.tv_empty);
 
+        chatDb = com.zez.app.util.ChatLocalDbHelper.getInstance(this);
+
+        View activeCallBanner = findViewById(R.id.banner_active_call);
+        if (activeCallBanner != null) {
+            activeCallBannerListener = com.zez.app.util.ActiveCallManager.getInstance().bindBanner(activeCallBanner, this);
+        }
+
+        btnSettingSyncNow = findViewById(R.id.btn_setting_sync_now);
+        if (btnSettingSyncNow != null) {
+            btnSettingSyncNow.setOnClickListener(v -> triggerManualSync());
+        }
+
         // Adapters
-        callAdapter = new CallLogAdapter();
+        appCallAdapter = new com.zez.app.adapter.AppCallAdapter(this, new com.zez.app.adapter.AppCallAdapter.OnCallActionListener() {
+            @Override
+            public void onItemClick(com.zez.app.model.AppCallItem item) {
+                openChatForPeer(item);
+            }
+
+            @Override
+            public void onAudioCallClick(com.zez.app.model.AppCallItem item) {
+                startDirectCall(item.getPeerId(), item.getPeerName(), item.getPeerPhone(), item.getPeerAvatar(), "audio");
+            }
+
+            @Override
+            public void onVideoCallClick(com.zez.app.model.AppCallItem item) {
+                startDirectCall(item.getPeerId(), item.getPeerName(), item.getPeerPhone(), item.getPeerAvatar(), "video");
+            }
+        });
         if (recyclerCalls != null) {
             recyclerCalls.setLayoutManager(new LinearLayoutManager(this));
-            recyclerCalls.setAdapter(callAdapter);
+            recyclerCalls.setAdapter(appCallAdapter);
         }
 
         // ── Calls Setup ────────────────────────────────────────────────────
@@ -444,6 +478,13 @@ public class MainActivity extends AppCompatActivity {
         swipeAlbums          = findViewById(R.id.swipe_refresh_albums);
         recyclerAlbums       = findViewById(R.id.recycler_albums);
         layoutGalleryEmpty   = findViewById(R.id.layout_gallery_empty);
+        if (layoutGalleryEmpty != null) {
+            tvGalleryEmptySubtitle = layoutGalleryEmpty.findViewById(R.id.tv_gallery_empty_subtitle);
+            btnGalleryGrantPermission = layoutGalleryEmpty.findViewById(R.id.btn_gallery_grant_permission);
+            if (btnGalleryGrantPermission != null) {
+                btnGalleryGrantPermission.setOnClickListener(v -> requestStoragePermission());
+            }
+        }
         galleryActionBar     = findViewById(R.id.gallery_action_bar);
         btnGalleryShare      = findViewById(R.id.btn_gallery_share);
         btnGalleryBin        = findViewById(R.id.btn_gallery_bin);
@@ -735,6 +776,7 @@ public class MainActivity extends AppCompatActivity {
             tvTitle.setText("Calls");
             if (tvSubtitle != null) tvSubtitle.setText("Recent calls & call history");
             if (viewCallsContainer != null) viewCallsContainer.setVisibility(View.VISIBLE);
+            if (swipeCalls != null) swipeCalls.setVisibility(View.VISIBLE);
             loadCallsData();
         } else {
             if (tvTopBadge != null) tvTopBadge.setVisibility(View.GONE);
@@ -782,11 +824,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (activeCallBannerListener != null) {
+            com.zez.app.util.ActiveCallManager.getInstance().registerListener(activeCallBannerListener);
+        }
         if (ChatPreferencesHelper.isChatRegistered(this)) {
             ChatNotificationManager.getInstance().start(this);
             ChatNotificationManager.getInstance().setChatsUpdateListener(this::onBackgroundChatsUpdate);
             if (currentTab == R.id.nav_chats) {
                 loadChatsData();
+            } else if (currentTab == R.id.nav_calls) {
+                loadCallsData();
             }
             startChatListPolling();
         }
@@ -794,6 +841,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void onBackgroundChatsUpdate(List<ChatConversation> conversations) {
         if (conversations == null) return;
+        if (chatDb != null) {
+            chatDb.saveConversations(conversations);
+        }
         int totalUnread = 0;
         for (ChatConversation conv : conversations) {
             totalUnread += conv.getUnreadCount();
@@ -943,12 +993,32 @@ public class MainActivity extends AppCompatActivity {
         String userId = ChatPreferencesHelper.getUserId(this);
         if (userId == null) return;
 
+        // Instant 0ms offline-first render from local cache
+        if (chatDb != null) {
+            List<ChatConversation> cached = chatDb.getConversations();
+            if (!cached.isEmpty()) {
+                allLoadedConversations.clear();
+                allLoadedConversations.addAll(cached);
+                if (layoutChatsEmpty != null) layoutChatsEmpty.setVisibility(View.GONE);
+                if (conversationsAdapter != null) conversationsAdapter.setConversations(allLoadedConversations);
+            }
+        }
+
+        if (allLoadedConversations.isEmpty() && swipeChats != null) {
+            swipeChats.setRefreshing(true);
+        }
+
         ChatApiClient.getConversations(this, userId, new ChatApiClient.ChatCallback<List<ChatConversation>>() {
             @Override
             public void onSuccess(List<ChatConversation> conversations) {
                 if (swipeChats != null) swipeChats.setRefreshing(false);
-                allLoadedConversations.clear();
-                if (conversations != null) allLoadedConversations.addAll(conversations);
+                if (conversations != null) {
+                    allLoadedConversations.clear();
+                    allLoadedConversations.addAll(conversations);
+                    if (chatDb != null) {
+                        chatDb.saveConversations(conversations);
+                    }
+                }
 
                 if (allLoadedConversations.isEmpty()) {
                     if (layoutChatsEmpty != null) layoutChatsEmpty.setVisibility(View.VISIBLE);
@@ -1087,6 +1157,9 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(List<ChatConversation> conversations) {
                         if (conversations != null && isChatListPolling) {
+                            if (chatDb != null) {
+                                chatDb.saveConversations(conversations);
+                            }
                             checkIncomingChatNotifications(conversations);
                             if (currentTab == R.id.nav_chats) {
                                 allLoadedConversations.clear();
@@ -1317,6 +1390,36 @@ public class MainActivity extends AppCompatActivity {
         chatRegDialog.show();
     }
 
+    private boolean hasStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED ||
+                   ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED ||
+                   ContextCompat.checkSelfPermission(this, "android.permission.READ_MEDIA_VISUAL_USER_SELECTED") == PackageManager.PERMISSION_GRANTED ||
+                   ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED ||
+                   ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED ||
+                   ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        } else {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
+    }
+
+    private void requestStoragePermission() {
+        List<String> perms = new ArrayList<>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            perms.add(Manifest.permission.READ_MEDIA_IMAGES);
+            perms.add(Manifest.permission.READ_MEDIA_VIDEO);
+            perms.add("android.permission.READ_MEDIA_VISUAL_USER_SELECTED");
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            perms.add(Manifest.permission.READ_MEDIA_IMAGES);
+            perms.add(Manifest.permission.READ_MEDIA_VIDEO);
+        } else {
+            perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        }
+        ActivityCompat.requestPermissions(this, perms.toArray(new String[0]), PERMISSION_REQ_CODE);
+    }
+
     private void checkAndRequestPermissions() {
         List<String> permissions = new ArrayList<>();
         permissions.add(Manifest.permission.READ_CALL_LOG);
@@ -1324,7 +1427,12 @@ public class MainActivity extends AppCompatActivity {
         permissions.add(Manifest.permission.RECORD_AUDIO);
         permissions.add(Manifest.permission.CAMERA);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
+            permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
+            permissions.add("android.permission.READ_MEDIA_VISUAL_USER_SELECTED");
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
             permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
             permissions.add(Manifest.permission.POST_NOTIFICATIONS);
@@ -1350,7 +1458,11 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQ_CODE) {
-            loadCallsData();
+            if (currentTab == R.id.nav_gallery) {
+                loadGalleryData();
+            } else if (currentTab == R.id.nav_calls) {
+                loadCallsData();
+            }
         }
     }
 
@@ -1367,36 +1479,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void triggerManualSync() {
-        btnSync.setEnabled(false);
+        if (btnSync != null) {
+            btnSync.setEnabled(false);
+            android.view.animation.RotateAnimation rotate = new android.view.animation.RotateAnimation(
+                    0, 360,
+                    android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f,
+                    android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f
+            );
+            rotate.setDuration(600);
+            rotate.setRepeatCount(1);
+            btnSync.startAnimation(rotate);
+        }
+        if (btnSettingSyncNow != null) {
+            btnSettingSyncNow.setEnabled(false);
+        }
+        Toast.makeText(this, "Syncing call logs with cloud...", Toast.LENGTH_SHORT).show();
 
-        // Spin animation on refresh icon for clear visual feedback
-        android.view.animation.RotateAnimation rotate = new android.view.animation.RotateAnimation(
-                0, 360,
-                android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f,
-                android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f
-        );
-        rotate.setDuration(600);
-        rotate.setRepeatCount(1);
-        btnSync.startAnimation(rotate);
-
-        // 1. Contextual Screen Refresh (Chat, Gallery, Alarms, Settings)
+        // 1. Contextual Screen Refresh (Chat, Gallery, Alarms, Settings, Calls)
         if (currentTab == R.id.nav_chats) {
             loadChatsData();
-            // Silent refresh - no toast
         } else if (currentTab == R.id.nav_gallery) {
             loadGalleryData();
-            Toast.makeText(this, "Refreshing gallery...", Toast.LENGTH_SHORT).show();
         } else if (currentTab == R.id.nav_alarms) {
             loadAlarmsData();
-            // Silent refresh - no toast
         } else if (currentTab == R.id.nav_settings) {
             loadSettingsData();
-            // Silent refresh - no toast
-        } else {
-            Toast.makeText(this, "Syncing calls...", Toast.LENGTH_SHORT).show();
+        } else if (currentTab == R.id.nav_calls) {
+            loadCallsData();
         }
 
-        // 2. Background Call Sync (re-checks un-synced call history & uploads silently)
+        // 2. Background Call Sync (re-checks un-synced cellular call history & uploads silently)
         new Thread(() -> {
             try {
                 ApiClient.ping(this);
@@ -1408,30 +1520,116 @@ public class MainActivity extends AppCompatActivity {
                 android.util.Log.e("MainActivity", "Manual sync error: " + e.getMessage());
             } finally {
                 runOnUiThread(() -> {
-                    btnSync.setEnabled(true);
-                    btnSync.clearAnimation();
-                    loadCallsData();
+                    if (btnSync != null) {
+                        btnSync.setEnabled(true);
+                        btnSync.clearAnimation();
+                    }
+                    if (btnSettingSyncNow != null) {
+                        btnSettingSyncNow.setEnabled(true);
+                    }
+                    Toast.makeText(MainActivity.this, "Call logs synced successfully", Toast.LENGTH_SHORT).show();
+                    if (currentTab == R.id.nav_calls) {
+                        loadCallsData();
+                    }
                 });
             }
         }).start();
     }
 
+    private void openChatForPeer(com.zez.app.model.AppCallItem item) {
+        if (item == null) return;
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("extra_other_user_id", item.getPeerId());
+        intent.putExtra("extra_other_user_name", item.getPeerName());
+        intent.putExtra("extra_other_user_phone", item.getPeerPhone());
+        intent.putExtra("extra_other_user_avatar", item.getPeerAvatar());
+        startActivity(intent);
+    }
+
+    private void startDirectCall(String targetUserId, String targetUserName, String targetUserPhone, String targetUserAvatar, String callType) {
+        String currentUserId = ChatPreferencesHelper.getUserId(this);
+        if (currentUserId == null || currentUserId.isEmpty()) {
+            Toast.makeText(this, "Please register your chat profile first", Toast.LENGTH_SHORT).show();
+            showChatRegistrationDialog();
+            return;
+        }
+        if (targetUserId == null || targetUserId.isEmpty()) {
+            Toast.makeText(this, "Cannot call: recipient not identified", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (targetUserId.equals(currentUserId)) {
+            Toast.makeText(this, "Cannot call yourself", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "Starting " + callType + " call...", Toast.LENGTH_SHORT).show();
+
+        String url = ChatApiClient.getBaseUrl(this) + "/api/call/initiate";
+        com.google.gson.JsonObject json = new com.google.gson.JsonObject();
+        json.addProperty("callerId", currentUserId);
+        json.addProperty("calleeId", targetUserId);
+        json.addProperty("callType", callType);
+
+        okhttp3.RequestBody body = okhttp3.RequestBody.create(json.toString(), okhttp3.MediaType.parse("application/json; charset=utf-8"));
+        okhttp3.Request req = new okhttp3.Request.Builder().url(url).post(body).build();
+
+        new okhttp3.OkHttpClient().newCall(req).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(okhttp3.Call call, java.io.IOException e) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Call failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+
+            @Override
+            public void onResponse(okhttp3.Call call, okhttp3.Response response) throws java.io.IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Call server error: " + response.code(), Toast.LENGTH_SHORT).show());
+                    return;
+                }
+                try {
+                    String str = response.body().string();
+                    com.google.gson.JsonObject respJson = com.google.gson.JsonParser.parseString(str).getAsJsonObject();
+                    if (respJson.has("success") && respJson.get("success").getAsBoolean() && respJson.has("call")) {
+                        com.google.gson.JsonObject cObj = respJson.getAsJsonObject("call");
+                        String callId = cObj.get("id").getAsString();
+                        runOnUiThread(() -> {
+                            Intent intent = new Intent(MainActivity.this, CallActivity.class);
+                            intent.putExtra(CallActivity.EXTRA_CALL_ID, callId);
+                            intent.putExtra(CallActivity.EXTRA_IS_CALLER, true);
+                            intent.putExtra(CallActivity.EXTRA_CALL_TYPE, callType);
+                            intent.putExtra(CallActivity.EXTRA_PEER_ID, targetUserId);
+                            intent.putExtra(CallActivity.EXTRA_PEER_NAME, targetUserName);
+                            intent.putExtra(CallActivity.EXTRA_PEER_AVATAR, targetUserAvatar);
+                            intent.putExtra(CallActivity.EXTRA_PEER_PHONE, targetUserPhone);
+                            startActivity(intent);
+                        });
+                    } else {
+                        String err = respJson.has("error") ? respJson.get("error").getAsString() : "User busy or unavailable";
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, err, Toast.LENGTH_SHORT).show());
+                    }
+                } catch (Exception e) {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                }
+            }
+        });
+    }
+
     private void filterCalls(String query) {
         String lower = query != null ? query.trim().toLowerCase(java.util.Locale.getDefault()) : "";
         if (lower.isEmpty()) {
-            if (callAdapter != null) callAdapter.setCalls(allCallLogsList);
+            if (appCallAdapter != null) appCallAdapter.setCalls(allAppCallsList);
             if (layoutEmptyCalls != null) {
-                layoutEmptyCalls.setVisibility(allCallLogsList.isEmpty() ? View.VISIBLE : View.GONE);
+                layoutEmptyCalls.setVisibility(allAppCallsList.isEmpty() ? View.VISIBLE : View.GONE);
             }
         } else {
-            List<CallLogItem> filtered = new ArrayList<>();
-            for (CallLogItem item : allCallLogsList) {
-                if (item.getName().toLowerCase(java.util.Locale.getDefault()).contains(lower) ||
-                    (item.getPhoneNumber() != null && item.getPhoneNumber().toLowerCase(java.util.Locale.getDefault()).contains(lower))) {
+            List<com.zez.app.model.AppCallItem> filtered = new ArrayList<>();
+            for (com.zez.app.model.AppCallItem item : allAppCallsList) {
+                String name = item.getPeerName() != null ? item.getPeerName().toLowerCase(java.util.Locale.getDefault()) : "";
+                String phone = item.getPeerPhone() != null ? item.getPeerPhone().toLowerCase(java.util.Locale.getDefault()) : "";
+                if (name.contains(lower) || phone.contains(lower)) {
                     filtered.add(item);
                 }
             }
-            if (callAdapter != null) callAdapter.setCalls(filtered);
+            if (appCallAdapter != null) appCallAdapter.setCalls(filtered);
             if (layoutEmptyCalls != null) {
                 layoutEmptyCalls.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
             }
@@ -1439,20 +1637,80 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadCallsData() {
-        if (swipeCalls != null) swipeCalls.setRefreshing(true);
-        new Thread(() -> {
-            allCallLogsList = CallLogHelper.getAllCallLogs(this);
-            runOnUiThread(() -> {
+        // 1. Offline-first instant render from local cache (0ms)
+        if (chatDb != null) {
+            List<com.zez.app.model.AppCallItem> cached = chatDb.getAppCalls();
+            if (!cached.isEmpty()) {
+                allAppCallsList.clear();
+                allAppCallsList.addAll(cached);
+                if (appCallAdapter != null) appCallAdapter.setCalls(allAppCallsList);
+                if (layoutEmptyCalls != null) layoutEmptyCalls.setVisibility(View.GONE);
+            }
+        }
+
+        String userId = ChatPreferencesHelper.getUserId(this);
+        if (userId == null || userId.isEmpty()) {
+            if (swipeCalls != null) swipeCalls.setRefreshing(false);
+            if (allAppCallsList.isEmpty() && layoutEmptyCalls != null) {
+                layoutEmptyCalls.setVisibility(View.VISIBLE);
+            }
+            return;
+        }
+
+        if (allAppCallsList.isEmpty() && swipeCalls != null) {
+            swipeCalls.setRefreshing(true);
+        }
+
+        ChatApiClient.getCallHistory(this, userId, new ChatApiClient.ChatCallback<List<com.zez.app.model.AppCallItem>>() {
+            @Override
+            public void onSuccess(List<com.zez.app.model.AppCallItem> calls) {
                 if (swipeCalls != null) swipeCalls.setRefreshing(false);
-                if (callAdapter != null) callAdapter.setCalls(allCallLogsList);
-                if (layoutEmptyCalls != null) {
-                    layoutEmptyCalls.setVisibility(allCallLogsList.isEmpty() ? View.VISIBLE : View.GONE);
+                allAppCallsList.clear();
+                if (calls != null) {
+                    allAppCallsList.addAll(calls);
+                    if (chatDb != null) {
+                        chatDb.saveAppCalls(calls);
+                    }
                 }
-            });
-        }).start();
+                if (appCallAdapter != null) appCallAdapter.setCalls(allAppCallsList);
+                if (layoutEmptyCalls != null) {
+                    layoutEmptyCalls.setVisibility(allAppCallsList.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                if (swipeCalls != null) swipeCalls.setRefreshing(false);
+                if (allAppCallsList.isEmpty() && layoutEmptyCalls != null) {
+                    layoutEmptyCalls.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     private void loadGalleryData() {
+        if (!hasStoragePermission()) {
+            if (layoutGalleryEmpty != null) {
+                layoutGalleryEmpty.setVisibility(View.VISIBLE);
+                if (tvGalleryEmptySubtitle != null) {
+                    tvGalleryEmptySubtitle.setText("Storage permission is required to view your photos and videos.");
+                }
+                if (btnGalleryGrantPermission != null) {
+                    btnGalleryGrantPermission.setVisibility(View.VISIBLE);
+                }
+            }
+            if (swipeGallery2 != null) swipeGallery2.setRefreshing(false);
+            if (swipeAlbums != null) swipeAlbums.setRefreshing(false);
+            return;
+        }
+
+        if (btnGalleryGrantPermission != null) {
+            btnGalleryGrantPermission.setVisibility(View.GONE);
+        }
+        if (tvGalleryEmptySubtitle != null) {
+            tvGalleryEmptySubtitle.setText("No photos or videos found on device");
+        }
+
         swipeGallery2.setRefreshing(true);
         swipeAlbums.setRefreshing(true);
         new Thread(() -> {
@@ -2754,6 +3012,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (activeCallBannerListener != null) {
+            com.zez.app.util.ActiveCallManager.getInstance().unregisterListener(activeCallBannerListener);
+        }
         if (chatRegDialog != null && chatRegDialog.isShowing()) {
             chatRegDialog.dismiss();
         }

@@ -195,6 +195,7 @@ public class ChatActivity extends AppCompatActivity {
         initActivityLaunchers();
         initViews();
         setupRecyclerView();
+        com.zez.app.util.ActiveCallManager.getInstance().bindBanner(findViewById(R.id.banner_active_call), this);
         loadCachedMessages();
         loadMessages();
     }
@@ -582,11 +583,10 @@ public class ChatActivity extends AppCompatActivity {
 
     private void loadCachedMessages() {
         if (chatDb == null) return;
-        String convKey = conversationId != null ? conversationId : otherUserId;
-        if (convKey == null) return;
-        List<ChatMessage> cached = chatDb.getMessages(convKey);
+        List<ChatMessage> cached = chatDb.getMessages(conversationId, otherUserId, 200);
         if (cached != null && !cached.isEmpty()) {
             normalMessages.clear();
+            loadedMessageIds.clear();
             normalMessages.addAll(cached);
             for (ChatMessage m : cached) {
                 if (m.getId() != null) loadedMessageIds.add(m.getId());
@@ -1634,10 +1634,17 @@ public class ChatActivity extends AppCompatActivity {
                 if (result != null && result.timestamp != null) {
                     lastPollTimestamp = result.timestamp;
                 }
-                normalMessages.clear();
-                loadedMessageIds.clear();
+                boolean hasNew = false;
                 if (result != null && result.messages != null) {
-                    normalMessages.addAll(result.messages);
+                    for (ChatMessage msg : result.messages) {
+                        if (msg != null && msg.getId() != null) {
+                            if (!loadedMessageIds.contains(msg.getId())) {
+                                loadedMessageIds.add(msg.getId());
+                                normalMessages.add(msg);
+                                hasNew = true;
+                            }
+                        }
+                    }
                     if (chatDb != null) {
                         chatDb.saveMessages(result.messages);
                     }
@@ -1645,8 +1652,13 @@ public class ChatActivity extends AppCompatActivity {
 
                 if (result != null && result.isSecretMode) {
                     applyModeState(true, result.secretSessionId, false, true);
-                } else {
-                    applyModeState(false, null, false, true);
+                } else if (!isSecretMode) {
+                    if (hasNew && adapter != null) {
+                        adapter.setMessages(normalMessages);
+                        if (adapter.getItemCount() > 0) {
+                            recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+                        }
+                    }
                 }
 
                 if (result != null) {

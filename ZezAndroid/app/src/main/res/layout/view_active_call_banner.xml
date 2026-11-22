@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_active_call_banner"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="14dp"
+    android:background="#14532D"
+    android:elevation="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone">
+
+    <!-- Call Type Icon Badge -->
+    <FrameLayout
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:background="@drawable/bg_circle_glass"
+        android:backgroundTint="#22C55E">
+
+        <ImageView
+            android:id="@+id/iv_banner_call_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_call"
+            app:tint="@android:color/white" />
+    </FrameLayout>
+
+    <!-- Caller / Callee Info & Duration -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="12dp">
+
+        <TextView
+            android:id="@+id/tv_banner_peer_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Contact"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:singleLine="true" />
+
+        <TextView
+            android:id="@+id/tv_banner_call_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tap to return to call · 00:00"
+            android:textColor="#BBF7D0"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Banner Mute Action -->
+    <ImageButton
+        android:id="@+id/btn_banner_mute"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:background="@drawable/bg_call_btn_round"
+        android:backgroundTint="#30FFFFFF"
+        android:src="@drawable/ic_mic"
+        app:tint="@android:color/white"
+        android:contentDescription="Mute call"
+        android:layout_marginEnd="8dp" />
+
+    <!-- Banner Hangup Action -->
+    <ImageButton
+        android:id="@+id/btn_banner_hangup"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:background="@drawable/bg_call_btn_end"
+        android:src="@drawable/ic_call_end"
+        app:tint="@android:color/white"
+        android:contentDescription="End call" />
+
+</LinearLayout>

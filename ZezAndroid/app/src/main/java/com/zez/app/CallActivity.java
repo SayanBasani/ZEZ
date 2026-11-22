@@ -2,6 +2,7 @@ package com.zez.app;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -41,6 +42,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zez.app.util.ActiveCallManager;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatPreferencesHelper;
 
@@ -48,6 +50,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -79,15 +82,18 @@ public class CallActivity extends AppCompatActivity {
 
     private ImageView ivRemoteVideo;
     private LinearLayout layoutAudioContent;
+    private View layoutAvatarBox;
     private TextView tvCallTypeLabel;
     private TextView tvPeerName;
     private TextView tvCallStatus;
     private ImageView ivPeerAvatar;
+    private TextView tvEncryptionNote;
 
     private CardView cardLocalPip;
     private TextureView textureLocalCamera;
     private ImageView ivLocalCamOff;
 
+    private ImageButton btnMinimize;
     private ImageButton btnMute;
     private ImageButton btnFlipCam;
     private ImageButton btnToggleCam;
@@ -112,6 +118,8 @@ public class CallActivity extends AppCompatActivity {
     private final OkHttpClient httpClient = new OkHttpClient();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Handler frameHandler = new Handler(Looper.getMainLooper());
+    private final AtomicBoolean isSendingFrame = new AtomicBoolean(false);
+    private final AtomicBoolean isFetchingFrame = new AtomicBoolean(false);
 
     private int callDurationSeconds = 0;
     private final Runnable timerRunnable = new Runnable() {
@@ -123,6 +131,7 @@ public class CallActivity extends AppCompatActivity {
             int secs = callDurationSeconds % 60;
             String timeStr = String.format(Locale.getDefault(), "%02d:%02d", mins, secs);
             tvCallStatus.setText(timeStr);
+            ActiveCallManager.getInstance().setDuration(callDurationSeconds);
             mainHandler.postDelayed(this, 1000);
         }
     };
@@ -149,6 +158,8 @@ public class CallActivity extends AppCompatActivity {
         peerPhone = getIntent().getStringExtra(EXTRA_PEER_PHONE);
         currentUserId = ChatPreferencesHelper.getUserId(this);
 
+        ActiveCallManager.getInstance().setCallStarted(callId, callType, isCaller, peerId, peerName, peerPhone, peerAvatar);
+
         initViews();
         setupAudio();
         checkPermissionsAndStart();
@@ -157,15 +168,18 @@ public class CallActivity extends AppCompatActivity {
     private void initViews() {
         ivRemoteVideo = findViewById(R.id.iv_call_remote_video);
         layoutAudioContent = findViewById(R.id.layout_call_audio_content);
+        layoutAvatarBox = findViewById(R.id.layout_call_avatar_box);
         tvCallTypeLabel = findViewById(R.id.tv_call_type_label);
         tvPeerName = findViewById(R.id.tv_call_peer_name);
         tvCallStatus = findViewById(R.id.tv_call_status);
         ivPeerAvatar = findViewById(R.id.iv_call_peer_avatar);
+        tvEncryptionNote = findViewById(R.id.tv_call_encryption_note);
 
         cardLocalPip = findViewById(R.id.card_call_local_pip);
         textureLocalCamera = findViewById(R.id.texture_call_local_camera);
         ivLocalCamOff = findViewById(R.id.iv_call_local_cam_off);
 
+        btnMinimize = findViewById(R.id.btn_call_minimize);
         btnMute = findViewById(R.id.btn_call_mute);
         btnFlipCam = findViewById(R.id.btn_call_flip_cam);
         btnToggleCam = findViewById(R.id.btn_call_toggle_cam);
@@ -200,11 +214,39 @@ public class CallActivity extends AppCompatActivity {
             btnToggleCam.setVisibility(View.VISIBLE);
         }
 
+        if (btnMinimize != null) {
+            btnMinimize.setOnClickListener(v -> minimizeCall());
+        }
         btnMute.setOnClickListener(v -> toggleMute());
         btnSpeaker.setOnClickListener(v -> toggleSpeaker());
         btnFlipCam.setOnClickListener(v -> flipCamera());
         btnToggleCam.setOnClickListener(v -> toggleVideo());
         btnHangup.setOnClickListener(v -> endCall(true));
+
+        ActiveCallManager.getInstance().registerListener(new ActiveCallManager.CallStateListener() {
+            @Override
+            public void onCallStateChanged(boolean isActive, boolean isMinimized) {
+                if (!isActive && !isFinishing()) {
+                    finish();
+                }
+            }
+            @Override public void onDurationTick(int durationSeconds) {}
+            @Override public void onMuteStateChanged(boolean isMuted) {}
+        });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        ActiveCallManager.getInstance().setMinimized(false);
+    }
+
+    private void minimizeCall() {
+        ActiveCallManager.getInstance().setMinimized(true);
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(intent);
     }
 
     private void setupAudio() {
@@ -471,86 +513,107 @@ public class CallActivity extends AppCompatActivity {
     }
 
     private void startFrameExchangeLoops() {
-        // Send local camera frame every 250ms
+        // Send local camera frame every 250ms (non-blocking)
         Runnable sendFrameTask = new Runnable() {
             @Override
             public void run() {
                 if (isDestroyed) return;
                 if (isCameraEnabled && textureLocalCamera != null && textureLocalCamera.isAvailable()) {
-                    try {
-                        Bitmap bmp = textureLocalCamera.getBitmap(240, 320);
-                        if (bmp != null) {
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            bmp.compress(Bitmap.CompressFormat.JPEG, 55, baos);
-                            bmp.recycle();
-                            byte[] bytes = baos.toByteArray();
-                            String b64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
+                    if (isSendingFrame.compareAndSet(false, true)) {
+                        try {
+                            Bitmap srcBmp = textureLocalCamera.getBitmap();
+                            if (srcBmp != null) {
+                                Bitmap scaled = Bitmap.createScaledBitmap(srcBmp, 320, 240, true);
+                                if (scaled != srcBmp) srcBmp.recycle();
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                scaled.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+                                scaled.recycle();
+                                byte[] bytes = baos.toByteArray();
+                                String b64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
 
-                            String url = ChatApiClient.getBaseUrl(CallActivity.this) + "/api/call/frame";
-                            JsonObject json = new JsonObject();
-                            json.addProperty("callId", callId);
-                            json.addProperty("senderId", currentUserId);
-                            json.addProperty("frameBase64", b64);
+                                String url = ChatApiClient.getBaseUrl(CallActivity.this) + "/api/call/frame";
+                                JsonObject json = new JsonObject();
+                                json.addProperty("callId", callId);
+                                json.addProperty("senderId", currentUserId);
+                                json.addProperty("frameBase64", b64);
 
-                            RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));
-                            Request req = new Request.Builder().url(url).post(body).build();
-                            httpClient.newCall(req).enqueue(new Callback() {
-                                @Override
-                                public void onFailure(Call call, IOException e) {}
-                                @Override
-                                public void onResponse(Call call, Response response) {
-                                    try { if (response.body() != null) response.body().close(); } catch (Exception ignored) {}
-                                }
-                            });
+                                RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));
+                                Request req = new Request.Builder().url(url).post(body).build();
+                                httpClient.newCall(req).enqueue(new Callback() {
+                                    @Override
+                                    public void onFailure(Call call, IOException e) {
+                                        isSendingFrame.set(false);
+                                    }
+                                    @Override
+                                    public void onResponse(Call call, Response response) {
+                                        try { if (response.body() != null) response.body().close(); } catch (Exception ignored) {}
+                                        isSendingFrame.set(false);
+                                    }
+                                });
+                            } else {
+                                isSendingFrame.set(false);
+                            }
+                        } catch (Exception e) {
+                            isSendingFrame.set(false);
                         }
-                    } catch (Exception ignored) {}
+                    }
                 }
-                if (!isDestroyed) frameHandler.postDelayed(this, 300);
+                if (!isDestroyed) frameHandler.postDelayed(this, 280);
             }
         };
         frameHandler.postDelayed(sendFrameTask, 400);
 
-        // Fetch remote camera frame every 250ms
+        // Fetch remote camera frame every 250ms (non-blocking)
         Runnable fetchFrameTask = new Runnable() {
             @Override
             public void run() {
                 if (isDestroyed) return;
                 if (peerId != null && !peerId.isEmpty()) {
-                    String url = ChatApiClient.getBaseUrl(CallActivity.this) + "/api/call/frame?callId=" + callId + "&senderId=" + peerId;
-                    Request req = new Request.Builder().url(url).build();
-                    httpClient.newCall(req).enqueue(new Callback() {
-                        @Override
-                        public void onFailure(Call call, IOException e) {}
-                        @Override
-                        public void onResponse(Call call, Response response) throws IOException {
-                            if (isDestroyed) return;
-                            if (response.isSuccessful() && response.body() != null) {
-                                try {
-                                    String body = response.body().string();
-                                    JsonObject json = JsonParser.parseString(body).getAsJsonObject();
-                                    if (json.has("hasFrame") && json.get("hasFrame").getAsBoolean() && json.has("frame")) {
-                                        String b64 = json.get("frame").getAsString();
-                                        byte[] bytes = Base64.decode(b64, Base64.DEFAULT);
-                                        Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                                        if (bmp != null) {
-                                            runOnUiThread(() -> {
-                                                if (ivRemoteVideo != null) {
-                                                    ivRemoteVideo.setImageBitmap(bmp);
-                                                    ivRemoteVideo.setVisibility(View.VISIBLE);
-                                                }
-                                                // Make audio overlay compact when remote video is streaming
-                                                if (layoutAudioContent != null) {
-                                                    ivPeerAvatar.setVisibility(View.GONE);
-                                                }
-                                            });
-                                        }
-                                    }
-                                } catch (Exception ignored) {}
+                    if (isFetchingFrame.compareAndSet(false, true)) {
+                        String url = ChatApiClient.getBaseUrl(CallActivity.this) + "/api/call/frame?callId=" + callId + "&senderId=" + peerId;
+                        Request req = new Request.Builder().url(url).build();
+                        httpClient.newCall(req).enqueue(new Callback() {
+                            @Override
+                            public void onFailure(Call call, IOException e) {
+                                isFetchingFrame.set(false);
                             }
-                        }
-                    });
+                            @Override
+                            public void onResponse(Call call, Response response) throws IOException {
+                                if (isDestroyed) {
+                                    isFetchingFrame.set(false);
+                                    return;
+                                }
+                                if (response.isSuccessful() && response.body() != null) {
+                                    try {
+                                        String body = response.body().string();
+                                        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+                                        if (json.has("hasFrame") && json.get("hasFrame").getAsBoolean() && json.has("frame")) {
+                                            String b64 = json.get("frame").getAsString();
+                                            byte[] bytes = Base64.decode(b64, Base64.DEFAULT);
+                                            Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                                            if (bmp != null) {
+                                                runOnUiThread(() -> {
+                                                    if (ivRemoteVideo != null) {
+                                                        ivRemoteVideo.setImageBitmap(bmp);
+                                                        ivRemoteVideo.setVisibility(View.VISIBLE);
+                                                    }
+                                                    if (layoutAvatarBox != null) {
+                                                        layoutAvatarBox.setVisibility(View.GONE);
+                                                    }
+                                                    if (tvEncryptionNote != null) {
+                                                        tvEncryptionNote.setVisibility(View.GONE);
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    } catch (Exception ignored) {}
+                                }
+                                isFetchingFrame.set(false);
+                            }
+                        });
+                    }
                 }
-                if (!isDestroyed) frameHandler.postDelayed(this, 300);
+                if (!isDestroyed) frameHandler.postDelayed(this, 280);
             }
         };
         frameHandler.postDelayed(fetchFrameTask, 500);
@@ -558,9 +621,9 @@ public class CallActivity extends AppCompatActivity {
 
     private void toggleMute() {
         isMuted = !isMuted;
+        ActiveCallManager.getInstance().toggleMute(this);
         btnMute.setImageResource(isMuted ? R.drawable.ic_mic_off : R.drawable.ic_mic);
         btnMute.getBackground().mutate().setTint(isMuted ? android.graphics.Color.parseColor("#EF4444") : android.graphics.Color.parseColor("#40202C33"));
-        Toast.makeText(this, isMuted ? "Microphone muted" : "Microphone unmuted", Toast.LENGTH_SHORT).show();
     }
 
     private void toggleSpeaker() {
@@ -611,6 +674,7 @@ public class CallActivity extends AppCompatActivity {
     private void endCall(boolean notifyBackend) {
         if (isDestroyed) return;
         isDestroyed = true;
+        ActiveCallManager.getInstance().endCall();
         stopOutgoingTone();
         closeCamera();
 
@@ -642,7 +706,7 @@ public class CallActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        endCall(true);
+        minimizeCall();
     }
 
     @Override
