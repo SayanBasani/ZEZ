@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.zez.app.R;
 import com.zez.app.model.CallRecordItem;
 import com.zez.app.util.AudioPlaybackManager;
+import com.zez.app.util.CallRecordDbHelper;
 import com.zez.app.util.CallRecordManager;
 import com.zez.app.util.PreferencesHelper;
 
@@ -83,7 +84,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
         ImageButton btnPlayPause;
         SeekBar sbProgress;
         TextView tvTimeCurrent, tvTimeTotal, tvSize;
-        View btnShare, btnDelete;
+        View btnShare, btnRename, btnDelete;
         ImageView ivTypeIcon, ivCloudStatus;
 
         public RecordViewHolder(@NonNull View itemView) {
@@ -102,6 +103,7 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
             tvSize = itemView.findViewById(R.id.tv_rec_size);
 
             btnShare = itemView.findViewById(R.id.btn_rec_share);
+            btnRename = itemView.findViewById(R.id.btn_rec_rename);
             btnDelete = itemView.findViewById(R.id.btn_rec_delete);
             ivTypeIcon = itemView.findViewById(R.id.iv_rec_type_icon);
         }
@@ -236,7 +238,33 @@ public class CallRecordAdapter extends RecyclerView.Adapter<CallRecordAdapter.Re
             });
 
             btnShare.setOnClickListener(v -> shareRecording(item));
+            if (btnRename != null) btnRename.setOnClickListener(v -> promptRename(item, getBindingAdapterPosition()));
             btnDelete.setOnClickListener(v -> confirmDelete(item, getBindingAdapterPosition()));
+        }
+
+        private void promptRename(CallRecordItem item, int position) {
+            android.widget.EditText input = new android.widget.EditText(context);
+            input.setText(item.getContactName());
+            input.setSelection(input.getText().length());
+            int pad = (int) (16 * context.getResources().getDisplayMetrics().density);
+            input.setPadding(pad, pad, pad, pad);
+
+            new AlertDialog.Builder(context)
+                    .setTitle("Rename Recording")
+                    .setView(input)
+                    .setPositiveButton("Save", (dialog, which) -> {
+                        String newName = input.getText().toString().trim();
+                        if (!newName.isEmpty()) {
+                            item.setContactName(newName);
+                            CallRecordDbHelper.getInstance(context).updateContactAndPhone(item.getId(), item.getPhoneNumber(), newName);
+                            if (position >= 0 && position < items.size()) {
+                                notifyItemChanged(position);
+                            }
+                            Toast.makeText(context, "Recording renamed", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         }
 
         private void shareRecording(CallRecordItem item) {

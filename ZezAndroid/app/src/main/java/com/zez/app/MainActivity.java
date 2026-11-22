@@ -496,7 +496,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (rowSettingCallRecording != null) {
             rowSettingCallRecording.setOnClickListener(v -> {
-                if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_calls);
+                showRecordingCapabilityDialog();
             });
         }
         updateRecordingSettingUi();
@@ -1611,7 +1611,37 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 tvSettingRecordingStatus.setText("Auto-record disabled (" + count + " recordings, " + sizeStr + ")");
             }
+
+            TextView tvDetails = findViewById(R.id.tv_setting_recording_details);
+            if (tvDetails != null) {
+                com.zez.app.recording.model.RecordingCapability cap = com.zez.app.recording.CallRecordingManager.getInstance(this).getCapability();
+                tvDetails.setText(cap.getSummaryTitle() + " • " + (cap.isVoipSupported() ? "VoIP HD Ready" : "VoIP Restricted"));
+            }
         }
+    }
+
+    private void showRecordingCapabilityDialog() {
+        com.zez.app.recording.model.RecordingCapability cap = com.zez.app.recording.CallRecordingManager.getInstance(this).getCapability();
+        int count = CallRecordManager.getInstance(this).getRecordingsCount();
+        long totalBytes = CallRecordManager.getInstance(this).getTotalSizeBytes();
+        String sizeStr;
+        if (totalBytes < 1024) sizeStr = totalBytes + " B";
+        else if (totalBytes < 1024 * 1024) sizeStr = String.format(java.util.Locale.getDefault(), "%.1f KB", totalBytes / 1024.0);
+        else sizeStr = String.format(java.util.Locale.getDefault(), "%.1f MB", totalBytes / (1024.0 * 1024.0));
+
+        String message = "Device: " + cap.getManufacturer() + " " + cap.getModel() + " (Android " + cap.getAndroidVersion() + ")\n\n"
+                + "Cellular Recording Status:\n" + cap.getDescription() + "\n\n"
+                + "VoIP / In-App Calling:\n100% Full Two-Way HD Recording Supported.\n\n"
+                + "Storage Used:\n" + sizeStr + " across " + count + " call recording(s).";
+
+        new AlertDialog.Builder(this)
+                .setTitle("Call Recording Capability")
+                .setMessage(message)
+                .setPositiveButton("View Recordings", (dialog, which) -> {
+                    if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_calls);
+                })
+                .setNegativeButton("Close", null)
+                .show();
     }
 
     private void loadCallsData() {

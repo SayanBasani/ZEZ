@@ -253,6 +253,33 @@
                     android:layout_marginStart="4dp" />
             </LinearLayout>
 
+            <!-- Rename Button -->
+            <LinearLayout
+                android:id="@+id/btn_rec_rename"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="?attr/selectableItemBackground"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="6dp"
+                android:layout_marginStart="6dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_edit"
+                    app:tint="@color/theme_text_primary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rename"
+                    android:textSize="12sp"
+                    android:textColor="@color/theme_text_primary"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
             <!-- Delete Button -->
             <LinearLayout
                 android:id="@+id/btn_rec_delete"

@@ -45,7 +45,13 @@ public class CallRecordService extends Service {
 
         String action = intent.getAction();
         if (ACTION_START.equals(action)) {
-            Notification notification = buildSilentNotification();
+            String phoneNumber = intent.getStringExtra(EXTRA_PHONE_NUMBER);
+            String contactName = intent.getStringExtra(EXTRA_CONTACT_NAME);
+            String callType = intent.getStringExtra(EXTRA_CALL_TYPE);
+            String direction = intent.getStringExtra(EXTRA_DIRECTION);
+
+            Notification notification = com.zez.app.recording.CallRecordingManager.getInstance(this)
+                    .getNotificationManager().buildRecordingNotification(contactName != null ? contactName : phoneNumber);
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
@@ -64,11 +70,6 @@ public class CallRecordService extends Service {
                     Log.e(TAG, "Failed fallback startForeground: " + ex.getMessage(), ex);
                 }
             }
-
-            String phoneNumber = intent.getStringExtra(EXTRA_PHONE_NUMBER);
-            String contactName = intent.getStringExtra(EXTRA_CONTACT_NAME);
-            String callType = intent.getStringExtra(EXTRA_CALL_TYPE);
-            String direction = intent.getStringExtra(EXTRA_DIRECTION);
 
             CallRecordManager.getInstance(this).startRecording(phoneNumber, contactName, callType, direction);
         } else if (ACTION_STOP.equals(action)) {
