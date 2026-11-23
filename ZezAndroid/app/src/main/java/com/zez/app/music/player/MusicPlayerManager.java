@@ -19,11 +19,17 @@ public class MusicPlayerManager {
     private static final String TAG = "MusicPlayerManager";
     private static MusicPlayerManager instance;
 
+    public static final int REPEAT_MODE_NONE = 0;
+    public static final int REPEAT_MODE_ALL = 1;
+    public static final int REPEAT_MODE_ONE = 2;
+
     public interface PlayerListener {
         void onTrackChanged(MusicTrack track);
         void onPlaybackStateChanged(boolean isPlaying, boolean isBuffering);
         void onProgressUpdate(int currentSeconds, int totalSeconds);
         void onError(String error);
+        default void onQueueChanged(List<MusicTrack> queue, int currentIndex) {}
+        default void onVideoModeChanged(boolean isVideoMode) {}
     }
 
     private final List<MusicTrack> queue = new ArrayList<>();
@@ -33,11 +39,13 @@ public class MusicPlayerManager {
     private boolean isBuffering = false;
     private int currentSeconds = 0;
     private int totalSeconds = 0;
-    private boolean isRepeat = false;
+    private int repeatMode = REPEAT_MODE_NONE;
     private boolean isShuffle = false;
+    private boolean isVideoMode = false;
 
     private final CopyOnWriteArrayList<PlayerListener> listeners = new CopyOnWriteArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable sleepTimerRunnable;
     private Context appContext;
 
     private MusicPlayerManager() {}
@@ -58,12 +66,13 @@ public class MusicPlayerManager {
     public void registerListener(PlayerListener listener) {
         if (listener != null && !listeners.contains(listener)) {
             listeners.add(listener);
-            // Immediately notify listener of current state
             if (currentTrack != null) {
                 listener.onTrackChanged(currentTrack);
             }
             listener.onPlaybackStateChanged(isPlaying, isBuffering);
             listener.onProgressUpdate(currentSeconds, totalSeconds);
+            listener.onQueueChanged(new ArrayList<>(queue), currentIndex);
+            listener.onVideoModeChanged(isVideoMode);
         }
     }
 
@@ -79,6 +88,7 @@ public class MusicPlayerManager {
         queue.add(track);
         currentIndex = 0;
         playCurrentTrack();
+        notifyQueueChanged();
     }
 
     public synchronized void playQueue(List<MusicTrack> tracks, int startIndex) {
@@ -91,14 +101,56 @@ public class MusicPlayerManager {
             currentIndex = 0;
         }
         playCurrentTrack();
+        notifyQueueChanged();
     }
 
     public synchronized void addToQueue(MusicTrack track) {
         if (track == null) return;
         queue.add(track);
+        notifyQueueChanged();
         if (currentTrack == null) {
             currentIndex = 0;
             playCurrentTrack();
+        }
+    }
+
+    public synchronized void addNextToQueue(MusicTrack track) {
+        if (track == null) return;
+        if (queue.isEmpty() || currentIndex < 0) {
+            addToQueue(track);
+            return;
+        }
+        queue.add(currentIndex + 1, track);
+        notifyQueueChanged();
+    }
+
+    public synchronized void playQueueIndex(int index) {
+        if (index >= 0 && index < queue.size()) {
+            currentIndex = index;
+            playCurrentTrack();
+            notifyQueueChanged();
+        }
+    }
+
+    public synchronized void removeFromQueue(int index) {
+        if (index >= 0 && index < queue.size()) {
+            queue.remove(index);
+            if (index < currentIndex) {
+                currentIndex--;
+            } else if (index == currentIndex) {
+                if (queue.isEmpty()) {
+                    currentTrack = null;
+                    currentIndex = -1;
+                    pause();
+                    notifyTrackChanged(null);
+                } else {
+                    if (currentIndex >= queue.size()) {
+                        currentIndex = 0;
+                    }
+                    playCurrentTrack();
+                }
+            }
+            notifyQueueChanged();
         }
     }
 
@@ -113,7 +165,6 @@ public class MusicPlayerManager {
         notifyTrackChanged(currentTrack);
         notifyPlaybackState(true, true);
 
-        // Start/command MusicPlayerService
         if (appContext != null) {
             Intent intent = new Intent(appContext, MusicPlayerService.class);
             intent.setAction(MusicPlayerService.ACTION_PLAY_TRACK);
@@ -165,13 +216,18 @@ public class MusicPlayerManager {
 
     public synchronized void next() {
         if (queue.isEmpty()) return;
+        if (repeatMode == REPEAT_MODE_ONE) {
+            seekTo(0);
+            play();
+            return;
+        }
         if (isShuffle) {
             int nextIdx = (int) (Math.random() * queue.size());
             currentIndex = nextIdx;
         } else {
             currentIndex++;
             if (currentIndex >= queue.size()) {
-                if (isRepeat) {
+                if (repeatMode == REPEAT_MODE_ALL) {
                     currentIndex = 0;
                 } else {
                     currentIndex = queue.size() - 1;
@@ -181,6 +237,7 @@ public class MusicPlayerManager {
             }
         }
         playCurrentTrack();
+        notifyQueueChanged();
     }
 
     public synchronized void previous() {
@@ -191,9 +248,10 @@ public class MusicPlayerManager {
         }
         currentIndex--;
         if (currentIndex < 0) {
-            currentIndex = isRepeat ? queue.size() - 1 : 0;
+            currentIndex = (repeatMode == REPEAT_MODE_ALL) ? queue.size() - 1 : 0;
         }
         playCurrentTrack();
+        notifyQueueChanged();
     }
 
     public void seekTo(int seconds) {
@@ -209,24 +267,80 @@ public class MusicPlayerManager {
         }
     }
 
-    public boolean isRepeat() {
-        return isRepeat;
+    public void toggleShuffle() {
+        isShuffle = !isShuffle;
     }
 
-    public void toggleRepeat() {
-        isRepeat = !isRepeat;
+    public void setSleepTimerMinutes(int minutes) {
+        if (sleepTimerRunnable != null) {
+            mainHandler.removeCallbacks(sleepTimerRunnable);
+            sleepTimerRunnable = null;
+        }
+        if (minutes > 0) {
+            sleepTimerRunnable = () -> {
+                Log.d(TAG, "Sleep timer expired, pausing music");
+                pause();
+            };
+            mainHandler.postDelayed(sleepTimerRunnable, (long) minutes * 60 * 1000L);
+        }
     }
 
     public boolean isShuffle() {
         return isShuffle;
     }
 
-    public void toggleShuffle() {
-        isShuffle = !isShuffle;
+    public void toggleRepeat() {
+        if (repeatMode == REPEAT_MODE_NONE) {
+            repeatMode = REPEAT_MODE_ALL;
+        } else if (repeatMode == REPEAT_MODE_ALL) {
+            repeatMode = REPEAT_MODE_ONE;
+        } else {
+            repeatMode = REPEAT_MODE_NONE;
+        }
+    }
+
+    public int getRepeatMode() {
+        return repeatMode;
+    }
+
+    public boolean isRepeat() {
+        return repeatMode != REPEAT_MODE_NONE;
+    }
+
+    public void setVideoMode(boolean isVideo) {
+        this.isVideoMode = isVideo;
+        mainHandler.post(() -> {
+            for (PlayerListener listener : listeners) {
+                listener.onVideoModeChanged(isVideoMode);
+            }
+        });
+    }
+
+    public boolean isVideoMode() {
+        return isVideoMode;
     }
 
     public MusicTrack getCurrentTrack() {
         return currentTrack;
+    }
+
+    public List<MusicTrack> getQueue() {
+        return new ArrayList<>(queue);
+    }
+
+    public synchronized void clearQueue() {
+        queue.clear();
+        if (currentTrack != null) {
+            queue.add(currentTrack);
+            currentIndex = 0;
+        } else {
+            currentIndex = -1;
+        }
+        notifyQueueChanged();
+    }
+
+    public int getCurrentIndex() {
+        return currentIndex;
     }
 
     public boolean isPlaying() {
@@ -245,51 +359,56 @@ public class MusicPlayerManager {
         return totalSeconds;
     }
 
-    public List<MusicTrack> getQueue() {
-        return Collections.unmodifiableList(queue);
-    }
-
-    // Called by MusicPlayerService on updates
     public void updatePlaybackState(boolean playing, boolean buffering) {
         this.isPlaying = playing;
         this.isBuffering = buffering;
         notifyPlaybackState(playing, buffering);
     }
 
-    public void updateProgress(int currentSec, int totalSec) {
-        this.currentSeconds = currentSec;
-        this.totalSeconds = totalSec;
-        notifyProgress(currentSec, totalSec);
+    public void updateProgress(int current, int total) {
+        this.currentSeconds = current;
+        if (total > 0) {
+            this.totalSeconds = total;
+        }
+        notifyProgress(current, this.totalSeconds);
     }
 
     public void notifyError(String error) {
         mainHandler.post(() -> {
-            for (PlayerListener l : listeners) {
-                l.onError(error);
+            for (PlayerListener listener : listeners) {
+                listener.onError(error);
             }
         });
     }
 
     private void notifyTrackChanged(MusicTrack track) {
         mainHandler.post(() -> {
-            for (PlayerListener l : listeners) {
-                l.onTrackChanged(track);
+            for (PlayerListener listener : listeners) {
+                listener.onTrackChanged(track);
             }
         });
     }
 
     private void notifyPlaybackState(boolean playing, boolean buffering) {
         mainHandler.post(() -> {
-            for (PlayerListener l : listeners) {
-                l.onPlaybackStateChanged(playing, buffering);
+            for (PlayerListener listener : listeners) {
+                listener.onPlaybackStateChanged(playing, buffering);
             }
         });
     }
 
     private void notifyProgress(int current, int total) {
         mainHandler.post(() -> {
-            for (PlayerListener l : listeners) {
-                l.onProgressUpdate(current, total);
+            for (PlayerListener listener : listeners) {
+                listener.onProgressUpdate(current, total);
+            }
+        });
+    }
+
+    private void notifyQueueChanged() {
+        mainHandler.post(() -> {
+            for (PlayerListener listener : listeners) {
+                listener.onQueueChanged(new ArrayList<>(queue), currentIndex);
             }
         });
     }

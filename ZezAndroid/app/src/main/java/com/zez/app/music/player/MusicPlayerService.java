@@ -20,6 +20,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -33,7 +34,6 @@ import androidx.core.app.NotificationCompat;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.zez.app.MainActivity;
 import com.zez.app.R;
 import com.zez.app.music.MusicActivity;
 import com.zez.app.music.model.MusicTrack;
@@ -53,19 +53,34 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     public static final String EXTRA_TRACK = "extra_track";
     public static final String EXTRA_SEEK_SECONDS = "extra_seek_seconds";
 
-    private static final String CHANNEL_ID = "zez_music_playback_channel";
-    private static final int NOTIFICATION_ID = 4040;
+    private static final String CHANNEL_ID = "zez_music_channel";
+    private static final int NOTIFICATION_ID = 4001;
+
+    private static final int ENGINE_IFRAME = 0;
+    private static final int ENGINE_DIRECT_MOBILE = 1;
+
+    private static WebView activeWebView;
 
     private WebView webView;
-    private boolean isPlayerReady = false;
-    private String pendingVideoId = null;
-    private MusicTrack currentTrack;
-    private boolean isPlaying = false;
+    private Handler handler;
     private AudioManager audioManager;
     private AudioFocusRequest audioFocusRequest;
     private PowerManager.WakeLock wakeLock;
-    private Handler handler;
+
+    private MusicTrack currentTrack;
+    private String currentVideoId;
     private Bitmap currentThumbnailBitmap;
+    private boolean isPlaying = false;
+    private boolean isPlayerReady = false;
+    private String pendingVideoId = null;
+
+    private int currentEngine = ENGINE_IFRAME;
+    private boolean fallbackTriggeredForCurrent = false;
+    private Runnable watchdogRunnable = null;
+
+    public static WebView getActiveWebView() {
+        return activeWebView;
+    }
 
     private final BroadcastReceiver noisyReceiver = new BroadcastReceiver() {
         @Override
@@ -117,17 +132,38 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
     private void initWebView() {
         try {
-            webView = new WebView(this);
+            currentEngine = ENGINE_IFRAME;
+            isPlayerReady = false;
+            fallbackTriggeredForCurrent = false;
+
+            if (webView == null) {
+                webView = new WebView(this);
+                activeWebView = webView;
+            }
+
             WebSettings settings = webView.getSettings();
             settings.setJavaScriptEnabled(true);
             settings.setDomStorageEnabled(true);
+            settings.setDatabaseEnabled(true);
             settings.setMediaPlaybackRequiresUserGesture(false);
-            settings.setUserAgentString("Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+            settings.setUserAgentString("Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
 
             webView.setWebChromeClient(new WebChromeClient());
-            webView.setWebViewClient(new WebViewClient());
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    if (currentEngine == ENGINE_DIRECT_MOBILE) {
+                        injectDirectMobileControlScript();
+                    }
+                }
+            });
+
             webView.addJavascriptInterface(new MusicBridge(), "MusicBridge");
 
+            String originUrl = "https://" + getPackageName();
             String html = "<!DOCTYPE html><html><head>" +
                     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
                     "<style>html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden;}#player{width:100%;height:100%;}</style>" +
@@ -138,7 +174,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                     "function onYouTubeIframeAPIReady(){" +
                     "  player=new YT.Player('player',{" +
                     "    height:'100%',width:'100%'," +
-                    "    playerVars:{'autoplay':1,'controls':0,'fs':0,'rel':0,'modestbranding':1,'playsinline':1,'origin':'https://www.youtube.com'}," +
+                    "    playerVars:{'autoplay':1,'controls':1,'fs':0,'rel':0,'modestbranding':1,'playsinline':1,'origin':'" + originUrl + "'}," +
                     "    events:{'onReady':onPlayerReady,'onStateChange':onPlayerStateChange,'onError':onPlayerError}" +
                     "  });" +
                     "}" +
@@ -154,10 +190,59 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                     "setInterval(function(){if(isReady&&player&&player.getCurrentTime&&player.getPlayerState()===1){window.MusicBridge.onProgress(player.getCurrentTime(),player.getDuration());}},500);" +
                     "</script></body></html>";
 
-            webView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null);
+            webView.loadDataWithBaseURL(originUrl, html, "text/html", "UTF-8", null);
         } catch (Exception e) {
             Log.e(TAG, "Error initializing webView player", e);
         }
+    }
+
+    private void playViaDirectMobileEngine(String videoId) {
+        if (videoId == null) return;
+        currentEngine = ENGINE_DIRECT_MOBILE;
+        isPlayerReady = false;
+        Log.i(TAG, "Activating Direct Mobile YouTube Playback Engine for video: " + videoId);
+
+        webView.post(() -> {
+            WebSettings settings = webView.getSettings();
+            settings.setUserAgentString("Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+            webView.loadUrl("https://m.youtube.com/watch?v=" + videoId);
+        });
+    }
+
+    private void injectDirectMobileControlScript() {
+        String js = "javascript:(function() {" +
+                "  var s = document.createElement('style');" +
+                "  s.innerHTML = 'header, ytm-pivot-bar-renderer, ytm-item-section-renderer, #comments, .watch-below-the-player, ytm-watch-card-entry { display: none !important; } html, body { background: #000 !important; margin: 0; padding: 0; overflow: hidden; } .player-container, #player-container-id { width: 100vw !important; height: 100vh !important; }';" +
+                "  document.head.appendChild(s);" +
+                "  function hook() {" +
+                "    var v = document.querySelector('video');" +
+                "    if (v) {" +
+                "      v.muted = false;" +
+                "      v.play().catch(function(e) {});" +
+                "      v.ontimeupdate = function() {" +
+                "        if (window.MusicBridge && v.duration) {" +
+                "          window.MusicBridge.onProgress(v.currentTime, v.duration);" +
+                "        }" +
+                "      };" +
+                "      v.onplay = function() { if (window.MusicBridge) window.MusicBridge.onStateChange(1); };" +
+                "      v.onpause = function() { if (window.MusicBridge) window.MusicBridge.onStateChange(2); };" +
+                "      v.onended = function() { if (window.MusicBridge) window.MusicBridge.onStateChange(0); };" +
+                "      v.onwaiting = function() { if (window.MusicBridge) window.MusicBridge.onStateChange(3); };" +
+                "      if (window.MusicBridge) window.MusicBridge.onReady();" +
+                "      return true;" +
+                "    }" +
+                "    return false;" +
+                "  }" +
+                "  if (!hook()) {" +
+                "    var tries = 0;" +
+                "    var timer = setInterval(function() {" +
+                "      tries++;" +
+                "      if (hook() || tries > 30) clearInterval(timer);" +
+                "    }, 350);" +
+                "  }" +
+                "})();";
+
+        webView.evaluateJavascript(js, null);
     }
 
     private class MusicBridge {
@@ -165,6 +250,10 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         public void onReady() {
             handler.post(() -> {
                 isPlayerReady = true;
+                if (watchdogRunnable != null) {
+                    handler.removeCallbacks(watchdogRunnable);
+                    watchdogRunnable = null;
+                }
                 if (pendingVideoId != null) {
                     loadTrackVideo(pendingVideoId);
                     pendingVideoId = null;
@@ -179,6 +268,10 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                 if (state == 1) { // PLAYING
                     isPlaying = true;
                     acquireWakeLock();
+                    if (watchdogRunnable != null) {
+                        handler.removeCallbacks(watchdogRunnable);
+                        watchdogRunnable = null;
+                    }
                     MusicPlayerManager.getInstance().updatePlaybackState(true, false);
                     updateNotification();
                 } else if (state == 2) { // PAUSED
@@ -207,8 +300,15 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         @JavascriptInterface
         public void onError(int code) {
             handler.post(() -> {
-                Log.e(TAG, "YouTube Player Error: " + code);
-                MusicPlayerManager.getInstance().notifyError("Player error code: " + code);
+                Log.w(TAG, "YouTube Player Error: " + code);
+                // Error 150 / 152 / 101 indicate YouTube embed embedding restrictions
+                if (!fallbackTriggeredForCurrent && currentVideoId != null) {
+                    fallbackTriggeredForCurrent = true;
+                    Log.i(TAG, "Auto-recovering via direct mobile playback engine...");
+                    playViaDirectMobileEngine(currentVideoId);
+                } else {
+                    MusicPlayerManager.getInstance().notifyError("Player error code: " + code);
+                }
             });
         }
     }
@@ -257,6 +357,9 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
     private void playTrack(MusicTrack track) {
         this.currentTrack = track;
+        this.currentVideoId = track.getId();
+        this.fallbackTriggeredForCurrent = false;
+
         requestAudioFocus();
         loadTrackVideo(track.getId());
         loadThumbnailBitmap(track.getThumbnailUrl());
@@ -265,17 +368,41 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
     private void loadTrackVideo(String videoId) {
         if (webView == null) return;
-        if (isPlayerReady) {
-            webView.evaluateJavascript("loadVideo('" + videoId + "');", null);
+        this.currentVideoId = videoId;
+
+        if (watchdogRunnable != null) {
+            handler.removeCallbacks(watchdogRunnable);
+        }
+
+        if (currentEngine == ENGINE_DIRECT_MOBILE) {
+            webView.post(() -> webView.loadUrl("https://m.youtube.com/watch?v=" + videoId));
         } else {
-            pendingVideoId = videoId;
+            if (isPlayerReady) {
+                webView.evaluateJavascript("loadVideo('" + videoId + "');", null);
+            } else {
+                pendingVideoId = videoId;
+            }
+
+            // Set a 4-second watchdog timer: if iframe fails to start or gets blocked silently
+            watchdogRunnable = () -> {
+                if (!isPlaying && !fallbackTriggeredForCurrent) {
+                    Log.w(TAG, "Watchdog timeout on IFrame player for " + videoId + ". Auto-switching to direct mobile engine.");
+                    fallbackTriggeredForCurrent = true;
+                    playViaDirectMobileEngine(videoId);
+                }
+            };
+            handler.postDelayed(watchdogRunnable, 4000);
         }
     }
 
     private void resumePlayback() {
         requestAudioFocus();
         if (webView != null) {
-            webView.evaluateJavascript("playVideo();", null);
+            if (currentEngine == ENGINE_DIRECT_MOBILE) {
+                webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.play();", null);
+            } else {
+                webView.evaluateJavascript("playVideo();", null);
+            }
         }
         isPlaying = true;
         acquireWakeLock();
@@ -285,7 +412,11 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
     private void pausePlayback() {
         if (webView != null) {
-            webView.evaluateJavascript("pauseVideo();", null);
+            if (currentEngine == ENGINE_DIRECT_MOBILE) {
+                webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.pause();", null);
+            } else {
+                webView.evaluateJavascript("pauseVideo();", null);
+            }
         }
         isPlaying = false;
         releaseWakeLock();
@@ -295,13 +426,21 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
     private void seekTo(int seconds) {
         if (webView != null) {
-            webView.evaluateJavascript("seekTo(" + seconds + ");", null);
+            if (currentEngine == ENGINE_DIRECT_MOBILE) {
+                webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.currentTime = " + seconds + ";", null);
+            } else {
+                webView.evaluateJavascript("seekTo(" + seconds + ");", null);
+            }
         }
     }
 
     private void stopPlayback() {
         if (webView != null) {
-            webView.evaluateJavascript("pauseVideo();", null);
+            if (currentEngine == ENGINE_DIRECT_MOBILE) {
+                webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.pause();", null);
+            } else {
+                webView.evaluateJavascript("pauseVideo();", null);
+            }
         }
         isPlaying = false;
         releaseWakeLock();
@@ -434,12 +573,20 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     @Override
     public void onDestroy() {
         stopPlayback();
+        if (watchdogRunnable != null) {
+            handler.removeCallbacks(watchdogRunnable);
+            watchdogRunnable = null;
+        }
         try {
             unregisterReceiver(noisyReceiver);
         } catch (Exception ignored) {}
         if (webView != null) {
+            if (webView.getParent() instanceof ViewGroup) {
+                ((ViewGroup) webView.getParent()).removeView(webView);
+            }
             webView.destroy();
             webView = null;
+            activeWebView = null;
         }
         super.onDestroy();
     }

@@ -84,9 +84,9 @@
     "semantic_hash": "cb85c827499b13b0db4ba8491215823e"
   },
   "ZezAndroid/app/build.gradle": {
-    "mtime": 1795449793.8888702,
-    "seen": 1795450003.1085746,
-    "ast_hash": "482927c022f235eda71b92b036318f20",
+    "mtime": 1795457959.0303288,
+    "seen": 1795458148.5795343,
+    "ast_hash": "47794e20707ac49a8982d395a8b478ed",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/AlarmFiringActivity.java": {
@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java": {
-    "mtime": 1795453020.145029,
-    "seen": 1795453937.8665733,
-    "ast_hash": "54870154ac4fc998db18f7c8ada94462",
+    "mtime": 1795457941.0441227,
+    "seen": 1795458148.5795548,
+    "ast_hash": "b1b53e45ec2efe0a06e1c29394beac46",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ZezApplication.java": {
@@ -978,15 +978,15 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/music/MusicActivity.java": {
-    "mtime": 1795453676.080361,
-    "seen": 1795453937.8666062,
-    "ast_hash": "42b4ccda76762d6e1eaac70731508a11",
+    "mtime": 1795457366.8519914,
+    "seen": 1795458148.5796075,
+    "ast_hash": "5ca50b4e26cb52d13dd3180d737877bb",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/music/adapter/MusicAdapter.java": {
-    "mtime": 1795452795.0897522,
-    "seen": 1795453937.8666081,
-    "ast_hash": "9e2ff35d5980a0bd02d7c7f0bddd845e",
+    "mtime": 1795457134.370385,
+    "seen": 1795458148.5796096,
+    "ast_hash": "4149f1d54005b31c9605027d35b9ade2",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/music/adapter/MusicSuggestionAdapter.java": {
@@ -996,9 +996,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/music/download/MusicDownloadHelper.java": {
-    "mtime": 1795452633.3846533,
-    "seen": 1795453937.8666108,
-    "ast_hash": "d43059538aa0900131d2946cc1fdc5ac",
+    "mtime": 1795457074.1351798,
+    "seen": 1795458148.5796146,
+    "ast_hash": "59343f712ee15e468dd1bb2a9396ef91",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/music/model/MusicTrack.java": {
@@ -1008,21 +1008,27 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/music/player/MusicPlayerManager.java": {
-    "mtime": 1795452491.264543,
-    "seen": 1795453937.866613,
-    "ast_hash": "88d2f0e95ef66bdd3cd0d0b77b6b088b",
+    "mtime": 1795457530.1883976,
+    "seen": 1795458148.579619,
+    "ast_hash": "af373ee33eaccda2779057701e082f73",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/music/player/MusicPlayerService.java": {
-    "mtime": 1795452529.7894852,
-    "seen": 1795453937.866614,
-    "ast_hash": "fad1af1194ba9ddf259727531de9314e",
+    "mtime": 1795456586.336281,
+    "seen": 1795458148.5796208,
+    "ast_hash": "366c29408c0723408b626418a3dde76a",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/music/util/YouTubeApiHelper.java": {
     "mtime": 1795452451.9803889,
     "seen": 1795453937.8666153,
     "ast_hash": "2281c3df21911b7d11cbad2c4d48980c",
+    "semantic_hash": ""
+  },
+  "App Icon/Quacky Duck Speech Bubble Logo.png": {
+    "mtime": 1795456252.1473825,
+    "seen": 1795458148.5797448,
+    "ast_hash": "81450e8c8f9bd66326c74b6c65d0501a",
     "semantic_hash": ""
   },
   "Zez-Backend/package-lock.json": {

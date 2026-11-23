@@ -15,6 +15,7 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.zez.app.R;
 import com.zez.app.music.download.MusicDownloadHelper;
 import com.zez.app.music.model.MusicTrack;
@@ -83,54 +84,82 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.TrackViewHol
             }
         });
 
-        holder.btnMore.setOnClickListener(v -> showPopupMenu(holder.btnMore, track));
+        holder.btnMore.setOnClickListener(v -> showTrackOptionsSheet(track));
     }
 
-    private void showPopupMenu(View anchor, MusicTrack track) {
-        PopupMenu popup = new PopupMenu(context, anchor);
-        popup.getMenu().add(0, 1, 0, "Play");
-        popup.getMenu().add(0, 2, 1, "Play next");
-        popup.getMenu().add(0, 3, 2, "Add to queue");
-        popup.getMenu().add(0, 4, 3, "Download");
-        popup.getMenu().add(0, 5, 4, "Share");
+    public void showTrackOptionsSheet(MusicTrack track) {
+        if (track == null) return;
+        BottomSheetDialog dialog = new BottomSheetDialog(context);
+        View view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_track_options, null);
+        dialog.setContentView(view);
+
+        ImageView ivThumb = view.findViewById(R.id.iv_opt_thumb);
+        TextView tvTitle = view.findViewById(R.id.tv_opt_title);
+        TextView tvArtist = view.findViewById(R.id.tv_opt_artist);
+        View optPlayAudio = view.findViewById(R.id.opt_play_audio);
+        View optPlayVideo = view.findViewById(R.id.opt_play_video);
+        View optDownload = view.findViewById(R.id.opt_download);
+        View optPlayNext = view.findViewById(R.id.opt_play_next);
+        View optAddQueue = view.findViewById(R.id.opt_add_queue);
+        View optShare = view.findViewById(R.id.opt_share);
+        View optDelete = view.findViewById(R.id.opt_delete);
+
+        tvTitle.setText(track.getTitle());
+        tvArtist.setText(track.getArtist());
+        Glide.with(context).load(track.getThumbnailUrl()).into(ivThumb);
+
+        optPlayAudio.setOnClickListener(v -> {
+            dialog.dismiss();
+            MusicPlayerManager.getInstance().setVideoMode(false);
+            MusicPlayerManager.getInstance().playTrack(track);
+        });
+
+        optPlayVideo.setOnClickListener(v -> {
+            dialog.dismiss();
+            MusicPlayerManager.getInstance().setVideoMode(true);
+            MusicPlayerManager.getInstance().playTrack(track);
+        });
+
+        optDownload.setOnClickListener(v -> {
+            dialog.dismiss();
+            MusicDownloadHelper.showDownloadDialog(context, track, null);
+        });
+
+        optPlayNext.setOnClickListener(v -> {
+            dialog.dismiss();
+            MusicPlayerManager.getInstance().addNextToQueue(track);
+            Toast.makeText(context, "Added as next: " + track.getTitle(), Toast.LENGTH_SHORT).show();
+        });
+
+        optAddQueue.setOnClickListener(v -> {
+            dialog.dismiss();
+            MusicPlayerManager.getInstance().addToQueue(track);
+            Toast.makeText(context, "Added to queue: " + track.getTitle(), Toast.LENGTH_SHORT).show();
+        });
+
+        optShare.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, track.getTitle());
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Listen to " + track.getTitle() + " on YouTube:\nhttps://www.youtube.com/watch?v=" + track.getId());
+            context.startActivity(Intent.createChooser(shareIntent, "Share Track"));
+        });
 
         if (track.isDownloaded()) {
-            popup.getMenu().add(0, 6, 5, "Delete download");
+            optDelete.setVisibility(View.VISIBLE);
+            optDelete.setOnClickListener(v -> {
+                dialog.dismiss();
+                MusicDownloadHelper.removeDownloadedTrack(context, track);
+                tracks.remove(track);
+                notifyDataSetChanged();
+                Toast.makeText(context, "Deleted from downloads", Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            optDelete.setVisibility(View.GONE);
         }
 
-        popup.setOnMenuItemClickListener(item -> {
-            switch (item.getItemId()) {
-                case 1:
-                    MusicPlayerManager.getInstance().playTrack(track);
-                    return true;
-                case 2:
-                    MusicPlayerManager.getInstance().addToQueue(track);
-                    Toast.makeText(context, "Added as next: " + track.getTitle(), Toast.LENGTH_SHORT).show();
-                    return true;
-                case 3:
-                    MusicPlayerManager.getInstance().addToQueue(track);
-                    Toast.makeText(context, "Added to queue: " + track.getTitle(), Toast.LENGTH_SHORT).show();
-                    return true;
-                case 4:
-                    MusicDownloadHelper.showDownloadDialog(context, track, null);
-                    return true;
-                case 5:
-                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                    shareIntent.setType("text/plain");
-                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, track.getTitle());
-                    shareIntent.putExtra(Intent.EXTRA_TEXT, "Listen to " + track.getTitle() + " on YouTube:\nhttps://www.youtube.com/watch?v=" + track.getId());
-                    context.startActivity(Intent.createChooser(shareIntent, "Share Track"));
-                    return true;
-                case 6:
-                    MusicDownloadHelper.removeDownloadedTrack(context, track);
-                    tracks.remove(track);
-                    notifyDataSetChanged();
-                    Toast.makeText(context, "Deleted from downloads", Toast.LENGTH_SHORT).show();
-                    return true;
-            }
-            return false;
-        });
-        popup.show();
+        dialog.show();
     }
 
     @Override

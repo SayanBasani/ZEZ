@@ -1,5 +1,6 @@
 package com.zez.app.music;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
@@ -9,9 +10,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -23,6 +28,8 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -36,6 +43,7 @@ import com.zez.app.music.adapter.MusicSuggestionAdapter;
 import com.zez.app.music.download.MusicDownloadHelper;
 import com.zez.app.music.model.MusicTrack;
 import com.zez.app.music.player.MusicPlayerManager;
+import com.zez.app.music.player.MusicPlayerService;
 import com.zez.app.music.util.YouTubeApiHelper;
 
 import java.util.List;
@@ -43,6 +51,8 @@ import java.util.Locale;
 
 public class MusicActivity extends AppCompatActivity implements MusicPlayerManager.PlayerListener {
 
+    private DrawerLayout drawerMusic;
+    private ImageButton btnMusicMenu;
     private ImageButton btnBack;
     private ImageButton btnSearchToggle;
     private LinearLayout layoutSearchBox;
@@ -75,6 +85,12 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
 
     // Full Player BottomSheet references
     private BottomSheetDialog playerSheetDialog;
+    private TextView btnModeAudio;
+    private TextView btnModeVideo;
+    private FrameLayout layoutPlayerVideoContainer;
+    private ImageButton btnPlayerQueueTop;
+    private ImageButton btnPlayerMore;
+    private View btnPlayerQueueBtn;
     private ImageView ivPlayerArt;
     private TextView tvPlayerTitle;
     private TextView tvPlayerArtist;
@@ -86,7 +102,7 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     private ImageButton btnPlayerNext;
     private ImageButton btnPlayerShuffle;
     private ImageButton btnPlayerRepeat;
-    private ImageButton btnPlayerDownload;
+    private View btnPlayerDownload;
     private boolean isUserSeeking = false;
 
     private MusicAdapter musicAdapter;
@@ -112,6 +128,8 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     }
 
     private void initViews() {
+        drawerMusic = findViewById(R.id.drawer_music);
+        btnMusicMenu = findViewById(R.id.btn_music_menu);
         btnBack = findViewById(R.id.btn_music_back);
         btnSearchToggle = findViewById(R.id.btn_music_search_toggle);
         layoutSearchBox = findViewById(R.id.layout_music_search_box);
@@ -143,7 +161,44 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     }
 
     private void setupListeners() {
-        btnBack.setOnClickListener(v -> finish());
+        if (btnMusicMenu != null) {
+            btnMusicMenu.setOnClickListener(v -> {
+                if (drawerMusic != null) {
+                    drawerMusic.openDrawer(GravityCompat.START);
+                }
+            });
+        }
+
+        btnBack.setOnClickListener(v -> {
+            if (drawerMusic != null && drawerMusic.isDrawerOpen(GravityCompat.START)) {
+                drawerMusic.closeDrawers();
+            } else {
+                finish();
+            }
+        });
+
+        // YMusic Navigation Drawer items
+        setupDrawerItem(R.id.drawer_item_trending, chipTrending, "Trending");
+        setupDrawerItem(R.id.drawer_item_top_tracks, chipTopTracks, "Top tracks");
+        setupDrawerItem(R.id.drawer_item_recommended, chipRecommended, "Recommended");
+        setupDrawerItem(R.id.drawer_item_charts, chipCharts, "Charts");
+        setupDrawerItem(R.id.drawer_item_downloads, chipDownloads, "Downloads");
+
+        View drawerSleep = findViewById(R.id.drawer_item_sleep_timer);
+        if (drawerSleep != null) {
+            drawerSleep.setOnClickListener(v -> {
+                if (drawerMusic != null) drawerMusic.closeDrawers();
+                showSleepTimerDialog();
+            });
+        }
+
+        View drawerBackApp = findViewById(R.id.drawer_item_back_app);
+        if (drawerBackApp != null) {
+            drawerBackApp.setOnClickListener(v -> {
+                if (drawerMusic != null) drawerMusic.closeDrawers();
+                finish();
+            });
+        }
 
         btnSearchToggle.setOnClickListener(v -> {
             if (layoutSearchBox.getVisibility() == View.VISIBLE) {
@@ -366,6 +421,13 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
             View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_music_player, null);
             playerSheetDialog.setContentView(sheetView);
 
+            btnModeAudio = sheetView.findViewById(R.id.btn_mode_audio);
+            btnModeVideo = sheetView.findViewById(R.id.btn_mode_video);
+            layoutPlayerVideoContainer = sheetView.findViewById(R.id.layout_player_video_container);
+            btnPlayerQueueTop = sheetView.findViewById(R.id.btn_player_queue_top);
+            btnPlayerMore = sheetView.findViewById(R.id.btn_player_more);
+            btnPlayerQueueBtn = sheetView.findViewById(R.id.btn_player_queue_btn);
+
             ivPlayerArt = sheetView.findViewById(R.id.iv_player_album_art);
             tvPlayerTitle = sheetView.findViewById(R.id.tv_player_title);
             tvPlayerArtist = sheetView.findViewById(R.id.tv_player_artist);
@@ -380,6 +442,35 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
             btnPlayerDownload = sheetView.findViewById(R.id.btn_player_download);
 
             sheetView.findViewById(R.id.btn_player_collapse).setOnClickListener(v -> playerSheetDialog.dismiss());
+
+            if (btnModeAudio != null) {
+                btnModeAudio.setOnClickListener(v -> MusicPlayerManager.getInstance().setVideoMode(false));
+            }
+            if (btnModeVideo != null) {
+                btnModeVideo.setOnClickListener(v -> MusicPlayerManager.getInstance().setVideoMode(true));
+            }
+
+            if (btnPlayerQueueTop != null) {
+                btnPlayerQueueTop.setOnClickListener(v -> showQueueBottomSheet());
+            }
+            if (btnPlayerQueueBtn != null) {
+                btnPlayerQueueBtn.setOnClickListener(v -> showQueueBottomSheet());
+            }
+
+            if (btnPlayerMore != null) {
+                btnPlayerMore.setOnClickListener(v -> {
+                    MusicTrack current = MusicPlayerManager.getInstance().getCurrentTrack();
+                    if (current != null && musicAdapter != null) {
+                        musicAdapter.showTrackOptionsSheet(current);
+                    }
+                });
+            }
+
+            playerSheetDialog.setOnDismissListener(dialog -> {
+                if (layoutPlayerVideoContainer != null) {
+                    layoutPlayerVideoContainer.removeAllViews();
+                }
+            });
 
             fabPlayerPlayPause.setOnClickListener(v -> MusicPlayerManager.getInstance().togglePlayPause());
             btnPlayerNext.setOnClickListener(v -> MusicPlayerManager.getInstance().next());
@@ -450,6 +541,7 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         fabPlayerPlayPause.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play_arrow);
 
         updateShuffleRepeatUI();
+        updateVideoModeUI(MusicPlayerManager.getInstance().isVideoMode());
     }
 
     private void updateShuffleRepeatUI() {
@@ -460,11 +552,129 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
             ));
         }
         if (btnPlayerRepeat != null) {
-            boolean repeat = MusicPlayerManager.getInstance().isRepeat();
-            btnPlayerRepeat.setImageTintList(ColorStateList.valueOf(
-                    ContextCompat.getColor(this, repeat ? R.color.primary : R.color.theme_icon_tint)
-            ));
+            int repeatMode = MusicPlayerManager.getInstance().getRepeatMode();
+            if (repeatMode == MusicPlayerManager.REPEAT_MODE_NONE) {
+                btnPlayerRepeat.setImageResource(R.drawable.ic_repeat);
+                btnPlayerRepeat.setImageTintList(ColorStateList.valueOf(
+                        ContextCompat.getColor(this, R.color.theme_icon_tint)
+                ));
+            } else if (repeatMode == MusicPlayerManager.REPEAT_MODE_ALL) {
+                btnPlayerRepeat.setImageResource(R.drawable.ic_repeat);
+                btnPlayerRepeat.setImageTintList(ColorStateList.valueOf(
+                        ContextCompat.getColor(this, R.color.primary)
+                ));
+            } else if (repeatMode == MusicPlayerManager.REPEAT_MODE_ONE) {
+                btnPlayerRepeat.setImageResource(R.drawable.ic_repeat_one);
+                btnPlayerRepeat.setImageTintList(ColorStateList.valueOf(
+                        ContextCompat.getColor(this, R.color.primary)
+                ));
+            }
         }
+    }
+
+    private void updateVideoModeUI(boolean isVideo) {
+        if (btnModeAudio == null || btnModeVideo == null) return;
+        if (isVideo) {
+            btnModeVideo.setTextColor(ContextCompat.getColor(this, android.R.color.white));
+            btnModeVideo.setBackgroundResource(R.drawable.bg_mode_toggle_active);
+            btnModeAudio.setTextColor(ContextCompat.getColor(this, R.color.theme_text_muted));
+            btnModeAudio.setBackground(null);
+
+            if (layoutPlayerVideoContainer != null) {
+                WebView activeWv = MusicPlayerService.getActiveWebView();
+                if (activeWv != null) {
+                    if (activeWv.getParent() instanceof ViewGroup) {
+                        ((ViewGroup) activeWv.getParent()).removeView(activeWv);
+                    }
+                    layoutPlayerVideoContainer.removeAllViews();
+                    layoutPlayerVideoContainer.addView(activeWv, new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                    layoutPlayerVideoContainer.setVisibility(View.VISIBLE);
+                }
+            }
+        } else {
+            btnModeAudio.setTextColor(ContextCompat.getColor(this, android.R.color.white));
+            btnModeAudio.setBackgroundResource(R.drawable.bg_mode_toggle_active);
+            btnModeVideo.setTextColor(ContextCompat.getColor(this, R.color.theme_text_muted));
+            btnModeVideo.setBackground(null);
+
+            if (layoutPlayerVideoContainer != null) {
+                layoutPlayerVideoContainer.removeAllViews();
+                layoutPlayerVideoContainer.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void showQueueBottomSheet() {
+        List<MusicTrack> queue = MusicPlayerManager.getInstance().getQueue();
+        BottomSheetDialog queueDialog = new BottomSheetDialog(this, R.style.Theme_Zez_BottomSheetDialog);
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_queue, null);
+        queueDialog.setContentView(view);
+
+        TextView tvHeading = view.findViewById(R.id.tv_queue_heading);
+        TextView tvEmpty = view.findViewById(R.id.tv_queue_empty);
+        Button btnClear = view.findViewById(R.id.btn_queue_clear);
+        RecyclerView rvQueue = view.findViewById(R.id.rv_player_queue);
+
+        if (queue == null || queue.isEmpty()) {
+            tvEmpty.setVisibility(View.VISIBLE);
+            rvQueue.setVisibility(View.GONE);
+        } else {
+            tvEmpty.setVisibility(View.GONE);
+            rvQueue.setVisibility(View.VISIBLE);
+            tvHeading.setText("Up Next (" + queue.size() + ")");
+            MusicAdapter queueAdapter = new MusicAdapter(this, (track, position) -> {
+                queueDialog.dismiss();
+                MusicPlayerManager.getInstance().playQueueIndex(position);
+            });
+            queueAdapter.setTracks(queue);
+            rvQueue.setLayoutManager(new LinearLayoutManager(this));
+            rvQueue.setAdapter(queueAdapter);
+        }
+
+        btnClear.setOnClickListener(v -> {
+            MusicPlayerManager.getInstance().clearQueue();
+            queueDialog.dismiss();
+            Toast.makeText(this, "Queue cleared", Toast.LENGTH_SHORT).show();
+        });
+
+        queueDialog.show();
+    }
+
+    private void setupDrawerItem(int viewId, TextView chip, String category) {
+        View item = findViewById(viewId);
+        if (item != null) {
+            item.setOnClickListener(v -> {
+                if (drawerMusic != null) drawerMusic.closeDrawers();
+                selectCategory(chip, category);
+            });
+        }
+    }
+
+    private void showSleepTimerDialog() {
+        String[] options = new String[]{"Turn off timer", "15 minutes", "30 minutes", "45 minutes", "60 minutes"};
+        new AlertDialog.Builder(this)
+                .setTitle("Sleep Timer")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        MusicPlayerManager.getInstance().setSleepTimerMinutes(0);
+                        Toast.makeText(this, "Sleep timer disabled", Toast.LENGTH_SHORT).show();
+                    } else {
+                        int mins = which * 15;
+                        MusicPlayerManager.getInstance().setSleepTimerMinutes(mins);
+                        Toast.makeText(this, "Sleep timer set for " + mins + " minutes", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawerMusic != null && drawerMusic.isDrawerOpen(GravityCompat.START)) {
+            drawerMusic.closeDrawer(GravityCompat.START);
+            return;
+        }
+        super.onBackPressed();
     }
 
     // PlayerListener callbacks
@@ -507,6 +717,20 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     @Override
     public void onError(String error) {
         Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onVideoModeChanged(boolean isVideoMode) {
+        runOnUiThread(() -> {
+            if (playerSheetDialog != null && playerSheetDialog.isShowing()) {
+                updateVideoModeUI(isVideoMode);
+            }
+        });
+    }
+
+    @Override
+    public void onQueueChanged(List<MusicTrack> queue, int currentIndex) {
+        // Queue state changed
     }
 
     private String formatTime(int totalSecs) {

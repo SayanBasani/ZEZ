@@ -16,6 +16,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
@@ -60,6 +61,7 @@ public class MusicDownloadHelper {
         TextView tvTitle = dialogView.findViewById(R.id.tv_download_title);
         TextView tvArtist = dialogView.findViewById(R.id.tv_download_artist);
         RadioGroup rgFormat = dialogView.findViewById(R.id.rg_download_format);
+        EditText etFilename = dialogView.findViewById(R.id.et_download_filename);
         Button btnCancel = dialogView.findViewById(R.id.btn_download_cancel);
         Button btnStart = dialogView.findViewById(R.id.btn_download_start);
 
@@ -67,13 +69,66 @@ public class MusicDownloadHelper {
         tvArtist.setText(track.getArtist());
         Glide.with(context).load(track.getThumbnailUrl()).into(ivThumb);
 
+        String cleanTitle = track.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+        if (cleanTitle.isEmpty()) cleanTitle = "music_" + track.getId();
+        if (etFilename != null) {
+            etFilename.setText(cleanTitle);
+        }
+
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
+        final String defaultCleanTitle = cleanTitle;
         btnStart.setOnClickListener(v -> {
             dialog.dismiss();
+            String customTitle = defaultCleanTitle;
+            if (etFilename != null) {
+                String input = etFilename.getText().toString().replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+                if (!input.isEmpty()) {
+                    customTitle = input;
+                }
+            }
+
             int checkedId = rgFormat.getCheckedRadioButtonId();
-            boolean isAudio = (checkedId == R.id.rb_format_mp3);
-            startDownloadWithWebView(context, track, isAudio, callback);
+            boolean isAudio = true;
+            String extension = ".mp3";
+            String qualityTag = "mp3_320";
+
+            if (checkedId == R.id.rb_format_m4a) {
+                isAudio = true;
+                extension = ".m4a";
+                qualityTag = "m4a_256";
+            } else if (checkedId == R.id.rb_format_mp3) {
+                isAudio = true;
+                extension = ".mp3";
+                qualityTag = "mp3_320";
+            } else if (checkedId == R.id.rb_format_mp3_std) {
+                isAudio = true;
+                extension = ".mp3";
+                qualityTag = "mp3_128";
+            } else if (checkedId == R.id.rb_format_opus) {
+                isAudio = true;
+                extension = ".opus";
+                qualityTag = "opus_160";
+            } else if (checkedId == R.id.rb_format_mp4_1080) {
+                isAudio = false;
+                extension = ".mp4";
+                qualityTag = "mp4_1080";
+            } else if (checkedId == R.id.rb_format_mp4) {
+                isAudio = false;
+                extension = ".mp4";
+                qualityTag = "mp4_720";
+            } else if (checkedId == R.id.rb_format_mp4_480) {
+                isAudio = false;
+                extension = ".mp4";
+                qualityTag = "mp4_480";
+            } else if (checkedId == R.id.rb_format_mp4_360) {
+                isAudio = false;
+                extension = ".mp4";
+                qualityTag = "mp4_360";
+            }
+
+            final String fullFileName = customTitle + extension;
+            startDownloadWithWebView(context, track, fullFileName, isAudio, qualityTag, callback);
         });
 
         dialog.show();
@@ -83,6 +138,11 @@ public class MusicDownloadHelper {
         String cleanTitle = track.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_").trim();
         if (cleanTitle.isEmpty()) cleanTitle = "music_" + track.getId();
         final String fileName = cleanTitle + (isAudio ? ".mp3" : ".mp4");
+        startDownloadWithWebView(context, track, fileName, isAudio, isAudio ? "mp3_320" : "mp4_720", callback);
+    }
+
+    public static void startDownloadWithWebView(Context context, MusicTrack track, String targetFileName, boolean isAudio, String qualityTag, DownloadCallback callback) {
+        final String fileName = targetFileName;
 
         Toast.makeText(context, "Preparing download: " + fileName, Toast.LENGTH_SHORT).show();
 

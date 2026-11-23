@@ -861,6 +861,14 @@ public class MainActivity extends AppCompatActivity {
 
         if (mainMusicPlayerListener != null) {
             com.zez.app.music.player.MusicPlayerManager.getInstance().registerListener(mainMusicPlayerListener);
+            com.zez.app.music.model.MusicTrack curr = com.zez.app.music.player.MusicPlayerManager.getInstance().getCurrentTrack();
+            if (curr != null) {
+                mainMusicPlayerListener.onTrackChanged(curr);
+                mainMusicPlayerListener.onPlaybackStateChanged(
+                        com.zez.app.music.player.MusicPlayerManager.getInstance().isPlaying(),
+                        com.zez.app.music.player.MusicPlayerManager.getInstance().isBuffering()
+                );
+            }
         }
     }
 
@@ -938,35 +946,41 @@ public class MainActivity extends AppCompatActivity {
             mainMusicPlayerListener = new com.zez.app.music.player.MusicPlayerManager.PlayerListener() {
                 @Override
                 public void onTrackChanged(com.zez.app.music.model.MusicTrack track) {
-                    if (track != null) {
-                        layoutMainMiniPlayer.setVisibility(View.VISIBLE);
-                        if (tvMainMiniTitle != null) tvMainMiniTitle.setText(track.getTitle());
-                        if (tvMainMiniArtist != null) tvMainMiniArtist.setText(track.getArtist());
-                        if (ivMainMiniThumb != null) {
-                            com.bumptech.glide.Glide.with(MainActivity.this)
-                                    .load(track.getThumbnailUrl())
-                                    .placeholder(R.drawable.bg_search_input)
-                                    .centerCrop()
-                                    .into(ivMainMiniThumb);
+                    runOnUiThread(() -> {
+                        if (track != null) {
+                            if (layoutMainMiniPlayer != null) layoutMainMiniPlayer.setVisibility(View.VISIBLE);
+                            if (tvMainMiniTitle != null) tvMainMiniTitle.setText(track.getTitle());
+                            if (tvMainMiniArtist != null) tvMainMiniArtist.setText(track.getArtist());
+                            if (ivMainMiniThumb != null) {
+                                com.bumptech.glide.Glide.with(MainActivity.this)
+                                        .load(track.getThumbnailUrl())
+                                        .placeholder(R.drawable.bg_search_input)
+                                        .centerCrop()
+                                        .into(ivMainMiniThumb);
+                            }
+                        } else {
+                            if (layoutMainMiniPlayer != null) layoutMainMiniPlayer.setVisibility(View.GONE);
                         }
-                    } else {
-                        layoutMainMiniPlayer.setVisibility(View.GONE);
-                    }
+                    });
                 }
 
                 @Override
                 public void onPlaybackStateChanged(boolean isPlaying, boolean isBuffering) {
-                    if (btnMainMiniPlayPause != null) {
-                        btnMainMiniPlayPause.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play_arrow);
-                    }
+                    runOnUiThread(() -> {
+                        if (btnMainMiniPlayPause != null) {
+                            btnMainMiniPlayPause.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play_arrow);
+                        }
+                    });
                 }
 
                 @Override
                 public void onProgressUpdate(int currentSeconds, int totalSeconds) {
-                    if (totalSeconds > 0 && pbMainMiniProgress != null) {
-                        int pct = (int) (((float) currentSeconds / totalSeconds) * 100);
-                        pbMainMiniProgress.setProgress(pct);
-                    }
+                    runOnUiThread(() -> {
+                        if (totalSeconds > 0 && pbMainMiniProgress != null) {
+                            int pct = (int) (((float) currentSeconds / totalSeconds) * 100);
+                            pbMainMiniProgress.setProgress(pct);
+                        }
+                    });
                 }
 
                 @Override
