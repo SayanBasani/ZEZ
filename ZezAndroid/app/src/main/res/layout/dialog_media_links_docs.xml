@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/theme_background">
+
+    <!-- Header Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:background="@color/theme_surface"
+        android:elevation="2dp">
+
+        <ImageButton
+            android:id="@+id/btn_mld_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Back" />
+
+        <TextView
+            android:id="@+id/tv_mld_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:text="Media, links and docs"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/theme_text_primary" />
+
+        <ImageButton
+            android:id="@+id/btn_mld_delete_selected"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_delete"
+            app:tint="@color/theme_icon_tint"
+            android:visibility="gone"
+            android:contentDescription="Delete selected" />
+    </LinearLayout>
+
+    <!-- WhatsApp Style Categorical Tabs -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:orientation="horizontal"
+        android:background="@color/theme_surface">
+
+        <LinearLayout
+            android:id="@+id/tab_mld_media"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:id="@+id/tv_tab_media_label"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Media"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary" />
+
+            <View
+                android:id="@+id/indicator_tab_media"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:background="@color/primary" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tab_mld_docs"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:id="@+id/tv_tab_docs_label"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Docs"
+                android:textSize="14sp"
+                android:textStyle="normal"
+                android:textColor="@color/theme_text_secondary" />
+
+            <View
+                android:id="@+id/indicator_tab_docs"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tab_mld_links"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:id="@+id/tv_tab_links_label"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Links"
+                android:textSize="14sp"
+                android:textStyle="normal"
+                android:textColor="@color/theme_text_secondary" />
+
+            <View
+                android:id="@+id/indicator_tab_links"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Main Content Container with Lists/Grids -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Tab 1: Media Grid -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_mld_media_grid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="2dp"
+            android:clipToPadding="false"
+            android:visibility="visible" />
+
+        <!-- Tab 2: Docs List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_mld_docs_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingVertical="4dp"
+            android:clipToPadding="false"
+            android:visibility="gone" />
+
+        <!-- Tab 3: Links List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_mld_links_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingVertical="4dp"
+            android:clipToPadding="false"
+            android:visibility="gone" />
+
+        <!-- Empty State Container -->
+        <LinearLayout
+            android:id="@+id/layout_mld_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/iv_mld_empty_icon"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_photo_library"
+                app:tint="@color/theme_text_muted" />
+
+            <TextView
+                android:id="@+id/tv_mld_empty_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="No media shared yet"
+                android:textSize="15sp"
+                android:textColor="@color/theme_text_muted" />
+        </LinearLayout>
+    </FrameLayout>
+
+</LinearLayout>

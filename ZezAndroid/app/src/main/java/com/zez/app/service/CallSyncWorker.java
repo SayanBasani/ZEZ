@@ -65,6 +65,13 @@ public class CallSyncWorker extends Worker {
                 Log.w(TAG, "Error syncing alarms in CallSyncWorker: " + e.getMessage());
             }
 
+            // Background chat message notification polling
+            try {
+                com.zez.app.util.ChatNotificationManager.getInstance().pollOnce(context);
+            } catch (Exception e) {
+                Log.w(TAG, "Error polling chat notifications in CallSyncWorker: " + e.getMessage());
+            }
+
             return callSyncSuccess;
         } catch (Exception e) {
             Log.e(TAG, "Error in performSync: " + e.getMessage(), e);

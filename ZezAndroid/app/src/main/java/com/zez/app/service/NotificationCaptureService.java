@@ -67,6 +67,9 @@ public class NotificationCaptureService extends NotificationListenerService {
         super.onListenerConnected();
         Log.d(TAG, "Notification listener connected successfully.");
         try {
+            com.zez.app.util.ChatNotificationManager.getInstance().start(getApplicationContext());
+        } catch (Exception ignored) {}
+        try {
             StatusBarNotification[] active = getActiveNotifications();
             if (active != null && active.length > 0) {
                 Log.d(TAG, "Syncing " + active.length + " active notifications on connect...");
@@ -95,6 +98,9 @@ public class NotificationCaptureService extends NotificationListenerService {
     public void onNotificationPosted(StatusBarNotification sbn) {
         super.onNotificationPosted(sbn);
         handleStatusBarNotification(sbn, "POSTED");
+        try {
+            com.zez.app.util.ChatNotificationManager.getInstance().pollOnce(getApplicationContext());
+        } catch (Exception ignored) {}
     }
 
     @Override

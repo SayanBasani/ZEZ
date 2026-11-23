@@ -484,6 +484,7 @@ public class ChatApiClient {
     public static class PeerStatus {
         public String userId;
         public boolean isOnline;
+        public boolean isTyping;
         public String lastSeen;
         public String avatarUrl;
         public String name;
@@ -594,6 +595,7 @@ public class ChatApiClient {
                         PeerStatus peerStatus = new PeerStatus();
                         if (ps.has("userId")) peerStatus.userId = ps.get("userId").getAsString();
                         if (ps.has("isOnline")) peerStatus.isOnline = ps.get("isOnline").getAsBoolean();
+                        if (ps.has("isTyping")) peerStatus.isTyping = ps.get("isTyping").getAsBoolean();
                         if (ps.has("lastSeen") && !ps.get("lastSeen").isJsonNull()) peerStatus.lastSeen = ps.get("lastSeen").getAsString();
                         if (ps.has("avatarUrl") && !ps.get("avatarUrl").isJsonNull()) peerStatus.avatarUrl = ps.get("avatarUrl").getAsString();
                         if (ps.has("name") && !ps.get("name").isJsonNull()) peerStatus.name = ps.get("name").getAsString();
@@ -767,6 +769,7 @@ public class ChatApiClient {
                         PeerStatus peerStatus = new PeerStatus();
                         if (ps.has("userId")) peerStatus.userId = ps.get("userId").getAsString();
                         if (ps.has("isOnline")) peerStatus.isOnline = ps.get("isOnline").getAsBoolean();
+                        if (ps.has("isTyping")) peerStatus.isTyping = ps.get("isTyping").getAsBoolean();
                         if (ps.has("lastSeen") && !ps.get("lastSeen").isJsonNull()) peerStatus.lastSeen = ps.get("lastSeen").getAsString();
                         if (ps.has("avatarUrl") && !ps.get("avatarUrl").isJsonNull()) peerStatus.avatarUrl = ps.get("avatarUrl").getAsString();
                         if (ps.has("name") && !ps.get("name").isJsonNull()) peerStatus.name = ps.get("name").getAsString();
@@ -787,6 +790,37 @@ public class ChatApiClient {
                     postSuccess(callback, pr);
                 } catch (Exception e) {
                     postError(callback, "Poll parse error: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    // 6b. Send typing indicator status
+    public static void sendTypingStatus(Context context, String conversationId, String userId, boolean isTyping, ChatCallback<Void> callback) {
+        if (conversationId == null || userId == null) return;
+        String url = getBaseUrl(context) + "/api/chat/typing";
+        JsonObject body = new JsonObject();
+        body.addProperty("conversationId", conversationId);
+        body.addProperty("userId", userId);
+        body.addProperty("isTyping", isTyping);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                if (callback != null) postError(callback, "Failed to update typing: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.body() != null) response.body().close();
+                if (callback != null) {
+                    if (response.isSuccessful()) postSuccess(callback, null);
+                    else postError(callback, "HTTP " + response.code());
                 }
             }
         });

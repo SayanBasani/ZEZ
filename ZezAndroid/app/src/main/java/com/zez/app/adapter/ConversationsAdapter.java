@@ -48,7 +48,14 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy", Locale.getDefault());
 
+    private android.content.Context context;
+
     public ConversationsAdapter(OnConversationClickListener listener) {
+        this(null, listener);
+    }
+
+    public ConversationsAdapter(android.content.Context context, OnConversationClickListener listener) {
+        this.context = context;
         this.listener = listener;
         setHasStableIds(true);
     }
@@ -124,8 +131,23 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
 
     public void setConversations(List<ChatConversation> list) {
         if (list == null) list = new ArrayList<>();
-        final List<ChatConversation> oldList = new ArrayList<>(conversations);
         final List<ChatConversation> targetList = new ArrayList<>(list);
+        if (context != null && !targetList.isEmpty()) {
+            java.util.Collections.sort(targetList, (a, b) -> {
+                boolean pinA = com.zez.app.util.ChatPreferencesHelper.isConversationPinned(context, a.getConversationId());
+                boolean pinB = com.zez.app.util.ChatPreferencesHelper.isConversationPinned(context, b.getConversationId());
+                if (pinA != pinB) {
+                    return pinA ? -1 : 1;
+                }
+                String tA = a.getLastMessageTime();
+                String tB = b.getLastMessageTime();
+                if (tA == null && tB == null) return 0;
+                if (tA == null) return 1;
+                if (tB == null) return -1;
+                return tB.compareTo(tA);
+            });
+        }
+        final List<ChatConversation> oldList = new ArrayList<>(conversations);
 
         androidx.recyclerview.widget.DiffUtil.DiffResult diffResult = androidx.recyclerview.widget.DiffUtil.calculateDiff(new androidx.recyclerview.widget.DiffUtil.Callback() {
             @Override
@@ -163,6 +185,9 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     private boolean isSameConversation(ChatConversation a, ChatConversation b) {
         if (a == b) return true;
         if (a == null || b == null) return false;
+        boolean pinA = context != null && com.zez.app.util.ChatPreferencesHelper.isConversationPinned(context, a.getConversationId());
+        boolean pinB = context != null && com.zez.app.util.ChatPreferencesHelper.isConversationPinned(context, b.getConversationId());
+        if (pinA != pinB) return false;
         return java.util.Objects.equals(a.getConversationId(), b.getConversationId())
                 && java.util.Objects.equals(a.getLastMessageText(), b.getLastMessageText())
                 && java.util.Objects.equals(a.getLastMessageTime(), b.getLastMessageTime())
@@ -174,6 +199,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (context == null) context = parent.getContext().getApplicationContext();
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_conversation, parent, false);
         return new ViewHolder(view);
     }
@@ -201,6 +227,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
         ImageView ivTick;
         TextView tvLastMessage;
         TextView tvUnreadBadge;
+        ImageView ivPin;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -214,6 +241,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             ivTick = itemView.findViewById(R.id.iv_conv_tick);
             tvLastMessage = itemView.findViewById(R.id.tv_conv_last_message);
             tvUnreadBadge = itemView.findViewById(R.id.tv_conv_unread_badge);
+            ivPin = itemView.findViewById(R.id.iv_conv_pin);
         }
 
         void bind(ChatConversation item, boolean isSelected, ConversationsAdapter adapter, OnConversationClickListener listener, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt, SimpleDateFormat dateFmt) {
@@ -309,6 +337,12 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             } else {
                 tvUnreadBadge.setVisibility(View.GONE);
                 tvLastMessage.setTextColor(itemView.getContext().getResources().getColor(R.color.theme_text_secondary));
+            }
+
+            // Pin badge
+            boolean isPinned = com.zez.app.util.ChatPreferencesHelper.isConversationPinned(itemView.getContext(), item.getConversationId());
+            if (ivPin != null) {
+                ivPin.setVisibility(isPinned ? View.VISIBLE : View.GONE);
             }
 
             View avatarClickTarget = layoutAvatar != null ? layoutAvatar : ivAvatar;

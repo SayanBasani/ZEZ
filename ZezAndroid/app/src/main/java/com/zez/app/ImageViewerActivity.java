@@ -56,6 +56,9 @@ public class ImageViewerActivity extends AppCompatActivity {
     public static final String EXTRA_VIDEO_LIST = "extra_video_list";
     public static final String EXTRA_DUR_LIST   = "extra_dur_list";
 
+    public static final String EXTRA_IS_PROFILE_VIEW = "extra_is_profile_view";
+    public static final String EXTRA_CAN_EDIT        = "extra_can_edit";
+
     private ViewPager2       viewPager;
     private LinearLayout     topBar;
     private LinearLayout     bottomContainer;
@@ -64,7 +67,13 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     private TextView    tvImageDate, tvImageTime;
     private ImageButton btnFavorite;
+    private ImageButton btnInfo;
+    private ImageButton btnEditProfilePhoto;
     private View        btnActionEdit;
+
+    private boolean isProfileView = false;
+    private boolean canEdit = false;
+    private androidx.activity.result.ActivityResultLauncher<String> editAvatarLauncher;
 
     private boolean barsVisible = true;
     private boolean dataChanged = false;
@@ -76,6 +85,9 @@ public class ImageViewerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_viewer);
 
+        isProfileView = getIntent().getBooleanExtra(EXTRA_IS_PROFILE_VIEW, false);
+        canEdit       = getIntent().getBooleanExtra(EXTRA_CAN_EDIT, false);
+
         viewPager         = findViewById(R.id.view_pager);
         topBar            = findViewById(R.id.top_bar);
         bottomContainer   = findViewById(R.id.bottom_container);
@@ -83,14 +95,54 @@ public class ImageViewerActivity extends AppCompatActivity {
         tvImageDate       = findViewById(R.id.tv_image_date);
         tvImageTime       = findViewById(R.id.tv_image_time);
         btnFavorite       = findViewById(R.id.btn_favorite);
+        btnInfo           = findViewById(R.id.btn_info);
+        btnEditProfilePhoto = findViewById(R.id.btn_edit_profile_photo);
 
         ImageButton btnBack = findViewById(R.id.btn_back);
-        ImageButton btnInfo = findViewById(R.id.btn_info);
 
         View btnActionShare  = findViewById(R.id.btn_action_share);
         btnActionEdit        = findViewById(R.id.btn_action_edit);
         View btnActionDelete = findViewById(R.id.btn_action_delete);
         View btnActionMore   = findViewById(R.id.btn_action_more);
+
+        if (isProfileView) {
+            if (bottomContainer != null) bottomContainer.setVisibility(View.GONE);
+            if (btnFavorite != null) btnFavorite.setVisibility(View.GONE);
+            if (btnInfo != null) btnInfo.setVisibility(View.GONE);
+            if (filmstripRecycler != null) filmstripRecycler.setVisibility(View.GONE);
+            if (tvImageTime != null) tvImageTime.setVisibility(View.GONE);
+            if (canEdit && btnEditProfilePhoto != null) {
+                btnEditProfilePhoto.setVisibility(View.VISIBLE);
+                btnEditProfilePhoto.setOnClickListener(v -> {
+                    if (editAvatarLauncher != null) editAvatarLauncher.launch("image/*");
+                });
+            }
+        }
+
+        editAvatarLauncher = registerForActivityResult(new androidx.activity.result.contract.ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                String myUid = com.zez.app.util.ChatPreferencesHelper.getUserId(this);
+                if (myUid != null) {
+                    Toast.makeText(this, "Updating profile picture...", Toast.LENGTH_SHORT).show();
+                    com.zez.app.util.ChatApiClient.uploadAvatar(this, uri, myUid, new com.zez.app.util.ChatApiClient.ChatCallback<String>() {
+                        @Override
+                        public void onSuccess(String relativeUrl) {
+                            com.zez.app.util.ChatPreferencesHelper.saveUserAvatar(ImageViewerActivity.this, relativeUrl);
+                            String full = com.zez.app.util.ChatApiClient.getAbsoluteMediaUrl(ImageViewerActivity.this, relativeUrl);
+                            mediaList.clear();
+                            mediaList.add(new MediaItem(System.currentTimeMillis(), Uri.parse(full), "Profile Photo", 0, System.currentTimeMillis(), false, 0, 0, 0, ""));
+                            if (viewPager.getAdapter() != null) viewPager.getAdapter().notifyDataSetChanged();
+                            Toast.makeText(ImageViewerActivity.this, "Profile picture updated successfully!", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            Toast.makeText(ImageViewerActivity.this, "Failed to upload photo: " + error, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        });
 
         // Reconstruct media list
         ArrayList<String>  uriList  = getIntent().getStringArrayListExtra(EXTRA_URI_LIST);
@@ -246,6 +298,16 @@ public class ImageViewerActivity extends AppCompatActivity {
         if (pos >= 0 && pos < mediaList.size()) {
             MediaItem item = mediaList.get(pos);
 
+            if (isProfileView) {
+                String name = getIntent().getStringExtra(EXTRA_NAME);
+                tvImageDate.setText(name != null && !name.isEmpty() ? name : "Profile Photo");
+                tvImageTime.setVisibility(View.GONE);
+                if (bottomContainer != null) bottomContainer.setVisibility(View.GONE);
+                if (btnFavorite != null) btnFavorite.setVisibility(View.GONE);
+                if (btnInfo != null) btnInfo.setVisibility(View.GONE);
+                return;
+            }
+
             // Date and Time (Vivo style: Line 1 = "Today", "Yesterday", or "Oct 24, 2026", Line 2 = "3:11 PM")
             long dateMs = item.getDateAdded();
             if (dateMs > 0) {
@@ -301,7 +363,9 @@ public class ImageViewerActivity extends AppCompatActivity {
         barsVisible = !barsVisible;
         int vis = barsVisible ? View.VISIBLE : View.GONE;
         topBar.setVisibility(vis);
-        bottomContainer.setVisibility(vis);
+        if (!isProfileView) {
+            bottomContainer.setVisibility(vis);
+        }
     }
 
     private void shareItem(MediaItem item) {

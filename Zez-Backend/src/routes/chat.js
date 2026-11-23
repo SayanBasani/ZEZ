@@ -44,6 +44,19 @@ const uploadAvatar = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB max avatar
 });
 
+// In-memory typing tracker: key = `${conversationId}:${userId}`, val = expiryTimestamp
+const typingUsers = new Map();
+
+// Periodic purge of expired typing states (every 10s)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, expiry] of typingUsers.entries()) {
+    if (expiry <= now) {
+      typingUsers.delete(key);
+    }
+  }
+}, 10000);
+
 function normalizePhone(raw) {
   if (!raw) return "";
   let digits = String(raw).replace(/\D/g, "");
@@ -841,6 +854,28 @@ router.post(["/messages/send", "/messages"], async (req, res) => {
   }
 });
 
+// 7b. Update typing indicator status
+// POST /api/chat/typing
+// Body: { conversationId, userId, isTyping }
+router.post("/typing", (req, res) => {
+  try {
+    const { conversationId, userId, isTyping } = req.body;
+    if (!conversationId || !userId) {
+      return res.status(400).json({ error: "conversationId and userId are required." });
+    }
+    const key = `${conversationId}:${userId}`;
+    if (isTyping) {
+      typingUsers.set(key, Date.now() + 4000); // active for 4 seconds
+    } else {
+      typingUsers.delete(key);
+    }
+    return res.json({ success: true, isTyping: !!isTyping });
+  } catch (err) {
+    console.error("Error in /api/chat/typing:", err);
+    return res.status(500).json({ error: "Failed to update typing status." });
+  }
+});
+
 // 8. Poll for new messages / status updates
 // GET /api/chat/poll?userId=...&since=...&conversationId=...
 router.get("/poll", async (req, res) => {
@@ -959,9 +994,12 @@ router.get("/poll", async (req, res) => {
         if (peerRes.rows.length > 0) {
           const peer = peerRes.rows[0];
           const isOnline = peer.last_seen && (Date.now() - new Date(peer.last_seen).getTime() < 12000);
+          const peerTypingKey = `${conversationId}:${peer.id}`;
+          const isTyping = (typingUsers.get(peerTypingKey) || 0) > Date.now();
           peerStatus = {
             userId: peer.id,
             isOnline: !!isOnline,
+            isTyping: !!isTyping,
             lastSeen: peer.last_seen,
             avatarUrl: peer.avatar_url,
             name: peer.name

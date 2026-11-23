@@ -684,8 +684,23 @@ public class MainActivity extends AppCompatActivity {
         if (btnChatsSelectionPin != null) {
             btnChatsSelectionPin.setOnClickListener(v -> {
                 if (conversationsAdapter != null) {
-                    Toast.makeText(this, "Pinned " + conversationsAdapter.getSelectedCount() + " chat(s)", Toast.LENGTH_SHORT).show();
-                    conversationsAdapter.clearSelection();
+                    List<ChatConversation> selected = conversationsAdapter.getSelectedConversations();
+                    if (!selected.isEmpty()) {
+                        boolean allPinned = true;
+                        for (ChatConversation c : selected) {
+                            if (!ChatPreferencesHelper.isConversationPinned(this, c.getConversationId())) {
+                                allPinned = false;
+                                break;
+                            }
+                        }
+                        boolean targetPin = !allPinned;
+                        for (ChatConversation c : selected) {
+                            ChatPreferencesHelper.setConversationPinned(this, c.getConversationId(), targetPin);
+                        }
+                        Toast.makeText(this, targetPin ? "Chat(s) pinned to top" : "Chat(s) unpinned", Toast.LENGTH_SHORT).show();
+                        conversationsAdapter.clearSelection();
+                        loadChatsData();
+                    }
                 }
             });
         }
@@ -833,6 +848,7 @@ public class MainActivity extends AppCompatActivity {
         if (com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
             com.zez.app.service.NotificationCaptureService.ensureServiceBound(this);
         }
+        com.zez.app.util.ChatNotificationManager.getInstance().start(this);
         if (activeCallBannerListener != null) {
             com.zez.app.util.ActiveCallManager.getInstance().registerListener(activeCallBannerListener);
         }
@@ -1387,7 +1403,22 @@ public class MainActivity extends AppCompatActivity {
         };
 
         if (btnChangePhoto != null) btnChangePhoto.setOnClickListener(pickPhotoListener);
-        if (currentProfileDialogAvatar != null) currentProfileDialogAvatar.setOnClickListener(pickPhotoListener);
+        if (currentProfileDialogAvatar != null) {
+            currentProfileDialogAvatar.setOnClickListener(v -> {
+                String av = ChatPreferencesHelper.getUserAvatar(this);
+                if (av != null && !av.isEmpty()) {
+                    String fullUrl = ChatApiClient.getAbsoluteMediaUrl(this, av);
+                    Intent viewer = new Intent(this, ImageViewerActivity.class);
+                    viewer.putExtra(ImageViewerActivity.EXTRA_URI, fullUrl);
+                    viewer.putExtra(ImageViewerActivity.EXTRA_NAME, "Profile Photo");
+                    viewer.putExtra(ImageViewerActivity.EXTRA_IS_PROFILE_VIEW, true);
+                    viewer.putExtra(ImageViewerActivity.EXTRA_CAN_EDIT, true);
+                    startActivity(viewer);
+                } else if (avatarPickerLauncher != null) {
+                    avatarPickerLauncher.launch("image/*");
+                }
+            });
+        }
         if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
         if (btnCancel != null) btnCancel.setOnClickListener(v -> dialog.dismiss());
 
@@ -2563,7 +2594,6 @@ public class MainActivity extends AppCompatActivity {
 
         View btnCall = view.findViewById(R.id.btn_profile_call);
         View btnVideo = view.findViewById(R.id.btn_profile_videocall);
-        View btnPay = view.findViewById(R.id.btn_profile_pay);
         View btnSearch = view.findViewById(R.id.btn_profile_search);
 
         String myUserId = ChatPreferencesHelper.getUserId(this);
@@ -2613,10 +2643,12 @@ public class MainActivity extends AppCompatActivity {
                     ivAvatar.setClickable(true);
                     ivAvatar.setFocusable(true);
                     ivAvatar.setOnClickListener(v -> {
-                        if (avatarPickerLauncher != null) {
-                            avatarPickerLauncher.launch("image/*");
-                            sheet.dismiss();
-                        }
+                        Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, fullUrl);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, "You");
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_IS_PROFILE_VIEW, true);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_CAN_EDIT, true);
+                        startActivity(viewerIntent);
                     });
                 } else {
                     final String viewerUrl = fullUrl;
@@ -2626,6 +2658,8 @@ public class MainActivity extends AppCompatActivity {
                         Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
                         viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, viewerUrl);
                         viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, name);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_IS_PROFILE_VIEW, true);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_CAN_EDIT, false);
                         startActivity(viewerIntent);
                     });
                 }
@@ -2671,19 +2705,92 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        if (btnPay != null) {
-            btnPay.setOnClickListener(v -> {
-                sheet.dismiss();
-                Toast.makeText(this, "Payment transfer feature...", Toast.LENGTH_SHORT).show();
-            });
-        }
-
         if (btnSearch != null) {
             btnSearch.setOnClickListener(v -> {
                 sheet.dismiss();
                 openChatConversation(conv);
             });
         }
+
+        String convId = conv.getConversationId();
+        com.google.android.material.switchmaterial.SwitchMaterial switchPin = view.findViewById(R.id.switch_profile_pin);
+        TextView tvPinSub = view.findViewById(R.id.tv_profile_pin_sub);
+        if (switchPin != null && convId != null) {
+            boolean isPinned = ChatPreferencesHelper.isConversationPinned(this, convId);
+            switchPin.setChecked(isPinned);
+            if (tvPinSub != null) tvPinSub.setText(isPinned ? "Pinned to the top of your chats list" : "Keep this chat at the top of your chats list");
+            switchPin.setOnCheckedChangeListener((btn, isChecked) -> {
+                ChatPreferencesHelper.setConversationPinned(this, convId, isChecked);
+                if (tvPinSub != null) tvPinSub.setText(isChecked ? "Pinned to the top of your chats list" : "Keep this chat at the top of your chats list");
+                Toast.makeText(this, isChecked ? "Chat pinned to top" : "Chat unpinned", Toast.LENGTH_SHORT).show();
+                loadChatsData();
+            });
+        }
+
+        View rowNotifications = view.findViewById(R.id.row_profile_notifications);
+        TextView tvNotifSub = view.findViewById(R.id.tv_profile_notifications_sub);
+        if (tvNotifSub != null && convId != null) {
+            tvNotifSub.setText(ChatPreferencesHelper.getMuteStatusText(this, convId));
+        }
+        if (rowNotifications != null && convId != null) {
+            rowNotifications.setOnClickListener(v -> {
+                boolean isMuted = ChatPreferencesHelper.isConversationMuted(this, convId);
+                String[] options = isMuted ? new String[]{"Unmute notifications", "8 hours", "1 week", "Always"} : new String[]{"8 hours", "1 week", "Always"};
+                new AlertDialog.Builder(this)
+                        .setTitle("Mute notifications")
+                        .setItems(options, (d, which) -> {
+                            String choice = options[which];
+                            if ("Unmute notifications".equals(choice)) {
+                                ChatPreferencesHelper.muteConversation(this, convId, 0);
+                                Toast.makeText(this, "Notifications unmuted", Toast.LENGTH_SHORT).show();
+                            } else if ("8 hours".equals(choice)) {
+                                ChatPreferencesHelper.muteConversation(this, convId, 8 * 3600 * 1000L);
+                                Toast.makeText(this, "Notifications muted for 8 hours", Toast.LENGTH_SHORT).show();
+                            } else if ("1 week".equals(choice)) {
+                                ChatPreferencesHelper.muteConversation(this, convId, 7 * 24 * 3600 * 1000L);
+                                Toast.makeText(this, "Notifications muted for 1 week", Toast.LENGTH_SHORT).show();
+                            } else if ("Always".equals(choice)) {
+                                ChatPreferencesHelper.muteConversation(this, convId, Long.MAX_VALUE);
+                                Toast.makeText(this, "Notifications muted always", Toast.LENGTH_SHORT).show();
+                            }
+                            if (tvNotifSub != null) tvNotifSub.setText(ChatPreferencesHelper.getMuteStatusText(this, convId));
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
+
+        View rowVisibility = view.findViewById(R.id.row_profile_visibility);
+        TextView tvVisSub = view.findViewById(R.id.tv_profile_visibility_sub);
+        if (tvVisSub != null && convId != null) {
+            int vis = ChatPreferencesHelper.getMediaVisibility(this, convId);
+            tvVisSub.setText(vis == 1 ? "Yes" : (vis == 2 ? "No" : "Default (Yes)"));
+        }
+        if (rowVisibility != null && convId != null) {
+            rowVisibility.setOnClickListener(v -> {
+                int current = ChatPreferencesHelper.getMediaVisibility(this, convId);
+                String[] options = new String[]{"Default (Yes)", "Yes", "No"};
+                new AlertDialog.Builder(this)
+                        .setTitle("Media visibility")
+                        .setSingleChoiceItems(options, current, (d, which) -> {
+                            ChatPreferencesHelper.setMediaVisibility(this, convId, which);
+                            if (tvVisSub != null) tvVisSub.setText(options[which]);
+                            Toast.makeText(this, "Media visibility: " + options[which], Toast.LENGTH_SHORT).show();
+                            d.dismiss();
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
+
+        View layoutMediaSection = view.findViewById(R.id.layout_profile_media_section);
+        View btnViewAllMedia = view.findViewById(R.id.btn_profile_view_all_media);
+        View.OnClickListener openMediaBrowser = v -> {
+            sheet.dismiss();
+            openChatConversation(conv);
+        };
+        if (layoutMediaSection != null) layoutMediaSection.setOnClickListener(openMediaBrowser);
+        if (btnViewAllMedia != null) btnViewAllMedia.setOnClickListener(openMediaBrowser);
 
         sheet.show();
     }

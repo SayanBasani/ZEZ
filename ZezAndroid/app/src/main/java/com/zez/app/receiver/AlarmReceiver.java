@@ -40,13 +40,19 @@ public class AlarmReceiver extends BroadcastReceiver {
             AlarmHelper.rescheduleAllAlarms(context);
             AlarmHelper.schedulePeriodicAlarmSync(context);
             AlarmHelper.syncWithBackend(context.getApplicationContext(), null);
+            try {
+                com.zez.app.util.ChatNotificationManager.getInstance().pollOnce(context.getApplicationContext());
+            } catch (Exception ignored) {}
             return;
         }
 
         if (ACTION_SYNC_ALARMS.equals(action)) {
-            Log.d(TAG, "ACTION_SYNC_ALARMS received: syncing alarms with backend in background");
+            Log.d(TAG, "ACTION_SYNC_ALARMS received: syncing alarms and chat notifications with backend in background");
             AlarmHelper.syncWithBackend(context.getApplicationContext(), null);
             AlarmHelper.schedulePeriodicAlarmSync(context.getApplicationContext());
+            try {
+                com.zez.app.util.ChatNotificationManager.getInstance().pollOnce(context.getApplicationContext());
+            } catch (Exception ignored) {}
             return;
         }
 

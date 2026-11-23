@@ -84,4 +84,64 @@ public class ChatPreferencesHelper {
     public static void setWallpaperDim(Context context, float dim) {
         getPrefs(context).edit().putFloat(KEY_WALLPAPER_DIM, Math.max(0.0f, Math.min(0.85f, dim))).apply();
     }
+
+    // Pinned Conversations
+    private static final String KEY_PINNED_CONVERSATIONS = "pinned_conversations_set";
+
+    public static java.util.Set<String> getPinnedConversations(Context context) {
+        if (context == null) return new java.util.HashSet<>();
+        return new java.util.HashSet<>(getPrefs(context).getStringSet(KEY_PINNED_CONVERSATIONS, new java.util.HashSet<>()));
+    }
+
+    public static boolean isConversationPinned(Context context, String conversationId) {
+        if (context == null || conversationId == null) return false;
+        return getPinnedConversations(context).contains(conversationId);
+    }
+
+    public static void setConversationPinned(Context context, String conversationId, boolean pinned) {
+        if (context == null || conversationId == null) return;
+        java.util.Set<String> current = getPinnedConversations(context);
+        if (pinned) {
+            current.add(conversationId);
+        } else {
+            current.remove(conversationId);
+        }
+        getPrefs(context).edit().putStringSet(KEY_PINNED_CONVERSATIONS, current).apply();
+    }
+
+    // Muted Conversations: stored as key = "mute_" + convId, value = expiration timestamp ms (-1 for always)
+    public static void muteConversation(Context context, String conversationId, long durationMs) {
+        if (context == null || conversationId == null) return;
+        long until = durationMs <= 0 ? 0 : (durationMs == Long.MAX_VALUE ? -1 : System.currentTimeMillis() + durationMs);
+        getPrefs(context).edit().putLong("mute_" + conversationId, until).apply();
+    }
+
+    public static boolean isConversationMuted(Context context, String conversationId) {
+        if (context == null || conversationId == null) return false;
+        long until = getPrefs(context).getLong("mute_" + conversationId, 0);
+        if (until == 0) return false;
+        if (until == -1) return true; // Always
+        return System.currentTimeMillis() < until;
+    }
+
+    public static String getMuteStatusText(Context context, String conversationId) {
+        if (context == null || conversationId == null) return "Off";
+        long until = getPrefs(context).getLong("mute_" + conversationId, 0);
+        if (until == 0) return "Off";
+        if (until == -1) return "Always";
+        if (System.currentTimeMillis() >= until) return "Off";
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, h:mm a", java.util.Locale.getDefault());
+        return "Until " + sdf.format(new java.util.Date(until));
+    }
+
+    // Media Visibility: 0 = Default (Yes), 1 = Yes, 2 = No
+    public static int getMediaVisibility(Context context, String conversationId) {
+        if (context == null || conversationId == null) return 0;
+        return getPrefs(context).getInt("media_vis_" + conversationId, 0);
+    }
+
+    public static void setMediaVisibility(Context context, String conversationId, int visibility) {
+        if (context == null || conversationId == null) return;
+        getPrefs(context).edit().putInt("media_vis_" + conversationId, visibility).apply();
+    }
 }

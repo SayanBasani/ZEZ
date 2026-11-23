@@ -69,6 +69,17 @@
             app:tint="#FFFFFF"
             android:contentDescription="Favorite" />
 
+        <!-- Edit Profile Photo (shown when inspecting own profile photo) -->
+        <ImageButton
+            android:id="@+id/btn_edit_profile_photo"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_edit"
+            app:tint="#FFFFFF"
+            android:visibility="gone"
+            android:contentDescription="Change profile photo" />
+
         <!-- Info (Details) -->
         <ImageButton
             android:id="@+id/btn_info"

@@ -167,6 +167,31 @@ public class ChatActivity extends AppCompatActivity {
     private final List<PendingMessage> pendingMessagesQueue = new ArrayList<>();
     private boolean isDrainingQueue = false;
 
+    private final Handler typingHandler = new Handler(Looper.getMainLooper());
+    private boolean isCurrentlyTyping = false;
+    private long lastTypingSentTime = 0;
+
+    private final Runnable stopTypingRunnable = () -> {
+        isCurrentlyTyping = false;
+        notifyTyping(false);
+    };
+
+    private void notifyTyping(boolean typing) {
+        if (conversationId == null || currentUserId == null) return;
+        ChatApiClient.sendTypingStatus(this, conversationId, currentUserId, typing, null);
+    }
+
+    private void handleUserTyping() {
+        long now = System.currentTimeMillis();
+        if (!isCurrentlyTyping || (now - lastTypingSentTime > 2000)) {
+            isCurrentlyTyping = true;
+            lastTypingSentTime = now;
+            notifyTyping(true);
+        }
+        typingHandler.removeCallbacks(stopTypingRunnable);
+        typingHandler.postDelayed(stopTypingRunnable, 3000);
+    }
+
     private ActivityResultLauncher<String> pickImageLauncher;
     private ActivityResultLauncher<String> pickVideoLauncher;
     private ActivityResultLauncher<String> pickFileLauncher;
@@ -201,8 +226,12 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initActivityLaunchers() {
-        pickImageLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri != null) handleMediaSelection(uri, "image");
+        pickImageLauncher = registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
+            if (uris != null && !uris.isEmpty()) {
+                for (Uri uri : uris) {
+                    if (uri != null) handleMediaSelection(uri, "image");
+                }
+            }
         });
 
         pickVideoLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
@@ -349,6 +378,28 @@ public class ChatActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(v -> finish());
         btnSendContainer.setOnClickListener(v -> sendMessage());
+        if (etInput != null) {
+            etInput.addTextChangedListener(new android.text.TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (s != null && s.length() > 0) {
+                        handleUserTyping();
+                    } else {
+                        typingHandler.removeCallbacks(stopTypingRunnable);
+                        if (isCurrentlyTyping) {
+                            isCurrentlyTyping = false;
+                            notifyTyping(false);
+                        }
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(android.text.Editable s) {}
+            });
+        }
         if (btnAttach != null) {
             btnAttach.setOnClickListener(v -> showAttachmentDialog());
         }
@@ -762,7 +813,6 @@ public class ChatActivity extends AppCompatActivity {
 
         View btnCall = view.findViewById(R.id.btn_profile_call);
         View btnVideo = view.findViewById(R.id.btn_profile_videocall);
-        View btnPay = view.findViewById(R.id.btn_profile_pay);
         View btnSearch = view.findViewById(R.id.btn_profile_search);
 
         RecyclerView rvMedia = view.findViewById(R.id.rv_profile_media);
@@ -823,16 +873,20 @@ public class ChatActivity extends AppCompatActivity {
                 ivAvatar.setFocusable(true);
                 if (isSelfChat) {
                     ivAvatar.setOnClickListener(v -> {
-                        if (pickAvatarLauncher != null) {
-                            pickAvatarLauncher.launch("image/*");
-                            sheet.dismiss();
-                        }
+                        Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, fullUrl);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, "You");
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_IS_PROFILE_VIEW, true);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_CAN_EDIT, true);
+                        startActivity(viewerIntent);
                     });
                 } else {
                     ivAvatar.setOnClickListener(v -> {
                         Intent viewerIntent = new Intent(this, ImageViewerActivity.class);
                         viewerIntent.putExtra(ImageViewerActivity.EXTRA_URI, fullUrl);
                         viewerIntent.putExtra(ImageViewerActivity.EXTRA_NAME, name);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_IS_PROFILE_VIEW, true);
+                        viewerIntent.putExtra(ImageViewerActivity.EXTRA_CAN_EDIT, false);
                         startActivity(viewerIntent);
                     });
                 }
@@ -868,19 +922,6 @@ public class ChatActivity extends AppCompatActivity {
             btnVideo.setOnClickListener(v -> {
                 sheet.dismiss();
                 startCall("video");
-            });
-        }
-
-        if (btnPay != null) {
-            btnPay.setOnClickListener(v -> {
-                try {
-                    String cleanDigits = phone.replaceAll("\\D", "");
-                    String upiUri = "upi://pay?pa=" + (cleanDigits.isEmpty() ? "contact" : cleanDigits) + "@upi&pn=" + Uri.encode(name) + "&cu=INR";
-                    Intent payIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(upiUri));
-                    startActivity(Intent.createChooser(payIntent, "Pay with"));
-                } catch (Exception e) {
-                    Toast.makeText(this, "No UPI payment app installed", Toast.LENGTH_SHORT).show();
-                }
             });
         }
 
@@ -970,16 +1011,55 @@ public class ChatActivity extends AppCompatActivity {
             });
         }
 
+        View layoutMediaSection = view.findViewById(R.id.layout_profile_media_section);
+        View btnViewAllMedia = view.findViewById(R.id.btn_profile_view_all_media);
+        View.OnClickListener openMediaBrowser = v -> {
+            sheet.dismiss();
+            com.zez.app.util.MediaLinksDocsHelper.showMediaLinksDocsDialog(this, normalMessages, messageId -> {
+                scrollToMessage(messageId);
+            }, messageIds -> {
+                List<ChatMessage> toDel = new ArrayList<>();
+                for (ChatMessage nm : normalMessages) {
+                    if (messageIds.contains(nm.getId())) toDel.add(nm);
+                }
+                if (!toDel.isEmpty()) showDeleteMessagesDialog(toDel);
+            });
+        };
+        if (layoutMediaSection != null) layoutMediaSection.setOnClickListener(openMediaBrowser);
+        if (btnViewAllMedia != null) btnViewAllMedia.setOnClickListener(openMediaBrowser);
+
+        com.google.android.material.switchmaterial.SwitchMaterial switchPin = view.findViewById(R.id.switch_profile_pin);
+        TextView tvPinSub = view.findViewById(R.id.tv_profile_pin_sub);
+        if (switchPin != null && conversationId != null) {
+            boolean isPinned = ChatPreferencesHelper.isConversationPinned(this, conversationId);
+            switchPin.setChecked(isPinned);
+            if (tvPinSub != null) tvPinSub.setText(isPinned ? "Pinned to the top of your chats list" : "Keep this chat at the top of your chats list");
+            switchPin.setOnCheckedChangeListener((btn, isChecked) -> {
+                ChatPreferencesHelper.setConversationPinned(this, conversationId, isChecked);
+                if (tvPinSub != null) tvPinSub.setText(isChecked ? "Pinned to the top of your chats list" : "Keep this chat at the top of your chats list");
+                Toast.makeText(this, isChecked ? "Chat pinned" : "Chat unpinned", Toast.LENGTH_SHORT).show();
+            });
+        }
+
         if (rowEncryption != null) {
             rowEncryption.setOnClickListener(v -> showSecurityCodeDialog());
         }
 
+        TextView tvNotifSub = view.findViewById(R.id.tv_profile_notifications_sub);
+        if (tvNotifSub != null && conversationId != null) {
+            tvNotifSub.setText(ChatPreferencesHelper.getMuteStatusText(this, conversationId));
+        }
         if (rowNotifications != null) {
-            rowNotifications.setOnClickListener(v -> Toast.makeText(this, "Notifications enabled", Toast.LENGTH_SHORT).show());
+            rowNotifications.setOnClickListener(v -> showMuteDialog(conversationId, tvNotifSub));
         }
 
+        TextView tvVisSub = view.findViewById(R.id.tv_profile_visibility_sub);
+        if (tvVisSub != null && conversationId != null) {
+            int vis = ChatPreferencesHelper.getMediaVisibility(this, conversationId);
+            tvVisSub.setText(vis == 1 ? "Yes" : (vis == 2 ? "No" : "Default (Yes)"));
+        }
         if (rowVisibility != null) {
-            rowVisibility.setOnClickListener(v -> Toast.makeText(this, "Media visibility: Default (Yes)", Toast.LENGTH_SHORT).show());
+            rowVisibility.setOnClickListener(v -> showMediaVisibilityDialog(conversationId, tvVisSub));
         }
 
         if (rowStarred != null) {
@@ -987,6 +1067,74 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         sheet.show();
+    }
+
+    private void showMuteDialog(String convId, TextView tvSubtitle) {
+        if (convId == null) return;
+        boolean isMuted = ChatPreferencesHelper.isConversationMuted(this, convId);
+        String[] options;
+        if (isMuted) {
+            options = new String[]{"Unmute notifications", "8 hours", "1 week", "Always"};
+        } else {
+            options = new String[]{"8 hours", "1 week", "Always"};
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Mute notifications")
+                .setItems(options, (d, which) -> {
+                    String choice = options[which];
+                    if ("Unmute notifications".equals(choice)) {
+                        ChatPreferencesHelper.muteConversation(this, convId, 0);
+                        Toast.makeText(this, "Notifications unmuted", Toast.LENGTH_SHORT).show();
+                    } else if ("8 hours".equals(choice)) {
+                        ChatPreferencesHelper.muteConversation(this, convId, 8 * 3600 * 1000L);
+                        Toast.makeText(this, "Notifications muted for 8 hours", Toast.LENGTH_SHORT).show();
+                    } else if ("1 week".equals(choice)) {
+                        ChatPreferencesHelper.muteConversation(this, convId, 7 * 24 * 3600 * 1000L);
+                        Toast.makeText(this, "Notifications muted for 1 week", Toast.LENGTH_SHORT).show();
+                    } else if ("Always".equals(choice)) {
+                        ChatPreferencesHelper.muteConversation(this, convId, Long.MAX_VALUE);
+                        Toast.makeText(this, "Notifications muted always", Toast.LENGTH_SHORT).show();
+                    }
+                    if (tvSubtitle != null) {
+                        tvSubtitle.setText(ChatPreferencesHelper.getMuteStatusText(this, convId));
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showMediaVisibilityDialog(String convId, TextView tvSubtitle) {
+        if (convId == null) return;
+        int current = ChatPreferencesHelper.getMediaVisibility(this, convId);
+        String[] options = new String[]{"Default (Yes)", "Yes", "No"};
+        new AlertDialog.Builder(this)
+                .setTitle("Media visibility")
+                .setSingleChoiceItems(options, current, (d, which) -> {
+                    ChatPreferencesHelper.setMediaVisibility(this, convId, which);
+                    if (tvSubtitle != null) {
+                        tvSubtitle.setText(options[which]);
+                    }
+                    Toast.makeText(this, "Media visibility: " + options[which], Toast.LENGTH_SHORT).show();
+                    d.dismiss();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void scrollToMessage(String messageId) {
+        if (messageId == null || adapter == null || recyclerView == null) return;
+        for (int i = 0; i < adapter.getItemCount(); i++) {
+            ChatMessage m = adapter.getMessageAt(i);
+            if (m != null && messageId.equals(m.getId())) {
+                final int pos = i;
+                recyclerView.smoothScrollToPosition(pos);
+                adapter.setHighlightedMessageId(messageId);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    adapter.setHighlightedMessageId(null);
+                }, 2000);
+                break;
+            }
+        }
     }
 
     private void showSecurityCodeDialog() {
@@ -1535,6 +1683,9 @@ public class ChatActivity extends AppCompatActivity {
         if (peerStatus == null) {
             statusText = "offline";
             statusColor = Color.parseColor("#94A3B8");
+        } else if (peerStatus.isTyping) {
+            statusText = "typing...";
+            statusColor = Color.parseColor("#22C55E");
         } else if (peerStatus.isOnline) {
             statusText = "online";
             statusColor = Color.parseColor("#22C55E");
@@ -1707,8 +1858,11 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         etInput.setText("");
-        btnSend.setVisibility(View.GONE);
-        pbSending.setVisibility(View.VISIBLE);
+        typingHandler.removeCallbacks(stopTypingRunnable);
+        if (isCurrentlyTyping) {
+            isCurrentlyTyping = false;
+            notifyTyping(false);
+        }
 
         final String activeMode = isSecretMode ? ChatMessage.MODE_SECRET : ChatMessage.MODE_NORMAL;
         final String sessionUuid = isSecretMode ? currentSecretSessionId : null;
@@ -1755,8 +1909,6 @@ public class ChatActivity extends AppCompatActivity {
             public void onSuccess(ChatMessage sentMessage) {
                 isDrainingQueue = false;
                 pendingMessagesQueue.remove(task);
-                btnSend.setVisibility(View.VISIBLE);
-                pbSending.setVisibility(View.GONE);
                 if (sentMessage != null) {
                     String serverId = sentMessage.getId();
                     String st = sentMessage.getStatus() != null ? sentMessage.getStatus() : ChatMessage.STATUS_SENT;
@@ -1786,8 +1938,6 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onError(String errorMessage) {
                 isDrainingQueue = false;
-                btnSend.setVisibility(View.VISIBLE);
-                pbSending.setVisibility(View.GONE);
                 // Retain in pending queue to auto-retry as soon as network returns
                 if (task.optimisticMsg != null) {
                     task.optimisticMsg.setStatus(ChatMessage.STATUS_PENDING);
@@ -2179,14 +2329,14 @@ public class ChatActivity extends AppCompatActivity {
                         }
                     }
                     if (isPollingActive) {
-                        pollHandler.postDelayed(pollRunnable, 1500); // Fast 1.5s live polling
+                        pollHandler.postDelayed(pollRunnable, 1000); // 1.0s fast live polling
                     }
                 }
 
                 @Override
                 public void onError(String errorMessage) {
                     if (isPollingActive) {
-                        pollHandler.postDelayed(pollRunnable, 2500);
+                        pollHandler.postDelayed(pollRunnable, 2000);
                     }
                 }
             });
@@ -2206,7 +2356,7 @@ public class ChatActivity extends AppCompatActivity {
         }
         isPollingActive = true;
         updateModeUi();
-        pollHandler.postDelayed(pollRunnable, 1000);
+        pollHandler.postDelayed(pollRunnable, 500);
         if (!pendingMessagesQueue.isEmpty()) {
             drainPendingQueue();
         }
@@ -2218,6 +2368,11 @@ public class ChatActivity extends AppCompatActivity {
         activeConversationId = null;
         isPollingActive = false;
         pollHandler.removeCallbacks(pollRunnable);
+        typingHandler.removeCallbacks(stopTypingRunnable);
+        if (isCurrentlyTyping) {
+            isCurrentlyTyping = false;
+            notifyTyping(false);
+        }
         // Ephemeral Secret Mode rule: Purge all in-memory secret messages when user navigates away or pauses
         ephemeralSecretMessages.clear();
         if (isSecretMode) {

@@ -124,6 +124,15 @@
                 android:textStyle="bold"
                 android:visibility="gone"
                 android:layout_marginStart="8dp" />
+
+            <ImageView
+                android:id="@+id/iv_conv_pin"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_pin"
+                app:tint="@color/theme_text_muted"
+                android:visibility="gone"
+                android:layout_marginStart="6dp" />
         </LinearLayout>
     </LinearLayout>
 

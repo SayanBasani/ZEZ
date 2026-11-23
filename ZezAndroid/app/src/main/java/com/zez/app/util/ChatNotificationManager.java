@@ -111,10 +111,20 @@ public class ChatNotificationManager {
                                     continue;
                                 }
 
+                                // Skip notification if muted
+                                if (ChatPreferencesHelper.isConversationMuted(appContext, convId)) {
+                                    continue;
+                                }
+
                                 String lastTime = conv.getLastMessageTime();
                                 String prevTime = lastNotifiedMsgTimeMap.get(convId);
+                                if (prevTime == null) {
+                                    prevTime = appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE).getString("last_notified_" + convId, null);
+                                }
                                 if (lastTime != null && !lastTime.equals(prevTime)) {
                                     lastNotifiedMsgTimeMap.put(convId, lastTime);
+                                    appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE)
+                                            .edit().putString("last_notified_" + convId, lastTime).apply();
                                     ChatNotificationHelper.showChatNotification(
                                             appContext,
                                             convId,

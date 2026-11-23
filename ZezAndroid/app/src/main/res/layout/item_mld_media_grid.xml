@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="115dp"
+    android:layout_margin="1.5dp"
+    android:background="@drawable/bg_search_input">
+
+    <ImageView
+        android:id="@+id/iv_grid_thumb"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_photo_library" />
+
+    <LinearLayout
+        android:id="@+id/layout_grid_video_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="4dp"
+        android:background="#99000000"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="2dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:src="@drawable/ic_videocall"
+            app:tint="@android:color/white" />
+
+        <TextView
+            android:id="@+id/tv_grid_video_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
+            android:text="0:15"
+            android:textColor="@android:color/white"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- Selection Checkmark Overlay -->
+    <View
+        android:id="@+id/view_grid_select_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#5522C55E"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/iv_grid_check"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp"
+        android:src="@drawable/ic_check_circle"
+        app:tint="#22C55E"
+        android:visibility="gone" />
+
+</FrameLayout>

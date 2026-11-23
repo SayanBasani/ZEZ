@@ -190,40 +190,6 @@
                             android:textColor="@color/theme_text_secondary" />
                     </LinearLayout>
 
-                    <!-- Pay -->
-                    <LinearLayout
-                        android:id="@+id/btn_profile_pay"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:padding="8dp">
-
-                        <FrameLayout
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:background="@drawable/bg_circle_glass">
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:layout_gravity="center"
-                                android:src="@drawable/ic_payment"
-                                app:tint="@color/theme_icon_tint" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="Pay"
-                            android:textSize="12sp"
-                            android:textColor="@color/theme_text_secondary" />
-                    </LinearLayout>
-
                     <!-- Search -->
                     <LinearLayout
                         android:id="@+id/btn_profile_search"
@@ -379,6 +345,61 @@
                     android:layout_marginStart="56dp"
                     android:background="@color/theme_card_border" />
 
+                <!-- Pin Chat -->
+                <LinearLayout
+                    android:id="@+id/row_profile_pin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:id="@+id/iv_profile_pin"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_pin"
+                        app:tint="@color/theme_icon_tint"
+                        android:layout_marginEnd="16dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pin chat"
+                            android:textSize="15sp"
+                            android:textColor="@color/theme_text_primary" />
+
+                        <TextView
+                            android:id="@+id/tv_profile_pin_sub"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Keep this chat at the top of your chats list"
+                            android:textSize="12sp"
+                            android:textColor="@color/theme_text_muted" />
+                    </LinearLayout>
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_profile_pin"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="56dp"
+                    android:background="@color/theme_card_border" />
+
                 <!-- Notifications -->
                 <LinearLayout
                     android:id="@+id/row_profile_notifications"
@@ -399,13 +420,27 @@
                         app:tint="@color/theme_icon_tint"
                         android:layout_marginEnd="16dp" />
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Notifications"
-                        android:textSize="15sp"
-                        android:textColor="@color/theme_text_primary" />
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Notifications"
+                            android:textSize="15sp"
+                            android:textColor="@color/theme_text_primary" />
+
+                        <TextView
+                            android:id="@+id/tv_profile_notifications_sub"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Off"
+                            android:textSize="12sp"
+                            android:textColor="@color/theme_text_muted" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <View
@@ -434,13 +469,27 @@
                         app:tint="@color/theme_icon_tint"
                         android:layout_marginEnd="16dp" />
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Media visibility"
-                        android:textSize="15sp"
-                        android:textColor="@color/theme_text_primary" />
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Media visibility"
+                            android:textSize="15sp"
+                            android:textColor="@color/theme_text_primary" />
+
+                        <TextView
+                            android:id="@+id/tv_profile_visibility_sub"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Default (Yes)"
+                            android:textSize="12sp"
+                            android:textColor="@color/theme_text_muted" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <View
