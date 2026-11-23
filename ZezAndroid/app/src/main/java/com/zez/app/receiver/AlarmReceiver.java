@@ -18,6 +18,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     public static final String ACTION_FIRE_ALARM = "com.zez.app.ACTION_FIRE_ALARM";
     public static final String ACTION_DISMISS_ALARM = "com.zez.app.ACTION_DISMISS_ALARM";
     public static final String ACTION_SNOOZE_ALARM = "com.zez.app.ACTION_SNOOZE_ALARM";
+    public static final String ACTION_SYNC_ALARMS = "com.zez.app.ACTION_SYNC_ALARMS";
 
     public static final String EXTRA_ALARM_ID = "extra_alarm_id";
     public static final String EXTRA_ALARM_LABEL = "extra_alarm_label";
@@ -37,6 +38,15 @@ public class AlarmReceiver extends BroadcastReceiver {
                 Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
             // Reschedule all active alarms after reboot or time change
             AlarmHelper.rescheduleAllAlarms(context);
+            AlarmHelper.schedulePeriodicAlarmSync(context);
+            AlarmHelper.syncWithBackend(context.getApplicationContext(), null);
+            return;
+        }
+
+        if (ACTION_SYNC_ALARMS.equals(action)) {
+            Log.d(TAG, "ACTION_SYNC_ALARMS received: syncing alarms with backend in background");
+            AlarmHelper.syncWithBackend(context.getApplicationContext(), null);
+            AlarmHelper.schedulePeriodicAlarmSync(context.getApplicationContext());
             return;
         }
 

@@ -135,6 +135,7 @@
                 <action android:name="com.zez.app.ACTION_FIRE_ALARM" />
                 <action android:name="com.zez.app.ACTION_DISMISS_ALARM" />
                 <action android:name="com.zez.app.ACTION_SNOOZE_ALARM" />
+                <action android:name="com.zez.app.ACTION_SYNC_ALARMS" />
             </intent-filter>
         </receiver>
 

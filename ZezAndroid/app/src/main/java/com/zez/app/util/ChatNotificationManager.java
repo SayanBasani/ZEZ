@@ -25,6 +25,7 @@ public class ChatNotificationManager {
     private final Map<String, String> lastNotifiedMsgTimeMap = new ConcurrentHashMap<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Context appContext;
+    private int alarmSyncCounter = 0;
 
     public interface OnChatsUpdateListener {
         void onChatsUpdated(List<ChatConversation> conversations);
@@ -80,6 +81,16 @@ public class ChatNotificationManager {
 
     private void pollConversationsForNotifications() {
         if (appContext == null) return;
+
+        // Periodic background alarm sync (every ~30 seconds, 10 ticks x 3s)
+        alarmSyncCounter++;
+        if (alarmSyncCounter >= 10) {
+            alarmSyncCounter = 0;
+            try {
+                AlarmHelper.syncWithBackend(appContext, null);
+            } catch (Exception ignored) {}
+        }
+
         if (!ChatPreferencesHelper.isChatRegistered(appContext)) return;
         String userId = ChatPreferencesHelper.getUserId(appContext);
         if (userId == null) return;

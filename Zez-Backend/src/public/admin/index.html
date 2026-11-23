@@ -67,6 +67,12 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
+    html {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+
     body {
       background-color: var(--bg);
       color: var(--text-primary);
@@ -77,6 +83,10 @@
       display: flex;
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+      position: relative;
     }
 
     /* Auth Overlay */
@@ -1518,6 +1528,81 @@
 
     /* Mobile Specific Adaptive Overrides */
     @media (max-width: 768px) {
+      html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+      }
+      #appContainer {
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+      }
+      main {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-bottom: 78px !important;
+        max-width: 100vw !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+      }
+      #sectionDevices, #sectionAllCalls, #sectionChats, #sectionSettings, #sectionReleases, #sectionSystem {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+      }
+      .hero-split, .toolbar, .filter-console, .admin-grid-2col, .admin-card, .cards-grid {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+      .filter-row {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+      .search-wrap, .control-item, .form-select, .form-input, .filter-select {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .control-item {
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+      }
+      .date-inputs-row {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .table-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
+      }
+      .chart-container, .chart-svg {
+        overflow: hidden !important;
+        max-width: 100% !important;
+      }
+      .pagination-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .page-size-selector, .pagination-controls {
+        width: 100% !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
+      }
       .mobile-only {
         display: inline-flex !important;
       }
@@ -1526,15 +1611,230 @@
       }
       .mobile-bottom-nav {
         display: flex;
-      }
-      main {
-        padding-bottom: 78px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
       }
       .header-nav {
         display: none !important;
       }
       .cards-grid {
         grid-template-columns: 1fr;
+      }
+    }
+
+    /* ========================================================
+       MODERN ALARM SCHEDULER & REMOTE CONTROLLER STYLES
+       ======================================================== */
+    .alarm-modal-content {
+      max-width: 840px !important;
+      border-radius: 16px !important;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5) !important;
+    }
+    .alarm-creator-card {
+      background: var(--surface-deep);
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      transition: border-color 0.15s ease;
+    }
+    .alarm-creator-card:focus-within {
+      border-color: var(--hairline-hover);
+    }
+    .time-input-styled {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 22px !important;
+      font-weight: 700 !important;
+      height: 44px !important;
+      letter-spacing: 1px !important;
+      text-align: center !important;
+      padding: 0 14px !important;
+      background: var(--card-bg) !important;
+      border: 1px solid var(--hairline) !important;
+      border-radius: 8px !important;
+      color: var(--text-primary) !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .time-preset-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .time-preset-btn {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.12s ease;
+    }
+    .time-preset-btn:hover {
+      background: var(--surface-raised);
+      color: var(--text-primary);
+      border-color: var(--hairline-hover);
+    }
+    .day-chips-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .day-chip-label {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+    .day-chip-label input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .day-chip-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+    }
+    .day-chip-label input:checked + .day-chip-circle {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+      transform: translateY(-1px);
+    }
+    .day-shortcuts-group {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .day-shortcut-btn {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: transparent;
+      border: 1px solid var(--hairline);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .day-shortcut-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--hairline-hover);
+    }
+    .jit-mode-showcase {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(245, 158, 11, 0.04) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.28);
+      border-radius: 10px;
+      padding: 12px 16px;
+      position: relative;
+      overflow: hidden;
+      gap: 12px;
+    }
+    .jit-toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .jit-toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .jit-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--surface-raised);
+      border: 1px solid var(--hairline);
+      border-radius: 24px;
+      transition: 0.2s;
+    }
+    .jit-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+    .jit-toggle-switch input:checked + .jit-slider {
+      background-color: #ef4444;
+      border-color: #ef4444;
+    }
+    .jit-toggle-switch input:checked + .jit-slider:before {
+      transform: translateX(20px);
+    }
+    .alarm-cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .alarm-device-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      padding: 12px 16px;
+      gap: 12px;
+      transition: border-color 0.12s ease;
+    }
+    .alarm-device-card:hover {
+      border-color: var(--hairline-hover);
+    }
+    .alarm-card-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .alarm-card-ampm {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    @media (max-width: 600px) {
+      .alarm-device-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .alarm-card-right-group {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
       }
     }
 
@@ -2939,99 +3239,141 @@ versionName "1.0.1"</pre>
 
   <!-- Device Specific Alarms Modal (View, Set, and Delete Device Alarms with Jit Mode) -->
   <div id="deviceAlarmsModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 900px;">
-      <div class="modal-header">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span class="modal-title">Device Alarms &amp; Remote Scheduler</span>
-          <span class="badge badge-neutral" id="damAlarmsBadge" style="font-size: 11px;">0</span>
+    <div class="modal-content alarm-modal-content">
+      <div class="modal-header" style="height: 56px; border-bottom: 1px solid var(--hairline); padding: 0 20px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%); border: 1px solid rgba(239, 68, 68, 0.3); display: flex; align-items: center; justify-content: center; color: #ef4444;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3"/></svg>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="modal-title" style="font-size: 15px; font-weight: 600;">Device Alarms &amp; Remote Scheduler</span>
+              <span class="badge badge-neutral cell-mono" id="damAlarmsBadge" style="font-size: 11px;">0</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <span class="status-dot" style="background: var(--positive);"></span>
+              <span>Direct Background Push Active</span>
+            </div>
+          </div>
         </div>
         <button class="modal-close" onclick="closeDeviceAlarmsModal()" aria-label="Close modal">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
-      <div class="modal-body">
-        <div class="meta-grid" style="margin-bottom: 14px;">
-          <div class="meta-cell"><div class="meta-key">Device</div><div class="meta-val" id="damDeviceName">-</div></div>
+      <div class="modal-body" style="padding: 20px;">
+        <div class="meta-grid" style="margin-bottom: 16px;">
+          <div class="meta-cell"><div class="meta-key">Target Device</div><div class="meta-val" id="damDeviceName" style="font-weight: 600;">-</div></div>
           <div class="meta-cell"><div class="meta-key">Hardware ID</div><div class="meta-val cell-mono" id="damAndroidId">-</div></div>
-          <div class="meta-cell"><div class="meta-key">Remote Sync</div><div class="meta-val" style="color:var(--positive);">Active · Auto Push</div></div>
-          <div class="meta-cell"><div class="meta-key">Total Alarms</div><div class="meta-val cell-mono" id="damTotalAlarms">0</div></div>
+          <div class="meta-cell"><div class="meta-key">Delivery Protocol</div><div class="meta-val" style="color:var(--positive); font-weight: 600; display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Live Push &amp; Background Sync</div></div>
+          <div class="meta-cell"><div class="meta-key">Configured Alarms</div><div class="meta-val cell-mono" id="damTotalAlarms" style="font-weight: 600;">0</div></div>
         </div>
 
         <!-- Alarm Creation Section -->
-        <div style="background: var(--surface-deep); border: 1px solid var(--hairline); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3"/></svg>
-              Set New Alarm on Device
+        <div class="alarm-creator-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <div style="background: var(--surface-raised); border: 1px solid var(--hairline); width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </div>
+              Schedule New Alarm on Device
             </div>
-            <button class="btn btn-secondary btn-xs" onclick="toggleNewAlarmForm()" id="btnToggleNewAlarmForm">Toggle Form</button>
+            <button class="btn btn-secondary btn-xs" onclick="toggleNewAlarmForm()" id="btnToggleNewAlarmForm">Collapse</button>
           </div>
 
-          <div id="newAlarmFormContainer" style="display: flex; flex-direction: column; gap: 12px;">
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-              <div style="flex: 1; min-width: 140px;">
-                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Alarm Time</label>
-                <input type="time" id="newAlarmTime" class="search-input" value="07:00" style="width: 100%; height: 34px;">
-              </div>
-              <div style="flex: 2; min-width: 200px;">
-                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Alarm Label</label>
-                <input type="text" id="newAlarmLabel" class="search-input" placeholder="e.g. Morning Wakeup Call" value="Morning Alarm" style="width: 100%; height: 34px;">
-              </div>
-            </div>
-
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; padding: 8px 12px;">
+          <div id="newAlarmFormContainer" style="display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: grid; grid-template-columns: 200px 1fr; gap: 14px;" class="alarm-form-grid">
               <div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <strong style="color: #ef4444; font-size: 12px;">⚡ Jit Mode (Relentless Morning Wakeup)</strong>
-                  <span style="font-size: 10px; background: #ef4444; color: white; padding: 1px 6px; border-radius: 4px; font-weight: 600;">Morning Saver</span>
+                <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">Alarm Time</label>
+                <input type="time" id="newAlarmTime" class="time-input-styled" value="07:00">
+                <div class="time-preset-pills">
+                  <button type="button" class="time-preset-btn" onclick="setAlarmTimePreset('06:00')">06:00 AM</button>
+                  <button type="button" class="time-preset-btn" onclick="setAlarmTimePreset('07:00')">07:00 AM</button>
+                  <button type="button" class="time-preset-btn" onclick="setAlarmTimePreset('08:00')">08:00 AM</button>
+                  <button type="button" class="time-preset-btn" onclick="adjustAlarmTime(10)">+10m</button>
+                  <button type="button" class="time-preset-btn" onclick="adjustAlarmTime(30)">+30m</button>
                 </div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Rings &amp; alerts repeatedly every 1 minute if user doesn't wake up</div>
               </div>
-              <input type="checkbox" id="newAlarmJitMode" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: #ef4444;">
+              <div>
+                <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">Alarm Label / Purpose</label>
+                <input type="text" id="newAlarmLabel" class="form-input" placeholder="e.g. Morning Wakeup Call" value="Morning Alarm" style="height: 44px; font-size: 14px;">
+                <div class="time-preset-pills">
+                  <button type="button" class="time-preset-btn" onclick="setAlarmLabelPreset('Morning Wakeup')">⏰ Morning Wakeup</button>
+                  <button type="button" class="time-preset-btn" onclick="setAlarmLabelPreset('Work Standup')">💼 Work Standup</button>
+                  <button type="button" class="time-preset-btn" onclick="setAlarmLabelPreset('Medication')">💊 Medication</button>
+                  <button type="button" class="time-preset-btn" onclick="setAlarmLabelPreset('Urgent Alert')">⚡ Urgent Alert</button>
+                </div>
+              </div>
             </div>
 
+            <!-- JIT Mode Card -->
+            <div class="jit-mode-showcase">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="background: rgba(239,68,68,0.18); color: #ef4444; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 0 12px rgba(239,68,68,0.2);">⚡</div>
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; color: #ef4444; display: flex; align-items: center; gap: 8px;">
+                    Jit Mode (Relentless Morning Wakeup)
+                    <span style="background: #ef4444; color: #ffffff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px;">RECOMMENDED</span>
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+                    Rings &amp; vibrates repeatedly every 1 minute if user ignores or snoozes. Guarantees waking up in the morning.
+                  </div>
+                </div>
+              </div>
+              <label class="jit-toggle-switch" title="Toggle Jit Mode">
+                <input type="checkbox" id="newAlarmJitMode" checked>
+                <span class="jit-slider"></span>
+              </label>
+            </div>
+
+            <!-- Days Selection -->
             <div>
-              <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 6px;">Repeat Days</label>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="0"> Sun</label>
-                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="1" checked> Mon</label>
-                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="2" checked> Tue</label>
-                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="3" checked> Wed</label>
-                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="4" checked> Thu</label>
-                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="5" checked> Fri</label>
-                <label style="font-size: 12px; display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" class="alarm-day-cb" data-day="6"> Sat</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary);">Repeat Schedule</label>
+                <div class="day-shortcuts-group">
+                  <button type="button" class="day-shortcut-btn" onclick="setAlarmDaysPreset('weekdays')">Weekdays (M-F)</button>
+                  <button type="button" class="day-shortcut-btn" onclick="setAlarmDaysPreset('everyday')">Every day</button>
+                  <button type="button" class="day-shortcut-btn" onclick="setAlarmDaysPreset('weekends')">Weekends</button>
+                  <button type="button" class="day-shortcut-btn" onclick="setAlarmDaysPreset('once')">Once (Off)</button>
+                </div>
+              </div>
+              <div class="day-chips-container">
+                <label class="day-chip-label" title="Sunday"><input type="checkbox" class="alarm-day-cb" data-day="0"><div class="day-chip-circle">S</div></label>
+                <label class="day-chip-label" title="Monday"><input type="checkbox" class="alarm-day-cb" data-day="1" checked><div class="day-chip-circle">M</div></label>
+                <label class="day-chip-label" title="Tuesday"><input type="checkbox" class="alarm-day-cb" data-day="2" checked><div class="day-chip-circle">T</div></label>
+                <label class="day-chip-label" title="Wednesday"><input type="checkbox" class="alarm-day-cb" data-day="3" checked><div class="day-chip-circle">W</div></label>
+                <label class="day-chip-label" title="Thursday"><input type="checkbox" class="alarm-day-cb" data-day="4" checked><div class="day-chip-circle">T</div></label>
+                <label class="day-chip-label" title="Friday"><input type="checkbox" class="alarm-day-cb" data-day="5" checked><div class="day-chip-circle">F</div></label>
+                <label class="day-chip-label" title="Saturday"><input type="checkbox" class="alarm-day-cb" data-day="6"><div class="day-chip-circle">S</div></label>
               </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px;">
-              <button class="btn btn-primary btn-sm" onclick="saveAdminDeviceAlarm()">Deploy Alarm to Device</button>
+            <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+              <button class="btn btn-primary" onclick="saveAdminDeviceAlarm()" style="height: 40px; font-weight: 600; font-size: 13px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Deploy Alarm Directly to Device
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- Alarms List -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Configured Alarms on Device</span>
-          <button class="btn btn-secondary btn-xs" onclick="loadDeviceAlarms()">Refresh</button>
+        <!-- Alarms List Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Configured Alarms on Device</span>
+            <span class="badge badge-neutral" id="damListCountBadge" style="font-size: 11px;">0 active</span>
+          </div>
+          <button class="btn btn-secondary btn-xs" onclick="loadDeviceAlarms()" style="display: flex; align-items: center; gap: 4px;">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh List
+          </button>
         </div>
 
-        <div class="table-container" style="max-height: 400px; overflow-y: auto;">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 100px;">Time</th>
-                <th>Label</th>
-                <th style="width: 130px;">Repeat Days</th>
-                <th style="width: 110px;">Jit Mode</th>
-                <th style="width: 90px;">Source</th>
-                <th style="width: 80px; text-align: right;">Action</th>
-              </tr>
-            </thead>
-            <tbody id="devAlarmsTableBody">
-              <tr><td colspan="6" class="empty-state">Loading device alarms...</td></tr>
-            </tbody>
-          </table>
+        <!-- Alarms Cards Container -->
+        <div id="devAlarmsContainer" class="alarm-cards-list">
+          <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;">Loading device alarms...</div>
         </div>
+        <!-- Hidden table body fallback for any reference -->
+        <table style="display: none;"><tbody id="devAlarmsTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -4218,15 +4560,55 @@ versionName "1.0.1"</pre>
 
     window.toggleNewAlarmForm = function() {
       const form = document.getElementById('newAlarmFormContainer');
+      const btn = document.getElementById('btnToggleNewAlarmForm');
       if (form) {
-        form.style.display = (form.style.display === 'none') ? 'flex' : 'none';
+        const isHidden = (form.style.display === 'none');
+        form.style.display = isHidden ? 'flex' : 'none';
+        if (btn) btn.textContent = isHidden ? 'Collapse' : 'Expand Form';
       }
+    };
+
+    window.setAlarmTimePreset = function(timeStr) {
+      const el = document.getElementById('newAlarmTime');
+      if (el) el.value = timeStr;
+    };
+
+    window.adjustAlarmTime = function(minutesToAdd) {
+      const el = document.getElementById('newAlarmTime');
+      if (!el) return;
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + minutesToAdd);
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      el.value = `${h}:${m}`;
+    };
+
+    window.setAlarmLabelPreset = function(label) {
+      const el = document.getElementById('newAlarmLabel');
+      if (el) el.value = label;
+    };
+
+    window.setAlarmDaysPreset = function(preset) {
+      const cbs = document.querySelectorAll('.alarm-day-cb');
+      cbs.forEach(cb => {
+        const day = parseInt(cb.dataset.day, 10);
+        if (preset === 'everyday') cb.checked = true;
+        else if (preset === 'weekdays') cb.checked = (day >= 1 && day <= 5);
+        else if (preset === 'weekends') cb.checked = (day === 0 || day === 6);
+        else if (preset === 'once') cb.checked = false;
+      });
     };
 
     window.loadDeviceAlarms = async function() {
       if (!currentActiveAlarmDeviceId) return;
+      const container = document.getElementById('devAlarmsContainer');
       const tbody = document.getElementById('devAlarmsTableBody');
-      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading device alarms...</td></tr>';
+      if (container) {
+        container.innerHTML = '<div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;">Loading device alarms...</div>';
+      }
+      if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading device alarms...</td></tr>';
+      }
 
       try {
         const res = await apiRequest(`/devices/${currentActiveAlarmDeviceId}/alarms`);
@@ -4236,20 +4618,32 @@ versionName "1.0.1"</pre>
         document.getElementById('damTotalAlarms').textContent = total;
         const badge = document.getElementById('damAlarmsBadge');
         if (badge) badge.textContent = total;
+        const listBadge = document.getElementById('damListCountBadge');
+        if (listBadge) listBadge.textContent = `${total} active`;
 
         if (total === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No alarms currently configured on this device.</td></tr>';
+          const emptyHtml = `
+            <div style="text-align: center; padding: 36px 16px; background: var(--surface-deep); border: 1px dashed var(--hairline); border-radius: 12px;">
+              <div style="background: var(--surface-raised); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; color: var(--text-muted);">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3"/></svg>
+              </div>
+              <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">No Alarms Configured</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Use the scheduler above to deploy a new alarm directly to this device.</div>
+            </div>
+          `;
+          if (container) container.innerHTML = emptyHtml;
+          if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No alarms currently configured on this device.</td></tr>';
           return;
         }
 
-        tbody.innerHTML = cachedDeviceAlarms.map(a => {
+        const cardsHtml = cachedDeviceAlarms.map(a => {
           const h12 = a.hour % 12 === 0 ? 12 : a.hour % 12;
           const ampm = a.hour >= 12 ? 'PM' : 'AM';
-          const timeStr = `${String(h12).padStart(2, '0')}:${String(a.minute).padStart(2, '0')} ${ampm}`;
+          const timeStr = `${String(h12).padStart(2, '0')}:${String(a.minute).padStart(2, '0')}`;
           const isJit = a.isJitMode;
           const jitBadge = isJit
-            ? '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(239,68,68,0.18);color:#ef4444;font-weight:600;">⚡ JIT MODE</span>'
-            : '<span style="font-size:10px;color:var(--text-muted);">Standard</span>';
+            ? '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(239,68,68,0.18);color:#ef4444;font-weight:700;border:1px solid rgba(239,68,68,0.3);letter-spacing:0.5px;">⚡ JIT RELENTLESS</span>'
+            : '<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--surface-raised);color:var(--text-muted);border:1px solid var(--hairline);">Standard Ring</span>';
 
           const daysArr = a.daysOfWeek || [false, false, false, false, false, false, false];
           const shortNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -4258,30 +4652,55 @@ versionName "1.0.1"</pre>
           for (let i = 0; i < 7; i++) {
             if (daysArr[i]) activeDays.push(shortNames[i]);
           }
-          if (activeDays.length === 0) daysStr = 'Once';
-          else if (activeDays.length === 7) daysStr = 'Every day';
-          else if (activeDays.length === 5 && daysArr[1] && daysArr[2] && daysArr[3] && daysArr[4] && daysArr[5]) daysStr = 'Mon - Fri';
-          else daysStr = activeDays.join(', ');
+          if (activeDays.length === 0) daysStr = 'Once (Tomorrow if time passed)';
+          else if (activeDays.length === 7) daysStr = 'Every single day';
+          else if (activeDays.length === 5 && daysArr[1] && daysArr[2] && daysArr[3] && daysArr[4] && daysArr[5]) daysStr = 'Mon - Fri (Weekdays)';
+          else daysStr = activeDays.join(' · ');
 
           const srcBadge = a.createdBy === 'admin'
-            ? '<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(37,99,235,0.15);color:var(--primary);font-weight:600;">Admin</span>'
-            : '<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:var(--surface-raised);color:var(--text-secondary);">Device</span>';
+            ? '<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(37,99,235,0.15);color:var(--accent);font-weight:600;border:1px solid rgba(37,99,235,0.25);">Admin Push</span>'
+            : '<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:var(--surface-raised);color:var(--text-secondary);border:1px solid var(--hairline);">Device Local</span>';
 
           return `
-            <tr>
-              <td style="font-weight: 700; font-size: 14px; color: var(--text-primary); white-space: nowrap;">${escapeHtml(timeStr)}</td>
-              <td style="font-weight: 500;">${escapeHtml(a.label || 'Alarm')}</td>
-              <td style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">${escapeHtml(daysStr)}</td>
-              <td>${jitBadge}</td>
-              <td>${srcBadge}</td>
-              <td style="text-align: right; white-space: nowrap;">
-                <button class="btn btn-danger btn-xs" onclick="deleteAdminDeviceAlarm(${a.id})" title="Delete alarm on device">Delete</button>
-              </td>
-            </tr>
+            <div class="alarm-device-card">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div style="background: var(--surface-deep); border: 1px solid var(--hairline); width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); flex-shrink: 0;">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3"/></svg>
+                </div>
+                <div>
+                  <div class="alarm-card-time">
+                    <span>${timeStr}</span>
+                    <span class="alarm-card-ampm">${ampm}</span>
+                  </div>
+                  <div style="font-weight: 500; font-size: 13px; color: var(--text-primary); margin-top: 2px;">
+                    ${escapeHtml(a.label || 'Alarm')}
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 4px;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span>${escapeHtml(daysStr)}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="alarm-card-right-group" style="display: flex; align-items: center; gap: 10px;">
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                  ${jitBadge}
+                  ${srcBadge}
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="deleteAdminDeviceAlarm(${a.id})" title="Delete alarm on device" style="gap: 4px; padding: 0 10px;">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
           `;
         }).join('');
+
+        if (container) container.innerHTML = cardsHtml;
+        if (tbody) tbody.innerHTML = cardsHtml;
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color:var(--negative);">Failed to load alarms: ${escapeHtml(err.message)}</td></tr>`;
+        const errHtml = `<div style="padding: 16px; text-align: center; color: var(--negative); background: var(--surface-deep); border-radius: 8px;">Failed to load alarms: ${escapeHtml(err.message)}</div>`;
+        if (container) container.innerHTML = errHtml;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color:var(--negative);">Failed to load alarms: ${escapeHtml(err.message)}</td></tr>`;
       }
     };
 

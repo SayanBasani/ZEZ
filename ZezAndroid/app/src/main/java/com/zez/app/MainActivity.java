@@ -824,6 +824,14 @@ public class MainActivity extends AppCompatActivity {
         if (activeCallBannerListener != null) {
             com.zez.app.util.ActiveCallManager.getInstance().registerListener(activeCallBannerListener);
         }
+
+        // Keep background alarm synchronization active and sync latest server alarm changes
+        com.zez.app.util.AlarmHelper.schedulePeriodicAlarmSync(this);
+        com.zez.app.util.AlarmHelper.syncWithBackend(this, () -> {
+            if (currentTab == R.id.nav_alarms) {
+                refreshAlarmsUi();
+            }
+        });
         if (ChatPreferencesHelper.isChatRegistered(this)) {
             ChatNotificationManager.getInstance().start(this);
             ChatNotificationManager.getInstance().setChatsUpdateListener(this::onBackgroundChatsUpdate);

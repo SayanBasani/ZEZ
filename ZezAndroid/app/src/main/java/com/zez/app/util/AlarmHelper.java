@@ -9,6 +9,7 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -301,6 +302,38 @@ public class AlarmHelper {
         );
         am.cancel(pi);
         Log.d(TAG, "Cancelled Jit mode repeat for alarm: " + alarmId);
+    }
+
+    public static final String ACTION_SYNC_ALARMS = "com.zez.app.ACTION_SYNC_ALARMS";
+    private static final int PERIODIC_SYNC_REQUEST_CODE = 88881;
+    private static final long PERIODIC_SYNC_INTERVAL_MS = 3 * 60 * 1000L; // 3 minutes
+
+    public static void schedulePeriodicAlarmSync(Context context) {
+        if (context == null) return;
+        try {
+            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (am == null) return;
+
+            Intent intent = new Intent(context, AlarmReceiver.class);
+            intent.setAction(ACTION_SYNC_ALARMS);
+            PendingIntent pi = PendingIntent.getBroadcast(
+                    context,
+                    PERIODIC_SYNC_REQUEST_CODE,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            long triggerAt = SystemClock.elapsedRealtime() + PERIODIC_SYNC_INTERVAL_MS;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi);
+            } else {
+                am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi);
+            }
+            Log.d(TAG, "schedulePeriodicAlarmSync: next background alarm sync in 3 minutes");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to schedule periodic alarm sync: " + e.getMessage(), e);
+        }
     }
 
     public static void syncWithBackend(Context context, Runnable onComplete) {

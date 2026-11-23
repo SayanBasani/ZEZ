@@ -12,6 +12,7 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import com.zez.app.service.CallSyncWorker;
+import com.zez.app.util.AlarmHelper;
 
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +26,8 @@ public class BootReceiver extends BroadcastReceiver {
             Intent.ACTION_MY_PACKAGE_REPLACED.equals(intent.getAction())) {
             Log.d(TAG, "Device booted or app replaced. Registering background sync.");
             schedulePeriodicSync(context);
+            AlarmHelper.schedulePeriodicAlarmSync(context);
+            AlarmHelper.syncWithBackend(context, null);
         }
     }
 

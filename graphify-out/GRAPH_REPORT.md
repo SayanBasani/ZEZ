@@ -1,41 +1,40 @@
 # Graph Report - Call Log Mannager  (2026-11-23)
 
 ## Corpus Check
-- 150 files · ~136,389 words
+- 150 files · ~138,132 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 161 file(s) not represented in the graph (top: .xml 151, .properties 5, (none) 3)
 - WARNING: 161 of 324 files seen (50%) have no supported extractor and are missing from this graph entirely. It may look complete while representing only part of the codebase.
 
 ## Summary
-- 2169 nodes · 5260 edges · 198 communities (56 shown, 142 thin omitted)
+- 2172 nodes · 5275 edges · 204 communities (58 shown, 146 thin omitted)
 - Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 490 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b9b56603`
+- Built from commit: `68ae2fbe`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- AlarmItem
+- AlarmHelper
 - b2StorageService.js
-- .onBindViewHolder
+- AppCallAdapter
 - e2e_device_test.py
 - ChatContactItem
 - Hardware Info & Performance Telemetry (C6)
 - android.view.View
 - ActiveCallManager
+- ChatApiClient
 - AlarmRingingService
 - ChatUser
 - compilerOptions
-- .loadGalleryData
+- RecycleBinAdapter
 - package.json
 - index.d.ts
 - Override
-- ImageViewerActivity.java
 - AppCallItem
 - d_call_log_mannager_zez_backend_src_db_pool
-- check-recordings.js
 - MainActivity
 - AppUpdateHelper
 - admin.js
@@ -56,66 +55,72 @@
 - System Architecture And Sync Guide Module (C43)
 - Backend Admin Routes & APIs (C44)
 - appRelease.js
-- GalleryAdapter.Listener
+- android.content.Context
 - ImageViewerActivity
-- dependencies
+- android.os.Bundle
 - server.js
-- ChatNotificationManager
+- ChatNotificationManager.java
 - okhttp3.Call
 - 2. Core Components & Responsibilities
 - Call Recording Implementation Audit
 - com.zez.app.model.ChatConversation
 - callSync.js
 - 3. Detailed Component Breakdown
+- AlarmAdapter
 - ChatLocalDbHelper
-- .onResponse
+- .ping
 - benchmark
 - ChatActivity
 - 2. Manufacturer-by-Manufacturer Breakdown
 - android.net.Uri
-- MediaItem
+- .initViews
 - 4. Troubleshooting & FAQs
-- com.zez.app.model.CallLogItem
-- android.content.Context
+- .onCreate
+- .getApiUrl
 - TWING: Device-Specific Zero-Audio Investigation — Android 16
+- AlarmItem
 - Technical Proposal: Unified Call Recording & Native OEM Import Integration
 - 1. System-Level Architectural Limitations
 - Detailed Test Analysis:
 - AlbumDetailActivity
 - 3. Manufacturer-by-Manufacturer Native Recording Breakdown
 - CallStateReceiver
-- .setCalls
+- com.zez.app.model.CallLogItem
 - CallStateReceiver
 - TWING OEM Call Recording Compatibility & Test Report
 - NotificationCaptureService.java
 - CallLogItem
 - chat.js
-- .onItemSelected
-- Override
+- PreferencesHelper
 - extreme-test-suite.js
 - MediaItem
 - { Pool }
-- scripts
-- engines
+- CallLogAdapter
 - FilmstripAdapter
-- ApiCallback
+- .applyModeState
 - CallSyncWorker.java
 - MediaPagerAdapter
 - com.zez.app.model.ChatMessage
 - ImageEditActivity
+- .loadCallsData
 - FavoritesHelper
-- AlarmRingingService.java
+- .loadGalleryData
+- AlarmHelper.java
 - Override
 - ChatMessageAdapter
+- .onResponse
+- 7. Affected Files & Isolation Boundaries
+- chat-extreme-test-suite.js
+- ChatCallback<MessagesResult>
 
 ## God Nodes (most connected - your core abstractions)
 1. `MainActivity` - 114 edges
-2. `ChatActivity` - 72 edges
+2. `ChatActivity` - 71 edges
 3. `ChatMessageAdapter` - 43 edges
 4. `CallActivity` - 43 edges
-5. `ChatApiClient` - 42 edges
-6. `AppCallItem` - 42 edges
-7. `ChatMessage` - 42 edges
+5. `AppCallItem` - 42 edges
+6. `ChatMessage` - 42 edges
+7. `ChatApiClient` - 42 edges
 8. `ChatCallback` - 39 edges
 9. `ImageViewerActivity` - 32 edges
 10. `ViewHolder` - 31 edges
@@ -129,80 +134,76 @@
   CALL_RECORDING_TEST_REPORT.md → ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java
 - `B. Manifest Declarations Removed` --references--> `MainActivity`  [INFERRED]
   docs/GALLERY_2_ROLLBACK_REPORT.md → ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java
-- `6. Build & Test Verification` --references--> `ApiClient`  [INFERRED]
-  docs/GALLERY_2_ROLLBACK_REPORT.md → ZezAndroid/app/src/main/java/com/zez/app/util/ApiClient.java
+- `7. Affected Files & Isolation Boundaries` --references--> `AlarmReceiver`  [INFERRED]
+  TWING_CALL_RECORDING_INTEGRATION_PROPOSAL.md → ZezAndroid/app/src/main/java/com/zez/app/receiver/AlarmReceiver.java
 
 ## Import Cycles
 - None detected.
 
-## Communities (198 total, 142 thin omitted)
+## Communities (204 total, 146 thin omitted)
 
-### Community 1 - "AlarmItem"
-Cohesion: 0.10
-Nodes (8): AlarmAdapter, AlarmViewHolder, OnAlarmClickListener, com.zez.app.adapter.AlarmAdapter.OnAlarmClickListener, AlarmItem, AlarmHelper, TypeToken<List<AlarmItem>>, ApiClient.AlarmSyncCallback
+### Community 1 - "AlarmHelper"
+Cohesion: 0.22
+Nodes (3): AlarmHelper, TypeToken<List<AlarmItem>>, ApiClient.AlarmSyncCallback
 
 ### Community 2 - "b2StorageService.js"
 Cohesion: 0.21
 Nodes (22): CATEGORY_LIMITS, crypto, deleteFile(), fileExists(), formatBytes(), fs, generateDownloadUrl(), generateObjectKey() (+14 more)
-
-### Community 3 - ".onBindViewHolder"
-Cohesion: 0.18
-Nodes (3): AppCallAdapter, CallViewHolder, OnCallActionListener
 
 ### Community 4 - "e2e_device_test.py"
 Cohesion: 0.19
 Nodes (19): configure_backend(), adb_shell(), dump_ui(), find_node(), get_nodes(), send_chat_text(), tap_node(), adb_shell() (+11 more)
 
 ### Community 5 - "ChatContactItem"
-Cohesion: 0.06
-Nodes (6): DisplayItem, OnContactClickListener, android.widget.SeekBar.OnSeekBarChangeListener, ContactsActivity, ChatContactItem, ChatPreferencesHelper
+Cohesion: 0.09
+Nodes (5): DisplayItem, OnContactClickListener, ContactsActivity, TextWatcher, ChatContactItem
 
 ### Community 6 - "Hardware Info & Performance Telemetry (C6)"
-Cohesion: 0.08
+Cohesion: 0.07
 Nodes (5): TelemetryGraphView, GestureListener, OnTapListener, ScaleListener, ZoomImageView
 
 ### Community 7 - "android.view.View"
-Cohesion: 0.11
-Nodes (10): DateHeaderViewHolder, IncomingViewHolder, OutgoingViewHolder, ContactsAdapter, ContactViewHolder, HeaderViewHolder, ViewHolder, FilmstripVH (+2 more)
+Cohesion: 0.14
+Nodes (11): AlbumVH, DateHeaderViewHolder, IncomingViewHolder, OutgoingViewHolder, ContactsAdapter, ContactViewHolder, HeaderViewHolder, ViewHolder (+3 more)
 
 ### Community 9 - "ActiveCallManager"
-Cohesion: 0.11
-Nodes (3): ActiveCallManager, Callback, CallStateListener
+Cohesion: 0.09
+Nodes (3): ActiveCallManager, CallStateListener, CallStateListener
+
+### Community 10 - "ChatApiClient"
+Cohesion: 0.16
+Nodes (8): ChatApiClient.ChatCallback<ChatApiClient.MessagesResult>, ChatApiClient.ChatCallback<ChatApiClient.MediaUploadResult>, ChatApiClient, Callback, ChatCallback, ContactSyncResult, MediaUploadResult, MessagesResult
 
 ### Community 13 - "compilerOptions"
 Cohesion: 0.10
 Nodes (20): compilerOptions, allowJs, checkJs, declaration, declarationMap, esModuleInterop, forceConsistentCasingInFileNames, lib (+12 more)
 
-### Community 14 - ".loadGalleryData"
+### Community 14 - "RecycleBinAdapter"
 Cohesion: 0.22
-Nodes (4): MediaHelper, RecycleBinHelper, TypeToken<List<RecycledItem>>, RecycledItem
+Nodes (5): OnRestoreClickListener, RecycleBinAdapter, RecycleBinHelper, TypeToken<List<RecycledItem>>, RecycledItem
 
 ### Community 15 - "package.json"
-Cohesion: 0.14
-Nodes (18): @types/cors, @types/express, @types/multer, @types/node, @types/pg, typescript, description, devDependencies (+10 more)
+Cohesion: 0.05
+Nodes (44): @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, cors, dotenv, @noble/ciphers, pg, @types/cors, @types/express (+36 more)
 
 ### Community 16 - "index.d.ts"
 Cohesion: 0.12
 Nodes (15): AdminCallsQuery, AdminChatExportFormat, AdminUserRecord, ApiResponse, AppReleaseRecord, CallLogRecord, CallSyncBatchPayload, ChatConversationRecord (+7 more)
 
 ### Community 17 - "Override"
-Cohesion: 0.14
+Cohesion: 0.15
 Nodes (7): Callback, TextureView.SurfaceTextureListener, ActiveCallManager.CallStateListener, Runnable, Callback, Runnable, Callback
+
+### Community 19 - "AppCallItem"
+Cohesion: 0.12
+Nodes (3): OnCallActionListener, AppCallItem, Callback
 
 ### Community 20 - "d_call_log_mannager_zez_backend_src_db_pool"
 Cohesion: 0.04
 Nodes (27): content, fs, lines, navMatch, fs, path, fs, path (+19 more)
 
-### Community 21 - "check-recordings.js"
-Cohesion: 0.15
-Nodes (10): @aws-sdk/client-s3, pg, @aws-sdk/client-s3@^3.1173.0, pg@^8.23.1, { Pool }, s3Client, { S3Client, ListObjectsV2Command }, { Pool } (+2 more)
-
-### Community 23 - "MainActivity"
-Cohesion: 0.06
-Nodes (3): TextWatcher, MainActivity, Runnable
-
 ### Community 24 - "AppUpdateHelper"
-Cohesion: 0.17
+Cohesion: 0.16
 Nodes (5): com.zez.app.util.AppUpdateHelper.UpdateCheckCallback, AppUpdateHelper, DownloadProgressCallback, ReleaseInfo, UpdateCheckCallback
 
 ### Community 26 - "admin.js"
@@ -214,40 +215,44 @@ Cohesion: 0.27
 Nodes (4): CpuInfo, HardwareInfoHelper, RamInfo, StorageInfo
 
 ### Community 28 - "appRelease.js"
-Cohesion: 0.20
-Nodes (8): downloadsDir, express, fs, multer, path, router, storage, upload
+Cohesion: 0.12
+Nodes (13): express, express@^5.1.0, downloadsDir, express, fs, multer, path, router (+5 more)
 
 ### Community 30 - "Call Recording Audio Diagnostics & Root-Cause Technical Report"
 Cohesion: 0.11
 Nodes (17): 1.1 The Core Problem, 1.2 The Root Cause, 1. Executive Summary & Root Cause Analysis, 2. Audio Source Investigation Matrix, 3.1 `AudioManager.AudioRecordingCallback` (API 29+), 3.2 Real-Time Peak & Silence Monitor, 3.3 Post-Recording Frame Decoded Sample Validation (`AudioCaptureValidator`), 3.4 Elimination of False Recordings (+9 more)
 
 ### Community 31 - "Override"
-Cohesion: 0.07
-Nodes (11): ChatApiClient.ChatCallback<Void>, ChatApiClient.ChatCallback<ChatMessage>, ChatApiClient.ChatCallback<Void>, android.text.TextWatcher, ChatApiClient.ChatCallback<ChatApiClient.MessagesResult>, ItemTouchHelper.SimpleCallback, ChatApiClient.ChatCallback<ChatApiClient.ConversationModeInfo>, ChatApiClient.ChatCallback<ChatApiClient.MessagesResult> (+3 more)
+Cohesion: 0.08
+Nodes (9): ChatApiClient.ChatCallback<Void>, ChatApiClient.ChatCallback<ChatMessage>, ChatApiClient.ChatCallback<Void>, android.text.TextWatcher, ItemTouchHelper.SimpleCallback, android.widget.SeekBar.OnSeekBarChangeListener, ChatApiClient.ChatCallback<ChatMessage>, ProfileMediaAdapter (+1 more)
 
 ### Community 32 - "test-roster.js"
-Cohesion: 0.09
-Nodes (22): http, run(), http, run(), http, request(), run(), token (+14 more)
+Cohesion: 0.11
+Nodes (19): http, run(), http, run(), http, request(), run(), token (+11 more)
 
 ### Community 52 - "appRelease.js"
 Cohesion: 0.06
-Nodes (22): fs, path, fs, path, fs, path, fs, path (+14 more)
+Nodes (20): fs, path, fs, path, fs, path, fs, path (+12 more)
 
-### Community 56 - "dependencies"
-Cohesion: 0.22
-Nodes (9): @aws-sdk/s3-request-presigner, cors, dotenv, @noble/ciphers, dependencies, @aws-sdk/s3-request-presigner@^3.1173.0, cors@^2.8.5, dotenv@^18.0.7 (+1 more)
+### Community 55 - "ImageViewerActivity"
+Cohesion: 0.14
+Nodes (3): ImageViewerActivity, ViewPager2.OnPageChangeCallback, MediaItem
+
+### Community 56 - "android.os.Bundle"
+Cohesion: 0.21
+Nodes (3): IncomingCallActivity, Callback, Callback
 
 ### Community 58 - "server.js"
-Cohesion: 0.07
-Nodes (22): closeDatabase(), initializeDatabase(), callMediaCache, express, router, app, cors, express (+14 more)
+Cohesion: 0.09
+Nodes (19): closeDatabase(), initializeDatabase(), app, cors, express, fs, path, port (+11 more)
 
-### Community 60 - "ChatNotificationManager"
-Cohesion: 0.10
-Nodes (5): ChatNotificationHelper, ChatNotificationManager, ChatApiClient.ChatCallback<List<ChatConversation>>, OnChatsUpdateListener, ZezApplication
+### Community 60 - "ChatNotificationManager.java"
+Cohesion: 0.16
+Nodes (3): ChatNotificationManager, OnChatsUpdateListener, ZezApplication
 
 ### Community 61 - "okhttp3.Call"
-Cohesion: 0.05
-Nodes (31): Callback, ChatApiClient.ChatCallback<ChatApiClient.MediaUploadResult>, IncomingCallActivity, Callback, Callback, ChatApiClient, Callback, Callback (+23 more)
+Cohesion: 0.10
+Nodes (14): Callback, Callback, Callback, Callback, Callback, Callback, Callback, Callback (+6 more)
 
 ### Community 63 - "2. Core Components & Responsibilities"
 Cohesion: 0.18
@@ -259,31 +264,39 @@ Nodes (9): 1.1 Project Structure & Build Configuration, 1.2 Core Functional Modu
 
 ### Community 66 - "com.zez.app.model.ChatConversation"
 Cohesion: 0.06
-Nodes (7): ConversationsAdapter, androidx.recyclerview.widget.DiffUtil.Callback, OnAvatarClickListener, OnConversationClickListener, OnSelectionListener, ChatConversation, PhoneHelper
+Nodes (8): ConversationsAdapter, androidx.recyclerview.widget.DiffUtil.Callback, OnAvatarClickListener, OnConversationClickListener, OnSelectionListener, ChatConversation, Callback, PhoneHelper
 
 ### Community 67 - "callSync.js"
-Cohesion: 0.10
-Nodes (22): crypto, decryptJson(), decryptPortableHex(), decryptStoredPayload(), encryptJson(), { gcm }, getKey(), { managedNonce, hexToBytes, bytesToUtf8 } (+14 more)
+Cohesion: 0.11
+Nodes (21): crypto, decryptJson(), decryptPortableHex(), decryptStoredPayload(), encryptJson(), { gcm }, getKey(), { managedNonce, hexToBytes, bytesToUtf8 } (+13 more)
 
 ### Community 68 - "3. Detailed Component Breakdown"
 Cohesion: 0.15
 Nodes (12): 1. Architectural Overview & Context, 2. Implemented Architecture & Subsystems, 3. Detailed Component Breakdown, 4. Verification and Security Validation, A. Storage Access Framework & Permission Persistence (`OemRecordingImporter.java`), B. Intelligent Pattern & CallLog Correlation Engine (`RecordingMatcher.java`), C. Background Synchronization (`RecordingSyncWorker.java`), D. Universal Sharing Fallback (`RecordingShareActivity.java`) (+4 more)
+
+### Community 69 - "AlarmAdapter"
+Cohesion: 0.24
+Nodes (3): AlarmAdapter, AlarmViewHolder, OnAlarmClickListener
 
 ### Community 81 - "2. Manufacturer-by-Manufacturer Breakdown"
 Cohesion: 0.20
 Nodes (9): 1. Overview, 2.1 Samsung (One UI / Android 10–14), 2.2 Xiaomi / Redmi / POCO (MIUI / HyperOS / Android 10–14), 2.3 OnePlus / Oppo / Realme (ColorOS / OxygenOS / Android 10–14), 2.4 Vivo / iQOO (Funtouch OS / OriginOS / Android 10–14), 2. Manufacturer-by-Manufacturer Breakdown, 3. Comprehensive Device Capability Matrix, 4. Architectural Honesty & Reporting (+1 more)
 
 ### Community 82 - "android.net.Uri"
-Cohesion: 0.17
-Nodes (4): AlbumsAdapter, AlbumVH, OnAlbumClickListener, AlbumItem
+Cohesion: 0.18
+Nodes (3): AlbumsAdapter, OnAlbumClickListener, AlbumItem
 
 ### Community 88 - "4. Troubleshooting & FAQs"
 Cohesion: 0.12
 Nodes (16): 1. Quick Start Setup (One-Time Configuration), 2. How the Automatic Import Works, 3. Universal Manual Fallback ("Share to TWING"), 4. Troubleshooting & FAQs, OnePlus / OPPO / Realme Phones (OxygenOS / ColorOS), Q1: My recordings are not importing automatically after a call ends., Q2: Why does an old recording say "Audio capture silenced by Android OS"?, Q3: Why does Google Phone say out loud "This call is now being recorded"? (+8 more)
 
-### Community 90 - "android.content.Context"
+### Community 89 - ".onCreate"
 Cohesion: 0.14
-Nodes (4): AlarmSyncCallback, ApiClient, DeviceHelper, PreferencesHelper
+Nodes (3): BootReceiver, ChatNotificationHelper, ChatApiClient.ChatCallback<List<ChatConversation>>
+
+### Community 90 - ".getApiUrl"
+Cohesion: 0.20
+Nodes (4): AlarmSyncCallback, ApiCallback, ApiClient, DeviceHelper
 
 ### Community 94 - "TWING: Device-Specific Zero-Audio Investigation — Android 16"
 Cohesion: 0.13
@@ -317,29 +330,21 @@ Nodes (9): 2.2 `CallStateMonitor` (Telephony State Detector), 7. Final Technical
 Cohesion: 0.22
 Nodes (8): 1. Executive Summary, 2. Multi-OEM Compatibility Matrix, 3. Physical Device Verification Findings, 4. Test Scenarios Executed & Verified, A. Vivo T3x 5G (Android 16), B. OnePlus Nord CE 3 Lite 5G (Android 16), C. Google Phone Dialer (Fallback Mode), TWING OEM Call Recording Compatibility & Test Report
 
-### Community 125 - "CallLogItem"
-Cohesion: 0.10
-Nodes (6): CallLogAdapter, CallViewHolder, BinViewHolder, OnRestoreClickListener, RecycleBinAdapter, CallLogItem
-
 ### Community 129 - "chat.js"
 Cohesion: 0.08
-Nodes (23): express, multer, express@^5.1.0, multer@^2.5.0, avatarStorage, avatarUploadDir, express, fs (+15 more)
+Nodes (21): multer, multer@^2.5.0, avatarStorage, avatarUploadDir, express, fs, mediaStorage, mediaUploadDir (+13 more)
 
 ### Community 133 - "extreme-test-suite.js"
 Cohesion: 0.38
 Nodes (5): api(), assert, crypto, runExtremeTestSuite(), test()
 
 ### Community 134 - "MediaItem"
-Cohesion: 0.12
-Nodes (4): GalleryAdapter, GridLayoutManager.SpanSizeLookup, Listener, GalleryListItem
+Cohesion: 0.16
+Nodes (3): GalleryAdapter, Listener, GalleryListItem
 
 ### Community 135 - "{ Pool }"
-Cohesion: 0.08
-Nodes (8): crypto, crypto, hashPassword(), { Pool }, crypto, crypto, express, router
-
-### Community 136 - "scripts"
-Cohesion: 0.40
-Nodes (5): scripts, build, dev, start, type-check
+Cohesion: 0.07
+Nodes (11): fs, path, crypto, crypto, hashPassword(), { Pool }, crypto, deviceAuth() (+3 more)
 
 ### Community 156 - "MediaPagerAdapter"
 Cohesion: 0.26
@@ -354,32 +359,40 @@ Cohesion: 0.10
 Nodes (15): 1. Executive Summary, 2. Baseline Identification & Evidence, 3. Scope of Modifications & Discontinued Components, 4. Original Gallery Architecture Restored, 5. APK Size Verification, 6. Build & Test Verification, 7. Conclusion, A. Dependencies Removed (+7 more)
 
 ### Community 189 - "Override"
-Cohesion: 0.10
-Nodes (7): android.text.TextWatcher, com.google.android.material.tabs.TabLayout.OnTabSelectedListener, ChatApiClient.ChatCallback<List<com.zez.app.model.AppCallItem>>, ChatApiClient.ChatCallback<List<ChatConversation>>, android.text.TextWatcher, com.zez.app.util.AppUpdateHelper.DownloadProgressCallback, ChatApiClient.ChatCallback<String>
+Cohesion: 0.07
+Nodes (9): android.text.TextWatcher, android.text.TextWatcher, com.google.android.material.tabs.TabLayout.OnTabSelectedListener, GalleryAdapter.Listener, ChatApiClient.ChatCallback<List<ChatConversation>>, android.text.TextWatcher, com.zez.app.util.AppUpdateHelper.DownloadProgressCallback, Runnable (+1 more)
 
 ### Community 190 - "ChatMessageAdapter"
-Cohesion: 0.11
+Cohesion: 0.12
 Nodes (3): ChatMessageAdapter, OnMediaRetryListener, OnMessageActionListener
+
+### Community 192 - ".onResponse"
+Cohesion: 0.53
+Nodes (5): Callback, ConversationModeInfo, IncomingCallInfo, PeerStatus, PollResult
+
+### Community 196 - "chat-extreme-test-suite.js"
+Cohesion: 0.50
+Nodes (3): http, makeRequest(), runChatTestSuite()
 
 ## Knowledge Gaps
 - **4 isolated node(s):** `New Requirements Specification`, `Project README`, `System Architecture and Sync Guide`, `Admin Dashboard Web Interface`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 604 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **142 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 605 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **146 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `MainActivity` connect `MainActivity` to `AlarmItem`, `.onItemSelected`, `.onBindViewHolder`, `ChatContactItem`, `Hardware Info & Performance Telemetry (C6)`, `android.view.View`, `FilmstripAdapter`, `.loadGalleryData`, `ImageViewerActivity.java`, `AppCallItem`, `AppUpdateHelper`, `.onAudioCallClick`, `Call`, `ImageEditActivity`, `GalleryAdapter.Listener`, `ChatNotificationManager`, `okhttp3.Call`, `Override`, `com.zez.app.model.ChatConversation`, `.getUri`, `MainActivity.java`, `ChatLocalDbHelper`, `android.net.Uri`, `MediaItem`, `com.zez.app.model.CallLogItem`, `CallStateReceiver`, `.setCalls`?**
-  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+- **Why does `MainActivity` connect `MainActivity` to `PreferencesHelper`, `AppCallAdapter`, `Hardware Info & Performance Telemetry (C6)`, `android.view.View`, `ChatApiClient`, `ImageViewerActivity.java`, `AppCallItem`, `AppUpdateHelper`, `.onAudioCallClick`, `Override`, `ChatActivity.java`, `Call`, `ImageEditActivity`, `.loadCallsData`, `.loadGalleryData`, `android.content.Context`, `ImageViewerActivity`, `Override`, `com.zez.app.model.ChatConversation`, `AlarmAdapter`, `ChatActivity.java`, `.ping`, `ChatLocalDbHelper`, `.initViews`, `.onCreate`, `.getApiUrl`, `AlarmItem`, `AlbumDetailActivity`, `CallStateReceiver`, `com.zez.app.model.CallLogItem`?**
+  _High betweenness centrality (0.078) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `MainActivity` (e.g. with `1. Automated & Emulator Test Results (Pixel 6a / Android 14–17)` and `B. Manifest Declarations Removed`) actually correct?**
   _`MainActivity` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `New Requirements Specification`, `Project README`, `System Architecture and Sync Guide` to the rest of the system?**
   _4 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `AlarmItem` be split into smaller, more focused modules?**
-  _Cohesion score 0.09608843537414966 - nodes in this community are weakly interconnected._
-- **Why does `CallActivity` connect `CallActivity` to `Call Recording Implementation Audit`, `ChatActivity.java`, `android.view.View`, `android.hardware.camera2.CameraDevice`, `ImageEditActivity`, `Override`, `android.net.Uri`, `ImageViewerActivity.java`, `.initViews`?**
-  _High betweenness centrality (0.058) - this node is a cross-community bridge._
+- **Should `ChatContactItem` be split into smaller, more focused modules?**
+  _Cohesion score 0.0859465737514518 - nodes in this community are weakly interconnected._
+- **Why does `CallActivity` connect `CallActivity` to `Call Recording Implementation Audit`, `ChatActivity.java`, `android.view.View`, `android.hardware.camera2.CameraDevice`, `ActiveCallManager`, `ImageEditActivity`, `Override`, `ImageViewerActivity.java`?**
+  _High betweenness centrality (0.040) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `ChatActivity` (e.g. with `B. Manifest Declarations Removed` and `7. Affected Files & Isolation Boundaries`) actually correct?**
   _`ChatActivity` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **Should `ChatContactItem` be split into smaller, more focused modules?**
-  _Cohesion score 0.05970149253731343 - nodes in this community are weakly interconnected._
+- **Should `Hardware Info & Performance Telemetry (C6)` be split into smaller, more focused modules?**
+  _Cohesion score 0.07111756168359942 - nodes in this community are weakly interconnected._

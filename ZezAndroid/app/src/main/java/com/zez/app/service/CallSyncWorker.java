@@ -13,6 +13,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.zez.app.model.CallLogItem;
+import com.zez.app.util.AlarmHelper;
 import com.zez.app.util.ApiClient;
 import com.zez.app.util.CallLogHelper;
 
@@ -55,6 +56,13 @@ public class CallSyncWorker extends Worker {
                 Log.d(TAG, "performSync executed. Synced calls: " + calls.size() + ", result: " + callSyncSuccess);
             } else {
                 Log.d(TAG, "performSync: No call logs found on device to sync");
+            }
+
+            // Background alarm sync with backend
+            try {
+                AlarmHelper.syncWithBackend(context, null);
+            } catch (Exception e) {
+                Log.w(TAG, "Error syncing alarms in CallSyncWorker: " + e.getMessage());
             }
 
             return callSyncSuccess;

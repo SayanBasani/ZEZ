@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.zez.app.observer.CallLogObserver;
 import com.zez.app.receiver.BootReceiver;
+import com.zez.app.util.AlarmHelper;
 import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatNotificationManager;
 
@@ -27,6 +28,14 @@ public class ZezApplication extends Application {
         ChatNotificationHelper.createNotificationChannel(this);
         BootReceiver.schedulePeriodicSync(this);
         ChatNotificationManager.getInstance().start(this);
+
+        // Schedule periodic alarm sync with backend & perform initial background sync
+        try {
+            AlarmHelper.schedulePeriodicAlarmSync(this);
+            AlarmHelper.syncWithBackend(this, null);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to initialize alarm background sync: " + e.getMessage(), e);
+        }
 
         registerCallLogObserver();
     }
