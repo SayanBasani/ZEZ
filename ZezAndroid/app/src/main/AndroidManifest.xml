@@ -169,6 +169,17 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- YMusic Section & Background Media Playback -->
+        <activity
+            android:name=".music.MusicActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan" />
+
+        <service
+            android:name=".music.player.MusicPlayerService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
     </application>
 
 </manifest>

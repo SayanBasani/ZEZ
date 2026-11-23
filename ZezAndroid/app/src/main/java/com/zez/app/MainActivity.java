@@ -227,6 +227,17 @@ public class MainActivity extends AppCompatActivity {
     private final android.os.Handler chatListPollHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean isChatListPolling = false;
 
+    // YMusic Integration
+    private ImageButton btnMusicLauncher;
+    private View layoutMainMiniPlayer;
+    private ImageView ivMainMiniThumb;
+    private TextView tvMainMiniTitle;
+    private TextView tvMainMiniArtist;
+    private ImageButton btnMainMiniPlayPause;
+    private ImageButton btnMainMiniNext;
+    private ProgressBar pbMainMiniProgress;
+    private com.zez.app.music.player.MusicPlayerManager.PlayerListener mainMusicPlayerListener;
+
     @Override
     protected void attachBaseContext(android.content.Context newBase) {
         float fontScale = PreferencesHelper.getFontScale(newBase);
@@ -729,6 +740,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
         bottomNav.setSelectedItemId(R.id.nav_chats);
+        setupMusicIntegration();
     }
 
     private void switchTab(int tabId) {
@@ -846,6 +858,10 @@ public class MainActivity extends AppCompatActivity {
         } else if (currentTab == R.id.nav_settings) {
             loadSettingsData();
         }
+
+        if (mainMusicPlayerListener != null) {
+            com.zez.app.music.player.MusicPlayerManager.getInstance().registerListener(mainMusicPlayerListener);
+        }
     }
 
     private void onBackgroundChatsUpdate(List<ChatConversation> conversations) {
@@ -882,6 +898,81 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         stopChatListPolling();
+        if (mainMusicPlayerListener != null) {
+            com.zez.app.music.player.MusicPlayerManager.getInstance().unregisterListener(mainMusicPlayerListener);
+        }
+    }
+
+    private void setupMusicIntegration() {
+        btnMusicLauncher = findViewById(R.id.btn_music_launcher);
+        if (btnMusicLauncher != null) {
+            btnMusicLauncher.setOnClickListener(v -> {
+                startActivity(new Intent(MainActivity.this, com.zez.app.music.MusicActivity.class));
+            });
+        }
+
+        layoutMainMiniPlayer = findViewById(R.id.layout_main_mini_player);
+        if (layoutMainMiniPlayer != null) {
+            ivMainMiniThumb = layoutMainMiniPlayer.findViewById(R.id.iv_mini_thumb);
+            tvMainMiniTitle = layoutMainMiniPlayer.findViewById(R.id.tv_mini_title);
+            tvMainMiniArtist = layoutMainMiniPlayer.findViewById(R.id.tv_mini_artist);
+            btnMainMiniPlayPause = layoutMainMiniPlayer.findViewById(R.id.btn_mini_play_pause);
+            btnMainMiniNext = layoutMainMiniPlayer.findViewById(R.id.btn_mini_next);
+            pbMainMiniProgress = layoutMainMiniPlayer.findViewById(R.id.pb_mini_progress);
+
+            layoutMainMiniPlayer.setOnClickListener(v -> {
+                startActivity(new Intent(MainActivity.this, com.zez.app.music.MusicActivity.class));
+            });
+
+            if (btnMainMiniPlayPause != null) {
+                btnMainMiniPlayPause.setOnClickListener(v -> {
+                    com.zez.app.music.player.MusicPlayerManager.getInstance().togglePlayPause();
+                });
+            }
+            if (btnMainMiniNext != null) {
+                btnMainMiniNext.setOnClickListener(v -> {
+                    com.zez.app.music.player.MusicPlayerManager.getInstance().next();
+                });
+            }
+
+            mainMusicPlayerListener = new com.zez.app.music.player.MusicPlayerManager.PlayerListener() {
+                @Override
+                public void onTrackChanged(com.zez.app.music.model.MusicTrack track) {
+                    if (track != null) {
+                        layoutMainMiniPlayer.setVisibility(View.VISIBLE);
+                        if (tvMainMiniTitle != null) tvMainMiniTitle.setText(track.getTitle());
+                        if (tvMainMiniArtist != null) tvMainMiniArtist.setText(track.getArtist());
+                        if (ivMainMiniThumb != null) {
+                            com.bumptech.glide.Glide.with(MainActivity.this)
+                                    .load(track.getThumbnailUrl())
+                                    .placeholder(R.drawable.bg_search_input)
+                                    .centerCrop()
+                                    .into(ivMainMiniThumb);
+                        }
+                    } else {
+                        layoutMainMiniPlayer.setVisibility(View.GONE);
+                    }
+                }
+
+                @Override
+                public void onPlaybackStateChanged(boolean isPlaying, boolean isBuffering) {
+                    if (btnMainMiniPlayPause != null) {
+                        btnMainMiniPlayPause.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play_arrow);
+                    }
+                }
+
+                @Override
+                public void onProgressUpdate(int currentSeconds, int totalSeconds) {
+                    if (totalSeconds > 0 && pbMainMiniProgress != null) {
+                        int pct = (int) (((float) currentSeconds / totalSeconds) * 100);
+                        pbMainMiniProgress.setProgress(pct);
+                    }
+                }
+
+                @Override
+                public void onError(String error) {}
+            };
+        }
     }
 
     private void onNewChatClicked() {

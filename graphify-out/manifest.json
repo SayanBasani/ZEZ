@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/MainActivity.java": {
-    "mtime": 1795447336.2698977,
-    "seen": 1795450003.1085935,
-    "ast_hash": "a173f42e86a3ff8ef0048c6d0ef93d2f",
+    "mtime": 1795453020.145029,
+    "seen": 1795453937.8665733,
+    "ast_hash": "54870154ac4fc998db18f7c8ada94462",
     "semantic_hash": ""
   },
   "ZezAndroid/app/src/main/java/com/zez/app/ZezApplication.java": {
@@ -975,6 +975,54 @@
     "mtime": 1795387760.6552126,
     "seen": 1795387795.9285188,
     "ast_hash": "1683568ba466c84384bfcf1238421d4d",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/music/MusicActivity.java": {
+    "mtime": 1795453676.080361,
+    "seen": 1795453937.8666062,
+    "ast_hash": "42b4ccda76762d6e1eaac70731508a11",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/music/adapter/MusicAdapter.java": {
+    "mtime": 1795452795.0897522,
+    "seen": 1795453937.8666081,
+    "ast_hash": "9e2ff35d5980a0bd02d7c7f0bddd845e",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/music/adapter/MusicSuggestionAdapter.java": {
+    "mtime": 1795452801.8143492,
+    "seen": 1795453937.8666093,
+    "ast_hash": "cf3c6152db7a9ba70fb10312c0d2c23e",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/music/download/MusicDownloadHelper.java": {
+    "mtime": 1795452633.3846533,
+    "seen": 1795453937.8666108,
+    "ast_hash": "d43059538aa0900131d2946cc1fdc5ac",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/music/model/MusicTrack.java": {
+    "mtime": 1795452425.4487398,
+    "seen": 1795453937.8666117,
+    "ast_hash": "c453a27391f8f7156ed7aba00f519ddc",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/music/player/MusicPlayerManager.java": {
+    "mtime": 1795452491.264543,
+    "seen": 1795453937.866613,
+    "ast_hash": "88d2f0e95ef66bdd3cd0d0b77b6b088b",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/music/player/MusicPlayerService.java": {
+    "mtime": 1795452529.7894852,
+    "seen": 1795453937.866614,
+    "ast_hash": "fad1af1194ba9ddf259727531de9314e",
+    "semantic_hash": ""
+  },
+  "ZezAndroid/app/src/main/java/com/zez/app/music/util/YouTubeApiHelper.java": {
+    "mtime": 1795452451.9803889,
+    "seen": 1795453937.8666153,
+    "ast_hash": "2281c3df21911b7d11cbad2c4d48980c",
     "semantic_hash": ""
   },
   "Zez-Backend/package-lock.json": {

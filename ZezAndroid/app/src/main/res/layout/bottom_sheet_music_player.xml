@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_sheet_top_rounded"
+    android:paddingBottom="24dp">
+
+    <!-- Drag Handle -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_pill_indicator" />
+
+    <!-- Top Action Row -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btn_player_collapse"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_expand_more"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Collapse player" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Now Playing"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/theme_text_primary" />
+
+        <ImageButton
+            android:id="@+id/btn_player_download"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_download"
+            app:tint="@color/primary"
+            android:contentDescription="Download song" />
+    </RelativeLayout>
+
+    <!-- Large Album Art / Video Container -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="260dp"
+        android:layout_marginHorizontal="28dp"
+        android:layout_marginTop="8dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="6dp"
+        app:cardBackgroundColor="@color/surface_variant">
+
+        <ImageView
+            android:id="@+id/iv_player_album_art"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- Track Info -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="32dp"
+        android:layout_marginTop="20dp">
+
+        <TextView
+            android:id="@+id/tv_player_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Song Title"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/theme_text_primary"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tv_player_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Artist Name"
+            android:textSize="14sp"
+            android:textColor="@color/theme_text_muted"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginTop="4dp" />
+    </LinearLayout>
+
+    <!-- Scrubber Seek Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:layout_marginTop="16dp">
+
+        <SeekBar
+            android:id="@+id/sb_player_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:progressTint="@color/primary"
+            android:thumbTint="@color/primary"
+            android:max="100" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="8dp"
+            android:layout_marginTop="2dp">
+
+            <TextView
+                android:id="@+id/tv_player_current_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0:00"
+                android:textSize="11sp"
+                android:textColor="@color/theme_text_muted" />
+
+            <TextView
+                android:id="@+id/tv_player_total_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="0:00"
+                android:textSize="11sp"
+                android:textColor="@color/theme_text_muted" />
+        </RelativeLayout>
+    </LinearLayout>
+
+    <!-- Media Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp"
+        android:paddingHorizontal="24dp">
+
+        <ImageButton
+            android:id="@+id/btn_player_shuffle"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_shuffle"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Shuffle" />
+
+        <ImageButton
+            android:id="@+id/btn_player_prev"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_marginStart="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_skip_previous"
+            app:tint="@color/theme_text_primary"
+            android:contentDescription="Previous" />
+
+        <!-- Big Play / Pause Button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_player_play_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:src="@drawable/ic_play_arrow"
+            app:backgroundTint="@color/primary"
+            app:tint="@android:color/white"
+            app:fabSize="normal"
+            app:elevation="6dp"
+            android:contentDescription="Play/Pause" />
+
+        <ImageButton
+            android:id="@+id/btn_player_next"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_marginEnd="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_skip_next"
+            app:tint="@color/theme_text_primary"
+            android:contentDescription="Next" />
+
+        <ImageButton
+            android:id="@+id/btn_player_repeat"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_repeat"
+            app:tint="@color/theme_icon_tint"
+            android:contentDescription="Repeat" />
+    </LinearLayout>
+
+    <!-- Additional Bottom Actions -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="20dp">
+
+        <Button
+            android:id="@+id/btn_player_share"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Share Link"
+            android:textColor="@color/theme_text_muted" />
+    </LinearLayout>
+</LinearLayout>

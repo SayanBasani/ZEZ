@@ -65,6 +65,15 @@
         </LinearLayout>
 
         <ImageButton
+            android:id="@+id/btn_music_launcher"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_music"
+            app:tint="@color/primary"
+            android:contentDescription="YMusic" />
+
+        <ImageButton
             android:id="@+id/btn_sync"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -243,6 +252,14 @@
         <include layout="@layout/view_chats" />
 
     </FrameLayout>
+
+    <!-- Bottom Mini Player (YMusic floating bar when playing) -->
+    <include
+        android:id="@+id/layout_main_mini_player"
+        layout="@layout/view_music_mini_player"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        app:layout_constraintBottom_toTopOf="@id/bottom_navigation" />
 
     <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
