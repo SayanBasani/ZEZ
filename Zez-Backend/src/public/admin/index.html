@@ -1219,6 +1219,10 @@
       gap: 10px;
       transition: border-color 0.15s ease;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
     }
     .device-card:hover {
       border-color: var(--hairline-hover);
@@ -1278,6 +1282,7 @@
     }
     .device-card-actions {
       width: 100%;
+      box-sizing: border-box;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 6px;
@@ -1287,9 +1292,12 @@
       width: 100%;
       max-width: none;
       min-width: 0;
+      box-sizing: border-box;
       padding: 6px 4px;
       font-size: 11px;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       justify-content: center;
       height: 32px;
     }

@@ -38,9 +38,12 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.zez.app.R;
+import com.zez.app.music.adapter.ActiveDownloadAdapter;
 import com.zez.app.music.adapter.MusicAdapter;
 import com.zez.app.music.adapter.MusicSuggestionAdapter;
+import com.zez.app.music.download.DownloadTask;
 import com.zez.app.music.download.MusicDownloadHelper;
+import com.zez.app.music.download.MusicDownloadManager;
 import com.zez.app.music.model.MusicTrack;
 import com.zez.app.music.player.MusicPlayerManager;
 import com.zez.app.music.player.MusicPlayerService;
@@ -65,6 +68,13 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     private TextView chipCharts;
     private TextView chipDownloads;
     private TextView activeChip;
+
+    // Downloads Sub-Tabs
+    private View layoutDownloadsSubtabs;
+    private TextView btnSubtabDownloading;
+    private TextView btnSubtabCompleted;
+    private ActiveDownloadAdapter activeDownloadAdapter;
+    private boolean isViewingDownloadingSubtab = false;
 
     private SwipeRefreshLayout swipeRefresh;
     private RecyclerView rvTracks;
@@ -149,6 +159,11 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         layoutEmpty = findViewById(R.id.layout_music_empty);
         tvEmptyTitle = findViewById(R.id.tv_music_empty_title);
         tvEmptySubtitle = findViewById(R.id.tv_music_empty_subtitle);
+
+        // Downloads Sub-Tabs
+        layoutDownloadsSubtabs = findViewById(R.id.layout_downloads_subtabs);
+        btnSubtabDownloading = findViewById(R.id.btn_subtab_downloading);
+        btnSubtabCompleted = findViewById(R.id.btn_subtab_completed);
 
         // Mini player
         cardMiniPlayer = findViewById(R.id.card_mini_player);
@@ -266,7 +281,11 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
 
         swipeRefresh.setOnRefreshListener(() -> {
             if ("Downloads".equalsIgnoreCase(currentCategory)) {
-                loadDownloads();
+                if (isViewingDownloadingSubtab) {
+                    refreshDownloadingList();
+                } else {
+                    loadCompletedDownloads();
+                }
             } else {
                 loadCategoryMusic(currentCategory);
             }
@@ -276,6 +295,14 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         cardMiniPlayer.setOnClickListener(v -> showPlayerBottomSheet());
         btnMiniPlayPause.setOnClickListener(v -> MusicPlayerManager.getInstance().togglePlayPause());
         btnMiniNext.setOnClickListener(v -> MusicPlayerManager.getInstance().next());
+
+        // Downloads Sub-Tabs clicks
+        if (btnSubtabDownloading != null) {
+            btnSubtabDownloading.setOnClickListener(v -> switchDownloadsSubtab(true));
+        }
+        if (btnSubtabCompleted != null) {
+            btnSubtabCompleted.setOnClickListener(v -> switchDownloadsSubtab(false));
+        }
     }
 
     private void setupRecyclerViews() {
@@ -283,6 +310,12 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
             MusicPlayerManager.getInstance().playQueue(musicAdapter.getTracks(), position);
             showPlayerBottomSheet();
         });
+
+        activeDownloadAdapter = new ActiveDownloadAdapter(this, task -> {
+            MusicDownloadManager.getInstance().cancelDownload(task.getVideoId());
+            Toast.makeText(this, "Download cancelled", Toast.LENGTH_SHORT).show();
+        });
+
         rvTracks.setLayoutManager(new LinearLayoutManager(this));
         rvTracks.setAdapter(musicAdapter);
 
@@ -311,8 +344,11 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
 
         this.currentCategory = category;
         if ("Downloads".equalsIgnoreCase(category)) {
+            if (layoutDownloadsSubtabs != null) layoutDownloadsSubtabs.setVisibility(View.VISIBLE);
             loadDownloads();
         } else {
+            if (layoutDownloadsSubtabs != null) layoutDownloadsSubtabs.setVisibility(View.GONE);
+            rvTracks.setAdapter(musicAdapter);
             loadCategoryMusic(category);
         }
     }
@@ -346,7 +382,65 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     private void loadDownloads() {
         pbLoading.setVisibility(View.GONE);
         swipeRefresh.setRefreshing(false);
+        if (layoutDownloadsSubtabs != null) layoutDownloadsSubtabs.setVisibility(View.VISIBLE);
+
+        List<DownloadTask> active = MusicDownloadManager.getInstance().getActiveTasks();
+        if (!active.isEmpty()) {
+            switchDownloadsSubtab(true);
+        } else {
+            switchDownloadsSubtab(false);
+        }
+    }
+
+    private void switchDownloadsSubtab(boolean showDownloading) {
+        this.isViewingDownloadingSubtab = showDownloading;
+        updateDownloadBadge();
+
+        if (showDownloading) {
+            btnSubtabDownloading.setTextColor(ContextCompat.getColor(this, R.color.theme_text_primary));
+            btnSubtabDownloading.setBackgroundResource(R.drawable.bg_mode_toggle_active);
+            btnSubtabCompleted.setTextColor(ContextCompat.getColor(this, R.color.theme_text_secondary));
+            btnSubtabCompleted.setBackgroundResource(R.drawable.bg_mode_toggle_normal);
+
+            rvTracks.setAdapter(activeDownloadAdapter);
+            refreshDownloadingList();
+        } else {
+            btnSubtabCompleted.setTextColor(ContextCompat.getColor(this, R.color.theme_text_primary));
+            btnSubtabCompleted.setBackgroundResource(R.drawable.bg_mode_toggle_active);
+            btnSubtabDownloading.setTextColor(ContextCompat.getColor(this, R.color.theme_text_secondary));
+            btnSubtabDownloading.setBackgroundResource(R.drawable.bg_mode_toggle_normal);
+
+            rvTracks.setAdapter(musicAdapter);
+            loadCompletedDownloads();
+        }
+    }
+
+    private void updateDownloadBadge() {
+        if (btnSubtabDownloading != null) {
+            int count = MusicDownloadManager.getInstance().getActiveTasks().size();
+            btnSubtabDownloading.setText("⏳ Downloading (" + count + ")");
+        }
+    }
+
+    private void refreshDownloadingList() {
+        pbLoading.setVisibility(View.GONE);
+        swipeRefresh.setRefreshing(false);
+        List<DownloadTask> tasks = MusicDownloadManager.getInstance().getActiveTasks();
+        updateDownloadBadge();
+        if (tasks.isEmpty()) {
+            showEmpty("No active downloads", "Media currently downloading with live speed will appear here.");
+            activeDownloadAdapter.setTasks(tasks);
+        } else {
+            layoutEmpty.setVisibility(View.GONE);
+            activeDownloadAdapter.setTasks(tasks);
+        }
+    }
+
+    private void loadCompletedDownloads() {
+        pbLoading.setVisibility(View.GONE);
+        swipeRefresh.setRefreshing(false);
         List<MusicTrack> downloaded = MusicDownloadHelper.getDownloadedTracks(this);
+        updateDownloadBadge();
         if (downloaded.isEmpty()) {
             showEmpty("No downloaded tracks", "Downloaded music and videos will appear here for offline playback.");
             musicAdapter.setTracks(downloaded);
@@ -769,14 +863,72 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         }
     }
 
+    private final MusicDownloadManager.DownloadProgressListener downloadProgressListener = new MusicDownloadManager.DownloadProgressListener() {
+        @Override
+        public void onDownloadStarted(DownloadTask task) {
+            runOnUiThread(() -> {
+                updateDownloadBadge();
+                if ("Downloads".equalsIgnoreCase(currentCategory) && isViewingDownloadingSubtab) {
+                    refreshDownloadingList();
+                }
+            });
+        }
+
+        @Override
+        public void onProgress(DownloadTask task) {
+            runOnUiThread(() -> {
+                if ("Downloads".equalsIgnoreCase(currentCategory) && isViewingDownloadingSubtab) {
+                    activeDownloadAdapter.updateTask(task);
+                }
+            });
+        }
+
+        @Override
+        public void onCompleted(DownloadTask task) {
+            runOnUiThread(() -> {
+                updateDownloadBadge();
+                if ("Downloads".equalsIgnoreCase(currentCategory)) {
+                    if (isViewingDownloadingSubtab) {
+                        refreshDownloadingList();
+                    } else {
+                        loadCompletedDownloads();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(DownloadTask task, String error) {
+            runOnUiThread(() -> {
+                updateDownloadBadge();
+                if ("Downloads".equalsIgnoreCase(currentCategory) && isViewingDownloadingSubtab) {
+                    refreshDownloadingList();
+                }
+            });
+        }
+
+        @Override
+        public void onCancelled(DownloadTask task) {
+            runOnUiThread(() -> {
+                updateDownloadBadge();
+                if ("Downloads".equalsIgnoreCase(currentCategory) && isViewingDownloadingSubtab) {
+                    refreshDownloadingList();
+                }
+            });
+        }
+    };
+
     @Override
     protected void onResume() {
         super.onResume();
         MusicPlayerManager.getInstance().registerListener(this);
+        MusicDownloadManager.getInstance().addListener(downloadProgressListener);
+        updateDownloadBadge();
     }
 
     @Override
     protected void onPause() {
+        MusicDownloadManager.getInstance().removeListener(downloadProgressListener);
         MusicPlayerManager.getInstance().unregisterListener(this);
         super.onPause();
     }

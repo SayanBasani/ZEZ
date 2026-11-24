@@ -9,12 +9,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ServiceInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -44,6 +46,8 @@ import com.zez.app.util.ChatApiClient;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -92,6 +96,10 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private boolean fallbackTriggeredForCurrent = false;
     private Runnable watchdogRunnable = null;
 
+    private String currentDirectAudioUrl = null;
+    private String currentBackendStreamUrl = null;
+    private boolean triedBackendStream = false;
+
     private final Runnable progressRunnable = new Runnable() {
         @Override
         public void run() {
@@ -122,6 +130,10 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
             } catch (Exception ignored) {}
         }
         mediaPlayer = new MediaPlayer();
+        try {
+            mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+        } catch (Exception ignored) {}
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -152,14 +164,24 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
         mediaPlayer.setOnErrorListener((mp, what, extra) -> {
             Log.w(TAG, "Native MediaPlayer error what=" + what + " extra=" + extra);
-            stopProgressUpdates();
-            if (currentVideoId != null && !fallbackTriggeredForCurrent) {
-                fallbackTriggeredForCurrent = true;
-                Log.i(TAG, "Falling back to Direct Mobile engine after native player error");
-                playViaDirectMobileEngine(currentVideoId);
-            }
+            handleNativePlayerError();
             return true;
         });
+    }
+
+    private void handleNativePlayerError() {
+        stopProgressUpdates();
+        if (!triedBackendStream && currentBackendStreamUrl != null) {
+            triedBackendStream = true;
+            Log.i(TAG, "Direct audio playback failed, falling back to backend stream...");
+            playAudioUrlNatively(currentBackendStreamUrl, false);
+            return;
+        }
+        if (currentVideoId != null && !fallbackTriggeredForCurrent) {
+            fallbackTriggeredForCurrent = true;
+            Log.i(TAG, "Falling back to Direct Mobile engine after native player error");
+            playViaDirectMobileEngine(currentVideoId);
+        }
     }
 
     public static WebView getActiveWebView() {
@@ -577,7 +599,8 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                         String streamUrl = baseUrl + "/api/music/stream?videoId=" + videoId;
                         handler.post(() -> {
                             if (currentTrack != null && videoId.equals(currentTrack.getId()) && currentEngine == ENGINE_NATIVE_AUDIO) {
-                                playAudioUrlNatively(streamUrl);
+                                Log.i(TAG, "Streaming native audio from: " + streamUrl);
+                                playAudioUrlNatively(streamUrl, false);
                             }
                         });
                     } else {
@@ -601,18 +624,36 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         });
     }
 
-    private void playAudioUrlNatively(String audioUrl) {
+    private void playAudioWithFallbacks(String directUrl, String backendUrl, String videoId) {
+        this.currentDirectAudioUrl = directUrl;
+        this.currentBackendStreamUrl = backendUrl;
+        this.triedBackendStream = false;
+
+        if (directUrl != null && !directUrl.isEmpty()) {
+            Log.i(TAG, "Playing direct audio stream: " + directUrl.substring(0, Math.min(60, directUrl.length())) + "...");
+            playAudioUrlNatively(directUrl, true);
+        } else if (backendUrl != null) {
+            this.triedBackendStream = true;
+            Log.i(TAG, "Playing via backend stream URL: " + backendUrl);
+            playAudioUrlNatively(backendUrl, false);
+        } else {
+            handleNativePlayerError();
+        }
+    }
+
+    private void playAudioUrlNatively(String audioUrl, boolean isDirect) {
         try {
             if (mediaPlayer == null) initMediaPlayer();
             mediaPlayer.reset();
+            try {
+                mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+            } catch (Exception ignored) {}
+
             mediaPlayer.setDataSource(audioUrl);
             mediaPlayer.prepareAsync();
         } catch (Exception e) {
-            Log.e(TAG, "Error playing audio URL natively", e);
-            if (!fallbackTriggeredForCurrent && currentVideoId != null) {
-                fallbackTriggeredForCurrent = true;
-                playViaDirectMobileEngine(currentVideoId);
-            }
+            Log.e(TAG, "Error playing audio URL natively: " + e.getMessage());
+            handleNativePlayerError();
         }
     }
 
@@ -827,7 +868,11 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         }
 
         Notification notification = builder.build();
-        startForeground(NOTIFICATION_ID, notification);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+        } else {
+            startForeground(NOTIFICATION_ID, notification);
+        }
     }
 
     private void requestAudioFocus() {
@@ -860,7 +905,14 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     public void onAudioFocusChange(int focusChange) {
         if (focusChange == AudioManager.AUDIOFOCUS_LOSS || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
             pausePlayback();
+        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+            if (mediaPlayer != null) {
+                try { mediaPlayer.setVolume(0.2f, 0.2f); } catch (Exception ignored) {}
+            }
         } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+            if (mediaPlayer != null) {
+                try { mediaPlayer.setVolume(1.0f, 1.0f); } catch (Exception ignored) {}
+            }
             if (currentTrack != null && !isPlaying) {
                 resumePlayback();
             }

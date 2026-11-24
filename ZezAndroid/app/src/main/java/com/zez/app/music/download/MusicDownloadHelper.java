@@ -47,128 +47,28 @@ public class MusicDownloadHelper {
 
     public static void showDownloadDialog(Context context, MusicTrack track, DownloadCallback callback) {
         if (track == null) return;
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_music_download, null);
-        builder.setView(dialogView);
-
-        AlertDialog dialog = builder.create();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        // Start download directly without disruptive modal dialogs or blocking circles
+        MusicDownloadManager.getInstance().startDownload(context, track, null, true);
+        if (callback != null) {
+            String cleanTitle = track.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+            callback.onDownloadStarted(cleanTitle + ".m4a");
         }
-
-        ImageView ivThumb = dialogView.findViewById(R.id.iv_download_thumb);
-        TextView tvTitle = dialogView.findViewById(R.id.tv_download_title);
-        TextView tvArtist = dialogView.findViewById(R.id.tv_download_artist);
-        RadioGroup rgFormat = dialogView.findViewById(R.id.rg_download_format);
-        EditText etFilename = dialogView.findViewById(R.id.et_download_filename);
-        Button btnCancel = dialogView.findViewById(R.id.btn_download_cancel);
-        Button btnStart = dialogView.findViewById(R.id.btn_download_start);
-
-        tvTitle.setText(track.getTitle());
-        tvArtist.setText(track.getArtist());
-        Glide.with(context).load(track.getThumbnailUrl()).into(ivThumb);
-
-        String cleanTitle = track.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_").trim();
-        if (cleanTitle.isEmpty()) cleanTitle = "music_" + track.getId();
-        if (etFilename != null) {
-            etFilename.setText(cleanTitle);
-        }
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        final String defaultCleanTitle = cleanTitle;
-        btnStart.setOnClickListener(v -> {
-            dialog.dismiss();
-            String customTitle = defaultCleanTitle;
-            if (etFilename != null) {
-                String input = etFilename.getText().toString().replaceAll("[\\\\/:*?\"<>|]", "_").trim();
-                if (!input.isEmpty()) {
-                    customTitle = input;
-                }
-            }
-
-            int checkedId = rgFormat.getCheckedRadioButtonId();
-            boolean isAudio = true;
-            String extension = ".mp3";
-            String qualityTag = "mp3_320";
-
-            if (checkedId == R.id.rb_format_m4a) {
-                isAudio = true;
-                extension = ".m4a";
-                qualityTag = "m4a_256";
-            } else if (checkedId == R.id.rb_format_mp3) {
-                isAudio = true;
-                extension = ".mp3";
-                qualityTag = "mp3_320";
-            } else if (checkedId == R.id.rb_format_mp3_std) {
-                isAudio = true;
-                extension = ".mp3";
-                qualityTag = "mp3_128";
-            } else if (checkedId == R.id.rb_format_opus) {
-                isAudio = true;
-                extension = ".opus";
-                qualityTag = "opus_160";
-            } else if (checkedId == R.id.rb_format_mp4_1080) {
-                isAudio = false;
-                extension = ".mp4";
-                qualityTag = "mp4_1080";
-            } else if (checkedId == R.id.rb_format_mp4) {
-                isAudio = false;
-                extension = ".mp4";
-                qualityTag = "mp4_720";
-            } else if (checkedId == R.id.rb_format_mp4_480) {
-                isAudio = false;
-                extension = ".mp4";
-                qualityTag = "mp4_480";
-            } else if (checkedId == R.id.rb_format_mp4_360) {
-                isAudio = false;
-                extension = ".mp4";
-                qualityTag = "mp4_360";
-            }
-
-            final String fullFileName = customTitle + extension;
-            startDownloadWithWebView(context, track, fullFileName, isAudio, qualityTag, callback);
-        });
-
-        dialog.show();
     }
 
     public static void startDownloadWithWebView(Context context, MusicTrack track, boolean isAudio, DownloadCallback callback) {
-        String cleanTitle = track.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_").trim();
-        if (cleanTitle.isEmpty()) cleanTitle = "music_" + track.getId();
-        final String fileName = cleanTitle + (isAudio ? ".mp3" : ".mp4");
-        startDownloadWithWebView(context, track, fileName, isAudio, isAudio ? "mp3_320" : "mp4_720", callback);
+        if (track == null) return;
+        MusicDownloadManager.getInstance().startDownload(context, track, null, isAudio);
+        if (callback != null) {
+            String cleanTitle = track.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+            callback.onDownloadStarted(cleanTitle + (isAudio ? ".m4a" : ".mp4"));
+        }
     }
 
     public static void startDownloadWithWebView(Context context, MusicTrack track, String targetFileName, boolean isAudio, String qualityTag, DownloadCallback callback) {
-        final String fileName = targetFileName;
-
-        Toast.makeText(context, "Starting download: " + fileName, Toast.LENGTH_SHORT).show();
-
-        try {
-            String baseUrl = com.zez.app.util.ChatApiClient.getBaseUrl(context);
-            String titleOnly = fileName.replaceAll("\\.[^.]+$", "");
-            String encodedTitle = URLEncoder.encode(titleOnly, "UTF-8");
-            String downloadUrl = baseUrl + "/api/music/download?videoId=" + track.getId() + "&title=" + encodedTitle;
-
-            String mimeType = isAudio ? "audio/mp4" : "video/mp4";
-            enqueueSystemDownload(context, downloadUrl, null, fileName, mimeType);
-
-            // Save to downloads store for offline playback and download directly
-            File destFile = getDestinationFile(context, fileName);
-            track.setDownloaded(true);
-            track.setLocalFilePath(destFile.getAbsolutePath());
-            saveDownloadedTrack(context, track);
-
-            downloadDirectlyToFile(context, downloadUrl, destFile, track, callback);
-
-            Toast.makeText(context, "Download enqueued to Downloads: " + fileName, Toast.LENGTH_LONG).show();
-            if (callback != null) callback.onDownloadStarted(fileName);
-        } catch (Exception e) {
-            Log.e(TAG, "Error starting download", e);
-            Toast.makeText(context, "Download error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            if (callback != null) callback.onError(e.getMessage());
+        if (track == null) return;
+        MusicDownloadManager.getInstance().startDownload(context, track, targetFileName, isAudio);
+        if (callback != null) {
+            callback.onDownloadStarted(targetFileName);
         }
     }
 

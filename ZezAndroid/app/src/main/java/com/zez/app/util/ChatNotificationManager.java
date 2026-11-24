@@ -79,6 +79,75 @@ public class ChatNotificationManager {
         scheduler.execute(this::pollConversationsForNotifications);
     }
 
+    public void pollSync(Context context) {
+        if (context != null) {
+            this.appContext = context.getApplicationContext();
+        }
+        if (appContext == null) return;
+        if (!ChatPreferencesHelper.isChatRegistered(appContext)) return;
+        String userId = ChatPreferencesHelper.getUserId(appContext);
+        if (userId == null) return;
+
+        try {
+            List<ChatConversation> conversations = ChatApiClient.getConversationsSync(appContext, userId);
+            if (conversations == null || conversations.isEmpty()) return;
+
+            processConversationsForNotifications(conversations);
+
+            if (chatsUpdateListener != null) {
+                mainHandler.post(() -> {
+                    if (chatsUpdateListener != null) {
+                        chatsUpdateListener.onChatsUpdated(conversations);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "pollSync error: " + e.getMessage());
+        }
+    }
+
+    private void processConversationsForNotifications(List<ChatConversation> conversations) {
+        if (conversations == null || conversations.isEmpty() || appContext == null) return;
+
+        for (ChatConversation conv : conversations) {
+            int unread = conv.getUnreadCount();
+            if (unread > 0) {
+                String convId = conv.getConversationId();
+                if (convId != null) {
+                    // Skip notification if user is currently inside ChatActivity for this conversation
+                    if (ChatActivity.activeConversationId != null && convId.equals(ChatActivity.activeConversationId)) {
+                        continue;
+                    }
+
+                    // Skip notification if muted
+                    if (ChatPreferencesHelper.isConversationMuted(appContext, convId)) {
+                        continue;
+                    }
+
+                    String lastTime = conv.getLastMessageTime();
+                    String prevTime = lastNotifiedMsgTimeMap.get(convId);
+                    if (prevTime == null) {
+                        prevTime = appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE).getString("last_notified_" + convId, null);
+                    }
+                    if (lastTime != null && !lastTime.equals(prevTime)) {
+                        lastNotifiedMsgTimeMap.put(convId, lastTime);
+                        appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE)
+                                .edit().putString("last_notified_" + convId, lastTime).apply();
+                        ChatNotificationHelper.showChatNotification(
+                                appContext,
+                                convId,
+                                conv.getOtherUserId(),
+                                conv.getOtherUserName(),
+                                conv.getOtherUserPhone(),
+                                conv.getLastMessageText(),
+                                null
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     private void pollConversationsForNotifications() {
         if (appContext == null) return;
 
@@ -101,43 +170,7 @@ public class ChatNotificationManager {
                 public void onSuccess(List<ChatConversation> conversations) {
                     if (conversations == null || conversations.isEmpty()) return;
 
-                    for (ChatConversation conv : conversations) {
-                        int unread = conv.getUnreadCount();
-                        if (unread > 0) {
-                            String convId = conv.getConversationId();
-                            if (convId != null) {
-                                // Skip notification if user is currently inside ChatActivity for this conversation
-                                if (ChatActivity.activeConversationId != null && convId.equals(ChatActivity.activeConversationId)) {
-                                    continue;
-                                }
-
-                                // Skip notification if muted
-                                if (ChatPreferencesHelper.isConversationMuted(appContext, convId)) {
-                                    continue;
-                                }
-
-                                String lastTime = conv.getLastMessageTime();
-                                String prevTime = lastNotifiedMsgTimeMap.get(convId);
-                                if (prevTime == null) {
-                                    prevTime = appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE).getString("last_notified_" + convId, null);
-                                }
-                                if (lastTime != null && !lastTime.equals(prevTime)) {
-                                    lastNotifiedMsgTimeMap.put(convId, lastTime);
-                                    appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE)
-                                            .edit().putString("last_notified_" + convId, lastTime).apply();
-                                    ChatNotificationHelper.showChatNotification(
-                                            appContext,
-                                            convId,
-                                            conv.getOtherUserId(),
-                                            conv.getOtherUserName(),
-                                            conv.getOtherUserPhone(),
-                                            conv.getLastMessageText(),
-                                            null
-                                    );
-                                }
-                            }
-                        }
-                    }
+                    processConversationsForNotifications(conversations);
 
                     if (chatsUpdateListener != null) {
                         mainHandler.post(() -> {

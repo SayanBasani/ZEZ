@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TWING</string>
+    <string name="app_name">Quacky</string>
     <string name="nav_chats">Chats</string>
     <string name="nav_calls">Calls</string>
     <string name="nav_alarms">Alarms</string>

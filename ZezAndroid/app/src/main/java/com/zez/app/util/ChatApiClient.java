@@ -473,6 +473,42 @@ public class ChatApiClient {
         });
     }
 
+    public static List<ChatConversation> getConversationsSync(Context context, String userId) {
+        if (context == null || userId == null) return new ArrayList<>();
+        try {
+            String url = getBaseUrl(context) + "/api/chat/conversations?userId=" + userId;
+            Request request = new Request.Builder().url(url).get().build();
+            Response response = client.newCall(request).execute();
+            if (!response.isSuccessful() || response.body() == null) {
+                return new ArrayList<>();
+            }
+            String str = response.body().string();
+            JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+            List<ChatConversation> list = new ArrayList<>();
+            if (json.has("conversations")) {
+                JsonArray arr = json.getAsJsonArray("conversations");
+                for (int i = 0; i < arr.size(); i++) {
+                    JsonObject obj = arr.get(i).getAsJsonObject();
+                    ChatConversation conv = new ChatConversation();
+                    if (obj.has("conversation_id")) conv.setConversationId(obj.get("conversation_id").getAsString());
+                    if (obj.has("other_user_id")) conv.setOtherUserId(obj.get("other_user_id").getAsString());
+                    if (obj.has("other_user_name")) conv.setOtherUserName(obj.get("other_user_name").getAsString());
+                    if (obj.has("other_user_phone")) conv.setOtherUserPhone(obj.get("other_user_phone").getAsString());
+                    if (obj.has("other_user_avatar") && !obj.get("other_user_avatar").isJsonNull()) conv.setOtherUserAvatar(obj.get("other_user_avatar").getAsString());
+                    if (obj.has("other_user_last_seen") && !obj.get("other_user_last_seen").isJsonNull()) conv.setOtherUserLastSeen(obj.get("other_user_last_seen").getAsString());
+                    if (obj.has("last_message_text") && !obj.get("last_message_text").isJsonNull()) conv.setLastMessageText(obj.get("last_message_text").getAsString());
+                    if (obj.has("last_message_time") && !obj.get("last_message_time").isJsonNull()) conv.setLastMessageTime(obj.get("last_message_time").getAsString());
+                    if (obj.has("unread_count")) conv.setUnreadCount(obj.get("unread_count").getAsInt());
+                    list.add(conv);
+                }
+            }
+            return list;
+        } catch (Exception e) {
+            Log.w(TAG, "getConversationsSync error: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
     public static class ConversationModeInfo {
         public String conversationId;
         public boolean isSecretMode;

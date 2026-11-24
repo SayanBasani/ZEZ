@@ -39,20 +39,33 @@ public class AlarmReceiver extends BroadcastReceiver {
             // Reschedule all active alarms after reboot or time change
             AlarmHelper.rescheduleAllAlarms(context);
             AlarmHelper.schedulePeriodicAlarmSync(context);
-            AlarmHelper.syncWithBackend(context.getApplicationContext(), null);
-            try {
-                com.zez.app.util.ChatNotificationManager.getInstance().pollOnce(context.getApplicationContext());
-            } catch (Exception ignored) {}
+            final PendingResult pr = goAsync();
+            new Thread(() -> {
+                try {
+                    AlarmHelper.syncWithBackend(context.getApplicationContext(), null);
+                    com.zez.app.util.ChatNotificationManager.getInstance().pollSync(context.getApplicationContext());
+                } catch (Exception ignored) {
+                } finally {
+                    pr.finish();
+                }
+            }).start();
             return;
         }
 
         if (ACTION_SYNC_ALARMS.equals(action)) {
             Log.d(TAG, "ACTION_SYNC_ALARMS received: syncing alarms and chat notifications with backend in background");
-            AlarmHelper.syncWithBackend(context.getApplicationContext(), null);
-            AlarmHelper.schedulePeriodicAlarmSync(context.getApplicationContext());
-            try {
-                com.zez.app.util.ChatNotificationManager.getInstance().pollOnce(context.getApplicationContext());
-            } catch (Exception ignored) {}
+            final PendingResult pr = goAsync();
+            new Thread(() -> {
+                try {
+                    AlarmHelper.syncWithBackend(context.getApplicationContext(), null);
+                    com.zez.app.util.ChatNotificationManager.getInstance().pollSync(context.getApplicationContext());
+                } catch (Exception e) {
+                    Log.e(TAG, "Error in background alarm/chat sync: " + e.getMessage());
+                } finally {
+                    AlarmHelper.schedulePeriodicAlarmSync(context.getApplicationContext());
+                    pr.finish();
+                }
+            }).start();
             return;
         }
 

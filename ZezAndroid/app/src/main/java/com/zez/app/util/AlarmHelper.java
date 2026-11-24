@@ -306,7 +306,7 @@ public class AlarmHelper {
 
     public static final String ACTION_SYNC_ALARMS = "com.zez.app.ACTION_SYNC_ALARMS";
     private static final int PERIODIC_SYNC_REQUEST_CODE = 88881;
-    private static final long PERIODIC_SYNC_INTERVAL_MS = 3 * 60 * 1000L; // 3 minutes
+    private static final long PERIODIC_SYNC_INTERVAL_MS = 60 * 1000L; // 1 minute
 
     public static void schedulePeriodicAlarmSync(Context context) {
         if (context == null) return;
@@ -326,11 +326,15 @@ public class AlarmHelper {
             long triggerAt = SystemClock.elapsedRealtime() + PERIODIC_SYNC_INTERVAL_MS;
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi);
+                try {
+                    am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi);
+                } catch (SecurityException se) {
+                    am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi);
+                }
             } else {
                 am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi);
             }
-            Log.d(TAG, "schedulePeriodicAlarmSync: next background alarm sync in 3 minutes");
+            Log.d(TAG, "schedulePeriodicAlarmSync: next background alarm & chat sync in 1 minute");
         } catch (Exception e) {
             Log.e(TAG, "Failed to schedule periodic alarm sync: " + e.getMessage(), e);
         }
