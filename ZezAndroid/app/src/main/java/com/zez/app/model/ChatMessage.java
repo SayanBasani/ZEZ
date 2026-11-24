@@ -43,6 +43,12 @@ public class ChatMessage implements Serializable {
     @SerializedName("file_size")
     private Long fileSize;
 
+    @SerializedName("sender_name")
+    private String senderName;
+
+    @SerializedName("sender_phone")
+    private String senderPhone;
+
     @SerializedName("mode")
     private String mode;
 
@@ -110,6 +116,12 @@ public class ChatMessage implements Serializable {
 
     public Long getFileSize() { return fileSize; }
     public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+
+    public String getSenderName() { return senderName; }
+    public void setSenderName(String senderName) { this.senderName = senderName; }
+
+    public String getSenderPhone() { return senderPhone; }
+    public void setSenderPhone(String senderPhone) { this.senderPhone = senderPhone; }
 
     public String getMode() { return mode != null ? mode : MODE_NORMAL; }
     public void setMode(String mode) { this.mode = mode; }

@@ -2,11 +2,15 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
+const EventEmitter = require("events");
 const { pool } = require("../db");
 const b2Storage = require("../services/b2StorageService");
 const { saveToStorageCache } = require("./storage");
 
 const router = express.Router();
+
+const chatEventEmitter = new EventEmitter();
+chatEventEmitter.setMaxListeners(2000);
 
 // Ensure local upload storage directories exist
 const mediaUploadDir = path.join(__dirname, "../public/uploads/chat_media");
@@ -847,10 +851,76 @@ router.post(["/messages/send", "/messages"], async (req, res) => {
     // Update sender last_seen
     pool.query("UPDATE public.chat_users SET last_seen = NOW() WHERE id = $1", [sender_id]).catch(() => {});
 
+    // Immediately dispatch real-time event to wake receiver's live connection (<1ms)
+    chatEventEmitter.emit(`message:${receiver_id}`, sentMessage);
+
     return res.json({ success: true, message: sentMessage });
   } catch (err) {
     console.error("Error in /api/chat/messages/send:", err);
     return res.status(500).json({ error: "Internal server error sending message." });
+  }
+});
+
+/**
+ * GET /api/chat/live-updates?userId=...
+ * Real-time event-driven endpoint: returns instantly if there are unread messages,
+ * or holds connection open up to 25s for immediate sub-second notification delivery (WhatsApp-speed).
+ */
+router.get("/live-updates", async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: "userId query parameter is required." });
+    }
+
+    // 1. Check for any pending unread messages for this user
+    try {
+      const unreadCheck = await pool.query(
+        `SELECT m.id, m.conversation_id, m.sender_id, m.receiver_id, m.message_text,
+                m.media_url, m.media_type, m.created_at, u.name AS sender_name, u.phone_number AS sender_phone
+         FROM public.chat_messages m
+         JOIN public.chat_users u ON m.sender_id = u.id
+         WHERE m.receiver_id = $1 AND m.sender_id != $1 AND m.status != 'read'
+         ORDER BY m.created_at DESC
+         LIMIT 10`,
+        [userId]
+      );
+
+      if (unreadCheck.rows.length > 0) {
+        return res.json({ success: true, hasNew: true, messages: unreadCheck.rows });
+      }
+    } catch (dbErr) {
+      console.warn("Error in unreadCheck for live-updates:", dbErr.message);
+    }
+
+    // 2. No unread messages: hold connection and await instant push event
+    let finished = false;
+    const onNewMessage = (msg) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timeoutId);
+      res.json({ success: true, hasNew: true, messages: [msg] });
+    };
+
+    chatEventEmitter.once(`message:${userId}`, onNewMessage);
+
+    const timeoutId = setTimeout(() => {
+      if (finished) return;
+      finished = true;
+      chatEventEmitter.removeListener(`message:${userId}`, onNewMessage);
+      res.json({ success: true, hasNew: false, timeout: true });
+    }, 25000);
+
+    req.on("close", () => {
+      if (!finished) {
+        finished = true;
+        clearTimeout(timeoutId);
+        chatEventEmitter.removeListener(`message:${userId}`, onNewMessage);
+      }
+    });
+  } catch (err) {
+    console.error("Error in /api/chat/live-updates:", err);
+    return res.status(500).json({ error: "Internal server error in live-updates." });
   }
 });
 

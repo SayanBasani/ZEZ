@@ -1620,18 +1620,17 @@ public class MainActivity extends AppCompatActivity {
 
                 new AlertDialog.Builder(this)
                         .setTitle("Enable Notification Access")
-                        .setMessage("To enable notification access:\n\n" +
-                                "1. Tap 'App Info' below\n" +
-                                "2. Tap ⋮ (top-right) → 'Allow restricted settings'\n" +
-                                "3. Tap 'Notification Access' & turn Quacky ON")
-                        .setPositiveButton("App Info", (dialog, which) -> {
+                        .setMessage("Android requires unlocking 'Restricted Settings' first:\n\n" +
+                                "Step 1: Tap '1. App Info' → Tap ⋮ (top-right menu) → 'Allow restricted settings'\n\n" +
+                                "Step 2: Tap '2. Enable Access' → Turn Quacky switch ON")
+                        .setPositiveButton("1. App Info", (dialog, which) -> {
                             try {
                                 Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                                 intent.setData(android.net.Uri.parse("package:" + getPackageName()));
                                 startActivity(intent);
                             } catch (Exception ignored) {}
                         })
-                        .setNeutralButton("Notification Access", (dialog, which) -> {
+                        .setNeutralButton("2. Enable Access", (dialog, which) -> {
                             try {
                                 startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
                             } catch (Exception e) {
@@ -2520,18 +2519,17 @@ public class MainActivity extends AppCompatActivity {
                 if (!com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
                     new AlertDialog.Builder(this)
                             .setTitle("Enable Notification Access")
-                            .setMessage("To enable notification access:\n\n" +
-                                    "1. Tap 'App Info' below\n" +
-                                    "2. Tap ⋮ (top-right) → 'Allow restricted settings'\n" +
-                                    "3. Tap 'Notification Access' & turn Quacky ON")
-                            .setPositiveButton("App Info", (dialog, which) -> {
+                            .setMessage("Android requires unlocking 'Restricted Settings' first:\n\n" +
+                                    "Step 1: Tap '1. App Info' → Tap ⋮ (top-right menu) → 'Allow restricted settings'\n\n" +
+                                    "Step 2: Tap '2. Enable Access' → Turn Quacky switch ON")
+                            .setPositiveButton("1. App Info", (dialog, which) -> {
                                 try {
                                     Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                                     intent.setData(android.net.Uri.parse("package:" + getPackageName()));
                                     startActivity(intent);
                                 } catch (Exception ignored) {}
                             })
-                            .setNeutralButton("Notification Access", (dialog, which) -> {
+                            .setNeutralButton("2. Enable Access", (dialog, which) -> {
                                 try {
                                     startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
                                 } catch (Exception e) {

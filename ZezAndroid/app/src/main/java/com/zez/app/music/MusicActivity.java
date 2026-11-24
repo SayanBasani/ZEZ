@@ -91,6 +91,7 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     private TextView tvMiniArtist;
     private ImageButton btnMiniPlayPause;
     private ImageButton btnMiniNext;
+    private ImageButton btnMiniClose;
     private ProgressBar pbMiniProgress;
 
     // Full Player BottomSheet references
@@ -172,6 +173,7 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         tvMiniArtist = findViewById(R.id.tv_mini_artist);
         btnMiniPlayPause = findViewById(R.id.btn_mini_play_pause);
         btnMiniNext = findViewById(R.id.btn_mini_next);
+        btnMiniClose = findViewById(R.id.btn_mini_close);
         pbMiniProgress = findViewById(R.id.pb_mini_progress);
     }
 
@@ -292,9 +294,19 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         });
 
         // Mini player click opens full player
-        cardMiniPlayer.setOnClickListener(v -> showPlayerBottomSheet());
+        View.OnClickListener openPlayerSheetListener = v -> showPlayerBottomSheet();
+        cardMiniPlayer.setOnClickListener(openPlayerSheetListener);
+        if (tvMiniTitle != null) tvMiniTitle.setOnClickListener(openPlayerSheetListener);
+        if (tvMiniArtist != null) tvMiniArtist.setOnClickListener(openPlayerSheetListener);
+        if (ivMiniThumb != null) ivMiniThumb.setOnClickListener(openPlayerSheetListener);
         btnMiniPlayPause.setOnClickListener(v -> MusicPlayerManager.getInstance().togglePlayPause());
         btnMiniNext.setOnClickListener(v -> MusicPlayerManager.getInstance().next());
+        if (btnMiniClose != null) {
+            btnMiniClose.setOnClickListener(v -> {
+                MusicPlayerManager.getInstance().stop();
+                if (cardMiniPlayer != null) cardMiniPlayer.setVisibility(View.GONE);
+            });
+        }
 
         // Downloads Sub-Tabs clicks
         if (btnSubtabDownloading != null) {
@@ -537,6 +549,15 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
 
             sheetView.findViewById(R.id.btn_player_collapse).setOnClickListener(v -> playerSheetDialog.dismiss());
 
+            View btnPlayerClose = sheetView.findViewById(R.id.btn_player_close);
+            if (btnPlayerClose != null) {
+                btnPlayerClose.setOnClickListener(v -> {
+                    playerSheetDialog.dismiss();
+                    MusicPlayerManager.getInstance().stop();
+                    if (cardMiniPlayer != null) cardMiniPlayer.setVisibility(View.GONE);
+                });
+            }
+
             if (btnModeAudio != null) {
                 btnModeAudio.setOnClickListener(v -> MusicPlayerManager.getInstance().setVideoMode(false));
             }
@@ -674,6 +695,8 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         }
     }
 
+    private WebView activityVideoWebView = null;
+
     private void updateVideoModeUI(boolean isVideo) {
         if (btnModeAudio == null || btnModeVideo == null) return;
         if (isVideo) {
@@ -683,16 +706,27 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
             btnModeAudio.setBackground(null);
 
             if (layoutPlayerVideoContainer != null) {
-                WebView activeWv = MusicPlayerService.getActiveWebView();
-                if (activeWv != null) {
-                    if (activeWv.getParent() instanceof ViewGroup) {
-                        ((ViewGroup) activeWv.getParent()).removeView(activeWv);
+                MusicTrack current = MusicPlayerManager.getInstance().getCurrentTrack();
+                if (current != null) {
+                    if (activityVideoWebView == null) {
+                        activityVideoWebView = new WebView(this);
+                        activityVideoWebView.getSettings().setJavaScriptEnabled(true);
+                        activityVideoWebView.getSettings().setDomStorageEnabled(true);
+                        activityVideoWebView.getSettings().setMediaPlaybackRequiresUserGesture(false);
                     }
-                    layoutPlayerVideoContainer.removeAllViews();
-                    layoutPlayerVideoContainer.addView(activeWv, new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                    layoutPlayerVideoContainer.setVisibility(View.VISIBLE);
+                    if (activityVideoWebView.getParent() != layoutPlayerVideoContainer) {
+                        if (activityVideoWebView.getParent() instanceof ViewGroup) {
+                            ((ViewGroup) activityVideoWebView.getParent()).removeView(activityVideoWebView);
+                        }
+                        layoutPlayerVideoContainer.removeAllViews();
+                        layoutPlayerVideoContainer.addView(activityVideoWebView, new FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                    }
+                    activityVideoWebView.loadUrl("https://www.youtube.com/embed/" + current.getId() + "?autoplay=1");
                 }
+                layoutPlayerVideoContainer.setVisibility(View.VISIBLE);
+                layoutPlayerVideoContainer.setAlpha(1.0f);
+                layoutPlayerVideoContainer.bringToFront();
             }
         } else {
             btnModeAudio.setTextColor(ContextCompat.getColor(this, android.R.color.white));
@@ -700,9 +734,20 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
             btnModeVideo.setTextColor(ContextCompat.getColor(this, R.color.theme_text_muted));
             btnModeVideo.setBackground(null);
 
+            if (activityVideoWebView != null) {
+                activityVideoWebView.loadUrl("about:blank");
+                if (layoutPlayerVideoContainer != null) {
+                    layoutPlayerVideoContainer.removeAllViews();
+                }
+            }
+
+            if (ivPlayerArt != null) {
+                ivPlayerArt.setVisibility(View.VISIBLE);
+                ivPlayerArt.bringToFront();
+            }
             if (layoutPlayerVideoContainer != null) {
-                layoutPlayerVideoContainer.removeAllViews();
                 layoutPlayerVideoContainer.setVisibility(View.GONE);
+                layoutPlayerVideoContainer.setAlpha(0.001f);
             }
         }
     }
@@ -782,7 +827,13 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     // PlayerListener callbacks
     @Override
     public void onTrackChanged(MusicTrack track) {
-        if (track == null) return;
+        if (track == null) {
+            if (cardMiniPlayer != null) cardMiniPlayer.setVisibility(View.GONE);
+            if (playerSheetDialog != null && playerSheetDialog.isShowing()) {
+                playerSheetDialog.dismiss();
+            }
+            return;
+        }
         cardMiniPlayer.setVisibility(View.VISIBLE);
         tvMiniTitle.setText(track.getTitle());
         tvMiniArtist.setText(track.getArtist());
@@ -965,6 +1016,12 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         }
         if (playerSheetDialog != null && playerSheetDialog.isShowing()) {
             playerSheetDialog.dismiss();
+        }
+        if (activityVideoWebView != null) {
+            try {
+                activityVideoWebView.destroy();
+            } catch (Exception ignored) {}
+            activityVideoWebView = null;
         }
         super.onDestroy();
     }

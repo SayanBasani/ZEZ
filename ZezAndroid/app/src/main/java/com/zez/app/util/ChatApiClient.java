@@ -535,6 +535,44 @@ public class ChatApiClient {
         public PeerStatus peerStatus = null;
     }
 
+    public static class LiveUpdateResult {
+        public boolean hasNew = false;
+        public boolean timeout = false;
+        public List<ChatMessage> messages = new ArrayList<>();
+    }
+
+    public static LiveUpdateResult listenForLiveUpdatesSync(Context context, String userId) {
+        if (context == null || userId == null) return null;
+        try {
+            String url = getBaseUrl(context) + "/api/chat/live-updates?userId=" + userId;
+            Request request = new Request.Builder().url(url).get().build();
+            OkHttpClient longPollClient = client.newBuilder()
+                    .readTimeout(35, TimeUnit.SECONDS)
+                    .connectTimeout(15, TimeUnit.SECONDS)
+                    .build();
+
+            Response response = longPollClient.newCall(request).execute();
+            if (!response.isSuccessful() || response.body() == null) {
+                return null;
+            }
+            String str = response.body().string();
+            JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+            LiveUpdateResult res = new LiveUpdateResult();
+            res.hasNew = json.has("hasNew") && json.get("hasNew").getAsBoolean();
+            res.timeout = json.has("timeout") && json.get("timeout").getAsBoolean();
+            if (res.hasNew && json.has("messages")) {
+                JsonArray arr = json.getAsJsonArray("messages");
+                for (int i = 0; i < arr.size(); i++) {
+                    ChatMessage msg = gson.fromJson(arr.get(i), ChatMessage.class);
+                    if (msg != null) res.messages.add(msg);
+                }
+            }
+            return res;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     // 3b. Mode management for Dual-Mode (Normal <-> Ephemeral Secret) chat
     public static void setConversationMode(Context context, String conversationId, String userId, boolean isSecretMode, ChatCallback<ConversationModeInfo> callback) {
         String url = getBaseUrl(context) + "/api/chat/conversation/" + conversationId + "/mode";

@@ -22,6 +22,8 @@ public class ChatNotificationManager {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> pollingTask;
+    private Thread realtimeWorkerThread;
+    private volatile boolean isRunning = false;
     private final Map<String, String> lastNotifiedMsgTimeMap = new ConcurrentHashMap<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Context appContext;
@@ -50,6 +52,9 @@ public class ChatNotificationManager {
         if (context != null) {
             this.appContext = context.getApplicationContext();
         }
+        isRunning = true;
+        startRealtimeListener();
+
         if (pollingTask != null && !pollingTask.isCancelled() && !pollingTask.isDone()) {
             return;
         }
@@ -60,7 +65,75 @@ public class ChatNotificationManager {
         Log.d(TAG, "Chat notification background poller started (3s interval)");
     }
 
+    private synchronized void startRealtimeListener() {
+        if (realtimeWorkerThread != null && realtimeWorkerThread.isAlive()) return;
+        realtimeWorkerThread = new Thread(() -> {
+            Log.i(TAG, "Chat notification real-time push listener active");
+            while (isRunning) {
+                try {
+                    if (appContext == null || !ChatPreferencesHelper.isChatRegistered(appContext)) {
+                        Thread.sleep(3000);
+                        continue;
+                    }
+                    String userId = ChatPreferencesHelper.getUserId(appContext);
+                    if (userId == null) {
+                        Thread.sleep(3000);
+                        continue;
+                    }
+
+                    ChatApiClient.LiveUpdateResult result = ChatApiClient.listenForLiveUpdatesSync(appContext, userId);
+                    if (result != null && result.hasNew && result.messages != null && !result.messages.isEmpty()) {
+                        Log.i(TAG, "Instant real-time message received! Dispatching notifications...");
+                        for (com.zez.app.model.ChatMessage msg : result.messages) {
+                            String convId = msg.getConversationId();
+                            if (convId != null) {
+                                if (ChatActivity.activeConversationId != null && convId.equals(ChatActivity.activeConversationId)) {
+                                    continue;
+                                }
+                                if (ChatPreferencesHelper.isConversationMuted(appContext, convId)) {
+                                    continue;
+                                }
+                                String msgTime = msg.getCreatedAt();
+                                String prev = lastNotifiedMsgTimeMap.get(convId);
+                                if (msgTime != null && !msgTime.equals(prev)) {
+                                    lastNotifiedMsgTimeMap.put(convId, msgTime);
+                                    appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE)
+                                            .edit().putString("last_notified_" + convId, msgTime).apply();
+                                    ChatNotificationHelper.showChatNotification(
+                                            appContext,
+                                            convId,
+                                            msg.getSenderId(),
+                                            msg.getSenderName() != null ? msg.getSenderName() : "Chat",
+                                            msg.getSenderPhone() != null ? msg.getSenderPhone() : "",
+                                            msg.getMessageText(),
+                                            null
+                                    );
+                                }
+                            }
+                        }
+                        pollSync(appContext);
+                    } else if (result != null && result.timeout) {
+                        // Loop immediately to re-establish connection
+                    } else {
+                        Thread.sleep(2000);
+                    }
+                } catch (InterruptedException ie) {
+                    break;
+                } catch (Exception e) {
+                    try { Thread.sleep(2500); } catch (Exception ignored) {}
+                }
+            }
+        }, "ChatRealtimeListener");
+        realtimeWorkerThread.setDaemon(true);
+        realtimeWorkerThread.start();
+    }
+
     public synchronized void stop() {
+        isRunning = false;
+        if (realtimeWorkerThread != null) {
+            realtimeWorkerThread.interrupt();
+            realtimeWorkerThread = null;
+        }
         if (pollingTask != null) {
             pollingTask.cancel(true);
             pollingTask = null;

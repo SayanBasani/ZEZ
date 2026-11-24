@@ -17,10 +17,17 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
+import okhttp3.Cookie;
+import okhttp3.CookieJar;
 import okhttp3.Dns;
+import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -37,6 +44,21 @@ public class YouTubeApiHelper {
     private final OkHttpClient httpClient;
     private final Handler mainHandler;
 
+    private static class CachedStream {
+        final String fastStreamUrl;
+        final String fallbackStreamUrl;
+        final long timestamp;
+        CachedStream(String fastStreamUrl, String fallbackStreamUrl) {
+            this.fastStreamUrl = fastStreamUrl;
+            this.fallbackStreamUrl = fallbackStreamUrl;
+            this.timestamp = System.currentTimeMillis();
+        }
+        boolean isValid() {
+            return (System.currentTimeMillis() - timestamp) < (4 * 3600 * 1000L); // 4 hours
+        }
+    }
+    private final Map<String, CachedStream> streamCache = new ConcurrentHashMap<>();
+
     public interface Callback<T> {
         void onSuccess(T result);
         void onError(Exception e);
@@ -46,6 +68,22 @@ public class YouTubeApiHelper {
         this.httpClient = new OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(20, TimeUnit.SECONDS)
+                .cookieJar(new CookieJar() {
+                    private final Map<String, List<Cookie>> cookieStore = new ConcurrentHashMap<>();
+
+                    @Override
+                    public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+                        if (cookies != null && !cookies.isEmpty()) {
+                            cookieStore.put(url.host(), cookies);
+                        }
+                    }
+
+                    @Override
+                    public List<Cookie> loadForRequest(HttpUrl url) {
+                        List<Cookie> cookies = cookieStore.get(url.host());
+                        return cookies != null ? cookies : new ArrayList<>();
+                    }
+                })
                 .dns(new Dns() {
                     @Override
                     public List<InetAddress> lookup(String hostname) throws UnknownHostException {
@@ -266,7 +304,40 @@ public class YouTubeApiHelper {
                     // Extract duration
                     String duration = "--:--";
                     if (v.has("lengthText")) {
-                        duration = v.getAsJsonObject("lengthText").get("simpleText").getAsString();
+                        JsonObject lenObj = v.getAsJsonObject("lengthText");
+                        if (lenObj.has("simpleText")) {
+                            duration = lenObj.get("simpleText").getAsString();
+                        } else if (lenObj.has("runs")) {
+                            JsonArray runs = lenObj.getAsJsonArray("runs");
+                            if (runs.size() > 0 && runs.get(0).getAsJsonObject().has("text")) {
+                                duration = runs.get(0).getAsJsonObject().get("text").getAsString();
+                            }
+                        }
+                    }
+                    if ("--:--".equals(duration) && v.has("thumbnailOverlays")) {
+                        try {
+                            JsonArray overlays = v.getAsJsonArray("thumbnailOverlays");
+                            for (JsonElement o : overlays) {
+                                if (!o.isJsonObject()) continue;
+                                JsonObject ro = o.getAsJsonObject();
+                                if (ro.has("thumbnailOverlayTimeStatusRenderer")) {
+                                    JsonObject timeObj = ro.getAsJsonObject("thumbnailOverlayTimeStatusRenderer");
+                                    if (timeObj != null && timeObj.has("text")) {
+                                        JsonObject textObj = timeObj.getAsJsonObject("text");
+                                        if (textObj.has("simpleText")) {
+                                            duration = textObj.get("simpleText").getAsString();
+                                            break;
+                                        } else if (textObj.has("runs")) {
+                                            JsonArray r = textObj.getAsJsonArray("runs");
+                                            if (r.size() > 0 && r.get(0).getAsJsonObject().has("text")) {
+                                                duration = r.get(0).getAsJsonObject().get("text").getAsString();
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Exception ignored) {}
                     }
 
                     // Extract view count
@@ -303,6 +374,341 @@ public class YouTubeApiHelper {
             Log.e(TAG, "Error parsing search results", e);
         }
         return results;
+    }
+
+    public void extractAudioStream(String videoId, Callback<String> callback) {
+        if (videoId == null || videoId.isEmpty()) {
+            mainHandler.post(() -> callback.onError(new IllegalArgumentException("Video ID is empty")));
+            return;
+        }
+
+        CachedStream cached = streamCache.get(videoId);
+        if (cached != null && cached.isValid() && cached.fastStreamUrl != null) {
+            mainHandler.post(() -> callback.onSuccess(cached.fastStreamUrl));
+            return;
+        }
+
+        new Thread(() -> {
+            String url = getStreamUrlSync(videoId, true);
+            if (url != null && !url.isEmpty()) {
+                mainHandler.post(() -> callback.onSuccess(url));
+            } else {
+                mainHandler.post(() -> callback.onError(new IOException("Could not resolve playable audio stream for " + videoId)));
+            }
+        }).start();
+    }
+
+    private String cachedVisitorData = null;
+    private int cachedSts = 20775;
+
+    private synchronized String ensureVisitorData() {
+        if (cachedVisitorData != null && !cachedVisitorData.isEmpty()) {
+            return cachedVisitorData;
+        }
+        // 1. Fetch official VISITOR_DATA & STS from YouTube homepage (same reliable method as yt-dlp)
+        try {
+            Request req = new Request.Builder()
+                    .url("https://www.youtube.com/")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .header("Accept-Language", "en-US,en;q=0.9")
+                    .build();
+
+            try (Response resp = httpClient.newCall(req).execute()) {
+                if (resp.isSuccessful() && resp.body() != null) {
+                    String html = resp.body().string();
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("ytcfg\\.set\\((\\{.+?\\})\\);").matcher(html);
+                    if (m.find()) {
+                        JsonObject ytcfg = JsonParser.parseString(m.group(1)).getAsJsonObject();
+                        if (ytcfg.has("VISITOR_DATA")) {
+                            cachedVisitorData = ytcfg.get("VISITOR_DATA").getAsString();
+                            Log.i(TAG, "Acquired official VISITOR_DATA length=" + cachedVisitorData.length());
+                        }
+                        if (ytcfg.has("STS")) {
+                            cachedSts = ytcfg.get("STS").getAsInt();
+                            Log.i(TAG, "Acquired official STS=" + cachedSts);
+                        }
+                        if (cachedVisitorData != null && !cachedVisitorData.isEmpty()) {
+                            return cachedVisitorData;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Could not acquire VISITOR_DATA from homepage: " + e.getMessage());
+        }
+
+        // 2. Fallback: visitor_id endpoint
+        try {
+            JsonObject clientObj = new JsonObject();
+            clientObj.addProperty("clientName", "WEB");
+            clientObj.addProperty("clientVersion", "2.20240101.01.00");
+            clientObj.addProperty("hl", "en");
+            clientObj.addProperty("gl", "US");
+
+            JsonObject contextObj = new JsonObject();
+            contextObj.add("client", clientObj);
+
+            JsonObject bodyObj = new JsonObject();
+            bodyObj.add("context", contextObj);
+
+            Request req = new Request.Builder()
+                    .url("https://www.youtube.com/youtubei/v1/visitor_id?prettyPrint=false")
+                    .post(RequestBody.create(bodyObj.toString(), JSON_MEDIA_TYPE))
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .header("Origin", "https://www.youtube.com")
+                    .header("Referer", "https://www.youtube.com/")
+                    .build();
+
+            try (Response resp = httpClient.newCall(req).execute()) {
+                if (resp.isSuccessful() && resp.body() != null) {
+                    JsonObject resJson = JsonParser.parseString(resp.body().string()).getAsJsonObject();
+                    if (resJson.has("responseContext")) {
+                        JsonObject ctx = resJson.getAsJsonObject("responseContext");
+                        if (ctx.has("visitorData")) {
+                            cachedVisitorData = ctx.get("visitorData").getAsString();
+                            Log.i(TAG, "Acquired visitorData from visitor_id endpoint: " + cachedVisitorData);
+                            return cachedVisitorData;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Could not acquire visitorData from visitor_id endpoint: " + e.getMessage());
+        }
+        return cachedVisitorData;
+    }
+
+    public String getStreamUrlSync(String videoId) {
+        return getStreamUrlSync(videoId, true);
+    }
+
+    public String getFallbackStreamUrlSync(String videoId) {
+        if (videoId == null || videoId.isEmpty()) return null;
+        CachedStream cached = streamCache.get(videoId);
+        if (cached != null && cached.isValid() && cached.fallbackStreamUrl != null) {
+            return cached.fallbackStreamUrl;
+        }
+        return getStreamUrlSync(videoId, false);
+    }
+
+    public String getStreamUrlSync(String videoId, boolean preferFastLowBandwidth) {
+        if (videoId == null || videoId.isEmpty()) return null;
+        CachedStream cached = streamCache.get(videoId);
+        if (cached != null && cached.isValid()) {
+            if (preferFastLowBandwidth && cached.fastStreamUrl != null) {
+                return cached.fastStreamUrl;
+            }
+            if (!preferFastLowBandwidth && cached.fallbackStreamUrl != null) {
+                return cached.fallbackStreamUrl;
+            }
+            if (cached.fastStreamUrl != null) return cached.fastStreamUrl;
+            if (cached.fallbackStreamUrl != null) return cached.fallbackStreamUrl;
+        }
+
+        try {
+            String visitorData = ensureVisitorData();
+
+            // Query player API with VISIONOS client + visitorData
+            JsonObject clientObj = new JsonObject();
+            clientObj.addProperty("clientName", "VISIONOS");
+            clientObj.addProperty("clientVersion", "1.02");
+            clientObj.addProperty("deviceMake", "Apple");
+            clientObj.addProperty("deviceModel", "RealityDevice17,1");
+            clientObj.addProperty("userAgent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15");
+            clientObj.addProperty("osName", "visionOS");
+            clientObj.addProperty("osVersion", "26.5.23O471");
+            clientObj.addProperty("hl", "en");
+            clientObj.addProperty("timeZone", "UTC");
+            clientObj.addProperty("utcOffsetMinutes", 0);
+            if (visitorData != null && !visitorData.isEmpty()) {
+                clientObj.addProperty("visitorData", visitorData);
+            }
+
+            JsonObject contextObj = new JsonObject();
+            contextObj.add("client", clientObj);
+
+            JsonObject playbackContext = new JsonObject();
+            JsonObject contentPlaybackContext = new JsonObject();
+            contentPlaybackContext.addProperty("html5Preference", "HTML5_PREF_WANTS");
+            contentPlaybackContext.addProperty("signatureTimestamp", cachedSts > 0 ? cachedSts : 20775);
+            playbackContext.add("contentPlaybackContext", contentPlaybackContext);
+
+            JsonObject playerBody = new JsonObject();
+            playerBody.add("context", contextObj);
+            playerBody.addProperty("videoId", videoId);
+            playerBody.add("playbackContext", playbackContext);
+            playerBody.addProperty("contentCheckOk", true);
+            playerBody.addProperty("racyCheckOk", true);
+
+            Request.Builder playerReqBuilder = new Request.Builder()
+                    .url("https://www.youtube.com/youtubei/v1/player?prettyPrint=false")
+                    .post(RequestBody.create(playerBody.toString(), JSON_MEDIA_TYPE))
+                    .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15")
+                    .header("X-YouTube-Client-Name", "101")
+                    .header("X-YouTube-Client-Version", "1.02")
+                    .header("Origin", "https://www.youtube.com");
+
+            if (visitorData != null && !visitorData.isEmpty()) {
+                playerReqBuilder.header("X-Goog-Visitor-Id", visitorData);
+            }
+
+            String fastStream = null;
+            String fallbackStream = null;
+
+            try (Response playerResp = httpClient.newCall(playerReqBuilder.build()).execute()) {
+                if (playerResp.isSuccessful() && playerResp.body() != null) {
+                    String resStr = playerResp.body().string();
+                    try {
+                        JsonObject root = JsonParser.parseString(resStr).getAsJsonObject();
+                        if (root.has("responseContext")) {
+                            JsonObject ctx = root.getAsJsonObject("responseContext");
+                            if (ctx.has("visitorData")) {
+                                cachedVisitorData = ctx.get("visitorData").getAsString();
+                            }
+                        }
+                    } catch (Exception ignored) {}
+
+                    String[] streams = parseAudioStreams(resStr);
+                    fastStream = streams[0];
+                    fallbackStream = streams[1];
+                } else {
+                    Log.e(TAG, "VISIONOS Player request failed with code: " + playerResp.code());
+                }
+            }
+
+            // Fallback: if VISIONOS returned null, try ANDROID_VR client
+            if (fastStream == null && fallbackStream == null) {
+                Log.w(TAG, "VISIONOS returned no stream for " + videoId + ", trying ANDROID_VR fallback...");
+                JsonObject vrClient = new JsonObject();
+                vrClient.addProperty("clientName", "ANDROID_VR");
+                vrClient.addProperty("clientVersion", "1.61.48");
+                vrClient.addProperty("deviceMake", "Oculus");
+                vrClient.addProperty("deviceModel", "Quest 3");
+                vrClient.addProperty("osName", "Android");
+                vrClient.addProperty("osVersion", "12");
+                vrClient.addProperty("hl", "en");
+                vrClient.addProperty("timeZone", "UTC");
+                vrClient.addProperty("utcOffsetMinutes", 0);
+                if (visitorData != null && !visitorData.isEmpty()) {
+                    vrClient.addProperty("visitorData", visitorData);
+                }
+                JsonObject vrContext = new JsonObject();
+                vrContext.add("client", vrClient);
+                JsonObject vrBody = new JsonObject();
+                vrBody.add("context", vrContext);
+                vrBody.addProperty("videoId", videoId);
+                vrBody.add("playbackContext", playbackContext);
+                vrBody.addProperty("contentCheckOk", true);
+                vrBody.addProperty("racyCheckOk", true);
+
+                Request.Builder vrReqBuilder = new Request.Builder()
+                        .url("https://www.youtube.com/youtubei/v1/player?prettyPrint=false")
+                        .post(RequestBody.create(vrBody.toString(), JSON_MEDIA_TYPE))
+                        .header("User-Agent", "Mozilla/5.0 (Linux; Android 12; Quest 3) AppleWebKit/537.36")
+                        .header("X-YouTube-Client-Name", "28")
+                        .header("X-YouTube-Client-Version", "1.61.48")
+                        .header("Origin", "https://www.youtube.com");
+                if (visitorData != null && !visitorData.isEmpty()) {
+                    vrReqBuilder.header("X-Goog-Visitor-Id", visitorData);
+                }
+                try (Response vrResp = httpClient.newCall(vrReqBuilder.build()).execute()) {
+                    if (vrResp.isSuccessful() && vrResp.body() != null) {
+                        String[] vrStreams = parseAudioStreams(vrResp.body().string());
+                        fastStream = vrStreams[0];
+                        fallbackStream = vrStreams[1];
+                    }
+                } catch (Exception vre) {
+                    Log.w(TAG, "ANDROID_VR fallback error: " + vre.getMessage());
+                }
+            }
+
+            if (fastStream != null || fallbackStream != null) {
+                Log.i(TAG, "Audio stream resolved successfully for " + videoId + " (fast=" + (fastStream != null) + ", fallback=" + (fallbackStream != null) + ")");
+                streamCache.put(videoId, new CachedStream(fastStream != null ? fastStream : fallbackStream, fallbackStream != null ? fallbackStream : fastStream));
+                return preferFastLowBandwidth ? (fastStream != null ? fastStream : fallbackStream) : (fallbackStream != null ? fallbackStream : fastStream);
+            } else {
+                Log.w(TAG, "Both VISIONOS and fallback returned null streams for " + videoId);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error resolving audio stream for " + videoId, e);
+        }
+        return null;
+    }
+
+    private String[] parseAudioStreams(String jsonStr) {
+        String fastUrl = null;
+        String fallbackUrl = null;
+        try {
+            JsonObject root = JsonParser.parseString(jsonStr).getAsJsonObject();
+            JsonObject streamingData = root.getAsJsonObject("streamingData");
+            if (streamingData == null) {
+                return new String[]{null, null};
+            }
+
+            JsonArray formats = streamingData.getAsJsonArray("adaptiveFormats");
+            if (formats != null) {
+                String opus70 = null;
+                String opus50 = null;
+                String aac128 = null;
+                String opus160 = null;
+                String genericAudio = null;
+
+                for (JsonElement el : formats) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject f = el.getAsJsonObject();
+                    if (!f.has("url")) continue;
+                    String u = f.get("url").getAsString();
+                    int itag = f.has("itag") ? f.get("itag").getAsInt() : 0;
+                    String mime = f.has("mimeType") ? f.get("mimeType").getAsString() : "";
+
+                    if (itag == 250) opus70 = u;
+                    else if (itag == 249) opus50 = u;
+                    else if (itag == 140) aac128 = u;
+                    else if (itag == 251) opus160 = u;
+                    else if (mime.startsWith("audio/")) {
+                        if (genericAudio == null) genericAudio = u;
+                    }
+                }
+
+                // Fast low-bandwidth stream: Opus 70kbps or 50kbps (tiny 4KB header, minimal buffering, starts instantly with 70% less data!)
+                if (opus70 != null) fastUrl = opus70;
+                else if (opus50 != null) fastUrl = opus50;
+                else if (aac128 != null) fastUrl = aac128;
+                else if (opus160 != null) fastUrl = opus160;
+                else fastUrl = genericAudio;
+
+                // High-quality / universal fallback stream: AAC 128kbps or Opus 160kbps
+                if (aac128 != null) fallbackUrl = aac128;
+                else if (opus160 != null) fallbackUrl = opus160;
+                else if (opus70 != null) fallbackUrl = opus70;
+                else fallbackUrl = fastUrl;
+            }
+
+            // Fallback: combined formats
+            if (fastUrl == null) {
+                JsonArray combinedFormats = streamingData.getAsJsonArray("formats");
+                if (combinedFormats != null) {
+                    for (JsonElement el : combinedFormats) {
+                        if (!el.isJsonObject()) continue;
+                        JsonObject f = el.getAsJsonObject();
+                        if (f.has("url")) {
+                            fastUrl = f.get("url").getAsString();
+                            fallbackUrl = fastUrl;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Fallback: HLS master manifest
+            if (fastUrl == null && streamingData.has("hlsManifestUrl")) {
+                fastUrl = streamingData.get("hlsManifestUrl").getAsString();
+                fallbackUrl = fastUrl;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing audio stream URLs", e);
+        }
+        return new String[]{fastUrl, fallbackUrl};
     }
 
     private List<String> parseSuggestions(String body) {

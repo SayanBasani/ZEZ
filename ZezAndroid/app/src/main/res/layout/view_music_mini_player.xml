@@ -93,6 +93,16 @@
                 android:src="@drawable/ic_skip_next"
                 app:tint="@color/theme_icon_tint"
                 android:contentDescription="Next track" />
+
+            <ImageButton
+                android:id="@+id/btn_mini_close"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close"
+                app:tint="@color/theme_text_muted"
+                android:contentDescription="Close and stop player" />
         </LinearLayout>
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

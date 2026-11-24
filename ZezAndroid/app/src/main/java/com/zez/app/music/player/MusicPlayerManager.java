@@ -228,6 +228,27 @@ public class MusicPlayerManager {
         }
     }
 
+    public void stop() {
+        isPlaying = false;
+        isBuffering = false;
+        currentTrack = null;
+        currentIndex = -1;
+        currentSeconds = 0;
+        totalSeconds = 0;
+        if (appContext != null) {
+            Intent intent = new Intent(appContext, MusicPlayerService.class);
+            intent.setAction(MusicPlayerService.ACTION_STOP);
+            try {
+                appContext.startService(intent);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to send STOP", e);
+            }
+        }
+        notifyTrackChanged(null);
+        notifyPlaybackState(false, false);
+        notifyProgress(0, 0);
+    }
+
     public synchronized void next() {
         if (queue.isEmpty()) return;
         if (repeatMode == REPEAT_MODE_ONE) {
