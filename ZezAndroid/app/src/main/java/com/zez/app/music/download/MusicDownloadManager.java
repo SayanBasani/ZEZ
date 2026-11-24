@@ -9,8 +9,14 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
@@ -30,8 +36,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -53,6 +61,7 @@ public class MusicDownloadManager {
     }
 
     private final Map<String, DownloadTask> activeTasks = new ConcurrentHashMap<>();
+    private final Map<String, String> capturedStreamUrls = new ConcurrentHashMap<>();
     private final List<DownloadProgressListener> listeners = new CopyOnWriteArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final ExecutorService downloadExecutor = Executors.newFixedThreadPool(3);
@@ -68,6 +77,17 @@ public class MusicDownloadManager {
             }
         }
         return instance;
+    }
+
+    public void registerCapturedStreamUrl(String videoId, String streamUrl) {
+        if (videoId != null && streamUrl != null && !streamUrl.isEmpty()) {
+            capturedStreamUrls.put(videoId, streamUrl);
+            Log.i(TAG, "Registered captured stream URL for " + videoId);
+        }
+    }
+
+    public String getCapturedStreamUrl(String videoId) {
+        return capturedStreamUrls.get(videoId);
     }
 
     public void addListener(DownloadProgressListener listener) {
@@ -142,17 +162,103 @@ public class MusicDownloadManager {
         downloadExecutor.execute(() -> executeDownload(appContext, task, isAudio));
     }
 
+    private String resolveStreamUrlWithHeadlessWebView(Context context, String videoId) {
+        String existing = capturedStreamUrls.get(videoId);
+        if (existing != null && !existing.isEmpty()) {
+            return existing;
+        }
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final String[] captured = new String[1];
+
+        mainHandler.post(() -> {
+            try {
+                WebView extractor = new WebView(context);
+                WebSettings settings = extractor.getSettings();
+                settings.setJavaScriptEnabled(true);
+                settings.setMediaPlaybackRequiresUserGesture(false);
+                settings.setDomStorageEnabled(true);
+                settings.setUserAgentString("Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+
+                extractor.setWebViewClient(new WebViewClient() {
+                    @Nullable
+                    @Override
+                    public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                        if (request != null && request.getUrl() != null) {
+                            String u = request.getUrl().toString();
+                            if (u.contains("googlevideo.com/videoplayback")) {
+                                synchronized (captured) {
+                                    if (captured[0] == null) {
+                                        captured[0] = u;
+                                        registerCapturedStreamUrl(videoId, u);
+                                        latch.countDown();
+                                        mainHandler.post(() -> {
+                                            try {
+                                                extractor.stopLoading();
+                                                extractor.destroy();
+                                            } catch (Exception ignored) {}
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        return super.shouldInterceptRequest(view, request);
+                    }
+                });
+
+                String html = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body>" +
+                        "<div id=\"player\"></div>" +
+                        "<script>" +
+                        "var tag = document.createElement('script');" +
+                        "tag.src = 'https://www.youtube.com/iframe_api';" +
+                        "var firstScriptTag = document.getElementsByTagName('script')[0];" +
+                        "firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);" +
+                        "var player;" +
+                        "function onYouTubeIframeAPIReady() {" +
+                        "  player = new YT.Player('player', {" +
+                        "    height: '100', width: '100', videoId: '" + videoId + "'," +
+                        "    playerVars: { 'autoplay': 1, 'controls': 0, 'playsinline': 1, 'origin': 'https://www.youtube.com' }," +
+                        "    events: { 'onReady': function(e){ e.target.mute(); e.target.playVideo(); } }" +
+                        "  });" +
+                        "}" +
+                        "</script></body></html>";
+
+                extractor.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", "https://www.youtube.com");
+            } catch (Exception e) {
+                Log.e(TAG, "Error starting headless extractor: " + e.getMessage());
+                latch.countDown();
+            }
+        });
+
+        try {
+            latch.await(6, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {}
+
+        return captured[0] != null ? captured[0] : capturedStreamUrls.get(videoId);
+    }
+
     private void executeDownload(Context context, DownloadTask task, boolean isAudio) {
         String videoId = task.getVideoId();
         String baseUrl = ChatApiClient.getBaseUrl(context);
         OkHttpClient client = ChatApiClient.getOkHttpClient();
 
+        String directUrl = capturedStreamUrls.get(videoId);
+        if (directUrl == null) {
+            directUrl = resolveStreamUrlWithHeadlessWebView(context, videoId);
+        }
+
         String downloadUrl;
-        try {
-            String encodedTitle = URLEncoder.encode(task.getFileName().replaceAll("\\.[^.]+$", ""), "UTF-8");
-            downloadUrl = baseUrl + "/api/music/download?videoId=" + videoId + "&title=" + encodedTitle;
-        } catch (Exception e) {
-            downloadUrl = baseUrl + "/api/music/download?videoId=" + videoId;
+        if (directUrl != null && !directUrl.isEmpty()) {
+            downloadUrl = directUrl;
+            Log.i(TAG, "Executing download via direct googlevideo URL for " + videoId);
+        } else {
+            try {
+                String encodedTitle = URLEncoder.encode(task.getFileName().replaceAll("\\.[^.]+$", ""), "UTF-8");
+                downloadUrl = baseUrl + "/api/music/download?videoId=" + videoId + "&title=" + encodedTitle;
+            } catch (Exception e) {
+                downloadUrl = baseUrl + "/api/music/download?videoId=" + videoId;
+            }
+            Log.i(TAG, "Executing download via backend endpoint for " + videoId);
         }
 
         File destFile = task.getDestinationFile();

@@ -154,17 +154,30 @@ public class MusicPlayerManager {
         }
     }
 
+    public static int parseDurationToSeconds(String durStr) {
+        if (durStr == null || durStr.trim().isEmpty()) return 0;
+        try {
+            String[] parts = durStr.trim().split(":");
+            if (parts.length == 2) {
+                return Integer.parseInt(parts[0].trim()) * 60 + Integer.parseInt(parts[1].trim());
+            } else if (parts.length == 3) {
+                return Integer.parseInt(parts[0].trim()) * 3600 + Integer.parseInt(parts[1].trim()) * 60 + Integer.parseInt(parts[2].trim());
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
     private void playCurrentTrack() {
         if (currentIndex < 0 || currentIndex >= queue.size()) return;
         currentTrack = queue.get(currentIndex);
         currentSeconds = 0;
-        totalSeconds = 0;
+        totalSeconds = parseDurationToSeconds(currentTrack != null ? currentTrack.getDuration() : null);
         isPlaying = true;
         isBuffering = true;
 
         notifyTrackChanged(currentTrack);
         notifyPlaybackState(true, true);
-        notifyProgress(0, 0);
+        notifyProgress(0, totalSeconds);
 
         if (appContext != null) {
             Intent intent = new Intent(appContext, MusicPlayerService.class);

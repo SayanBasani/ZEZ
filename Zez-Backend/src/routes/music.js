@@ -4,8 +4,8 @@ const { Ytdl, Client } = require('@distube/ytdl-core');
 const https = require('https');
 const http = require('http');
 
-// Use VisionOS client to resolve direct high-speed audio streams without requiring player JS execution
-const ytdl = new Ytdl({ clients: [Client.VisionOS] });
+// Use VisionOS, Tv and WebMusic clients for automatic fallback with deciphered audio formats
+const ytdl = new Ytdl({ clients: [Client.VisionOS, Client.Tv, Client.WebMusic] });
 
 // In-memory cache for resolved track stream URLs (valid for 30 minutes)
 const streamCache = new Map();
@@ -28,7 +28,7 @@ router.get('/resolve', async (req, res) => {
   try {
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
     const info = await ytdl.getInfo(videoUrl);
-    const audioFormats = info.formats.filter(f => f.hasAudio && !f.hasVideo);
+    const audioFormats = info.formats.filter(f => f.hasAudio && !f.hasVideo && f.url);
     audioFormats.sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
 
     if (audioFormats.length === 0) {
@@ -78,7 +78,7 @@ router.get('/stream', async (req, res) => {
     } else {
       const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
       const info = await ytdl.getInfo(videoUrl);
-      const audioFormats = info.formats.filter(f => f.hasAudio && !f.hasVideo);
+      const audioFormats = info.formats.filter(f => f.hasAudio && !f.hasVideo && f.url);
       audioFormats.sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
 
       if (audioFormats.length === 0) {
@@ -162,7 +162,7 @@ router.get('/download', async (req, res) => {
     } else {
       const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
       const info = await ytdl.getInfo(videoUrl);
-      const audioFormats = info.formats.filter(f => f.hasAudio && !f.hasVideo);
+      const audioFormats = info.formats.filter(f => f.hasAudio && !f.hasVideo && f.url);
       audioFormats.sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
 
       if (audioFormats.length === 0) {
