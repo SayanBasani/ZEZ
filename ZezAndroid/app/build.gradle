@@ -10,8 +10,8 @@ android {
         applicationId "com.zez.app"
         minSdk 26
         targetSdk 34
-        versionCode 41
-        versionName "1.0.40"
+        versionCode 42
+        versionName "1.0.41"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -67,4 +67,7 @@ dependencies {
 
     // ViewPager2 for swipe-between-photos in Gallery viewer
     implementation 'androidx.viewpager2:viewpager2:1.0.0'
+
+    // AndroidX Media for MediaSessionCompat and MediaStyle rich media notifications
+    implementation 'androidx.media:media:1.7.0'
 }

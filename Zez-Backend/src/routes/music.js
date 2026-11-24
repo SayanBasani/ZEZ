@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { Ytdl } = require('@distube/ytdl-core');
+const { Ytdl, Client } = require('@distube/ytdl-core');
 const https = require('https');
 const http = require('http');
 
-const ytdl = new Ytdl();
+// Use VisionOS client to resolve direct high-speed audio streams without requiring player JS execution
+const ytdl = new Ytdl({ clients: [Client.VisionOS] });
 
 // In-memory cache for resolved track stream URLs (valid for 30 minutes)
 const streamCache = new Map();

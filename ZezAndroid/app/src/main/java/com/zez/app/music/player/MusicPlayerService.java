@@ -33,6 +33,9 @@ import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.media.app.NotificationCompat.MediaStyle;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -79,6 +82,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private static WebView activeWebView;
 
     private MediaPlayer mediaPlayer;
+    private MediaSessionCompat mediaSession;
     private WebView webView;
     private Handler handler;
     private AudioManager audioManager;
@@ -100,6 +104,19 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private String currentBackendStreamUrl = null;
     private boolean triedBackendStream = false;
 
+    public static int parseDurationToSeconds(String durStr) {
+        if (durStr == null || durStr.trim().isEmpty()) return 0;
+        try {
+            String[] parts = durStr.trim().split(":");
+            if (parts.length == 2) {
+                return Integer.parseInt(parts[0].trim()) * 60 + Integer.parseInt(parts[1].trim());
+            } else if (parts.length == 3) {
+                return Integer.parseInt(parts[0].trim()) * 3600 + Integer.parseInt(parts[1].trim()) * 60 + Integer.parseInt(parts[2].trim());
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
     private final Runnable progressRunnable = new Runnable() {
         @Override
         public void run() {
@@ -107,6 +124,9 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                 try {
                     int pos = mediaPlayer.getCurrentPosition() / 1000;
                     int dur = mediaPlayer.getDuration() / 1000;
+                    if (dur <= 0 && currentTrack != null) {
+                        dur = parseDurationToSeconds(currentTrack.getDuration());
+                    }
                     MusicPlayerManager.getInstance().updateProgress(pos, dur);
                 } catch (Exception ignored) {}
                 handler.postDelayed(this, 500);
@@ -149,6 +169,11 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
             isPlaying = true;
             acquireWakeLock();
             MusicPlayerManager.getInstance().updatePlaybackState(true, false);
+            int dur = mp.getDuration() / 1000;
+            if (dur <= 0 && currentTrack != null) {
+                dur = parseDurationToSeconds(currentTrack.getDuration());
+            }
+            MusicPlayerManager.getInstance().updateProgress(0, dur);
             updateNotification();
             startProgressUpdates();
         });
@@ -211,6 +236,27 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
         createNotificationChannel();
         initWebView();
+
+        try {
+            mediaSession = new MediaSessionCompat(this, "QuackyMusicSession");
+            mediaSession.setCallback(new MediaSessionCompat.Callback() {
+                @Override
+                public void onPlay() { resumePlayback(); }
+                @Override
+                public void onPause() { pausePlayback(); }
+                @Override
+                public void onSkipToNext() { MusicPlayerManager.getInstance().next(); }
+                @Override
+                public void onSkipToPrevious() { MusicPlayerManager.getInstance().previous(); }
+                @Override
+                public void onSeekTo(long pos) { seekTo((int) (pos / 1000)); }
+                @Override
+                public void onStop() { stopPlayback(); stopSelf(); }
+            });
+            mediaSession.setActive(true);
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing MediaSessionCompat", e);
+        }
 
         try {
             registerReceiver(noisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
@@ -511,9 +557,10 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         loadThumbnailBitmap(track.getThumbnailUrl());
         updateNotification();
 
-        // Immediately update player manager so UI resets to 0:00 and buffering
+        // Immediately update player manager with track duration so UI shows total length right away
+        int initialDur = parseDurationToSeconds(track.getDuration());
         MusicPlayerManager.getInstance().updatePlaybackState(false, true);
-        MusicPlayerManager.getInstance().updateProgress(0, 0);
+        MusicPlayerManager.getInstance().updateProgress(0, initialDur);
 
         if (MusicPlayerManager.getInstance().isVideoMode()) {
             if (mediaPlayer != null) {
@@ -850,6 +897,26 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         int playPauseIcon = isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play;
         String playPauseTitle = isPlaying ? "Pause" : "Play";
 
+        if (mediaSession != null) {
+            long actions = PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE
+                    | PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                    | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS | PlaybackStateCompat.ACTION_SEEK_TO;
+            int state = isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
+            long posMs = (mediaPlayer != null) ? mediaPlayer.getCurrentPosition() : 0;
+            mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                    .setActions(actions)
+                    .setState(state, posMs, 1.0f)
+                    .build());
+        }
+
+        MediaStyle mediaStyle = new MediaStyle()
+                .setShowActionsInCompactView(0, 1, 2)
+                .setShowCancelButton(true)
+                .setCancelButtonIntent(stopPendingIntent);
+        if (mediaSession != null) {
+            mediaStyle.setMediaSession(mediaSession.getSessionToken());
+        }
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_music)
                 .setContentTitle(currentTrack.getTitle())
@@ -858,6 +925,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                 .setOngoing(isPlaying)
                 .setOnlyAlertOnce(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setStyle(mediaStyle)
                 .addAction(android.R.drawable.ic_media_previous, "Previous", prevPendingIntent)
                 .addAction(playPauseIcon, playPauseTitle, togglePendingIntent)
                 .addAction(android.R.drawable.ic_media_next, "Next", nextPendingIntent)
@@ -935,6 +1003,13 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     public void onDestroy() {
         stopPlayback();
         stopProgressUpdates();
+        if (mediaSession != null) {
+            try {
+                mediaSession.setActive(false);
+                mediaSession.release();
+            } catch (Exception ignored) {}
+            mediaSession = null;
+        }
         if (mediaPlayer != null) {
             try {
                 mediaPlayer.release();

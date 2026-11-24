@@ -631,6 +631,14 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         tvPlayerArtist.setText(current.getArtist());
         Glide.with(this).load(current.getThumbnailUrl()).into(ivPlayerArt);
 
+        int initialDur = parseDurationToSeconds(current.getDuration());
+        if (initialDur > 0) {
+            if (tvPlayerTotalTime != null) tvPlayerTotalTime.setText(formatTime(initialDur));
+            if (sbPlayerProgress != null) sbPlayerProgress.setMax(initialDur);
+        } else if (current.getDuration() != null && !current.getDuration().isEmpty()) {
+            if (tvPlayerTotalTime != null) tvPlayerTotalTime.setText(current.getDuration());
+        }
+
         boolean isPlaying = MusicPlayerManager.getInstance().isPlaying();
         fabPlayerPlayPause.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play_arrow);
 
@@ -802,8 +810,28 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         }
     }
 
+    public static int parseDurationToSeconds(String durStr) {
+        if (durStr == null || durStr.trim().isEmpty()) return 0;
+        try {
+            String[] parts = durStr.trim().split(":");
+            if (parts.length == 2) {
+                return Integer.parseInt(parts[0].trim()) * 60 + Integer.parseInt(parts[1].trim());
+            } else if (parts.length == 3) {
+                return Integer.parseInt(parts[0].trim()) * 3600 + Integer.parseInt(parts[1].trim()) * 60 + Integer.parseInt(parts[2].trim());
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
     @Override
     public void onProgressUpdate(int currentSeconds, int totalSeconds) {
+        if (totalSeconds <= 0) {
+            MusicTrack current = MusicPlayerManager.getInstance().getCurrentTrack();
+            if (current != null) {
+                totalSeconds = parseDurationToSeconds(current.getDuration());
+            }
+        }
+
         if (totalSeconds > 0) {
             int progressPercent = (int) (((float) currentSeconds / totalSeconds) * 100);
             if (pbMiniProgress != null) pbMiniProgress.setProgress(progressPercent);
@@ -815,11 +843,8 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
                 tvPlayerTotalTime.setText(formatTime(totalSeconds));
             }
         } else {
-            if (pbMiniProgress != null) pbMiniProgress.setProgress(0);
-            if (!isUserSeeking && sbPlayerProgress != null) {
-                sbPlayerProgress.setProgress(0);
-                tvPlayerCurrentTime.setText("0:00");
-                tvPlayerTotalTime.setText("0:00");
+            if (tvPlayerCurrentTime != null && !isUserSeeking) {
+                tvPlayerCurrentTime.setText(formatTime(currentSeconds));
             }
         }
     }
