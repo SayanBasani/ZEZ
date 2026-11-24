@@ -97,8 +97,8 @@ public class IncomingCallActivity extends AppCompatActivity {
         TextView tvAcceptLabel = findViewById(R.id.tv_incoming_accept_label);
 
         boolean isVideo = "video".equalsIgnoreCase(callType);
-        tvCallType.setText(isVideo ? "Incoming TWING Video Call" : "Incoming TWING Voice Call");
-        tvCallerName.setText(callerName != null && !callerName.isEmpty() ? callerName : "TWING Contact");
+        tvCallType.setText(isVideo ? "Incoming Quacky Video Call" : "Incoming Quacky Voice Call");
+        tvCallerName.setText(callerName != null && !callerName.isEmpty() ? callerName : "Quacky Contact");
         if (callerPhone != null && !callerPhone.isEmpty()) {
             tvCallerPhone.setText(callerPhone.startsWith("+") ? callerPhone : "+91 " + callerPhone);
             tvCallerPhone.setVisibility(View.VISIBLE);

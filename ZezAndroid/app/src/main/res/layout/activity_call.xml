@@ -42,7 +42,7 @@
             android:id="@+id/tv_call_type_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="TWING Video Call"
+            android:text="Quacky Video Call"
             android:textColor="#94A3B8"
             android:textSize="14sp"
             android:letterSpacing="0.05" />

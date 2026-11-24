@@ -12,9 +12,18 @@ async function publish() {
 
   const fileStats = fs.statSync(apkSourcePath);
   const fileSize = fileStats.size;
-  const versionName = '1.0.41';
-  const versionCode = 42;
-  const fileName = 'app-release-1.0.41.apk';
+
+  const gradlePath = path.resolve(__dirname, '../../ZezAndroid/app/build.gradle');
+  let versionName = '1.0.42';
+  let versionCode = 43;
+  if (fs.existsSync(gradlePath)) {
+    const gradleContent = fs.readFileSync(gradlePath, 'utf8');
+    const vNameMatch = gradleContent.match(/versionName\s+["']([^"']+)["']/);
+    const vCodeMatch = gradleContent.match(/versionCode\s+(\d+)/);
+    if (vNameMatch) versionName = vNameMatch[1];
+    if (vCodeMatch) versionCode = parseInt(vCodeMatch[1], 10);
+  }
+  const fileName = `app-release-${versionName}.apk`;
 
   // 1. Copy to public downloads directory
   const downloadsDir = path.resolve(__dirname, '../src/public/downloads');
@@ -49,7 +58,7 @@ async function publish() {
 
   // 3. Update database
   console.log('[Publish] Updating database records...');
-  const releaseNotes = 'Quacky v1.0.41: Rich MediaStyle notification controls with system seeker & lock screen widget, instant audio playback with VisionOS resolver, accurate real-time duration display, live download progress with speeds and sub-tabs, and responsive 3-column mobile admin panel.';
+  const releaseNotes = `Quacky v${versionName}: Full brand identity to Quacky, rich MediaStyle notification controls with system seeker & lock screen widget, instant audio playback with VisionOS resolver, accurate real-time duration display, live download progress with speeds and sub-tabs, and responsive 3-column mobile admin panel.`;
 
   await pool.query('UPDATE public.app_releases SET is_active = FALSE WHERE is_active = TRUE');
   const insertRes = await pool.query(

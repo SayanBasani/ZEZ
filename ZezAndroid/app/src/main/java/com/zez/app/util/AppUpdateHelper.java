@@ -215,7 +215,7 @@ public class AppUpdateHelper {
                 if (!activity.getPackageManager().canRequestPackageInstalls()) {
                     new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                             .setTitle("Install Permission Needed")
-                            .setMessage("To install this update, please allow 'Install unknown apps' for Zez.")
+                            .setMessage("To install this update, please allow 'Install unknown apps' for Quacky.")
                             .setPositiveButton("Allow in Settings", (dialog, which) -> {
                                 try {
                                     Intent permIntent = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);

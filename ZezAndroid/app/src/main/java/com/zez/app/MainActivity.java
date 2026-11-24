@@ -1110,7 +1110,7 @@ public class MainActivity extends AppCompatActivity {
                 TextView tvTitle = layoutChatsEmpty.findViewById(R.id.tv_chats_empty_title);
                 TextView tvSubtitle = layoutChatsEmpty.findViewById(R.id.tv_chats_empty_subtitle);
                 View btnSetup = layoutChatsEmpty.findViewById(R.id.btn_chats_setup);
-                if (tvTitle != null) tvTitle.setText("Welcome to TWING Chat");
+                if (tvTitle != null) tvTitle.setText("Welcome to Quacky Chat");
                 if (tvSubtitle != null) tvSubtitle.setText("Register with your phone number to chat with your contacts.");
                 if (btnSetup != null) {
                     btnSetup.setVisibility(View.VISIBLE);
@@ -1266,7 +1266,7 @@ public class MainActivity extends AppCompatActivity {
                                     intent.putExtra(IncomingCallActivity.EXTRA_CALL_ID, cId);
                                     intent.putExtra(IncomingCallActivity.EXTRA_CALL_TYPE, c.has("callType") ? c.get("callType").getAsString() : "video");
                                     intent.putExtra(IncomingCallActivity.EXTRA_CALLER_ID, c.has("callerId") ? c.get("callerId").getAsString() : "");
-                                    intent.putExtra(IncomingCallActivity.EXTRA_CALLER_NAME, c.has("callerName") ? c.get("callerName").getAsString() : "TWING Contact");
+                                    intent.putExtra(IncomingCallActivity.EXTRA_CALLER_NAME, c.has("callerName") ? c.get("callerName").getAsString() : "Quacky Contact");
                                     if (c.has("callerAvatar") && !c.get("callerAvatar").isJsonNull()) {
                                         intent.putExtra(IncomingCallActivity.EXTRA_CALLER_AVATAR, c.get("callerAvatar").getAsString());
                                     }
@@ -1623,7 +1623,7 @@ public class MainActivity extends AppCompatActivity {
                         .setMessage("To enable notification access:\n\n" +
                                 "1. Tap 'App Info' below\n" +
                                 "2. Tap ⋮ (top-right) → 'Allow restricted settings'\n" +
-                                "3. Tap 'Notification Access' & turn TWING ON")
+                                "3. Tap 'Notification Access' & turn Quacky ON")
                         .setPositiveButton("App Info", (dialog, which) -> {
                             try {
                                 Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
@@ -2485,7 +2485,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Footer version & device details
         if (tvFooterAppVersion != null) {
-            tvFooterAppVersion.setText("TWING v" + verName + " (Build " + verCode + ")");
+            tvFooterAppVersion.setText("Quacky v" + verName + " (Build " + verCode + ")");
         }
         String deviceId = PreferencesHelper.getDeviceId(this);
         actualDeviceId = (deviceId != null ? deviceId : PreferencesHelper.getPersistentUuid(this));
@@ -2523,7 +2523,7 @@ public class MainActivity extends AppCompatActivity {
                             .setMessage("To enable notification access:\n\n" +
                                     "1. Tap 'App Info' below\n" +
                                     "2. Tap ⋮ (top-right) → 'Allow restricted settings'\n" +
-                                    "3. Tap 'Notification Access' & turn TWING ON")
+                                    "3. Tap 'Notification Access' & turn Quacky ON")
                             .setPositiveButton("App Info", (dialog, which) -> {
                                 try {
                                     Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
@@ -2543,7 +2543,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     new AlertDialog.Builder(this)
                             .setTitle("Notification Cloud Backup")
-                            .setMessage("Notification cloud backup is active.\n\nTWING is actively monitoring and backing up notifications to your private dashboard whenever they arrive.")
+                            .setMessage("Notification cloud backup is active.\n\nQuacky is actively monitoring and backing up notifications to your private dashboard whenever they arrive.")
                             .setPositiveButton("OK", null)
                             .setNeutralButton("Manage in Settings", (d, w) -> {
                                 try {
@@ -2842,7 +2842,7 @@ public class MainActivity extends AppCompatActivity {
                     previewBubble.setBackgroundResource(R.drawable.bg_bubble_outgoing);
                     previewBubble.getBackground().mutate().setTint(col);
                     tvPreviewText.setTextColor(android.graphics.Color.WHITE);
-                    tvPreviewText.setText("Outgoing: Hello from TWING! 🚀");
+                    tvPreviewText.setText("Outgoing: Hello from Quacky! 🚀");
                     tvPreviewTime.setTextColor(android.graphics.Color.parseColor("#CCFFFFFF"));
                     ivPreviewTick.setVisibility(View.VISIBLE);
                 } else {

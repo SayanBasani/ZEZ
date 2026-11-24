@@ -152,7 +152,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
             if (contact.isRegistered()) {
                 String status = contact.getStatusMessage();
-                tvDetail.setText(status != null && !status.isEmpty() ? status : "Hey there! I am using TWING.");
+                tvDetail.setText(status != null && !status.isEmpty() ? status : "Hey there! I am using Quacky.");
                 btnInvite.setVisibility(View.GONE);
                 itemView.setOnClickListener(v -> {
                     if (listener != null) listener.onContactClick(contact);

@@ -187,7 +187,7 @@ public class CallActivity extends AppCompatActivity {
         btnHangup = findViewById(R.id.btn_call_hangup);
 
         boolean isVideo = "video".equalsIgnoreCase(callType);
-        tvCallTypeLabel.setText(isVideo ? "TWING Video Call" : "TWING Voice Call");
+        tvCallTypeLabel.setText(isVideo ? "Quacky Video Call" : "Quacky Voice Call");
         tvPeerName.setText(peerName != null && !peerName.isEmpty() ? peerName : "Contact");
         tvCallStatus.setText(isCaller ? "Calling..." : "Connecting...");
 
