@@ -686,6 +686,15 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         tvMiniArtist.setText(track.getArtist());
         Glide.with(this).load(track.getThumbnailUrl()).into(ivMiniThumb);
 
+        // Immediately reset progress bars and time indicators for the new track
+        if (pbMiniProgress != null) pbMiniProgress.setProgress(0);
+        if (sbPlayerProgress != null) {
+            sbPlayerProgress.setProgress(0);
+            sbPlayerProgress.setMax(100);
+        }
+        if (tvPlayerCurrentTime != null) tvPlayerCurrentTime.setText("0:00");
+        if (tvPlayerTotalTime != null) tvPlayerTotalTime.setText("0:00");
+
         if (playerSheetDialog != null && playerSheetDialog.isShowing()) {
             updateFullPlayerUI();
         }
@@ -703,13 +712,20 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     public void onProgressUpdate(int currentSeconds, int totalSeconds) {
         if (totalSeconds > 0) {
             int progressPercent = (int) (((float) currentSeconds / totalSeconds) * 100);
-            pbMiniProgress.setProgress(progressPercent);
+            if (pbMiniProgress != null) pbMiniProgress.setProgress(progressPercent);
 
             if (!isUserSeeking && sbPlayerProgress != null) {
                 sbPlayerProgress.setMax(totalSeconds);
                 sbPlayerProgress.setProgress(currentSeconds);
                 tvPlayerCurrentTime.setText(formatTime(currentSeconds));
                 tvPlayerTotalTime.setText(formatTime(totalSeconds));
+            }
+        } else {
+            if (pbMiniProgress != null) pbMiniProgress.setProgress(0);
+            if (!isUserSeeking && sbPlayerProgress != null) {
+                sbPlayerProgress.setProgress(0);
+                tvPlayerCurrentTime.setText("0:00");
+                tvPlayerTotalTime.setText("0:00");
             }
         }
     }

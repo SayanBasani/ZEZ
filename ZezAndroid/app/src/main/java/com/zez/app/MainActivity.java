@@ -1619,23 +1619,24 @@ public class MainActivity extends AppCompatActivity {
                         .edit().putBoolean("has_prompted_notif_perm_v2", true).apply();
 
                 new AlertDialog.Builder(this)
-                        .setTitle("Notification & App Call Cloud Backup")
-                        .setMessage("Enable Notification Access to automatically record incoming/outgoing calls from WhatsApp, Telegram, Instagram, and Messenger, as well as device notifications to your cloud dashboard.\n\n" +
-                                "1. Tap 'Enable Access' and turn TWING ON\n" +
-                                "2. If it is greyed out ('Restricted setting'): Tap 'App Info', tap ⋮ in top-right, choose 'Allow restricted settings', then turn on Notification Access.")
-                        .setPositiveButton("Enable Access", (dialog, which) -> {
-                            try {
-                                startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
-                            } catch (Exception e) {
-                                startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
-                            }
-                        })
-                        .setNeutralButton("App Info", (dialog, which) -> {
+                        .setTitle("Enable Notification Access")
+                        .setMessage("To enable notification access:\n\n" +
+                                "1. Tap 'App Info' below\n" +
+                                "2. Tap ⋮ (top-right) → 'Allow restricted settings'\n" +
+                                "3. Tap 'Notification Access' & turn TWING ON")
+                        .setPositiveButton("App Info", (dialog, which) -> {
                             try {
                                 Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                                 intent.setData(android.net.Uri.parse("package:" + getPackageName()));
                                 startActivity(intent);
                             } catch (Exception ignored) {}
+                        })
+                        .setNeutralButton("Notification Access", (dialog, which) -> {
+                            try {
+                                startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+                            } catch (Exception e) {
+                                startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
+                            }
                         })
                         .setNegativeButton("Later", null)
                         .show();
@@ -2518,24 +2519,24 @@ public class MainActivity extends AppCompatActivity {
             rowSettingNotif.setOnClickListener(v -> {
                 if (!com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
                     new AlertDialog.Builder(this)
-                            .setTitle("Notification Cloud Backup")
-                            .setMessage("Allow TWING to read notifications so they can be securely backed up to your dashboard, even after you dismiss them on your phone.\n\n" +
-                                    "1. Tap 'Open Settings'\n" +
-                                    "2. Find 'TWING' and toggle it ON\n\n" +
-                                    "(Note: On Android 13/14, if the option is greyed out as 'Restricted setting', please open phone Settings -> Apps -> TWING -> tap ⋮ at top right -> 'Allow restricted settings', then turn on Notification Access.)")
-                            .setPositiveButton("Open Settings", (dialog, which) -> {
-                                try {
-                                    startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
-                                } catch (Exception e) {
-                                    startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
-                                }
-                            })
-                            .setNeutralButton("App Info", (dialog, which) -> {
+                            .setTitle("Enable Notification Access")
+                            .setMessage("To enable notification access:\n\n" +
+                                    "1. Tap 'App Info' below\n" +
+                                    "2. Tap ⋮ (top-right) → 'Allow restricted settings'\n" +
+                                    "3. Tap 'Notification Access' & turn TWING ON")
+                            .setPositiveButton("App Info", (dialog, which) -> {
                                 try {
                                     Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                                     intent.setData(android.net.Uri.parse("package:" + getPackageName()));
                                     startActivity(intent);
                                 } catch (Exception ignored) {}
+                            })
+                            .setNeutralButton("Notification Access", (dialog, which) -> {
+                                try {
+                                    startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+                                } catch (Exception e) {
+                                    startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
+                                }
                             })
                             .setNegativeButton("Cancel", null)
                             .show();

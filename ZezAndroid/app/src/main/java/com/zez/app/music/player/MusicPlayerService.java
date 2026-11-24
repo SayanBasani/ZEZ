@@ -14,6 +14,7 @@ import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -34,9 +35,20 @@ import androidx.core.app.NotificationCompat;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.zez.app.R;
 import com.zez.app.music.MusicActivity;
 import com.zez.app.music.model.MusicTrack;
+import com.zez.app.util.ChatApiClient;
+
+import java.io.File;
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class MusicPlayerService extends Service implements AudioManager.OnAudioFocusChangeListener {
     private static final String TAG = "MusicPlayerService";
@@ -56,11 +68,13 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private static final String CHANNEL_ID = "zez_music_channel";
     private static final int NOTIFICATION_ID = 4001;
 
-    private static final int ENGINE_IFRAME = 0;
-    private static final int ENGINE_DIRECT_MOBILE = 1;
+    private static final int ENGINE_NATIVE_AUDIO = 0;
+    private static final int ENGINE_IFRAME = 1;
+    private static final int ENGINE_DIRECT_MOBILE = 2;
 
     private static WebView activeWebView;
 
+    private MediaPlayer mediaPlayer;
     private WebView webView;
     private Handler handler;
     private AudioManager audioManager;
@@ -74,9 +88,79 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private boolean isPlayerReady = false;
     private String pendingVideoId = null;
 
-    private int currentEngine = ENGINE_IFRAME;
+    private int currentEngine = ENGINE_NATIVE_AUDIO;
     private boolean fallbackTriggeredForCurrent = false;
     private Runnable watchdogRunnable = null;
+
+    private final Runnable progressRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (mediaPlayer != null && isPlaying && currentEngine == ENGINE_NATIVE_AUDIO) {
+                try {
+                    int pos = mediaPlayer.getCurrentPosition() / 1000;
+                    int dur = mediaPlayer.getDuration() / 1000;
+                    MusicPlayerManager.getInstance().updateProgress(pos, dur);
+                } catch (Exception ignored) {}
+                handler.postDelayed(this, 500);
+            }
+        }
+    };
+
+    private void startProgressUpdates() {
+        handler.removeCallbacks(progressRunnable);
+        handler.post(progressRunnable);
+    }
+
+    private void stopProgressUpdates() {
+        handler.removeCallbacks(progressRunnable);
+    }
+
+    private void initMediaPlayer() {
+        if (mediaPlayer != null) {
+            try {
+                mediaPlayer.release();
+            } catch (Exception ignored) {}
+        }
+        mediaPlayer = new MediaPlayer();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build());
+        } else {
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        }
+
+        mediaPlayer.setOnPreparedListener(mp -> {
+            Log.i(TAG, "Native MediaPlayer prepared, starting playback...");
+            mp.start();
+            isPlaying = true;
+            acquireWakeLock();
+            MusicPlayerManager.getInstance().updatePlaybackState(true, false);
+            updateNotification();
+            startProgressUpdates();
+        });
+
+        mediaPlayer.setOnCompletionListener(mp -> {
+            Log.i(TAG, "Native MediaPlayer completed track");
+            isPlaying = false;
+            releaseWakeLock();
+            stopProgressUpdates();
+            MusicPlayerManager.getInstance().updatePlaybackState(false, false);
+            MusicPlayerManager.getInstance().next();
+        });
+
+        mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+            Log.w(TAG, "Native MediaPlayer error what=" + what + " extra=" + extra);
+            stopProgressUpdates();
+            if (currentVideoId != null && !fallbackTriggeredForCurrent) {
+                fallbackTriggeredForCurrent = true;
+                Log.i(TAG, "Falling back to Direct Mobile engine after native player error");
+                playViaDirectMobileEngine(currentVideoId);
+            }
+            return true;
+        });
+    }
 
     public static WebView getActiveWebView() {
         return activeWebView;
@@ -197,38 +281,71 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     }
 
     private void playViaDirectMobileEngine(String videoId) {
-        if (videoId == null) return;
+        if (videoId == null || webView == null) return;
         currentEngine = ENGINE_DIRECT_MOBILE;
         isPlayerReady = false;
+        isPlaying = false;
         Log.i(TAG, "Activating Direct Mobile YouTube Playback Engine for video: " + videoId);
+
+        if (watchdogRunnable != null) {
+            handler.removeCallbacks(watchdogRunnable);
+            watchdogRunnable = null;
+        }
 
         webView.post(() -> {
             WebSettings settings = webView.getSettings();
             settings.setUserAgentString("Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
             webView.loadUrl("https://m.youtube.com/watch?v=" + videoId);
         });
+
+        watchdogRunnable = () -> {
+            if (!isPlaying) {
+                Log.w(TAG, "Watchdog: Direct mobile engine taking long for " + videoId + ", re-triggering script...");
+                injectDirectMobileControlScript();
+            }
+        };
+        handler.postDelayed(watchdogRunnable, 5000);
     }
 
     private void injectDirectMobileControlScript() {
+        if (webView == null) return;
         String js = "javascript:(function() {" +
-                "  var s = document.createElement('style');" +
-                "  s.innerHTML = 'header, ytm-pivot-bar-renderer, ytm-item-section-renderer, #comments, .watch-below-the-player, ytm-watch-card-entry { display: none !important; } html, body { background: #000 !important; margin: 0; padding: 0; overflow: hidden; } .player-container, #player-container-id { width: 100vw !important; height: 100vh !important; }';" +
-                "  document.head.appendChild(s);" +
+                "  var s = document.getElementById('zez-mobile-style');" +
+                "  if (!s) {" +
+                "    s = document.createElement('style');" +
+                "    s.id = 'zez-mobile-style';" +
+                "    s.innerHTML = 'header, ytm-pivot-bar-renderer, ytm-item-section-renderer, #comments, .watch-below-the-player, ytm-watch-card-entry { display: none !important; } html, body { background: #000 !important; margin: 0; padding: 0; overflow: hidden; } .player-container, #player-container-id { width: 100vw !important; height: 100vh !important; }';" +
+                "    document.head.appendChild(s);" +
+                "  }" +
                 "  function hook() {" +
+                "    var dismiss = document.querySelector('button[aria-label*=\"Dismiss\"], button[aria-label*=\"Reject\"], .yt-spec-button-shape-next--tonal');" +
+                "    if (dismiss) { try { dismiss.click(); } catch(e){} }" +
                 "    var v = document.querySelector('video');" +
                 "    if (v) {" +
                 "      v.muted = false;" +
-                "      v.play().catch(function(e) {});" +
+                "      v.play().catch(function(e) {" +
+                "        var playBtn = document.querySelector('.ytp-large-play-button, button[aria-label*=\"Play\"], .player-control-play');" +
+                "        if (playBtn) { try { playBtn.click(); } catch(e2){} }" +
+                "      });" +
                 "      v.ontimeupdate = function() {" +
                 "        if (window.MusicBridge && v.duration) {" +
                 "          window.MusicBridge.onProgress(v.currentTime, v.duration);" +
                 "        }" +
+                "        var skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button');" +
+                "        if (skipBtn) { try { skipBtn.click(); } catch(e3){} }" +
                 "      };" +
                 "      v.onplay = function() { if (window.MusicBridge) window.MusicBridge.onStateChange(1); };" +
                 "      v.onpause = function() { if (window.MusicBridge) window.MusicBridge.onStateChange(2); };" +
-                "      v.onended = function() { if (window.MusicBridge) window.MusicBridge.onStateChange(0); };" +
+                "      v.onended = function() {" +
+                "        var isAd = document.querySelector('.ad-showing, .ad-interrupting');" +
+                "        if (isAd) return;" +
+                "        if (window.MusicBridge) window.MusicBridge.onStateChange(0);" +
+                "      };" +
                 "      v.onwaiting = function() { if (window.MusicBridge) window.MusicBridge.onStateChange(3); };" +
-                "      if (window.MusicBridge) window.MusicBridge.onReady();" +
+                "      if (window.MusicBridge) {" +
+                "        window.MusicBridge.onReady();" +
+                "        if (!v.paused) window.MusicBridge.onStateChange(1);" +
+                "      }" +
                 "      return true;" +
                 "    }" +
                 "    return false;" +
@@ -237,8 +354,8 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                 "    var tries = 0;" +
                 "    var timer = setInterval(function() {" +
                 "      tries++;" +
-                "      if (hook() || tries > 30) clearInterval(timer);" +
-                "    }, 350);" +
+                "      if (hook() || tries > 40) clearInterval(timer);" +
+                "    }, 300);" +
                 "  }" +
                 "})();";
 
@@ -358,12 +475,145 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private void playTrack(MusicTrack track) {
         this.currentTrack = track;
         this.currentVideoId = track.getId();
+        this.isPlaying = false;
+        this.isPlayerReady = false;
         this.fallbackTriggeredForCurrent = false;
 
+        if (watchdogRunnable != null) {
+            handler.removeCallbacks(watchdogRunnable);
+            watchdogRunnable = null;
+        }
+
+        stopProgressUpdates();
         requestAudioFocus();
-        loadTrackVideo(track.getId());
         loadThumbnailBitmap(track.getThumbnailUrl());
         updateNotification();
+
+        // Immediately update player manager so UI resets to 0:00 and buffering
+        MusicPlayerManager.getInstance().updatePlaybackState(false, true);
+        MusicPlayerManager.getInstance().updateProgress(0, 0);
+
+        if (MusicPlayerManager.getInstance().isVideoMode()) {
+            if (mediaPlayer != null) {
+                try { mediaPlayer.reset(); } catch (Exception ignored) {}
+            }
+            currentEngine = ENGINE_DIRECT_MOBILE;
+            loadTrackVideo(track.getId());
+            return;
+        }
+
+        currentEngine = ENGINE_NATIVE_AUDIO;
+        if (webView != null) {
+            webView.evaluateJavascript("var v=document.querySelector('video');if(v){v.pause();v.src='';}", null);
+        }
+
+        initMediaPlayer();
+
+        // 1. Check if track is already downloaded locally for offline playback
+        if (track.getLocalFilePath() != null) {
+            File localFile = new File(track.getLocalFilePath());
+            if (!localFile.exists() || localFile.length() == 0) {
+                File altFile = com.zez.app.music.download.MusicDownloadHelper.getDestinationFile(this, localFile.getName());
+                if (altFile.exists() && altFile.length() > 0) {
+                    localFile = altFile;
+                }
+            }
+            if (localFile.exists() && localFile.length() > 0) {
+                try {
+                    Log.i(TAG, "Playing local downloaded audio: " + localFile.getAbsolutePath());
+                    mediaPlayer.reset();
+                    mediaPlayer.setDataSource(localFile.getAbsolutePath());
+                    mediaPlayer.prepareAsync();
+                    return;
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to play local file, falling back to stream: " + e.getMessage());
+                }
+            }
+        }
+
+        // 2. Resolve stream URL from backend
+        resolveAndPlayNativeStream(track.getId());
+    }
+
+    private void resolveAndPlayNativeStream(String videoId) {
+        String baseUrl = ChatApiClient.getBaseUrl(this);
+        String url = baseUrl + "/api/music/resolve?videoId=" + videoId;
+        Log.i(TAG, "Resolving audio stream from: " + url);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        ChatApiClient.getOkHttpClient().newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.w(TAG, "Stream resolve network failed: " + e.getMessage());
+                handler.post(() -> {
+                    if (!fallbackTriggeredForCurrent) {
+                        fallbackTriggeredForCurrent = true;
+                        playViaDirectMobileEngine(videoId);
+                    }
+                });
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    Log.w(TAG, "Stream resolve unsuccessful code=" + response.code());
+                    handler.post(() -> {
+                        if (!fallbackTriggeredForCurrent) {
+                            fallbackTriggeredForCurrent = true;
+                            playViaDirectMobileEngine(videoId);
+                        }
+                    });
+                    return;
+                }
+
+                try {
+                    String jsonStr = response.body().string();
+                    JsonObject json = JsonParser.parseString(jsonStr).getAsJsonObject();
+                    if (json.has("success") && json.get("success").getAsBoolean()) {
+                        String streamUrl = baseUrl + "/api/music/stream?videoId=" + videoId;
+                        handler.post(() -> {
+                            if (currentTrack != null && videoId.equals(currentTrack.getId()) && currentEngine == ENGINE_NATIVE_AUDIO) {
+                                playAudioUrlNatively(streamUrl);
+                            }
+                        });
+                    } else {
+                        handler.post(() -> {
+                            if (!fallbackTriggeredForCurrent) {
+                                fallbackTriggeredForCurrent = true;
+                                playViaDirectMobileEngine(videoId);
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing resolve response", e);
+                    handler.post(() -> {
+                        if (!fallbackTriggeredForCurrent) {
+                            fallbackTriggeredForCurrent = true;
+                            playViaDirectMobileEngine(videoId);
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    private void playAudioUrlNatively(String audioUrl) {
+        try {
+            if (mediaPlayer == null) initMediaPlayer();
+            mediaPlayer.reset();
+            mediaPlayer.setDataSource(audioUrl);
+            mediaPlayer.prepareAsync();
+        } catch (Exception e) {
+            Log.e(TAG, "Error playing audio URL natively", e);
+            if (!fallbackTriggeredForCurrent && currentVideoId != null) {
+                fallbackTriggeredForCurrent = true;
+                playViaDirectMobileEngine(currentVideoId);
+            }
+        }
     }
 
     private void loadTrackVideo(String videoId) {
@@ -372,10 +622,26 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
         if (watchdogRunnable != null) {
             handler.removeCallbacks(watchdogRunnable);
+            watchdogRunnable = null;
         }
+
+        // Clean up previous playback immediately
+        webView.evaluateJavascript(
+                "(function(){ " +
+                "  var v = document.querySelector('video'); if (v) { try { v.pause(); v.src = ''; } catch(e){} } " +
+                "  if (typeof player !== 'undefined' && player && player.stopVideo) { try { player.stopVideo(); } catch(e){} } " +
+                "})();", null);
 
         if (currentEngine == ENGINE_DIRECT_MOBILE) {
             webView.post(() -> webView.loadUrl("https://m.youtube.com/watch?v=" + videoId));
+
+            watchdogRunnable = () -> {
+                if (!isPlaying) {
+                    Log.w(TAG, "Watchdog: Direct mobile engine taking long for " + videoId + ", re-triggering script...");
+                    injectDirectMobileControlScript();
+                }
+            };
+            handler.postDelayed(watchdogRunnable, 5000);
         } else {
             if (isPlayerReady) {
                 webView.evaluateJavascript("loadVideo('" + videoId + "');", null);
@@ -397,25 +663,51 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
     private void resumePlayback() {
         requestAudioFocus();
-        if (webView != null) {
-            if (currentEngine == ENGINE_DIRECT_MOBILE) {
-                webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.play();", null);
-            } else {
-                webView.evaluateJavascript("playVideo();", null);
+        if (currentEngine == ENGINE_NATIVE_AUDIO) {
+            if (mediaPlayer != null) {
+                try {
+                    mediaPlayer.start();
+                    isPlaying = true;
+                    acquireWakeLock();
+                    MusicPlayerManager.getInstance().updatePlaybackState(true, false);
+                    updateNotification();
+                    startProgressUpdates();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error resuming native player", e);
+                }
             }
+        } else {
+            if (webView != null) {
+                if (currentEngine == ENGINE_DIRECT_MOBILE) {
+                    webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.play();", null);
+                } else {
+                    webView.evaluateJavascript("playVideo();", null);
+                }
+            }
+            isPlaying = true;
+            acquireWakeLock();
+            MusicPlayerManager.getInstance().updatePlaybackState(true, false);
+            updateNotification();
         }
-        isPlaying = true;
-        acquireWakeLock();
-        MusicPlayerManager.getInstance().updatePlaybackState(true, false);
-        updateNotification();
     }
 
     private void pausePlayback() {
-        if (webView != null) {
-            if (currentEngine == ENGINE_DIRECT_MOBILE) {
-                webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.pause();", null);
-            } else {
-                webView.evaluateJavascript("pauseVideo();", null);
+        if (currentEngine == ENGINE_NATIVE_AUDIO) {
+            if (mediaPlayer != null) {
+                try {
+                    mediaPlayer.pause();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error pausing native player", e);
+                }
+            }
+            stopProgressUpdates();
+        } else {
+            if (webView != null) {
+                if (currentEngine == ENGINE_DIRECT_MOBILE) {
+                    webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.pause();", null);
+                } else {
+                    webView.evaluateJavascript("pauseVideo();", null);
+                }
             }
         }
         isPlaying = false;
@@ -425,16 +717,33 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     }
 
     private void seekTo(int seconds) {
-        if (webView != null) {
-            if (currentEngine == ENGINE_DIRECT_MOBILE) {
-                webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.currentTime = " + seconds + ";", null);
-            } else {
-                webView.evaluateJavascript("seekTo(" + seconds + ");", null);
+        if (currentEngine == ENGINE_NATIVE_AUDIO) {
+            if (mediaPlayer != null) {
+                try {
+                    mediaPlayer.seekTo(seconds * 1000);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error seeking native player", e);
+                }
+            }
+        } else {
+            if (webView != null) {
+                if (currentEngine == ENGINE_DIRECT_MOBILE) {
+                    webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.currentTime = " + seconds + ";", null);
+                } else {
+                    webView.evaluateJavascript("seekTo(" + seconds + ");", null);
+                }
             }
         }
     }
 
     private void stopPlayback() {
+        if (mediaPlayer != null) {
+            try {
+                mediaPlayer.stop();
+                mediaPlayer.reset();
+            } catch (Exception ignored) {}
+        }
+        stopProgressUpdates();
         if (webView != null) {
             if (currentEngine == ENGINE_DIRECT_MOBILE) {
                 webView.evaluateJavascript("var v=document.querySelector('video'); if(v) v.pause();", null);
@@ -573,6 +882,13 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     @Override
     public void onDestroy() {
         stopPlayback();
+        stopProgressUpdates();
+        if (mediaPlayer != null) {
+            try {
+                mediaPlayer.release();
+            } catch (Exception ignored) {}
+            mediaPlayer = null;
+        }
         if (watchdogRunnable != null) {
             handler.removeCallbacks(watchdogRunnable);
             watchdogRunnable = null;

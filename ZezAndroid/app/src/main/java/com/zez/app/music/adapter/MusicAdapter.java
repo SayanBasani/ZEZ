@@ -111,13 +111,23 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.TrackViewHol
         optPlayAudio.setOnClickListener(v -> {
             dialog.dismiss();
             MusicPlayerManager.getInstance().setVideoMode(false);
-            MusicPlayerManager.getInstance().playTrack(track);
+            int idx = tracks.indexOf(track);
+            if (idx >= 0) {
+                MusicPlayerManager.getInstance().playQueue(tracks, idx);
+            } else {
+                MusicPlayerManager.getInstance().playTrack(track);
+            }
         });
 
         optPlayVideo.setOnClickListener(v -> {
             dialog.dismiss();
             MusicPlayerManager.getInstance().setVideoMode(true);
-            MusicPlayerManager.getInstance().playTrack(track);
+            int idx = tracks.indexOf(track);
+            if (idx >= 0) {
+                MusicPlayerManager.getInstance().playQueue(tracks, idx);
+            } else {
+                MusicPlayerManager.getInstance().playTrack(track);
+            }
         });
 
         optDownload.setOnClickListener(v -> {

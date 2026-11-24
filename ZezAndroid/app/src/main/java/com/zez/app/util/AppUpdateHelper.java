@@ -209,6 +209,31 @@ public class AppUpdateHelper {
                 Log.e(TAG, "APK file does not exist");
                 return;
             }
+
+            // On Android 8.0+ (API 26+), verify that installing unknown packages is permitted
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (!activity.getPackageManager().canRequestPackageInstalls()) {
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
+                            .setTitle("Install Permission Needed")
+                            .setMessage("To install this update, please allow 'Install unknown apps' for Zez.")
+                            .setPositiveButton("Allow in Settings", (dialog, which) -> {
+                                try {
+                                    Intent permIntent = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+                                    permIntent.setData(Uri.parse("package:" + activity.getPackageName()));
+                                    activity.startActivity(permIntent);
+                                } catch (Exception e) {
+                                    try {
+                                        Intent secIntent = new Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS);
+                                        activity.startActivity(secIntent);
+                                    } catch (Exception ignored) {}
+                                }
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                    return;
+                }
+            }
+
             apkFile.setReadable(true, false);
             Uri apkUri = FileProvider.getUriForFile(
                     activity,

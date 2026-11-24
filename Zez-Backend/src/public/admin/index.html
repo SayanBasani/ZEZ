@@ -1270,25 +1270,28 @@
     }
     .device-card-footer {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      flex-direction: column;
+      align-items: stretch;
       gap: 8px;
-      flex-wrap: wrap;
       border-top: 1px solid var(--hairline);
       padding-top: 10px;
     }
     .device-card-actions {
-      display: flex;
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 6px;
-      flex: 1;
-      justify-content: flex-end;
-      flex-wrap: wrap;
+      justify-content: stretch;
     }
     .device-card-actions .btn {
-      flex: 1;
-      max-width: 90px;
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      padding: 6px 4px;
+      font-size: 11px;
+      white-space: nowrap;
       justify-content: center;
-      height: 34px;
+      height: 32px;
     }
 
     /* Responsive Call Card */

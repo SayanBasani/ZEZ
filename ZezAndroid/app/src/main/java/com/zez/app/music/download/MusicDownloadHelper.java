@@ -144,78 +144,80 @@ public class MusicDownloadHelper {
     public static void startDownloadWithWebView(Context context, MusicTrack track, String targetFileName, boolean isAudio, String qualityTag, DownloadCallback callback) {
         final String fileName = targetFileName;
 
-        Toast.makeText(context, "Preparing download: " + fileName, Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "Starting download: " + fileName, Toast.LENGTH_SHORT).show();
 
-        // Create a non-intrusive downloader dialog with WebView
-        Dialog dlDialog = new Dialog(context);
-        View view = LayoutInflater.from(context).inflate(R.layout.dialog_webview_downloader, null);
-        dlDialog.setContentView(view);
-        if (dlDialog.getWindow() != null) {
-            dlDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        }
-
-        TextView tvStatus = view.findViewById(R.id.tv_dl_status);
-        ProgressBar pbProgress = view.findViewById(R.id.pb_dl_progress);
-        Button btnClose = view.findViewById(R.id.btn_dl_close);
-        WebView wv = view.findViewById(R.id.wv_downloader);
-
-        tvStatus.setText("Connecting to YouTube downloader for " + (isAudio ? "MP3..." : "MP4..."));
-        btnClose.setOnClickListener(v -> {
-            wv.destroy();
-            dlDialog.dismiss();
-        });
-
-        WebSettings ws = wv.getSettings();
-        ws.setJavaScriptEnabled(true);
-        ws.setDomStorageEnabled(true);
-        ws.setUserAgentString("Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
-
-        wv.setWebChromeClient(new WebChromeClient());
-        wv.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                tvStatus.setText("Extracting media stream...");
-            }
-        });
-
-        wv.setDownloadListener(new DownloadListener() {
-            private boolean downloadTriggered = false;
-
-            @Override
-            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-                if (downloadTriggered) return;
-                downloadTriggered = true;
-
-                Log.d(TAG, "Download started: " + url + " MIME: " + mimetype);
-                enqueueSystemDownload(context, url, userAgent, fileName, mimetype);
-
-                // Save to downloads store
-                File destFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName);
-                track.setDownloaded(true);
-                track.setLocalFilePath(destFile.getAbsolutePath());
-                saveDownloadedTrack(context, track);
-
-                Toast.makeText(context, "Download enqueued: " + fileName, Toast.LENGTH_LONG).show();
-                if (callback != null) callback.onDownloadStarted(fileName);
-
-                wv.destroy();
-                dlDialog.dismiss();
-            }
-        });
-
-        // Use standard high-reliability converter gateway
         try {
-            String encodedVid = URLEncoder.encode("https://www.youtube.com/watch?v=https://www.youtube.com/watch?v=" + track.getId(), "UTF-8");
-            String targetUrl = isAudio
-                    ? "https://yt1s.com/en/youtube-to-mp3?q=https://www.youtube.com/watch?v=" + track.getId()
-                    : "https://yt1s.com/en/youtube-to-mp4?q=https://www.youtube.com/watch?v=" + track.getId();
-            wv.loadUrl(targetUrl);
-            dlDialog.show();
+            String baseUrl = com.zez.app.util.ChatApiClient.getBaseUrl(context);
+            String titleOnly = fileName.replaceAll("\\.[^.]+$", "");
+            String encodedTitle = URLEncoder.encode(titleOnly, "UTF-8");
+            String downloadUrl = baseUrl + "/api/music/download?videoId=" + track.getId() + "&title=" + encodedTitle;
+
+            String mimeType = isAudio ? "audio/mp4" : "video/mp4";
+            enqueueSystemDownload(context, downloadUrl, null, fileName, mimeType);
+
+            // Save to downloads store for offline playback and download directly
+            File destFile = getDestinationFile(context, fileName);
+            track.setDownloaded(true);
+            track.setLocalFilePath(destFile.getAbsolutePath());
+            saveDownloadedTrack(context, track);
+
+            downloadDirectlyToFile(context, downloadUrl, destFile, track, callback);
+
+            Toast.makeText(context, "Download enqueued to Downloads: " + fileName, Toast.LENGTH_LONG).show();
+            if (callback != null) callback.onDownloadStarted(fileName);
         } catch (Exception e) {
-            Log.e(TAG, "Failed to load downloader url", e);
-            Toast.makeText(context, "Failed to start download", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "Error starting download", e);
+            Toast.makeText(context, "Download error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            if (callback != null) callback.onError(e.getMessage());
         }
+    }
+
+    public static File getDestinationFile(Context context, String fileName) {
+        try {
+            File publicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            if (publicDir != null && (publicDir.exists() || publicDir.mkdirs()) && publicDir.canWrite()) {
+                return new File(publicDir, fileName);
+            }
+        } catch (Exception ignored) {}
+        File appDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        if (appDir == null) {
+            appDir = context.getFilesDir();
+        }
+        return new File(appDir, fileName);
+    }
+
+    private static void downloadDirectlyToFile(Context context, String downloadUrl, File destFile, MusicTrack track, DownloadCallback callback) {
+        new Thread(() -> {
+            try {
+                okhttp3.Request request = new okhttp3.Request.Builder()
+                        .url(downloadUrl)
+                        .get()
+                        .build();
+                okhttp3.Response response = com.zez.app.util.ChatApiClient.getOkHttpClient().newCall(request).execute();
+                if (response.isSuccessful() && response.body() != null) {
+                    if (destFile.getParentFile() != null && !destFile.getParentFile().exists()) {
+                        destFile.getParentFile().mkdirs();
+                    }
+                    try (java.io.InputStream is = response.body().byteStream();
+                         java.io.FileOutputStream fos = new java.io.FileOutputStream(destFile)) {
+                        byte[] buf = new byte[8192];
+                        int r;
+                        while ((r = is.read(buf)) != -1) {
+                            fos.write(buf, 0, r);
+                        }
+                        fos.flush();
+                    }
+                    track.setDownloaded(true);
+                    track.setLocalFilePath(destFile.getAbsolutePath());
+                    saveDownloadedTrack(context, track);
+                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                        Toast.makeText(context, "Downloaded for offline playback: " + destFile.getName(), Toast.LENGTH_SHORT).show();
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Direct download to file error", e);
+            }
+        }).start();
     }
 
     private static void enqueueSystemDownload(Context context, String url, String userAgent, String fileName, String mimeType) {
@@ -249,14 +251,25 @@ public class MusicDownloadHelper {
             List<MusicTrack> list = new Gson().fromJson(json, listType);
             if (list == null) list = new ArrayList<>();
 
-            // Verify local files still exist
-            List<MusicTrack> existing = new ArrayList<>();
+            List<MusicTrack> valid = new ArrayList<>();
             for (MusicTrack t : list) {
-                if (t.getLocalFilePath() != null && new File(t.getLocalFilePath()).exists()) {
-                    existing.add(t);
+                if (t.getLocalFilePath() != null) {
+                    File f = new File(t.getLocalFilePath());
+                    if (f.exists() && f.length() > 0) {
+                        valid.add(t);
+                        continue;
+                    }
+                    // Check alternative destination directory
+                    File alt = getDestinationFile(context, f.getName());
+                    if (alt.exists() && alt.length() > 0) {
+                        t.setLocalFilePath(alt.getAbsolutePath());
+                        valid.add(t);
+                        continue;
+                    }
                 }
+                valid.add(t);
             }
-            return existing;
+            return valid;
         } catch (Exception e) {
             Log.e(TAG, "Error loading downloaded tracks", e);
             return new ArrayList<>();

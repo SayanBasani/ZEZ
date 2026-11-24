@@ -11,12 +11,16 @@ import com.google.gson.JsonParser;
 import com.zez.app.music.model.MusicTrack;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
+import okhttp3.Dns;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -42,8 +46,51 @@ public class YouTubeApiHelper {
         this.httpClient = new OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(20, TimeUnit.SECONDS)
+                .dns(new Dns() {
+                    @Override
+                    public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+                        try {
+                            return Dns.SYSTEM.lookup(hostname);
+                        } catch (Exception e) {
+                            Log.w(TAG, "System DNS failed for " + hostname + ", using fallback resolver");
+                            List<InetAddress> fallback = resolveFallback(hostname);
+                            if (fallback != null && !fallback.isEmpty()) {
+                                return fallback;
+                            }
+                            throw new UnknownHostException("Could not resolve " + hostname);
+                        }
+                    }
+                })
                 .build();
         this.mainHandler = new Handler(Looper.getMainLooper());
+    }
+
+    private static List<InetAddress> resolveFallback(String hostname) {
+        List<InetAddress> list = new ArrayList<>();
+        try {
+            if ("www.youtube.com".equalsIgnoreCase(hostname)) {
+                for (String ip : Arrays.asList("142.251.154.4", "142.251.150.4", "142.251.157.4", "142.251.155.4")) {
+                    list.add(InetAddress.getByAddress(hostname, InetAddress.getByName(ip).getAddress()));
+                }
+                return list;
+            } else if ("suggestqueries-clients6.youtube.com".equalsIgnoreCase(hostname)) {
+                for (String ip : Arrays.asList("142.250.193.142", "142.251.150.4")) {
+                    list.add(InetAddress.getByAddress(hostname, InetAddress.getByName(ip).getAddress()));
+                }
+                return list;
+            } else if ("i.ytimg.com".equalsIgnoreCase(hostname)) {
+                for (String ip : Arrays.asList("142.251.148.6", "142.251.146.6", "192.178.41.6")) {
+                    list.add(InetAddress.getByAddress(hostname, InetAddress.getByName(ip).getAddress()));
+                }
+                return list;
+            } else if ("m.youtube.com".equalsIgnoreCase(hostname)) {
+                for (String ip : Arrays.asList("142.250.122.102", "142.250.122.100", "142.250.122.138")) {
+                    list.add(InetAddress.getByAddress(hostname, InetAddress.getByName(ip).getAddress()));
+                }
+                return list;
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     public static synchronized YouTubeApiHelper getInstance() {
@@ -58,7 +105,7 @@ public class YouTubeApiHelper {
             try {
                 JsonObject clientObj = new JsonObject();
                 clientObj.addProperty("clientName", "WEB");
-                clientObj.addProperty("clientVersion", "2.20241118.00.00");
+                clientObj.addProperty("clientVersion", "2.20240101.01.00");
                 clientObj.addProperty("hl", "en");
                 clientObj.addProperty("gl", "US");
 
@@ -78,18 +125,23 @@ public class YouTubeApiHelper {
                         .header("Referer", "https://www.youtube.com/")
                         .build();
 
+                Log.d(TAG, "Executing YouTube search request for: " + query);
                 Response response = httpClient.newCall(request).execute();
+                Log.d(TAG, "Search response code: " + response.code());
                 if (!response.isSuccessful() || response.body() == null) {
+                    String errBody = response.body() != null ? response.body().string() : "";
+                    Log.e(TAG, "Search failed with HTTP " + response.code() + ": " + errBody);
                     mainHandler.post(() -> callback.onError(new IOException("Unexpected HTTP code " + response.code())));
                     return;
                 }
 
                 String responseStr = response.body().string();
                 List<MusicTrack> tracks = parseSearchResults(responseStr);
+                Log.d(TAG, "Parsed " + tracks.size() + " tracks for query: " + query);
                 mainHandler.post(() -> callback.onSuccess(tracks));
-            } catch (Exception e) {
-                Log.e(TAG, "Search error for query: " + query, e);
-                mainHandler.post(() -> callback.onError(e));
+            } catch (Throwable e) {
+                Log.e(TAG, "Search error for query: " + query + " -> " + e.getClass().getName() + ": " + e.getMessage(), e);
+                mainHandler.post(() -> callback.onError(new Exception(e.getMessage())));
             }
         }).start();
     }

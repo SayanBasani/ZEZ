@@ -164,6 +164,7 @@ public class MusicPlayerManager {
 
         notifyTrackChanged(currentTrack);
         notifyPlaybackState(true, true);
+        notifyProgress(0, 0);
 
         if (appContext != null) {
             Intent intent = new Intent(appContext, MusicPlayerService.class);

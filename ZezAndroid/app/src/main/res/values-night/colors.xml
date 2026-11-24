@@ -21,6 +21,7 @@
     <!-- Legacy compatibility tokens mapped to dark in night mode -->
     <color name="background_light">#141415</color>
     <color name="surface_light">#19191B</color>
+    <color name="surface_variant">#232325</color>
     <color name="text_primary_light">#EDEDED</color>
     <color name="text_secondary_light">#A1A1A6</color>
     <color name="border_light">#232325</color>

@@ -18,6 +18,7 @@ ZezAndroid/.gradle/
 *.key
 
 # Output & Temp Files
+scratch/
 *.apk
 *.aab
 *.dex

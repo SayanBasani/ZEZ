@@ -10,6 +10,7 @@ const appReleaseRouter = require("./routes/appRelease");
 const chatRouter = require("./routes/chat");
 const storageRouter = require("./routes/storage");
 const callSignalingRouter = require("./routes/callSignaling");
+const musicRouter = require("./routes/music");
 const path = require('path');
 const fs = require('fs');
 
@@ -88,6 +89,7 @@ app.use("/api/calls/read", callReadRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/storage", storageRouter);
 app.use("/api/call", callSignalingRouter);
+app.use("/api/music", musicRouter);
 
 app.use((error, _req, res, _next) => {
   if (error?.type === 'entity.too.large') {

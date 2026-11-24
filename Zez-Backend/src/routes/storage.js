@@ -65,15 +65,22 @@ router.get("/file/*key", async (req, res) => {
     const objectKey = b2Storage.sanitizeKey(rawKey);
     const cachedFilePath = path.join(STORAGE_CACHE_DIR, objectKey);
 
+    const isApk = objectKey.endsWith('.apk');
+
     // 1. Instant Cache Hit: Serve directly from local disk (<5ms)
     if (fs.existsSync(cachedFilePath)) {
+      const headers = {
+        "Cache-Control": "public, max-age=86400, immutable"
+      };
+      if (isApk) {
+        headers["Content-Disposition"] = `attachment; filename="${path.basename(objectKey)}"`;
+        headers["Content-Type"] = "application/vnd.android.package-archive";
+      }
       return res.sendFile(path.resolve(cachedFilePath), {
         acceptRanges: true,
         cacheControl: true,
         maxAge: 86400000,
-        headers: {
-          "Cache-Control": "public, max-age=86400, immutable"
-        }
+        headers
       });
     }
 
@@ -91,10 +98,14 @@ router.get("/file/*key", async (req, res) => {
     }
 
     const headers = {
-      "Content-Type": b2Res.contentType,
+      "Content-Type": isApk ? "application/vnd.android.package-archive" : b2Res.contentType,
       "Accept-Ranges": "bytes",
       "Cache-Control": "public, max-age=86400, immutable"
     };
+
+    if (isApk || req.query.download === "true") {
+      headers["Content-Disposition"] = `attachment; filename="${path.basename(objectKey)}"`;
+    }
 
     if (b2Res.contentLength !== undefined) {
       headers["Content-Length"] = b2Res.contentLength;
