@@ -1,11 +1,11 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { pool } = require('./src/db');
-const b2Storage = require('./src/services/b2StorageService');
+const { pool } = require('../src/db');
+const b2Storage = require('../src/services/b2StorageService');
 
 async function publish() {
-  const apkSourcePath = path.resolve(__dirname, '../ZezAndroid/app/build/outputs/apk/release/app-release.apk');
+  const apkSourcePath = path.resolve(__dirname, '../../ZezAndroid/app/build/outputs/apk/release/app-release.apk');
   if (!fs.existsSync(apkSourcePath)) {
     throw new Error('Release APK not found at: ' + apkSourcePath);
   }
@@ -17,7 +17,7 @@ async function publish() {
   const fileName = 'app-release-1.0.41.apk';
 
   // 1. Copy to public downloads directory
-  const downloadsDir = path.resolve(__dirname, './src/public/downloads');
+  const downloadsDir = path.resolve(__dirname, '../src/public/downloads');
   if (!fs.existsSync(downloadsDir)) {
     fs.mkdirSync(downloadsDir, { recursive: true });
   }

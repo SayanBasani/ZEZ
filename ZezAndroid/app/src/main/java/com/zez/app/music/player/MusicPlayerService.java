@@ -103,6 +103,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private String currentDirectAudioUrl = null;
     private String currentBackendStreamUrl = null;
     private boolean triedBackendStream = false;
+    private boolean isDataSourceSet = false;
 
     public static int parseDurationToSeconds(String durStr) {
         if (durStr == null || durStr.trim().isEmpty()) return 0;
@@ -188,7 +189,11 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         });
 
         mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-            Log.w(TAG, "Native MediaPlayer error what=" + what + " extra=" + extra);
+            Log.w(TAG, "Native MediaPlayer error what=" + what + " extra=" + extra + " isDataSourceSet=" + isDataSourceSet);
+            if (!isDataSourceSet) {
+                // Ignore state errors if dataSource hasn't been set yet
+                return true;
+            }
             handleNativePlayerError();
             return true;
         });
@@ -645,7 +650,9 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                     if (json.has("success") && json.get("success").getAsBoolean()) {
                         String streamUrl = baseUrl + "/api/music/stream?videoId=" + videoId;
                         handler.post(() -> {
-                            if (currentTrack != null && videoId.equals(currentTrack.getId()) && currentEngine == ENGINE_NATIVE_AUDIO) {
+                            if (currentTrack != null && videoId.equals(currentTrack.getId())) {
+                                currentEngine = ENGINE_NATIVE_AUDIO;
+                                fallbackTriggeredForCurrent = false;
                                 Log.i(TAG, "Streaming native audio from: " + streamUrl);
                                 playAudioUrlNatively(streamUrl, false);
                             }
@@ -691,14 +698,17 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private void playAudioUrlNatively(String audioUrl, boolean isDirect) {
         try {
             if (mediaPlayer == null) initMediaPlayer();
+            isDataSourceSet = false;
             mediaPlayer.reset();
             try {
                 mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             } catch (Exception ignored) {}
 
             mediaPlayer.setDataSource(audioUrl);
+            isDataSourceSet = true;
             mediaPlayer.prepareAsync();
         } catch (Exception e) {
+            isDataSourceSet = false;
             Log.e(TAG, "Error playing audio URL natively: " + e.getMessage());
             handleNativePlayerError();
         }
