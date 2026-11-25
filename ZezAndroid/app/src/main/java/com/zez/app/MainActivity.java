@@ -244,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerAlbums;
     private LinearLayout layoutGalleryEmpty;
     private LinearLayout galleryActionBar;
-    private com.google.android.material.button.MaterialButton btnGalleryShare, btnGalleryBin;
+    private View btnGalleryShare, btnGalleryBin, btnGalleryMove, btnGalleryCreate, btnGalleryMore;
     private com.zez.app.adapter.AlbumsAdapter albumsAdapter;
     private List<com.zez.app.model.MediaItem> allMediaCache = new ArrayList<>();
     private static final int GALLERY_TAB_PHOTOS = 0;
@@ -589,6 +589,9 @@ public class MainActivity extends AppCompatActivity {
         galleryActionBar     = findViewById(R.id.gallery_action_bar);
         btnGalleryShare      = findViewById(R.id.btn_gallery_share);
         btnGalleryBin        = findViewById(R.id.btn_gallery_bin);
+        btnGalleryMove       = findViewById(R.id.btn_gallery_move);
+        btnGalleryCreate     = findViewById(R.id.btn_gallery_create);
+        btnGalleryMore       = findViewById(R.id.btn_gallery_more);
 
         // Gallery photos RecyclerView
         GridLayoutManager glm = new GridLayoutManager(this, 3);
@@ -670,9 +673,12 @@ public class MainActivity extends AppCompatActivity {
             @Override public void onTabReselected(com.google.android.material.tabs.TabLayout.Tab tab) {}
         });
 
-        // Multi-select actions
-        btnGalleryShare.setOnClickListener(v -> shareSelectedMedia());
-        btnGalleryBin.setOnClickListener(v -> moveSelectedToBin());
+        // Multi-select actions (Vivo Album Style)
+        if (btnGalleryShare != null) btnGalleryShare.setOnClickListener(v -> shareSelectedMedia());
+        if (btnGalleryBin != null) btnGalleryBin.setOnClickListener(v -> moveSelectedToBin());
+        if (btnGalleryMove != null) btnGalleryMove.setOnClickListener(v -> Toast.makeText(this, "Move/Copy option coming soon", Toast.LENGTH_SHORT).show());
+        if (btnGalleryCreate != null) btnGalleryCreate.setOnClickListener(v -> Toast.makeText(this, "Create option coming soon", Toast.LENGTH_SHORT).show());
+        if (btnGalleryMore != null) btnGalleryMore.setOnClickListener(this::showGalleryMorePopup);
 
         binAdapter = new RecycleBinAdapter(item -> {
             RecycleBinHelper.restoreItem(this, item.mediaId);
@@ -2231,6 +2237,54 @@ public class MainActivity extends AppCompatActivity {
         tvTitle.setText("Gallery");
         galleryActionBar.setVisibility(View.GONE);
         loadGalleryData();
+    }
+
+    private void showGalleryMorePopup(View anchor) {
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenu().add(0, 1, 0, "Hide");
+        popup.getMenu().add(0, 2, 1, "Move to Private space");
+        popup.getMenu().add(0, 3, 2, "Copy to clipboard");
+        popup.getMenu().add(0, 4, 3, "PDF/PPT");
+        popup.getMenu().add(0, 5, 4, "Print");
+
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == 4) {
+                launchPdfGeneratorFromGallery();
+            } else if (id == 1) {
+                Toast.makeText(this, "Hidden", Toast.LENGTH_SHORT).show();
+            } else if (id == 2) {
+                Toast.makeText(this, "Moved to Private space", Toast.LENGTH_SHORT).show();
+            } else if (id == 3) {
+                Toast.makeText(this, "Copied to clipboard", Toast.LENGTH_SHORT).show();
+            } else if (id == 5) {
+                Toast.makeText(this, "Printing...", Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        });
+        popup.show();
+    }
+
+    private void launchPdfGeneratorFromGallery() {
+        if (galleryAdapter == null) return;
+        List<com.zez.app.model.MediaItem> selected = galleryAdapter.getSelectedItems();
+        if (selected == null || selected.isEmpty()) {
+            Toast.makeText(this, "Select at least one image", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ArrayList<String> uris = new ArrayList<>();
+        for (com.zez.app.model.MediaItem item : selected) {
+            if (item != null && item.getUri() != null) {
+                uris.add(item.getUri().toString());
+            }
+        }
+        if (uris.isEmpty()) {
+            Toast.makeText(this, "No valid images selected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent intent = new Intent(this, PdfGeneratorActivity.class);
+        intent.putStringArrayListExtra(PdfGeneratorActivity.EXTRA_IMAGE_URIS, uris);
+        startActivity(intent);
     }
 
     @Override

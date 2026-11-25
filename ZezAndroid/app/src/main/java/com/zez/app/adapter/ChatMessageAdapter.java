@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -411,6 +412,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        holder.itemView.setTranslationX(0f);
         ChatRowItem item = rowItems.get(position);
         if (item == null) return;
 
@@ -492,7 +494,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
-    static class OutgoingViewHolder extends RecyclerView.ViewHolder {
+    public static class OutgoingViewHolder extends RecyclerView.ViewHolder {
         TextView tvText;
         TextView tvTime;
         ImageView ivTick;
@@ -713,10 +715,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     String text = msg.getCleanMessageText();
                     if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
                         tvText.setVisibility(View.VISIBLE);
-                        tvText.setText(com.zez.app.util.MarkdownRenderer.render(text));
+                        setTextWithLinks(tvText, text);
                     } else if (msg.getMediaUrl() == null || msg.getMediaUrl().isEmpty()) {
                         tvText.setVisibility(View.VISIBLE);
-                        tvText.setText(text != null ? com.zez.app.util.MarkdownRenderer.render(text) : "");
+                        setTextWithLinks(tvText, text != null ? text : "");
                     } else {
                         tvText.setVisibility(View.GONE);
                     }
@@ -729,7 +731,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
-    static class IncomingViewHolder extends RecyclerView.ViewHolder {
+    public static class IncomingViewHolder extends RecyclerView.ViewHolder {
         View layoutBubble;
         TextView tvText;
         TextView tvTime;
@@ -943,10 +945,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     String text = msg.getCleanMessageText();
                     if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
                         tvText.setVisibility(View.VISIBLE);
-                        tvText.setText(com.zez.app.util.MarkdownRenderer.render(text));
+                        setTextWithLinks(tvText, text);
                     } else if (msg.getMediaUrl() == null || msg.getMediaUrl().isEmpty()) {
                         tvText.setVisibility(View.VISIBLE);
-                        tvText.setText(text != null ? com.zez.app.util.MarkdownRenderer.render(text) : "");
+                        setTextWithLinks(tvText, text != null ? text : "");
                     } else {
                         tvText.setVisibility(View.GONE);
                     }
@@ -956,6 +958,19 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
             bindReactionOnly(msg);
         }
+    }
+
+    private static void setTextWithLinks(TextView tv, CharSequence text) {
+        if (text == null || text.length() == 0) {
+            tv.setText("");
+            return;
+        }
+        CharSequence rendered = com.zez.app.util.MarkdownRenderer.render(text);
+        SpannableStringBuilder ssb = new SpannableStringBuilder(rendered);
+        android.text.util.Linkify.addLinks(ssb, android.text.util.Linkify.WEB_URLS | android.text.util.Linkify.EMAIL_ADDRESSES);
+        tv.setText(ssb);
+        tv.setMovementMethod(com.zez.app.util.LinkTouchMovementMethod.getInstance());
+        tv.setLinkTextColor(Color.parseColor("#38BDF8"));
     }
 
     private static void bindMedia(Context context, ChatMessage msg, FrameLayout layoutMedia, ImageView ivImage, ImageView ivPlay, LinearLayout layoutFile, TextView tvFileName, TextView tvFileSize) {

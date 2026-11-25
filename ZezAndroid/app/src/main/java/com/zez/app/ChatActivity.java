@@ -1407,7 +1407,7 @@ public class ChatActivity extends AppCompatActivity {
         adapter.setOnGameInviteClickListener(this::handleGameInviteClick);
         adapter.setOnGameDeclineClickListener(this::handleGameDeclineClick);
 
-        // WhatsApp-Style Effortless Swipe to Reply (both left & right, very low threshold)
+        // Swipe to Reply with user direction rules and zero-sticking guarantee
         ItemTouchHelper.SimpleCallback swipeToReplyCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT) {
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
@@ -1419,12 +1419,24 @@ public class ChatActivity extends AppCompatActivity {
                 if (viewHolder instanceof ChatMessageAdapter.DateHeaderViewHolder) {
                     return 0;
                 }
-                return ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT;
+                int pos = viewHolder.getBindingAdapterPosition();
+                if (pos == RecyclerView.NO_POSITION || adapter == null) return 0;
+                ChatMessage msg = adapter.getMessageAt(pos);
+                if (msg == null || msg.isDeletedForEveryone()) return 0;
+
+                // User direction rules:
+                // Other user's message (incoming): swipe RIGHT ONLY
+                // Own message (outgoing): swipe LEFT or RIGHT
+                if (viewHolder instanceof ChatMessageAdapter.IncomingViewHolder) {
+                    return ItemTouchHelper.RIGHT;
+                } else {
+                    return ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT;
+                }
             }
 
             @Override
             public float getSwipeThreshold(@NonNull RecyclerView.ViewHolder viewHolder) {
-                return 0.10f; // Only 10% swipe required to trigger reply effortlessly
+                return 0.12f; // Low threshold for effortless swipe
             }
 
             @Override
@@ -1438,24 +1450,35 @@ public class ChatActivity extends AppCompatActivity {
             }
 
             @Override
+            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                getDefaultUIUtil().clearView(viewHolder.itemView);
+                viewHolder.itemView.setTranslationX(0f);
+            }
+
+            @Override
             public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
                                     @NonNull RecyclerView.ViewHolder viewHolder,
                                     float dX, float dY, int actionState, boolean isCurrentlyActive) {
-                // Smoothly clamp visual offset so the bubble doesn't get dragged away
                 float maxOffset = 140f;
                 float clampedDx = dX > 0 ? Math.min(dX, maxOffset) : Math.max(dX, -maxOffset);
-                super.onChildDraw(c, recyclerView, viewHolder, clampedDx, dY, actionState, isCurrentlyActive);
+                getDefaultUIUtil().onDraw(c, recyclerView, viewHolder.itemView, clampedDx, dY, actionState, isCurrentlyActive);
             }
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int pos = viewHolder.getBindingAdapterPosition();
-                if (pos != RecyclerView.NO_POSITION) {
+                if (pos != RecyclerView.NO_POSITION && adapter != null) {
                     ChatMessage msg = adapter.getMessageAt(pos);
                     if (msg != null && !msg.isDeletedForEveryone()) {
                         startReply(msg);
                     }
-                    adapter.notifyItemChanged(pos); // Snap message bubble smoothly back into place
+                }
+                // Unconditionally clear translation & snap bubble back into place without sticking
+                getDefaultUIUtil().clearView(viewHolder.itemView);
+                viewHolder.itemView.setTranslationX(0f);
+                if (pos != RecyclerView.NO_POSITION && adapter != null) {
+                    adapter.notifyItemChanged(pos);
                 }
             }
         };

@@ -162,36 +162,146 @@
 
     </FrameLayout>
 
-    <!-- Multi-select bottom action bar -->
+    <!-- Multi-select bottom action bar (Vivo Album Style) -->
     <LinearLayout
         android:id="@+id/gallery_action_bar"
         android:layout_width="match_parent"
-        android:layout_height="58dp"
+        android:layout_height="60dp"
         android:orientation="horizontal"
-        android:gravity="center"
+        android:gravity="center_vertical"
         android:background="?attr/colorThemeSurface"
         android:elevation="8dp"
         android:visibility="gone">
 
-        <com.google.android.material.button.MaterialButton
+        <!-- Share -->
+        <LinearLayout
             android:id="@+id/btn_gallery_share"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginHorizontal="14dp"
-            android:text="Share"
-            android:textSize="13sp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
 
-        <com.google.android.material.button.MaterialButton
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_share"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Share"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
+
+        <!-- Move/Copy -->
+        <LinearLayout
+            android:id="@+id/btn_gallery_move"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_folder"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Move/Copy"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
+
+        <!-- Create -->
+        <LinearLayout
+            android:id="@+id/btn_gallery_create"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_edit"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Create"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
+
+        <!-- Delete -->
+        <LinearLayout
             android:id="@+id/btn_gallery_bin"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginHorizontal="14dp"
-            android:text="Move to Bin"
-            android:textSize="13sp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_delete"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Delete"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
+
+        <!-- More -->
+        <LinearLayout
+            android:id="@+id/btn_gallery_more"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_more_vert"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="More"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

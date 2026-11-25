@@ -83,6 +83,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private boolean isPreparing = false;
     private boolean isPrepared = false;
     private boolean playWhenReady = true;
+    private boolean resumeOnFocusGain = false;
     private boolean hasRetriedWithFallback = false;
     private int lastReportedPositionSeconds = 0;
 
@@ -328,7 +329,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null || intent.getAction() == null) {
-            return START_STICKY;
+            return START_NOT_STICKY;
         }
 
         String action = intent.getAction();
@@ -364,7 +365,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                 break;
         }
 
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     private void playTrack(MusicTrack track) {
@@ -507,6 +508,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
     private void pausePlayback() {
         playWhenReady = false;
+        resumeOnFocusGain = false;
         if (mediaPlayer != null && isPrepared) {
             try {
                 if (mediaPlayer.isPlaying()) {
@@ -520,6 +522,11 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         releaseWakeLock();
         stopProgressUpdates();
         MusicPlayerManager.getInstance().updatePlaybackState(false, false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_DETACH);
+        } else {
+            stopForeground(false);
+        }
         updateNotification();
     }
 
@@ -537,6 +544,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         playWhenReady = false;
         isPreparing = false;
         isPrepared = false;
+        resumeOnFocusGain = false;
         if (mediaPlayer != null) {
             try {
                 if (mediaPlayer.isPlaying()) mediaPlayer.stop();
@@ -554,6 +562,10 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
             stopForeground(STOP_FOREGROUND_REMOVE);
         } else {
             stopForeground(true);
+        }
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.cancel(NOTIFICATION_ID);
         }
     }
 
@@ -651,6 +663,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
                 .setContentTitle(currentTrack.getTitle())
                 .setContentText(currentTrack.getArtist())
                 .setContentIntent(contentPendingIntent)
+                .setDeleteIntent(stopPendingIntent)
                 .setOngoing(isPlaying)
                 .setOnlyAlertOnce(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -665,10 +678,22 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         }
 
         Notification notification = builder.build();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (isPlaying) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+            } else {
+                startForeground(NOTIFICATION_ID, notification);
+            }
         } else {
-            startForeground(NOTIFICATION_ID, notification);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_DETACH);
+            } else {
+                stopForeground(false);
+            }
+            if (nm != null) {
+                nm.notify(NOTIFICATION_ID, notification);
+            }
         }
     }
 
@@ -700,10 +725,28 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
     @Override
     public void onAudioFocusChange(int focusChange) {
-        if (focusChange == AudioManager.AUDIOFOCUS_LOSS || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+        if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+            resumeOnFocusGain = false;
             pausePlayback();
+        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+            if (isPlaying) {
+                resumeOnFocusGain = true;
+                pausePlayback();
+            }
         } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-            resumePlayback();
+            if (resumeOnFocusGain) {
+                resumeOnFocusGain = false;
+                resumePlayback();
+            }
+        }
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        if (!isPlaying) {
+            stopPlayback();
+            stopSelf();
         }
     }
 
