@@ -146,6 +146,9 @@ public class SnakesAndLaddersActivity extends AppCompatActivity {
         btnViewDetails = findViewById(R.id.btn_sl_view_details);
 
         btnRollDice.setEnabled(false);
+        btnRollDice.setAlpha(0.48f);
+        tintCircle(tvP1Token, Color.parseColor("#EF4444"));
+        tintCircle(tvP2Token, Color.parseColor("#2563EB"));
     }
 
     private void setupListeners() {
@@ -366,6 +369,7 @@ public class SnakesAndLaddersActivity extends AppCompatActivity {
         btnRollDice.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         isRollInFlight = true;
         btnRollDice.setEnabled(false);
+        btnRollDice.setAlpha(0.48f);
         btnRollDice.setText("ROLLING...");
         diceView.startRollingAnimation();
         playTone(ToneGenerator.TONE_PROP_BEEP, 60);
@@ -410,6 +414,7 @@ public class SnakesAndLaddersActivity extends AppCompatActivity {
             diceView.setValue(move.diceValue);
             isAnimatingMove = true;
             btnRollDice.setEnabled(false);
+            btnRollDice.setAlpha(0.48f);
             showMoveFeedback(move, session);
 
             boardView.animateMove(move, session.players, session.currentTurnPlayerId, () -> {
@@ -519,6 +524,7 @@ public class SnakesAndLaddersActivity extends AppCompatActivity {
         if (session == null) return;
         if ("FINISHED".equals(session.status)) {
             btnRollDice.setEnabled(false);
+            btnRollDice.setAlpha(0.48f);
             btnRollDice.setText("GAME ENDED");
             return;
         }
@@ -531,7 +537,9 @@ public class SnakesAndLaddersActivity extends AppCompatActivity {
         }
 
         boolean myTurn = myUserId != null && myUserId.equals(session.currentTurnPlayerId);
-        btnRollDice.setEnabled(myTurn && !isRollInFlight && !isAnimatingMove);
+        boolean canRoll = myTurn && !isRollInFlight && !isAnimatingMove;
+        btnRollDice.setEnabled(canRoll);
+        btnRollDice.setAlpha(canRoll ? 1.0f : 0.48f);
         btnRollDice.setText(myTurn ? "ROLL DICE" : "OPPONENT TURN");
 
         if (opponent != null && "OFFLINE".equals(opponent.connectedStatus)) {

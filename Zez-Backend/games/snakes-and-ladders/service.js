@@ -183,7 +183,7 @@ class SnakesLaddersService {
              winner_id = $5,
              state_version = $6,
              updated_at = NOW(),
-             finished_at = CASE WHEN $2 = 'FINISHED' THEN NOW() ELSE finished_at END
+             finished_at = CASE WHEN $7::boolean THEN NOW() ELSE finished_at END
          WHERE id = $1`,
         [
           gameId,
@@ -192,6 +192,7 @@ class SnakesLaddersService {
           nextState.currentTurnIndex,
           nextState.winnerId,
           nextState.stateVersion,
+          nextState.status === SESSION_STATUS.FINISHED,
         ]
       );
 

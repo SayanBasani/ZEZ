@@ -512,6 +512,9 @@ public class SnakesLaddersBoardView extends View {
                             center.y + (float) Math.sin(angle) * spread);
                     radius = baseRadius * 0.85f;
                 }
+                float margin = radius + 4f;
+                center.x = Math.max(margin, Math.min(getWidth() - margin, center.x));
+                center.y = Math.max(margin, Math.min(getHeight() - margin, center.y));
             }
 
             int fillColor = resolveTokenColor(p.tokenColor);

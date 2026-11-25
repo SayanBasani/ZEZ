@@ -203,8 +203,14 @@ public class ChatNotificationHelper {
             if (trimmed.startsWith("[game:tictactoe|")) {
                 return "\uD83C\uDFAE Invited you to play Tic Tac Toe!";
             }
+            if (trimmed.startsWith("[game:snakes_and_ladders|")) {
+                return "\uD83C\uDFB2 Snakes & Ladders Challenge!";
+            }
             if (trimmed.startsWith("[game_end:tictactoe|")) {
                 return "\uD83C\uDFAE Tic Tac Toe match ended";
+            }
+            if (trimmed.startsWith("[game_end:snakes_and_ladders|")) {
+                return "\uD83C\uDFC6 Snakes & Ladders match ended";
             }
             if (trimmed.startsWith("[contact|")) {
                 String[] parts = trimmed.substring(9, trimmed.endsWith("]") ? trimmed.length() - 1 : trimmed.length()).split("\\|");
