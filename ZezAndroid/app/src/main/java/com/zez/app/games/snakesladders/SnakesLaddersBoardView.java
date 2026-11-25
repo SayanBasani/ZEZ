@@ -544,4 +544,13 @@ public class SnakesLaddersBoardView extends View {
         if ("yellow".equalsIgnoreCase(colorName)) return Color.parseColor("#F59E0B");
         return Color.parseColor("#EF4444");
     }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        if (currentAnimator != null) {
+            currentAnimator.cancel();
+            currentAnimator = null;
+        }
+        super.onDetachedFromWindow();
+    }
 }

@@ -44,7 +44,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.zez.app.adapter.CallLogAdapter;
 import com.zez.app.adapter.GalleryAdapter;
 import com.zez.app.adapter.RecycleBinAdapter;
 import com.zez.app.adapter.AlbumsAdapter;
@@ -93,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
     private Button btnGalleryGrantPermission;
     private TextView tvGalleryEmptySubtitle;
 
-    private SwipeRefreshLayout swipeGallery;
     private SwipeRefreshLayout swipeBin;
     private View viewChatsContainer;
     private SwipeRefreshLayout swipeChats;
@@ -227,13 +225,11 @@ public class MainActivity extends AppCompatActivity {
     private Runnable telemetryRunnable;
 
     private RecyclerView recyclerCalls;
-    private RecyclerView recyclerGallery;
     private RecyclerView recyclerBin;
 
     private LinearLayout layoutEmpty;
     private TextView tvEmpty;
 
-    private CallLogAdapter callAdapter;
     private GalleryAdapter galleryAdapter;
     private RecycleBinAdapter binAdapter;
 
@@ -341,7 +337,6 @@ public class MainActivity extends AppCompatActivity {
         btnSync = findViewById(R.id.btn_sync);
 
         swipeCalls = findViewById(R.id.swipe_refresh_calls);
-        swipeGallery = findViewById(R.id.swipe_refresh_gallery);
         swipeBin = findViewById(R.id.swipe_refresh_bin);
         viewChatsContainer = findViewById(R.id.view_chats_container);
         scrollSettings = findViewById(R.id.scroll_settings);
@@ -524,7 +519,6 @@ public class MainActivity extends AppCompatActivity {
         btnSettingUpdate.setOnClickListener(v -> showUpdateDialog(true));
 
         recyclerCalls = findViewById(R.id.recycler_calls);
-        recyclerGallery = findViewById(R.id.recycler_gallery);
         recyclerBin = findViewById(R.id.recycler_bin);
 
         layoutEmpty = findViewById(R.id.layout_empty);
@@ -818,7 +812,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Listeners
         swipeCalls.setOnRefreshListener(this::loadCallsData);
-        swipeGallery.setOnRefreshListener(this::loadGalleryData);
         swipeBin.setOnRefreshListener(this::loadBinData);
 
         // Chats setup
@@ -950,7 +943,6 @@ public class MainActivity extends AppCompatActivity {
         if (viewChatsContainer != null) viewChatsContainer.setVisibility(View.GONE);
         if (viewCallsContainer != null) viewCallsContainer.setVisibility(View.GONE);
         if (swipeCalls != null) swipeCalls.setVisibility(View.GONE);
-        swipeGallery.setVisibility(View.GONE);
         swipeBin.setVisibility(View.GONE);
         layoutAlarmsContainer.setVisibility(View.GONE);
         scrollSettings.setVisibility(View.GONE);
@@ -1012,7 +1004,6 @@ public class MainActivity extends AppCompatActivity {
     public void openRecycleBin() {
         if (viewChatsContainer != null) viewChatsContainer.setVisibility(View.GONE);
         swipeCalls.setVisibility(View.GONE);
-        swipeGallery.setVisibility(View.GONE);
         layoutAlarmsContainer.setVisibility(View.GONE);
         scrollSettings.setVisibility(View.GONE);
         viewFontPage.setVisibility(View.GONE);
@@ -1040,6 +1031,9 @@ public class MainActivity extends AppCompatActivity {
             com.zez.app.service.NotificationCaptureService.ensureServiceBound(this);
         }
         com.zez.app.util.ChatNotificationManager.getInstance().start(this);
+        if (ChatPreferencesHelper.isChatRegistered(this)) {
+            com.zez.app.service.QuackyBackgroundService.ensureRunning(this);
+        }
         if (activeCallBannerListener != null) {
             com.zez.app.util.ActiveCallManager.getInstance().registerListener(activeCallBannerListener);
         }
@@ -1464,7 +1458,7 @@ public class MainActivity extends AppCompatActivity {
                         if (json.has("hasIncomingCall") && json.get("hasIncomingCall").getAsBoolean() && json.has("call")) {
                             com.google.gson.JsonObject c = json.getAsJsonObject("call");
                             String cId = c.has("id") ? c.get("id").getAsString() : null;
-                            if (cId != null && !cId.equals(activeIncomingCallId)) {
+                            if (cId != null && !cId.equals(activeIncomingCallId) && com.zez.app.util.ChatNotificationHelper.markCallHandledIfNew(cId)) {
                                 activeIncomingCallId = cId;
                                 runOnUiThread(() -> {
                                     Intent intent = new Intent(MainActivity.this, IncomingCallActivity.class);
@@ -1734,6 +1728,7 @@ public class MainActivity extends AppCompatActivity {
                     ChatPreferencesHelper.saveChatUser(MainActivity.this, user.getId(), user.getPhoneNumber(), user.getName(), user.getAvatarUrl(), user.getStatusMessage());
                     Toast.makeText(MainActivity.this, "Welcome to Zez Chat, " + user.getName() + "!", Toast.LENGTH_SHORT).show();
                     ChatNotificationManager.getInstance().start(MainActivity.this);
+                    com.zez.app.service.QuackyBackgroundService.ensureRunning(MainActivity.this);
                     loadChatsData();
                     startChatListPolling();
                 }
@@ -1790,11 +1785,13 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
             permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
+            permissions.add(Manifest.permission.READ_MEDIA_AUDIO);
             permissions.add("android.permission.READ_MEDIA_VISUAL_USER_SELECTED");
             permissions.add(Manifest.permission.POST_NOTIFICATIONS);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
             permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
+            permissions.add(Manifest.permission.READ_MEDIA_AUDIO);
             permissions.add(Manifest.permission.POST_NOTIFICATIONS);
         } else {
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);

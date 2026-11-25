@@ -1,5 +1,7 @@
 const express = require("express");
 const { pool } = require("../db");
+const realtimeEvents = require("../services/realtimeEvents");
+const { notifyCallEnded } = require("../services/callRelayWs");
 
 const router = express.Router();
 
@@ -59,22 +61,26 @@ router.post("/initiate", async (req, res, next) => {
     );
 
     const call = insertRes.rows[0];
+    const callPayload = {
+      id: call.id,
+      callType: call.call_type,
+      status: call.status,
+      callerId: call.caller_id,
+      calleeId: call.callee_id,
+      callerName: call.caller_name,
+      callerAvatar: call.caller_avatar,
+      callerPhone: call.caller_phone,
+      calleeName: callee.name,
+      calleeAvatar: callee.avatar_url,
+      calleePhone: callee.phone_number,
+      startedAt: call.started_at
+    };
+
+    realtimeEvents.emit(`call_incoming:${calleeId}`, callPayload);
+
     res.status(201).json({
       success: true,
-      call: {
-        id: call.id,
-        callType: call.call_type,
-        status: call.status,
-        callerId: call.caller_id,
-        calleeId: call.callee_id,
-        callerName: call.caller_name,
-        callerAvatar: call.caller_avatar,
-        callerPhone: call.caller_phone,
-        calleeName: callee.name,
-        calleeAvatar: callee.avatar_url,
-        calleePhone: callee.phone_number,
-        startedAt: call.started_at
-      }
+      call: callPayload
     });
   } catch (err) {
     next(err);
@@ -237,11 +243,10 @@ router.post("/respond", async (req, res, next) => {
     
     // Clean up in-memory media frame cache if not connected
     if (!isConnected) {
-      for (const k of callMediaCache.keys()) {
-        if (k.startsWith(`${callId}_`)) {
-          callMediaCache.delete(k);
-        }
-      }
+      clearCallCaches(callId);
+      notifyCallEnded(callId, newStatus);
+      realtimeEvents.emit(`call_ended:${call.caller_id}`, { callId: call.id, status: newStatus });
+      realtimeEvents.emit(`call_ended:${call.callee_id}`, { callId: call.id, status: newStatus });
       await logCallToChat(call, newStatus, 0);
     }
 
@@ -343,13 +348,12 @@ router.post("/end", async (req, res, next) => {
     }
 
     const call = updateRes.rows[0];
-    
+
     // Clean up in-memory media frame cache
-    for (const k of callMediaCache.keys()) {
-      if (k.startsWith(`${callId}_`)) {
-        callMediaCache.delete(k);
-      }
-    }
+    clearCallCaches(callId);
+    notifyCallEnded(callId, "ended");
+    realtimeEvents.emit(`call_ended:${call.caller_id}`, { callId: call.id, status: "ended" });
+    realtimeEvents.emit(`call_ended:${call.callee_id}`, { callId: call.id, status: "ended" });
 
     // Automatically record call log entry into chat conversation
     await logCallToChat(call, "ended", call.duration_seconds);
@@ -459,6 +463,17 @@ router.get("/status", async (req, res, next) => {
 
 // In-memory low-latency media frame and audio relay (cleaned up on call end)
 const callMediaCache = new Map();
+const callAudioCache = new Map();
+
+function clearCallCaches(callId) {
+  const prefix = `${callId}_`;
+  for (const k of callMediaCache.keys()) {
+    if (k.startsWith(prefix)) callMediaCache.delete(k);
+  }
+  for (const k of callAudioCache.keys()) {
+    if (k.startsWith(prefix)) callAudioCache.delete(k);
+  }
+}
 
 /**
  * POST /api/call/frame
@@ -492,6 +507,54 @@ router.get("/frame", (req, res) => {
     return res.json({ success: true, hasFrame: false });
   }
   res.json({ success: true, hasFrame: true, frame: item.frame, timestamp: item.time });
+});
+
+/**
+ * POST /api/call/audio
+ * Fallback HTTP audio relay ring buffer (when WebSocket /ws/call is unavailable)
+ */
+router.post("/audio", (req, res) => {
+  const { callId, senderId, chunkBase64 } = req.body || {};
+  if (!callId || !senderId || !chunkBase64) {
+    return res.status(400).json({ success: false, error: "callId, senderId, and chunkBase64 required." });
+  }
+  const key = `${callId}_${senderId}`;
+  let entry = callAudioCache.get(key);
+  if (!entry) {
+    entry = { seq: 0, items: [] };
+    callAudioCache.set(key, entry);
+  }
+  entry.seq += 1;
+  entry.items.push({ seq: entry.seq, data: chunkBase64, time: Date.now() });
+  if (entry.items.length > 16) {
+    entry.items.splice(0, entry.items.length - 16);
+  }
+  res.json({ success: true, seq: entry.seq });
+});
+
+/**
+ * GET /api/call/audio?callId=...&senderId=...&afterSeq=...
+ * Fetch recent fallback audio chunks sent by peer
+ */
+router.get("/audio", (req, res) => {
+  const { callId, senderId, afterSeq } = req.query || {};
+  if (!callId || !senderId) {
+    return res.status(400).json({ success: false, error: "callId and senderId required." });
+  }
+  const after = Number(afterSeq || 0);
+  const key = `${callId}_${senderId}`;
+  const entry = callAudioCache.get(key);
+  if (!entry || entry.items.length === 0) {
+    return res.json({ success: true, lastSeq: after, chunks: [] });
+  }
+  const now = Date.now();
+  const valid = entry.items.filter(x => x.seq > after && (now - x.time <= 3000));
+  const lastSeq = valid.length > 0 ? valid[valid.length - 1].seq : entry.seq;
+  res.json({
+    success: true,
+    lastSeq,
+    chunks: valid.map(x => x.data)
+  });
 });
 
 module.exports = router;

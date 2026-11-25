@@ -136,14 +136,25 @@ public class QuackyStorageHelper {
     }
 
     public static String saveAudioToPublicStorage(Context context, File sourceFile, String fileName, boolean isAudio) {
+        return saveAudioToPublicStorage(context, sourceFile, fileName, isAudio, null, null);
+    }
+
+    public static String saveAudioToPublicStorage(Context context, File sourceFile, String fileName, boolean isAudio, String trackTitle, String artistName) {
         if (context == null || sourceFile == null || !sourceFile.exists() || sourceFile.length() == 0) {
             return null;
         }
         String mimeType = isAudio ? "audio/mp4" : "video/mp4";
-        if (fileName != null && fileName.toLowerCase().endsWith(".mp3")) {
-            mimeType = "audio/mpeg";
-        } else if (fileName != null && fileName.toLowerCase().endsWith(".webm")) {
-            mimeType = isAudio ? "audio/webm" : "video/webm";
+        if (fileName != null) {
+            String lower = fileName.toLowerCase();
+            if (lower.endsWith(".mp3")) {
+                mimeType = "audio/mpeg";
+            } else if (lower.endsWith(".webm")) {
+                mimeType = isAudio ? "audio/webm" : "video/webm";
+            } else if (lower.endsWith(".m4a")) {
+                mimeType = "audio/mp4";
+            } else if (lower.endsWith(".mp4")) {
+                mimeType = isAudio ? "audio/mp4" : "video/mp4";
+            }
         }
 
         // Android 10+ Scoped Storage: write cleanly into Music/Quacky or Movies/Quacky via MediaStore
@@ -156,6 +167,15 @@ public class QuackyStorageHelper {
                 values.put(MediaStore.MediaColumns.RELATIVE_PATH,
                         (isAudio ? Environment.DIRECTORY_MUSIC : Environment.DIRECTORY_MOVIES) + "/Quacky");
                 values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+                if (isAudio) {
+                    values.put(MediaStore.Audio.Media.IS_MUSIC, 1);
+                    if (trackTitle != null && !trackTitle.trim().isEmpty()) {
+                        values.put(MediaStore.Audio.Media.TITLE, trackTitle.trim());
+                    }
+                    if (artistName != null && !artistName.trim().isEmpty()) {
+                        values.put(MediaStore.Audio.Media.ARTIST, artistName.trim());
+                    }
+                }
 
                 Uri collection = isAudio
                         ? MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
@@ -176,14 +196,20 @@ public class QuackyStorageHelper {
                     values.put(MediaStore.MediaColumns.IS_PENDING, 0);
                     resolver.update(insertedUri, values, null, null);
 
-                    // Return readable filesystem path if accessible, else canonical content:// URI
+                    // Return readable filesystem path if accessible (and trigger scanner), else canonical content:// URI
                     try (Cursor c = resolver.query(insertedUri, new String[]{MediaStore.MediaColumns.DATA}, null, null, null)) {
                         if (c != null && c.moveToFirst()) {
                             int idx = c.getColumnIndex(MediaStore.MediaColumns.DATA);
                             if (idx >= 0) {
                                 String path = c.getString(idx);
-                                if (path != null && new File(path).exists() && new File(path).canRead()) {
-                                    return path;
+                                if (path != null) {
+                                    File f = new File(path);
+                                    if (f.exists()) {
+                                        scanFile(context, f);
+                                        if (f.canRead()) {
+                                            return path;
+                                        }
+                                    }
                                 }
                             }
                         }

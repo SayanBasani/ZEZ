@@ -253,7 +253,10 @@ public class ChatMessage implements Serializable {
 
     public String getGameSummaryText() {
         String[] p = splitTagParts("[game_end:");
-        return p.length > 2 && !p[2].isEmpty() ? p[2] : "Tic Tac Toe match ended";
+        String fallback = "snakes_and_ladders".equals(getGameType())
+                ? "Snakes & Ladders match ended"
+                : "Tic Tac Toe match ended";
+        return p.length > 2 && !p[2].isEmpty() ? p[2] : fallback;
     }
 
     public String getSharedContactName() {

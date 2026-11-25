@@ -84,6 +84,15 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private OnMediaRetryListener retryListener;
     private OnGameInviteClickListener gameInviteClickListener;
     private OnGameDeclineClickListener gameDeclineClickListener;
+    private static final java.util.Set<String> declinedGameInviteIds =
+            java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+
+    public void markGameInviteDeclined(String gameId) {
+        if (gameId != null && !gameId.trim().isEmpty()) {
+            declinedGameInviteIds.add(gameId.trim());
+            notifyDataSetChanged();
+        }
+    }
 
     public void setOnMessageActionListener(OnMessageActionListener listener) {
         this.actionListener = listener;
@@ -665,10 +674,11 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if (tvGameTitle != null) tvGameTitle.setText("Snakes & Ladders Challenge");
                     long exp = msg.getGameExpiresAtMillis();
                     boolean expired = exp > 0 && System.currentTimeMillis() > exp;
+                    boolean declined = declinedGameInviteIds.contains(msg.getGameId());
                     if (tvGameSubtitle != null) {
-                        tvGameSubtitle.setText(expired ? "Challenge expired" : "Invited by: " + msg.getGameHostName());
+                        tvGameSubtitle.setText(declined ? "Challenge declined" : (expired ? "Challenge expired" : "Invited by: " + msg.getGameHostName()));
                     }
-                    if (tvGameCta != null) tvGameCta.setText(expired ? "Expired" : "Open");
+                    if (tvGameCta != null) tvGameCta.setText(declined ? "Declined" : (expired ? "Expired" : "Open"));
                 } else {
                     if (tvGameTitle != null) tvGameTitle.setText("Tic Tac Toe");
                     if (tvGameSubtitle != null) tvGameSubtitle.setText("Tap Open to play together");
@@ -883,11 +893,12 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if (tvGameTitle != null) tvGameTitle.setText("Snakes & Ladders Challenge");
                     long exp = msg.getGameExpiresAtMillis();
                     boolean expired = exp > 0 && System.currentTimeMillis() > exp;
+                    boolean declined = declinedGameInviteIds.contains(msg.getGameId());
                     if (tvGameSubtitle != null) {
-                        tvGameSubtitle.setText(expired ? "Invitation expired" : "Invited by: " + msg.getGameHostName());
+                        tvGameSubtitle.setText(declined ? "Invitation declined" : (expired ? "Invitation expired" : "Invited by: " + msg.getGameHostName()));
                     }
                     if (tvGameDecline != null) {
-                        tvGameDecline.setVisibility(expired ? View.GONE : View.VISIBLE);
+                        tvGameDecline.setVisibility((expired || declined) ? View.GONE : View.VISIBLE);
                         tvGameDecline.setOnClickListener(v -> {
                             if (adapter.gameDeclineClickListener != null) {
                                 adapter.gameDeclineClickListener.onGameDeclineClick(msg);
@@ -895,7 +906,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         });
                     }
                     if (tvGameCta != null) {
-                        tvGameCta.setText(expired ? "Expired" : "Accept Game");
+                        tvGameCta.setText(declined ? "Declined" : (expired ? "Expired" : "Accept Game"));
                     }
                 } else {
                     if (tvGameTitle != null) tvGameTitle.setText("Tic Tac Toe");

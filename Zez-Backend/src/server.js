@@ -12,6 +12,7 @@ const storageRouter = require("./routes/storage");
 const callSignalingRouter = require("./routes/callSignaling");
 const musicRouter = require("./routes/music");
 const snakesLaddersModule = require("../games/snakes-and-ladders");
+const { attachRealtimeWebSockets } = require("./services/callRelayWs");
 const path = require('path');
 const fs = require('fs');
 
@@ -137,6 +138,8 @@ async function startServer() {
     console.log('POST /api/devices/register');
     console.log('POST /api/calls/sync');
   });
+
+  attachRealtimeWebSockets(server);
 
   let shuttingDown = false;
   const shutdown = () => {

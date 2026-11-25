@@ -301,14 +301,14 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
                 }
             }
 
-            String lastMsg = item.getLastMessageText();
-            if (lastMsg != null && lastMsg.startsWith("[reply:")) {
-                int closeIdx = lastMsg.indexOf("]\n");
-                if (closeIdx != -1) {
-                    lastMsg = lastMsg.substring(closeIdx + 2).trim();
-                }
+            String rawLastMsg = item.getLastMessageText();
+            String lastMsg = "No messages yet";
+            if (rawLastMsg != null && !rawLastMsg.trim().isEmpty()) {
+                com.zez.app.model.ChatMessage previewMsg = new com.zez.app.model.ChatMessage();
+                previewMsg.setMessageText(rawLastMsg);
+                lastMsg = previewMsg.getDisplaySnippet();
             }
-            tvLastMessage.setText(lastMsg != null && !lastMsg.isEmpty() ? lastMsg : "No messages yet");
+            tvLastMessage.setText(lastMsg);
 
             // Format timestamp
             String rawTime = item.getLastMessageTime();

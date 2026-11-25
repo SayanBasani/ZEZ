@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.zez.app.observer.CallLogObserver;
 import com.zez.app.receiver.BootReceiver;
+import com.zez.app.service.QuackyBackgroundService;
 import com.zez.app.util.AlarmHelper;
 import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatNotificationManager;
@@ -23,10 +24,12 @@ public class ZezApplication extends Application {
         // Apply saved theme (System Default / Light / Dark) & dynamic colors
         com.zez.app.theme.ThemeManager.init(this);
 
-        // Pre-register notification channel & start persistent background polling
+        // Pre-register notification channels & start persistent background listener/service
         ChatNotificationHelper.createNotificationChannel(this);
+        ChatNotificationHelper.createCallNotificationChannel(this);
         BootReceiver.schedulePeriodicSync(this);
         ChatNotificationManager.getInstance().start(this);
+        QuackyBackgroundService.ensureRunning(this);
 
         // Ensure public Quacky storage directories exist
         QuackyStorageHelper.initDirectories(this);

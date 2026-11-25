@@ -14,6 +14,7 @@ import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -125,12 +126,63 @@ public class GalleryPopupHelper {
         View view = LayoutInflater.from(activity).inflate(R.layout.dialog_gallery_popup, null);
         sheet.setContentView(view);
         if (sheet.getWindow() != null) {
-            sheet.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+            sheet.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
 
         DisplayMetrics dm = activity.getResources().getDisplayMetrics();
         int sheetHeight = (int) (dm.heightPixels * 0.80f);
         view.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, sheetHeight));
+
+        final int[] baseVisibleBottom = new int[]{0};
+        final int[] lastAppliedHeight = new int[]{-1};
+        final int[] lastAppliedPad = new int[]{-1};
+        final Runnable updateSheetForIme = () -> {
+            if (sheet.getWindow() == null || !sheet.isShowing()) return;
+            View decor = sheet.getWindow().getDecorView();
+            View bs = sheet.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (decor == null || bs == null) return;
+
+            android.graphics.Rect visibleRect = new android.graphics.Rect();
+            decor.getWindowVisibleDisplayFrame(visibleRect);
+            if (visibleRect.bottom <= 0) return;
+
+            if (baseVisibleBottom[0] == 0 || visibleRect.bottom > baseVisibleBottom[0]) {
+                baseVisibleBottom[0] = visibleRect.bottom;
+            }
+            int imeOverlap = Math.max(0, baseVisibleBottom[0] - visibleRect.bottom);
+            if (imeOverlap < (int) (80 * dm.density)) {
+                imeOverlap = 0;
+            }
+
+            int availHeight = Math.max((int) (240 * dm.density),
+                    visibleRect.bottom - visibleRect.top - (int) (12 * dm.density));
+            int contentHeight = imeOverlap > 0 ? Math.min(sheetHeight, availHeight) : sheetHeight;
+            int sheetTotalHeight = contentHeight + imeOverlap;
+
+            if (lastAppliedHeight[0] == sheetTotalHeight && lastAppliedPad[0] == imeOverlap) {
+                return;
+            }
+            lastAppliedHeight[0] = sheetTotalHeight;
+            lastAppliedPad[0] = imeOverlap;
+
+            ViewGroup.LayoutParams vlp = view.getLayoutParams();
+            if (vlp != null) {
+                vlp.height = contentHeight;
+                view.setLayoutParams(vlp);
+            }
+            bs.setPadding(bs.getPaddingLeft(), bs.getPaddingTop(), bs.getPaddingRight(), imeOverlap);
+            ViewGroup.LayoutParams blp = bs.getLayoutParams();
+            if (blp != null) {
+                blp.height = sheetTotalHeight;
+                bs.setLayoutParams(blp);
+            }
+            try {
+                BottomSheetBehavior<View> b = BottomSheetBehavior.from(bs);
+                b.setPeekHeight(sheetTotalHeight);
+                b.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } catch (Exception ignored) {}
+        };
+        final android.view.ViewTreeObserver.OnGlobalLayoutListener imeLayoutListener = updateSheetForIme::run;
 
         View parentSheet = (View) view.getParent();
         if (parentSheet != null) {
@@ -150,6 +202,17 @@ public class GalleryPopupHelper {
                 b.setSkipCollapsed(true);
                 b.setState(BottomSheetBehavior.STATE_EXPANDED);
             }
+            if (sheet.getWindow() != null) {
+                sheet.getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(imeLayoutListener);
+            }
+            updateSheetForIme.run();
+        });
+        sheet.setOnDismissListener(d -> {
+            try {
+                if (sheet.getWindow() != null) {
+                    sheet.getWindow().getDecorView().getViewTreeObserver().removeOnGlobalLayoutListener(imeLayoutListener);
+                }
+            } catch (Exception ignored) {}
         });
 
         LinearLayout albumPicker = view.findViewById(R.id.layout_gallery_album_picker);

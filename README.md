@@ -1,299 +1,149 @@
-# Zez Call Log Manager & Gallery
+# Quacky (`ZezAndroid` + `Zez-Backend`)
 
-A lightweight native Android telemetry client and Node.js/PostgreSQL backend suite designed for automated call log synchronization, local photo gallery management, and real-time administrative intelligence.
+A native Java Android communication, media, and device-telemetry application paired with a Node.js (Express 5), PostgreSQL, and Backblaze B2 backend suite.
 
-- **Android Client (`ZezAndroid`)**: Pure native Java (no React Native or Expo overhead), compiled to a ~7 MB APK with low memory consumption, background `WorkManager` execution, and full Light / Dark / Device System theme support.
-- **Backend API & Portal (`Zez-Backend`)**: Express.js REST API with PostgreSQL storage, AES-256-GCM encryption at rest, integrated Graphite Admin Portal, and full administrative user management (create, update, delete admin credentials).
+For the complete architecture, API endpoints, 20-table database schema, permissions/restore guide, security notes, and call-recording postmortem, see **[PROJECT_DOCUMENTATION.md](file:///D:/Call%20Log%20Mannager/PROJECT_DOCUMENTATION.md)**.
+
+---
+
+## Core Capabilities
+
+- **Android Client (`ZezAndroid`, `com.zez.app`)**: Pure native Java 17 Android app (`minSdk 26`, `targetSdk 34`, `compileSdk 34`) with 5 primary bottom-navigation tabs (`Chats`, `Calls`, `Alarms`, `Gallery`, `Settings`), plus sub-apps:
+  - **Encrypted Chat**: 1-on-1 messaging with Normal & Secret (client-ephemeral session) modes, emoji reactions, markdown rendering, reply/delete, multi-image `GalleryPopupHelper`, `QuickCameraActivity`, links/docs viewer, and Backblaze B2 media sharing.
+  - **In-App VoIP Calling**: Voice & video calls (`CallActivity`, `IncomingCallActivity`, `ActiveCallManager`).
+  - **Call History & Background Sync**: Full device call-log retrieval (`CallLogHelper.getAllCallLogs`) synced in 100-record batches via `WorkManager` (`CallSyncWorker`) and `CallLogObserver` with AES-256-GCM at-rest encryption.
+  - **Alarms**: Local & admin-synced alarms (`AlarmHelper`, `AlarmRingingService`, `AlarmFiringActivity`) with custom device ringtones and multi-select delete.
+  - **Gallery & Recycle Bin**: Photos/Albums browser (`view_gallery.xml`), pinch-to-zoom `ImageViewerActivity`, `ImageEditActivity`, favorites, `RecycleBinHelper`, and `ManageStorageActivity`.
+  - **YMusic Player**: YouTube search/stream/download player (`MusicActivity`, `MusicPlayerService` foreground media playback) backed by `/api/music/*`.
+  - **Multiplayer Mini-Games**: In-chat **Tic Tac Toe** and **Snakes & Ladders** (`SnakesAndLaddersActivity`, server-authoritative move engine).
+  - **Settings & Hardware Telemetry**: 8 theme palettes (`ThemeManager`), 7 accent colors, 9 font families & font scaling, CPU/RAM/storage telemetry graphs (`TelemetryGraphView`), and in-app OTA updater (`AppUpdateHelper`).
+- **Backend & Admin Portal (`Zez-Backend`)**: Express 5 REST API with PostgreSQL persistence, Backblaze B2 cloud object storage (`b2StorageService.js`), read-through disk cache (`src/cache/storage/`), in-app APK release distribution (`/api/app/latest`), and the `/admin` web portal.
 
 ---
 
 ## Architecture Overview
 
-```
-                   +----------------------------------+
-                   |       Android Device (Native)    |
-                   |                                  |
-                   |  - Hardware / Android ID         |
-                   |  - One-time auto-registration    |
-                   |  - WorkManager background sync   |
-                   |  - Glide Photo Gallery + Recycler|
-                   |  - ZoomImageView & EXIF viewer   |
-                   +-----------------+----------------+
-                                     |
-                          HTTPS / HTTP REST API
-                                     |
-                                     v
-                   +-----------------+----------------+
-                   |     Zez-Backend (Node.js/Express)|
-                   |                                  |
-                   |  - Bearer Token Auth per device  |
-                   |  - AES-256-GCM Payload Cipher    |
-                   |  - Call deduplication via SHA-256|
-                   |  - PostgreSQL Database Tables    |
-                   |  - Admin Web Portal (/admin)     |
-                   +-----------------+----------------+
-                                     ^
-                                     |
-                         Admin Login (Session Auth)
-                                     |
-                   +-----------------+----------------+
-                   |       Admin Web Dashboard        |
-                   |                                  |
-                   |  - Graphite Neutral UI Design    |
-                   |  - Real-time Telemetry Density   |
-                   |  - Registered Devices Directory  |
-                   |  - Decrypted Call Log Inspector  |
-                   |  - CSV Export & Bulk Deletion    |
-                   +----------------------------------+
+```text
++--------------------------------------------+
+|         Quacky Android (com.zez.app)       |
+|  Chats | Calls | Alarms | Gallery |Settings|
+|  YMusic | TicTacToe | Snakes & Ladders     |
++---------------------+----------------------+
+                      | HTTPS / REST (OkHttp + Gson)
+                      v
++--------------------------------------------+
+|         Zez-Backend (Express 5 / Node >=20)|
+|  Device & Admin Auth | AES-256-GCM Crypto  |
+|  /api/{devices,calls,chat,call,storage,    |
+|        app,music,admin,games/snakes-...}   |
++----------+------------------------+--------+
+           |                        |
+           v                        v
++--------------------+   +-------------------+
+|   PostgreSQL (20   |   |   Backblaze B2    |
+|  tables in public) |   |  (+ local cache)  |
++--------------------+   +-------------------+
+           ^
+           | HMAC-SHA256 Session Auth
++----------+----------+
+| Admin Web Portal    |
+| GET /admin          |
++---------------------+
 ```
 
 ---
 
-## Directory Structure
+## Project Layout
 
-```
+```text
 D:\Call Log Mannager\
-├── README.md                      # Complete command reference & documentation
-├── scripts/                       # 1-Click PowerShell Automation Scripts
-│   ├── run-android.ps1            # Auto-starts emulator, builds, installs & runs Android app
-│   ├── run-backend.ps1            # Validates port 3000 & launches Express backend
-│   ├── start-emulator.ps1         # Launches emulator in standalone mode
-│   └── reset-emulator.ps1         # Clears stale locks & wipes emulator data
-├── .vscode/                       # VS Code 1-Click Tasks & Launch Configurations
-│   ├── tasks.json                 # Ctrl+Shift+B build task, backend, logcat
-│   └── launch.json                # F5 debug & run configurations
-├── Zez-Backend/                   # Express.js REST Backend
-│   ├── .env                       # Environment configuration (DB, keys, port)
-│   ├── package.json               # Backend dependencies and scripts
-│   └── src/
-│       ├── server.js              # Server entry point & route registration
-│       ├── db.js                  # PostgreSQL connection pool & schema init
-│       ├── crypto.js              # AES-256-GCM encryption/decryption utilities
-│       ├── public/admin/          # Unslopped Admin Dashboard (HTML/CSS/JS)
-│       ├── middleware/
-│       │   ├── deviceAuth.js      # Device token authorization middleware
-│       │   └── adminAuth.js       # Admin HMAC-SHA256 session middleware
-│       └── routes/
-│           ├── admin.js           # Admin API: stats, devices, decrypted calls, bulk delete
-│           ├── devices.js         # POST /api/devices/register
-│           ├── callSync.js        # POST /api/calls/sync
-│           └── callRead.js        # GET  /api/calls/read, /stats, /:id
-└── ZezAndroid/                    # Pure Native Java Android Application
-    ├── build.gradle               # Root project Gradle configuration
-    ├── settings.gradle            # Settings and repository definitions
-    ├── gradlew / gradlew.bat      # Gradle wrapper scripts (v8.5)
-    ├── gradle.properties          # JVM args, android.useAndroidX=true
-    ├── local.properties           # Local Android SDK directory path
+├── README.md                              # Project overview and quick-start guide
+├── PROJECT_DOCUMENTATION.md               # Consolidated technical & operational reference
+├── App Icon/
+│   └── Quacky Logo.png                    # Application branding asset
+├── scripts/                               # Automation & E2E verification helpers
+│   ├── run-backend.ps1                    # Validate port 3000 & launch Zez-Backend
+│   ├── run-android.ps1                    # Start emulator, build, install & launch APK
+│   ├── start-emulator.ps1                 # Launch AVD emulator standalone
+│   ├── reset-emulator.ps1                 # Clear stale locks & wipe emulator data
+│   ├── configure_emulators.py             # Configure dual-emulator environment
+│   ├── e2e_device_test.py                 # End-to-end device test harness
+│   ├── test_offline_retry.py              # Offline retry synchronization test
+│   └── test_secret_mode_sync.py           # Secret chat mode peer-sync test
+├── Zez-Backend/                           # Node.js Express 5 API & Admin Portal
+│   ├── .env.example                       # Environment template (DB, keys, B2, admin)
+│   ├── package.json
+│   ├── tsconfig.json                      # allowJs TypeScript check configuration
+│   ├── games/snakes-and-ladders/          # Modular Snakes & Ladders engine + tests
+│   ├── scripts/                           # Canonical release & DB/maintenance utilities
+│   ├── src/
+│   │   ├── server.js                      # Express entry point & route wiring
+│   │   ├── db.js                          # pg Pool & schema initialization
+│   │   ├── crypto.js                      # AES-256-GCM & @noble/ciphers crypto
+│   │   ├── middleware/                    # deviceAuth.js, adminAuth.js
+│   │   ├── routes/                        # 9 API route modules
+│   │   ├── services/b2StorageService.js   # Backblaze B2 S3 client
+│   │   └── public/                        # /admin UI, /downloads (APKs), uploads/
+│   └── tests/                             # Backend & B2 integration test scripts
+└── ZezAndroid/                            # Native Java Android client
+    ├── build.gradle / settings.gradle
+    ├── gradlew / gradlew.bat              # Gradle 8.5 wrapper
     └── app/
-        ├── build.gradle           # Dependencies (Glide, OkHttp, WorkManager)
+        ├── build.gradle                   # App config (com.zez.app, Java 17)
         └── src/main/
             ├── AndroidManifest.xml
-            ├── java/com/zez/app/
-            │   ├── MainActivity.java           # Main tabbed interface (Call logs & Gallery)
-            │   ├── ImageViewerActivity.java    # Fullscreen pinch-to-zoom & metadata viewer
-            │   ├── ZezApplication.java         # Global Application class
-            │   ├── adapter/                    # RecyclerView adapters (Calls, Gallery, Bin)
-            │   ├── model/                      # Data models (CallLogItem, MediaItem)
-            │   ├── receiver/BootReceiver.java  # Auto-reschedules sync after phone reboot
-            │   ├── service/CallSyncWorker.java # WorkManager background periodic synchronization
-            │   └── util/                       # Helpers (ApiClient, DeviceHelper, MediaHelper, etc.)
-            └── res/                            # Layouts, colors, drawables, menus
+            ├── assets/backend_config.properties
+            ├── java/com/zez/app/          # Activities, adapters, models, music, games, services, utils
+            └── res/                       # Layouts, menus, drawables, values, themes
 ```
 
 ---
 
-## Complete Command Reference (Frontend & Backend)
+## Quick Start
 
-### 1. Backend Commands (`Zez-Backend`)
+### 1. Backend (`Zez-Backend`)
 
-#### Initial Setup & Installation
+1. Copy `Zez-Backend/.env.example` to `Zez-Backend/.env` and configure `DATABASE_URL`, `ENCRYPTION_KEY`, `PORTABLE_ENCRYPTION_KEY`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, and Backblaze B2 credentials (`B2_*`).
+2. Install dependencies and verify before running:
+
 ```powershell
-# Navigate to backend directory
 cd "D:\Call Log Mannager\Zez-Backend"
-
-# Install all npm dependencies
 npm install
+npm run type-check
+node -c src/server.js
+node --test games/snakes-and-ladders/tests/*.test.js
+npm start          # or: npm run dev (node --watch src/server.js)
 ```
 
-#### Environment Configuration (`.env`)
-The backend reads from `D:\Call Log Mannager\Zez-Backend\.env`:
-```env
-PORT=3000
-HOST=0.0.0.0
-NODE_ENV=development
+3. Verify locally:
+   - Health check: `GET http://localhost:3000/health`
+   - Diagnostics ping: `POST http://localhost:3000/api/ping`
+   - Admin Portal: `http://localhost:3000/admin`
 
-# PostgreSQL connection string
-DATABASE_URL=postgresql://username:password@hostname:5432/dbname?sslmode=require
+### 2. Android App (`ZezAndroid`)
 
-# 32-byte Base64-encoded key for AES-256-GCM encryption
-ENCRYPTION_KEY=your_base64_32_byte_encryption_key_here=
+Default production URL is configured in `ZezAndroid/app/src/main/assets/backend_config.properties` (`BACKEND_URL=https://zez-chat-backend.onrender.com`; note the Render free-tier host may return `503` if suspended — use local backend `http://10.0.2.2:3000` for emulator testing via Settings Developer Mode, PIN `7788`).
 
-# 64-character hexadecimal key for portable cross-client crypto
-PORTABLE_ENCRYPTION_KEY=your_64_character_hex_key_here
-
-# Predefined Admin Credentials
-ADMIN_API_PASSWORD=your_secure_admin_password
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=your_secure_admin_password
-ADMIN_SESSION_SECRET=your_session_secret_hex
-```
-
-#### Starting the Backend Server
 ```powershell
-# Standard run with Node.js
-node src/server.js
-
-# Development run with auto-reload (Node.js 18+)
-node --watch src/server.js
-
-# Using npm script
-npm start
-```
-
-#### Verifying Server Syntax & Health
-```powershell
-# Verify syntax of all backend files
-node -c src/server.js src/routes/admin.js src/routes/callSync.js src/routes/callRead.js src/routes/devices.js
-
-# Health check via PowerShell
-Invoke-RestMethod -Uri "http://localhost:3000/health"
-
-# Diagnostics ping via PowerShell
-Invoke-RestMethod -Method Post -Uri "http://localhost:3000/api/ping" -Body '{"source":"manual_check"}' -ContentType "application/json"
-```
-
-#### Accessing the Admin Portal
-Open your web browser:
-```
-http://localhost:3000/admin
-```
-- **Username**: `admin`
-- **Password**: `your_admin_password`
-
----
-
-### 2. Android Frontend Commands (`ZezAndroid`)
-
-#### Configuring Backend API Target
-Edit `D:\Call Log Mannager\ZezAndroid\app\src\main\java\com\zez\app\util\PreferencesHelper.java`:
-```java
-// For Android Studio Emulator:
-public static final String DEFAULT_API_URL = "http://10.0.2.2:3000";
-
-// For Physical Phone on Wi-Fi (replace with your PC's IP from ipconfig):
-// public static final String DEFAULT_API_URL = "http://192.168.1.15:3000";
-
-// For Live Production Backend:
-// public static final String DEFAULT_API_URL = "https://your-domain.com";
-```
-
-#### Building the APK with Gradle Wrapper
-```powershell
-# Navigate to Android directory
 cd "D:\Call Log Mannager\ZezAndroid"
-
-# Build Debug APK (both syntax variants work in Windows PowerShell)
-.\gradlew.bat assembleDebug
-# or
-./gradlew assembleDebug
-
-# Clean build artifacts
-.\gradlew.bat clean
-
-# Build Release APK
-.\gradlew.bat assembleRelease
-```
-The compiled APK is located at:
-`D:\Call Log Mannager\ZezAndroid\app\build\outputs\apk\debug\app-debug.apk`
-
-#### Managing the Android Emulator from CLI
-```powershell
-# List available AVDs
-& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -list-avds
-
-# Start emulator in standalone window (recommended to avoid 5-minute toolwindow timeout)
-& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd Pixel_6 -no-snapshot-load
-
-# Cold boot and wipe emulator data (fixes corrupted snapshots or boot loops)
-& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd Pixel_6 -wipe-data -no-snapshot-load
+.\gradlew.bat test assembleDebug assembleRelease
 ```
 
-#### ADB Device Management & Installation
+Install debug APK on a running emulator or device:
+
 ```powershell
-# Check connected devices / emulator
 adb devices
-
-# Install debug APK onto running device/emulator
-adb install -r -d "D:\Call Log Mannager\ZezAndroid\app\build\outputs\apk\debug\app-debug.apk"
-
-# Automatically grant runtime permissions
-adb shell pm grant com.zez.app android.permission.READ_CALL_LOG
-adb shell pm grant com.zez.app android.permission.READ_MEDIA_IMAGES
-adb shell pm grant com.zez.app android.permission.READ_EXTERNAL_STORAGE
-adb shell pm grant com.zez.app android.permission.POST_NOTIFICATIONS
-
-# Launch the application
+adb install -r "D:\Call Log Mannager\ZezAndroid\app\build\outputs\apk\debug\app-debug.apk"
 adb shell am start -n com.zez.app/.MainActivity
-
-# Stop the application
-adb shell am force-stop com.zez.app
-
-# Uninstall the application
-adb uninstall com.zez.app
-
-# View live application logcat stream (filtered)
-adb logcat -v time -s ZezApiClient:V MainActivity:V CallSyncWorker:V AndroidRuntime:E
 ```
 
----
-
-### 3. 1-Click Automation Scripts (`scripts/`)
-
-For rapid testing on Windows, run these pre-configured scripts from the project root:
+### 3. Windows Automation & VS Code
 
 ```powershell
-# 1. Build APK, ensure emulator is running, install & launch app:
-powershell -ExecutionPolicy Bypass -File scripts\run-android.ps1
-
-# 2. Start Express backend with port validation:
 powershell -ExecutionPolicy Bypass -File scripts\run-backend.ps1
-
-# 3. Boot Android emulator in standalone mode:
+powershell -ExecutionPolicy Bypass -File scripts\run-android.ps1
 powershell -ExecutionPolicy Bypass -File scripts\start-emulator.ps1
-
-# 4. Clean-wipe and reset Android emulator:
 powershell -ExecutionPolicy Bypass -File scripts\reset-emulator.ps1
 ```
 
----
-
-### 4. Running from Visual Studio Code
-
-1. **Open Workspace**: Open `D:\Call Log Mannager` in VS Code.
-2. **Build & Run App**: Press **`Ctrl + Shift + B`** (runs `scripts/run-android.ps1`).
-3. **Start Backend**: Press **`Ctrl + Shift + P`** -> `Tasks: Run Task` -> **`Start Backend (Node.js)`**.
-4. **Run Everything**: Run task **`Run Full Stack (Backend + Android App)`**.
-5. **View Live Logs**: Run task **`View App Logs (Logcat)`**.
-
----
-
-## Backend REST API Reference
-
-| Method | Endpoint | Authorization | Description |
-|---|---|---|---|
-| `GET` | `/health` | Public | Server and PostgreSQL health check |
-| `POST` | `/api/ping` | Public | Connectivity diagnostic endpoint |
-| `POST` | `/api/devices/register` | Public | Registers/pairs device using `androidId` & `persistentId`. Returns `deviceToken`. |
-| `POST` | `/api/calls/sync` | Device Token | Synchronizes batch of call logs with AES-256-GCM encryption. |
-| `GET` | `/api/calls/read` | Device Token | Paged call log list strictly for the requesting device. |
-| `POST` | `/api/admin/login` | Public | Authenticates admin using `.env` credentials, issues JWT session token. |
-| `GET` | `/api/admin/stats` | Admin Token | Returns telemetry: total devices, active 24h, total calls, today's calls. |
-| `GET` | `/api/admin/devices` | Admin Token | Lists all devices with specs, last seen, and call counts. Supports search (`?q=`). |
-| `GET` | `/api/admin/devices/:id` | Admin Token | Returns full hardware metadata & client details JSON for a device. |
-| `GET` | `/api/admin/devices/:id/calls` | Admin Token | Decrypts and lists calls for a device (type, date, phone/name filters). |
-| `GET` | `/api/admin/calls` | Admin Token | Global calls feed across all devices (filters: `deviceId`, `type`, `year`, `month`, `from`, `to`, `q`). |
-| `DELETE` | `/api/admin/calls/:id` | Admin Token | Deletes a single call record by ID. |
-| `POST` | `/api/admin/calls/batch-delete` | Admin Token | Bulk deletes call records by array of IDs (`callIds`). |
-| `DELETE` | `/api/admin/devices/:id` | Admin Token | Deletes a device and cascade-deletes all its call records. |
-| `POST` | `/api/admin/devices/batch-delete`| Admin Token | Bulk deletes devices and cascade-deletes all their call records. |
-| `GET` | `/admin` | Web Browser | Unslopped Admin Web Portal. |
+In VS Code (`.vscode/tasks.json`), press **`Ctrl + Shift + B`** to run `scripts/run-android.ps1` or open **Tasks: Run Task** to start the backend, full stack, or Logcat stream.

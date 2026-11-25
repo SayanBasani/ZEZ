@@ -232,25 +232,27 @@ public class MusicPlayerManager {
         }
     }
 
-    public void stop() {
+    public synchronized void clearFromServiceStop() {
         isPlaying = false;
         isBuffering = false;
         currentTrack = null;
         currentIndex = -1;
         currentSeconds = 0;
         totalSeconds = 0;
-        if (appContext != null) {
-            Intent intent = new Intent(appContext, MusicPlayerService.class);
-            intent.setAction(MusicPlayerService.ACTION_STOP);
-            try {
-                appContext.startService(intent);
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to send STOP", e);
-            }
-        }
         notifyTrackChanged(null);
         notifyPlaybackState(false, false);
         notifyProgress(0, 0);
+    }
+
+    public void stop() {
+        clearFromServiceStop();
+        if (appContext != null) {
+            try {
+                appContext.stopService(new Intent(appContext, MusicPlayerService.class));
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to stop MusicPlayerService", e);
+            }
+        }
     }
 
     public synchronized void next() {

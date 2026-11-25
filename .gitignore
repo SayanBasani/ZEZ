@@ -46,3 +46,11 @@ graphify-out/.*.txt
 graphify-out/.graphify_root
 graphify-out/.graphify_python
 graphify-out/run_*.py
+
+# Temporary ADB UI & debug dumps
+ui_*.xml
+view_temp.xml
+font_view.xml
+app_view.xml
+vivo_screen.xml
+window_dump*.xml

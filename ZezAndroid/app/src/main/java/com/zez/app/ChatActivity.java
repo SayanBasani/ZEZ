@@ -208,7 +208,6 @@ public class ChatActivity extends AppCompatActivity {
     private ActivityResultLauncher<String> pickVideoLauncher;
     private ActivityResultLauncher<String> pickFileLauncher;
     private ActivityResultLauncher<Void> takePhotoLauncher;
-    private ActivityResultLauncher<Intent> customMediaPickerLauncher;
     private ActivityResultLauncher<Intent> quickCameraLauncher;
     private ActivityResultLauncher<String[]> mediaPermissionsLauncher;
     private ActivityResultLauncher<String> contactPermissionLauncher;
@@ -266,22 +265,6 @@ public class ChatActivity extends AppCompatActivity {
 
         takePhotoLauncher = registerForActivityResult(new ActivityResultContracts.TakePicturePreview(), bitmap -> {
             if (bitmap != null) handleBitmapCapture(bitmap);
-        });
-
-        customMediaPickerLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                ArrayList<String> uriStrings = result.getData().getStringArrayListExtra(MediaPickerActivity.EXTRA_SELECTED_URIS);
-                if (uriStrings != null && !uriStrings.isEmpty()) {
-                    for (String uriStr : uriStrings) {
-                        if (uriStr != null) {
-                            Uri uri = Uri.parse(uriStr);
-                            String mime = getContentResolver().getType(uri);
-                            String type = (mime != null && mime.startsWith("video")) ? "video" : "image";
-                            handleMediaSelection(uri, type);
-                        }
-                    }
-                }
-            }
         });
 
         quickCameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -2404,6 +2387,9 @@ public class ChatActivity extends AppCompatActivity {
                             return;
                         }
                         if ("DECLINED".equals(st)) {
+                            if (adapter != null) {
+                                adapter.markGameInviteDeclined(invId);
+                            }
                             Toast.makeText(ChatActivity.this, "This invitation was declined.", Toast.LENGTH_SHORT).show();
                             return;
                         }
@@ -2459,6 +2445,9 @@ public class ChatActivity extends AppCompatActivity {
                 new com.zez.app.games.snakesladders.SnakesLaddersApiClient.ApiCallback<com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationState>() {
                     @Override
                     public void onSuccess(com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationState data) {
+                        if (adapter != null) {
+                            adapter.markGameInviteDeclined(invId);
+                        }
                         Toast.makeText(ChatActivity.this, "Invitation declined.", Toast.LENGTH_SHORT).show();
                     }
 
@@ -3084,6 +3073,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void handleIncomingCall(ChatApiClient.IncomingCallInfo call) {
         if (call == null || call.id == null || call.id.equals(activeIncomingCallId)) return;
+        if (!ChatNotificationHelper.markCallHandledIfNew(call.id)) return;
         activeIncomingCallId = call.id;
 
         Intent intent = new Intent(this, IncomingCallActivity.class);

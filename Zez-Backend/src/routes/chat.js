@@ -2,15 +2,12 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
-const EventEmitter = require("events");
 const { pool } = require("../db");
 const b2Storage = require("../services/b2StorageService");
 const { saveToStorageCache } = require("./storage");
+const chatEventEmitter = require("../services/realtimeEvents");
 
 const router = express.Router();
-
-const chatEventEmitter = new EventEmitter();
-chatEventEmitter.setMaxListeners(2000);
 
 // Ensure local upload storage directories exist
 const mediaUploadDir = path.join(__dirname, "../public/uploads/chat_media");
@@ -957,12 +954,47 @@ router.get("/live-updates", async (req, res) => {
       console.warn("Error in unreadCheck for live-updates:", dbErr.message);
     }
 
-    // 2. No unpushed messages: hold connection and await instant push event
+    // 2. Check if there is an active ringing incoming call right now
+    let activeCallPayload = null;
+    try {
+      const callRes = await pool.query(
+        `SELECT id, call_type, status, caller_id, callee_id, caller_name, caller_avatar, caller_phone, started_at
+         FROM public.active_calls
+         WHERE callee_id = $1 AND status = 'ringing' AND started_at > NOW() - INTERVAL '60 seconds'
+         ORDER BY started_at DESC LIMIT 1`,
+        [userId]
+      );
+      if (callRes.rowCount > 0) {
+        const c = callRes.rows[0];
+        activeCallPayload = {
+          id: c.id,
+          callType: c.call_type,
+          status: c.status,
+          callerId: c.caller_id,
+          calleeId: c.callee_id,
+          callerName: c.caller_name,
+          callerAvatar: c.caller_avatar,
+          callerPhone: c.caller_phone,
+          startedAt: c.started_at
+        };
+        return res.json({ success: true, hasNew: false, hasIncomingCall: true, incomingCall: activeCallPayload });
+      }
+    } catch (_) {}
+
+    // 3. No unpushed messages or calls: hold connection and await instant push event
     let finished = false;
+    let timeoutId = null;
+
+    const cleanupListeners = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      chatEventEmitter.removeListener(`message:${userId}`, onNewMessage);
+      chatEventEmitter.removeListener(`call_incoming:${userId}`, onIncomingCall);
+    };
+
     const onNewMessage = (msg) => {
       if (finished) return;
       finished = true;
-      clearTimeout(timeoutId);
+      cleanupListeners();
       if (msg && msg.id && msg.status === "sent") {
         pool.query(
           "UPDATE public.chat_messages SET status = 'delivered', updated_at = NOW() WHERE id = $1 AND status = 'sent'",
@@ -972,20 +1004,27 @@ router.get("/live-updates", async (req, res) => {
       res.json({ success: true, hasNew: true, messages: [msg] });
     };
 
-    chatEventEmitter.once(`message:${userId}`, onNewMessage);
-
-    const timeoutId = setTimeout(() => {
+    const onIncomingCall = (callPayload) => {
       if (finished) return;
       finished = true;
-      chatEventEmitter.removeListener(`message:${userId}`, onNewMessage);
+      cleanupListeners();
+      res.json({ success: true, hasNew: false, hasIncomingCall: true, incomingCall: callPayload });
+    };
+
+    chatEventEmitter.once(`message:${userId}`, onNewMessage);
+    chatEventEmitter.once(`call_incoming:${userId}`, onIncomingCall);
+
+    timeoutId = setTimeout(() => {
+      if (finished) return;
+      finished = true;
+      cleanupListeners();
       res.json({ success: true, hasNew: false, timeout: true });
     }, 25000);
 
     req.on("close", () => {
       if (!finished) {
         finished = true;
-        clearTimeout(timeoutId);
-        chatEventEmitter.removeListener(`message:${userId}`, onNewMessage);
+        cleanupListeners();
       }
     });
   } catch (err) {

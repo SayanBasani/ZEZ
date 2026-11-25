@@ -593,6 +593,8 @@ public class ChatApiClient {
         public boolean hasNew = false;
         public boolean timeout = false;
         public List<ChatMessage> messages = new ArrayList<>();
+        public boolean hasIncomingCall = false;
+        public IncomingCallInfo incomingCall = null;
     }
 
     public static LiveUpdateResult listenForLiveUpdatesSync(Context context, String userId) {
@@ -626,6 +628,22 @@ public class ChatApiClient {
                 for (int i = 0; i < arr.size(); i++) {
                     ChatMessage msg = gson.fromJson(arr.get(i), ChatMessage.class);
                     if (msg != null) res.messages.add(msg);
+                }
+            }
+            if (json.has("hasIncomingCall") && json.get("hasIncomingCall").getAsBoolean()
+                    && json.has("incomingCall") && json.get("incomingCall").isJsonObject()) {
+                JsonObject ic = json.getAsJsonObject("incomingCall");
+                IncomingCallInfo info = new IncomingCallInfo();
+                info.id = optStr(ic, "id", null);
+                info.callType = optStr(ic, "callType", "video");
+                info.callerId = optStr(ic, "callerId", "");
+                info.callerName = optStr(ic, "callerName", "Quacky Contact");
+                info.callerAvatar = optStr(ic, "callerAvatar", null);
+                info.callerPhone = optStr(ic, "callerPhone", null);
+                info.startedAt = optStr(ic, "startedAt", null);
+                if (info.id != null) {
+                    res.hasIncomingCall = true;
+                    res.incomingCall = info;
                 }
             }
             return res;

@@ -54,6 +54,8 @@ public class ActiveCallManager {
     private final List<CallStateListener> listeners = new ArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final OkHttpClient httpClient = new OkHttpClient();
+    private volatile CallMediaEngine mediaEngine;
+    private volatile CallMediaEngine.MediaListener activeMediaListener;
 
     public static synchronized ActiveCallManager getInstance() {
         if (instance == null) {
@@ -124,18 +126,96 @@ public class ActiveCallManager {
     public synchronized int getDurationSeconds() { return durationSeconds; }
     public synchronized boolean isMuted() { return isMuted; }
 
+    public void startMedia(Context context, CallMediaEngine.MediaListener listener) {
+        final CallMediaEngine toStart;
+        synchronized (this) {
+            this.activeMediaListener = listener;
+            if (!isCallActive || callId == null || context == null) return;
+            if (mediaEngine != null) return;
+            String userId = ChatPreferencesHelper.getUserId(context);
+            if (userId == null) return;
+
+            toStart = new CallMediaEngine(context, callId, userId, peerId, new CallMediaEngine.MediaListener() {
+                @Override
+                public void onRemoteVideoFrame(byte[] jpegBytes) {
+                    CallMediaEngine.MediaListener l = activeMediaListener;
+                    if (l != null) l.onRemoteVideoFrame(jpegBytes);
+                }
+
+                @Override
+                public void onRemoteHangup(String reason) {
+                    endCall();
+                    CallMediaEngine.MediaListener l = activeMediaListener;
+                    if (l != null) l.onRemoteHangup(reason);
+                }
+
+                @Override
+                public void onNetworkQualityChanged(int tier, int rttMs) {
+                    CallMediaEngine.MediaListener l = activeMediaListener;
+                    if (l != null) l.onNetworkQualityChanged(tier, rttMs);
+                }
+            });
+            toStart.setMuted(isMuted);
+            mediaEngine = toStart;
+        }
+        // Start audio/WebSocket outside monitor lock so UI & camera threads never stall
+        toStart.start();
+    }
+
+    public void setMediaListener(CallMediaEngine.MediaListener listener) {
+        this.activeMediaListener = listener;
+    }
+
+    public void enableAudioIfPermitted() {
+        CallMediaEngine engine = mediaEngine;
+        if (engine != null) {
+            engine.enableAudioIfPermitted();
+        }
+    }
+
+    public boolean canSendVideoFrame() {
+        CallMediaEngine engine = mediaEngine;
+        return engine != null && engine.canSendVideoFrame();
+    }
+
+    public boolean isWsMediaConnected() {
+        CallMediaEngine engine = mediaEngine;
+        return engine != null && engine.isWsConnected();
+    }
+
+    public int getNetworkTier() {
+        CallMediaEngine engine = mediaEngine;
+        return engine != null ? engine.getNetworkTier() : CallMediaEngine.TIER_GOOD;
+    }
+
+    public void sendVideoFrame(byte[] jpegBytes) {
+        CallMediaEngine engine = mediaEngine;
+        if (engine != null) {
+            engine.sendVideoFrame(jpegBytes);
+        }
+    }
+
     public synchronized void toggleMute(Context context) {
-        isMuted = !isMuted;
-        AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        if (am != null) {
-            am.setMicrophoneMute(isMuted);
+        setMuted(context, !isMuted);
+        Toast.makeText(context, isMuted ? "Microphone muted" : "Microphone unmuted", Toast.LENGTH_SHORT).show();
+    }
+
+    public synchronized void setMuted(Context context, boolean muteState) {
+        isMuted = muteState;
+        if (mediaEngine != null) {
+            mediaEngine.setMuted(isMuted);
+        }
+        if (context != null) {
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am != null) {
+                am.setMicrophoneMute(isMuted);
+            }
         }
         mainHandler.post(() -> {
             for (CallStateListener l : new ArrayList<>(listeners)) {
                 l.onMuteStateChanged(isMuted);
             }
         });
-        Toast.makeText(context, isMuted ? "Microphone muted" : "Microphone unmuted", Toast.LENGTH_SHORT).show();
     }
 
     public synchronized void hangup(Context context) {
@@ -165,8 +245,15 @@ public class ActiveCallManager {
     }
 
     public synchronized void endCall() {
+        String prevCallId = this.callId;
         this.isCallActive = false;
         this.isMinimized = false;
+        this.activeMediaListener = null;
+        if (mediaEngine != null) {
+            mediaEngine.stop();
+            mediaEngine = null;
+        }
+        ChatNotificationHelper.clearHandledCall(prevCallId);
         notifyStateChanged();
     }
 

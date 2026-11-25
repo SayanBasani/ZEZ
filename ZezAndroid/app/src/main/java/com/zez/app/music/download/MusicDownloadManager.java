@@ -162,12 +162,18 @@ public class MusicDownloadManager {
         downloadExecutor.execute(() -> executeDownload(appContext, task, isAudio));
     }
 
-    private String resolveStreamUrl(Context context, String videoId) {
+    private String resolveStreamUrl(Context context, String videoId, boolean isAudio) {
+        if (isAudio) {
+            String dlUrl = com.zez.app.music.util.YouTubeApiHelper.getInstance().getDownloadAudioUrlSync(videoId);
+            if (dlUrl != null && !dlUrl.isEmpty()) {
+                return dlUrl;
+            }
+        }
         String existing = capturedStreamUrls.get(videoId);
         if (existing != null && !existing.isEmpty()) {
             return existing;
         }
-        String resolved = com.zez.app.music.util.YouTubeApiHelper.getInstance().getStreamUrlSync(videoId, false);
+        String resolved = com.zez.app.music.util.YouTubeApiHelper.getInstance().getStreamUrlSync(videoId, !isAudio);
         if (resolved != null && !resolved.isEmpty()) {
             registerCapturedStreamUrl(videoId, resolved);
             return resolved;
@@ -214,7 +220,7 @@ public class MusicDownloadManager {
                     }
 
                     if (attempt == 0) {
-                        currentUrl = resolveStreamUrl(context, videoId);
+                        currentUrl = resolveStreamUrl(context, videoId, isAudio);
                     } else if (attempt < 3) {
                         capturedStreamUrls.remove(videoId);
                         com.zez.app.music.util.YouTubeApiHelper.getInstance().invalidateCachedStream(videoId);
@@ -355,9 +361,16 @@ public class MusicDownloadManager {
                 throw (lastErr != null) ? lastErr : new java.io.IOException("Stream returned 0 bytes");
             }
 
-            // Publish safely to /Music/Quacky (MediaStore on Android 10+, public dir fallback on legacy)
+            // Detect real container magic bytes so MediaStore & phone music players always get exact extension & MIME
+            String finalFileName = detectActualFileName(tempFile, task.getFileName(), isAudio);
+            MusicTrack orig = task.getOriginalTrack();
             String savedLocation = com.zez.app.util.QuackyStorageHelper.saveAudioToPublicStorage(
-                    context, tempFile, task.getFileName(), isAudio);
+                    context,
+                    tempFile,
+                    finalFileName,
+                    isAudio,
+                    orig != null ? orig.getTitle() : null,
+                    orig != null ? orig.getArtist() : null);
             try { tempFile.delete(); } catch (Exception ignored) {}
 
             if (savedLocation == null || savedLocation.trim().isEmpty()) {
@@ -366,10 +379,11 @@ public class MusicDownloadManager {
 
             // Success!
             task.setStatus(DownloadTask.STATUS_COMPLETED);
-            MusicTrack orig = task.getOriginalTrack();
-            orig.setDownloaded(true);
-            orig.setLocalFilePath(savedLocation);
-            MusicDownloadHelper.saveDownloadedTrack(context, orig);
+            if (orig != null) {
+                orig.setDownloaded(true);
+                orig.setLocalFilePath(savedLocation);
+                MusicDownloadHelper.saveDownloadedTrack(context, orig);
+            }
 
             activeTasks.remove(videoId);
             showCompletedNotification(context, nm, task, notifId);
@@ -464,6 +478,34 @@ public class MusicDownloadManager {
         try {
             nm.notify(notifId, builder.build());
         } catch (SecurityException ignored) {}
+    }
+
+    private static String detectActualFileName(File file, String originalFileName, boolean isAudio) {
+        String baseName = originalFileName != null ? originalFileName : "track";
+        int dot = baseName.lastIndexOf('.');
+        String stem = dot > 0 ? baseName.substring(0, dot) : baseName;
+        String fallbackExt = dot > 0 ? baseName.substring(dot) : (isAudio ? ".m4a" : ".mp4");
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+            byte[] header = new byte[16];
+            int n = fis.read(header);
+            if (n >= 4) {
+                // WebM / Matroska magic bytes: 1A 45 DF A3
+                if ((header[0] & 0xFF) == 0x1A && (header[1] & 0xFF) == 0x45
+                        && (header[2] & 0xFF) == 0xDF && (header[3] & 0xFF) == 0xA3) {
+                    return stem + ".webm";
+                }
+                // MP3 ID3 or MPEG ADTS sync
+                if ((header[0] == 'I' && header[1] == 'D' && header[2] == '3')
+                        || ((header[0] & 0xFF) == 0xFF && (header[1] & 0xE0) == 0xE0)) {
+                    return stem + ".mp3";
+                }
+                // ISO Base Media / MP4 / M4A ('ftyp' at offset 4)
+                if (n >= 8 && header[4] == 'f' && header[5] == 't' && header[6] == 'y' && header[7] == 'p') {
+                    return stem + (isAudio ? ".m4a" : ".mp4");
+                }
+            }
+        } catch (Exception ignored) {}
+        return stem + fallbackExt;
     }
 
     private static void copyFile(File src, File dst) throws Exception {

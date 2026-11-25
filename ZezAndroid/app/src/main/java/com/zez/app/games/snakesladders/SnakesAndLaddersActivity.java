@@ -526,6 +526,17 @@ public class SnakesAndLaddersActivity extends AppCompatActivity {
             btnRollDice.setEnabled(false);
             btnRollDice.setAlpha(0.48f);
             btnRollDice.setText("GAME ENDED");
+            SnakesLaddersModels.PlayerState winPlayer = null;
+            for (SnakesLaddersModels.PlayerState p : session.players) {
+                if (session.winnerId != null && session.winnerId.equals(p.userId)) {
+                    winPlayer = p;
+                    break;
+                }
+            }
+            boolean iWon = myUserId != null && myUserId.equals(session.winnerId);
+            String wName = winPlayer != null ? winPlayer.name : "Player";
+            tvTurnBanner.setText(iWon ? "You Won!" : "Winner: " + wName);
+            tvSubstatus.setText(session.resignedBy != null ? "Ended by resignation" : "Reached Square 100");
             return;
         }
 

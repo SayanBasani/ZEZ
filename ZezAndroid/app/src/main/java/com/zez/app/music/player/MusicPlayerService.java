@@ -80,6 +80,9 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     private Bitmap currentThumbnailBitmap;
     private boolean isPlaying = false;
     private boolean isDataSourceSet = false;
+    private boolean isPreparing = false;
+    private boolean isPrepared = false;
+    private boolean playWhenReady = true;
     private boolean hasRetriedWithFallback = false;
     private int lastReportedPositionSeconds = 0;
 
@@ -162,19 +165,28 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         }
 
         mediaPlayer.setOnPreparedListener(mp -> {
-            Log.i(TAG, "Native MediaPlayer prepared! Starting loud, clear audio playback...");
+            isPreparing = false;
+            isPrepared = true;
+            Log.i(TAG, "Native MediaPlayer prepared! playWhenReady=" + playWhenReady);
             try {
-                mp.start();
-                isPlaying = true;
-                acquireWakeLock();
-                MusicPlayerManager.getInstance().updatePlaybackState(true, false);
                 int dur = mp.getDuration() / 1000;
                 if (dur <= 0 && currentTrack != null) {
                     dur = parseDurationToSeconds(currentTrack.getDuration());
                 }
-                MusicPlayerManager.getInstance().updateProgress(0, dur);
-                updateNotification();
-                startProgressUpdates();
+                if (playWhenReady) {
+                    mp.start();
+                    isPlaying = true;
+                    acquireWakeLock();
+                    MusicPlayerManager.getInstance().updatePlaybackState(true, false);
+                    MusicPlayerManager.getInstance().updateProgress(0, dur);
+                    updateNotification();
+                    startProgressUpdates();
+                } else {
+                    isPlaying = false;
+                    MusicPlayerManager.getInstance().updatePlaybackState(false, false);
+                    MusicPlayerManager.getInstance().updateProgress(0, dur);
+                    updateNotification();
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Error starting MediaPlayer onPrepared", e);
             }
@@ -183,6 +195,8 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         mediaPlayer.setOnCompletionListener(mp -> {
             Log.i(TAG, "Native MediaPlayer completed track");
             isPlaying = false;
+            isPrepared = false;
+            isPreparing = false;
             releaseWakeLock();
             stopProgressUpdates();
             MusicPlayerManager.getInstance().updatePlaybackState(false, false);
@@ -190,6 +204,8 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         });
 
         mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+            isPreparing = false;
+            isPrepared = false;
             Log.w(TAG, "Native MediaPlayer error what=" + what + " extra=" + extra);
             if (currentVideoId != null && !hasRetriedWithFallback) {
                 hasRetriedWithFallback = true;
@@ -355,6 +371,9 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         this.currentTrack = track;
         this.currentVideoId = track.getId();
         this.isPlaying = false;
+        this.isPreparing = true;
+        this.isPrepared = false;
+        this.playWhenReady = true;
         this.hasRetriedWithFallback = false;
 
         stopProgressUpdates();
@@ -465,8 +484,9 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     }
 
     private void resumePlayback() {
+        playWhenReady = true;
         requestAudioFocus();
-        if (mediaPlayer != null) {
+        if (mediaPlayer != null && isPrepared) {
             try {
                 mediaPlayer.start();
                 isPlaying = true;
@@ -477,13 +497,21 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
             } catch (Exception e) {
                 Log.e(TAG, "Error resuming native player", e);
             }
+        } else if (isPreparing) {
+            MusicPlayerManager.getInstance().updatePlaybackState(true, true);
+            updateNotification();
+        } else if (currentTrack != null) {
+            playTrack(currentTrack);
         }
     }
 
     private void pausePlayback() {
-        if (mediaPlayer != null) {
+        playWhenReady = false;
+        if (mediaPlayer != null && isPrepared) {
             try {
-                mediaPlayer.pause();
+                if (mediaPlayer.isPlaying()) {
+                    mediaPlayer.pause();
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Error pausing native player", e);
             }
@@ -496,7 +524,7 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     }
 
     private void seekTo(int seconds) {
-        if (mediaPlayer != null) {
+        if (mediaPlayer != null && isPrepared) {
             try {
                 mediaPlayer.seekTo(seconds * 1000);
             } catch (Exception e) {
@@ -506,9 +534,12 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
     }
 
     private void stopPlayback() {
+        playWhenReady = false;
+        isPreparing = false;
+        isPrepared = false;
         if (mediaPlayer != null) {
             try {
-                mediaPlayer.stop();
+                if (mediaPlayer.isPlaying()) mediaPlayer.stop();
                 mediaPlayer.reset();
                 mediaPlayer.release();
             } catch (Exception ignored) {}
@@ -518,8 +549,12 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
         isPlaying = false;
         releaseWakeLock();
         abandonAudioFocus();
-        MusicPlayerManager.getInstance().updatePlaybackState(false, false);
-        stopForeground(true);
+        MusicPlayerManager.getInstance().clearFromServiceStop();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        } else {
+            stopForeground(true);
+        }
     }
 
     private void loadThumbnailBitmap(String url) {

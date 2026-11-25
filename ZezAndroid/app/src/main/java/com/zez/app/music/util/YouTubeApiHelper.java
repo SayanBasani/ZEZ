@@ -584,6 +584,13 @@ public class YouTubeApiHelper {
         return getStreamUrlSync(videoId, true);
     }
 
+    /**
+     * Resolves an AAC (.m4a) stream URL first for universal device & MediaPlayer compatibility.
+     */
+    public String getDownloadAudioUrlSync(String videoId) {
+        return getStreamUrlSync(videoId, false);
+    }
+
     public String getFallbackStreamUrlSync(String videoId) {
         if (videoId == null || videoId.isEmpty()) return null;
         CachedStream cached = streamCache.get(videoId);

@@ -1,5 +1,6 @@
 package com.zez.app.util;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -31,6 +32,10 @@ public class ChatNotificationHelper {
     private static final String TAG = "ChatNotificationHelper";
     public static final String CHANNEL_ID = "zez_chat_channel_v2";
     public static final String CHANNEL_NAME = "Zez Chat Messages";
+    public static final String CALL_CHANNEL_ID = "zez_incoming_call_channel_v1";
+    public static final String CALL_CHANNEL_NAME = "Incoming Calls";
+    private static final int INCOMING_CALL_NOTIF_ID = 4911;
+    private static volatile String lastHandledCallId = null;
 
     private static final String PREF_DEDUP = "zez_chat_notif_dedup";
     private static final String KEY_SEEN_IDS = "seen_msg_ids";
@@ -348,6 +353,130 @@ public class ChatNotificationHelper {
         try {
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             notificationManager.cancel(Math.abs(conversationId.hashCode()));
+        } catch (Exception ignored) {}
+    }
+
+    public static void createCallNotificationChannel(Context context) {
+        if (context == null) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = context.getSystemService(NotificationManager.class);
+            if (manager == null) return;
+            NotificationChannel existing = manager.getNotificationChannel(CALL_CHANNEL_ID);
+            if (existing != null) return;
+
+            NotificationChannel channel = new NotificationChannel(
+                    CALL_CHANNEL_ID,
+                    CALL_CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Full-screen and heads-up alerts for incoming Quacky voice and video calls");
+            channel.enableLights(true);
+            channel.setLightColor(0xFF22C55E);
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{0, 600, 600, 600, 600});
+            channel.setLockscreenVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+            Uri ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+            if (ringtoneUri == null) ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .build();
+            channel.setSound(ringtoneUri, audioAttributes);
+            manager.createNotificationChannel(channel);
+        }
+    }
+
+    public static synchronized boolean markCallHandledIfNew(String callId) {
+        if (callId == null || callId.isEmpty()) return false;
+        if (callId.equals(lastHandledCallId)) return false;
+        lastHandledCallId = callId;
+        return true;
+    }
+
+    public static synchronized void clearHandledCall(String callId) {
+        if (callId != null && callId.equals(lastHandledCallId)) {
+            lastHandledCallId = null;
+        }
+    }
+
+    public static void showIncomingCallNotification(Context context, ChatApiClient.IncomingCallInfo call) {
+        if (context == null || call == null || call.id == null) return;
+        if (ActiveCallManager.getInstance().isCallActive()) return;
+        if (!markCallHandledIfNew(call.id)) return;
+
+        Context appCtx = context.getApplicationContext();
+        createCallNotificationChannel(appCtx);
+
+        Intent incomingIntent = new Intent(appCtx, com.zez.app.IncomingCallActivity.class);
+        incomingIntent.putExtra(com.zez.app.IncomingCallActivity.EXTRA_CALL_ID, call.id);
+        incomingIntent.putExtra(com.zez.app.IncomingCallActivity.EXTRA_CALL_TYPE, call.callType);
+        incomingIntent.putExtra(com.zez.app.IncomingCallActivity.EXTRA_CALLER_ID, call.callerId);
+        incomingIntent.putExtra(com.zez.app.IncomingCallActivity.EXTRA_CALLER_NAME, call.callerName);
+        incomingIntent.putExtra(com.zez.app.IncomingCallActivity.EXTRA_CALLER_AVATAR, call.callerAvatar);
+        incomingIntent.putExtra(com.zez.app.IncomingCallActivity.EXTRA_CALLER_PHONE, call.callerPhone);
+        incomingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        int reqFlags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
+        PendingIntent fullScreenPi = PendingIntent.getActivity(appCtx, 5101, incomingIntent, reqFlags);
+
+        Intent declineIntent = new Intent(appCtx, com.zez.app.receiver.IncomingCallActionReceiver.class);
+        declineIntent.setAction(com.zez.app.receiver.IncomingCallActionReceiver.ACTION_DECLINE);
+        declineIntent.putExtra(com.zez.app.receiver.IncomingCallActionReceiver.EXTRA_CALL_ID, call.id);
+        PendingIntent declinePi = PendingIntent.getBroadcast(appCtx, 5102, declineIntent, reqFlags);
+
+        Intent answerActivityIntent = new Intent(appCtx, com.zez.app.CallActivity.class);
+        answerActivityIntent.putExtra(com.zez.app.CallActivity.EXTRA_CALL_ID, call.id);
+        answerActivityIntent.putExtra(com.zez.app.CallActivity.EXTRA_IS_CALLER, false);
+        answerActivityIntent.putExtra(com.zez.app.CallActivity.EXTRA_CALL_TYPE, call.callType);
+        answerActivityIntent.putExtra(com.zez.app.CallActivity.EXTRA_PEER_ID, call.callerId);
+        answerActivityIntent.putExtra(com.zez.app.CallActivity.EXTRA_PEER_NAME, call.callerName);
+        answerActivityIntent.putExtra(com.zez.app.CallActivity.EXTRA_PEER_AVATAR, call.callerAvatar);
+        answerActivityIntent.putExtra(com.zez.app.CallActivity.EXTRA_PEER_PHONE, call.callerPhone);
+        answerActivityIntent.putExtra(com.zez.app.CallActivity.EXTRA_ACCEPT_CALL, true);
+        answerActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent answerPi = PendingIntent.getActivity(appCtx, 5103, answerActivityIntent, reqFlags);
+
+        boolean isVideo = "video".equalsIgnoreCase(call.callType);
+        String callerTitle = (call.callerName != null && !call.callerName.trim().isEmpty()) ? call.callerName.trim() : "Quacky Contact";
+        String callSub = isVideo ? "Incoming Quacky Video Call" : "Incoming Quacky Voice Call";
+
+        boolean canPost = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                || ActivityCompat.checkSelfPermission(appCtx, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+
+        if (canPost) {
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(appCtx, CALL_CHANNEL_ID)
+                    .setSmallIcon(isVideo ? R.drawable.ic_videocall : R.drawable.ic_call)
+                    .setContentTitle(callerTitle)
+                    .setContentText(callSub)
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setCategory(NotificationCompat.CATEGORY_CALL)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setOngoing(true)
+                    .setAutoCancel(false)
+                    .setContentIntent(fullScreenPi)
+                    .setFullScreenIntent(fullScreenPi, true)
+                    .addAction(R.drawable.ic_call_end, "Decline", declinePi)
+                    .addAction(isVideo ? R.drawable.ic_videocall : R.drawable.ic_call, "Answer", answerPi);
+
+            try {
+                Notification callNotif = builder.build();
+                callNotif.flags |= Notification.FLAG_INSISTENT;
+                NotificationManagerCompat.from(appCtx).notify(INCOMING_CALL_NOTIF_ID, callNotif);
+            } catch (SecurityException ignored) {}
+        }
+
+        // Also start IncomingCallActivity immediately when OS allows foreground/background activity launch
+        try {
+            appCtx.startActivity(incomingIntent);
+        } catch (Exception e) {
+            Log.d(TAG, "Direct startActivity deferred to fullScreenIntent notification: " + e.getMessage());
+        }
+    }
+
+    public static void cancelIncomingCallNotification(Context context) {
+        if (context == null) return;
+        try {
+            NotificationManagerCompat.from(context.getApplicationContext()).cancel(INCOMING_CALL_NOTIF_ID);
         } catch (Exception ignored) {}
     }
 }

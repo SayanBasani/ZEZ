@@ -6,23 +6,31 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
+import android.graphics.YuvImage;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.AudioManager;
+import android.media.Image;
+import android.media.ImageReader;
 import android.media.ToneGenerator;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
+import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -45,13 +53,17 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zez.app.util.ActiveCallManager;
+import com.zez.app.util.CallMediaEngine;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatPreferencesHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Collections;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.Call;
@@ -72,6 +84,7 @@ public class CallActivity extends AppCompatActivity {
     public static final String EXTRA_PEER_NAME = "extra_peer_name";
     public static final String EXTRA_PEER_AVATAR = "extra_peer_avatar";
     public static final String EXTRA_PEER_PHONE = "extra_peer_phone";
+    public static final String EXTRA_ACCEPT_CALL = "extra_accept_call";
 
     private String callId;
     private boolean isCaller = false;
@@ -116,6 +129,15 @@ public class CallActivity extends AppCompatActivity {
     private CameraCaptureSession captureSession;
     private String frontCameraId;
     private String backCameraId;
+    private Size previewSize = new Size(480, 360);
+    private int sensorOrientation = 90;
+    private HandlerThread videoThread;
+    private Handler videoHandler;
+    private ImageReader frameImageReader;
+    private final ExecutorService decodeExecutor = Executors.newSingleThreadExecutor();
+    private volatile long lastVideoSendTimeMs = 0L;
+    private volatile boolean isFetchingRemoteFallback = false;
+    private boolean isRemoteFitCenter = false;
 
     private final OkHttpClient httpClient = new OkHttpClient();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -162,6 +184,7 @@ public class CallActivity extends AppCompatActivity {
         currentUserId = ChatPreferencesHelper.getUserId(this);
 
         ActiveCallManager.getInstance().setCallStarted(callId, callType, isCaller, peerId, peerName, peerPhone, peerAvatar);
+        handleAcceptFromNotificationIfNeeded(getIntent());
 
         initViews();
         setupAudio();
@@ -215,6 +238,13 @@ public class CallActivity extends AppCompatActivity {
             cardLocalPip.setVisibility(View.VISIBLE);
             btnFlipCam.setVisibility(View.VISIBLE);
             btnToggleCam.setVisibility(View.VISIBLE);
+            if (ivRemoteVideo != null) {
+                ivRemoteVideo.setOnClickListener(v -> {
+                    isRemoteFitCenter = !isRemoteFitCenter;
+                    ivRemoteVideo.setScaleType(isRemoteFitCenter ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER_CROP);
+                    Toast.makeText(this, isRemoteFitCenter ? "Fit video to screen" : "Fill screen", Toast.LENGTH_SHORT).show();
+                });
+            }
         }
 
         if (btnMinimize != null) {
@@ -234,8 +264,24 @@ public class CallActivity extends AppCompatActivity {
                 }
             }
             @Override public void onDurationTick(int durationSeconds) {}
-            @Override public void onMuteStateChanged(boolean isMuted) {}
+            @Override
+            public void onMuteStateChanged(boolean mutedState) {
+                isMuted = mutedState;
+                updateMuteUi();
+            }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isMuted = ActiveCallManager.getInstance().isMuted();
+        updateMuteUi();
+        ActiveCallManager.getInstance().setMediaListener(callMediaListener);
+        if (audioManager != null) {
+            audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+            audioManager.setSpeakerphoneOn(isSpeakerOn);
+        }
     }
 
     @Override
@@ -243,6 +289,35 @@ public class CallActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         ActiveCallManager.getInstance().setMinimized(false);
+        handleAcceptFromNotificationIfNeeded(intent);
+    }
+
+    private void handleAcceptFromNotificationIfNeeded(Intent intent) {
+        if (intent == null || isCaller || !intent.getBooleanExtra(EXTRA_ACCEPT_CALL, false)) return;
+        intent.removeExtra(EXTRA_ACCEPT_CALL);
+        com.zez.app.util.ChatNotificationHelper.cancelIncomingCallNotification(this);
+        if (callId == null || callId.isEmpty()) return;
+
+        String url = ChatApiClient.getBaseUrl(this) + "/api/call/respond";
+        JsonObject body = new JsonObject();
+        body.addProperty("callId", callId);
+        if (currentUserId != null) body.addProperty("userId", currentUserId);
+        body.addProperty("action", "accept");
+        Request req = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), MediaType.parse("application/json; charset=utf-8")))
+                .build();
+        httpClient.newCall(req).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.w(TAG, "Accept-from-notification request failed: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                response.close();
+            }
+        });
     }
 
     private void minimizeCall() {
@@ -283,11 +358,30 @@ public class CallActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        ActiveCallManager.getInstance().enableAudioIfPermitted();
         initCameraAndLifecycle();
+    }
+
+    private void startVideoBackgroundThread() {
+        if (videoThread == null) {
+            videoThread = new HandlerThread("CallVideoThread");
+            videoThread.start();
+            videoHandler = new Handler(videoThread.getLooper());
+        }
+    }
+
+    private void stopVideoBackgroundThread() {
+        if (videoThread != null) {
+            videoThread.quitSafely();
+            try { videoThread.join(400); } catch (InterruptedException ignored) {}
+            videoThread = null;
+            videoHandler = null;
+        }
     }
 
     private void initCameraAndLifecycle() {
         if ("video".equalsIgnoreCase(callType)) {
+            startVideoBackgroundThread();
             setupCameraIds();
             if (textureLocalCamera.isAvailable()) {
                 configureTransform(textureLocalCamera.getWidth(), textureLocalCamera.getHeight());
@@ -317,11 +411,26 @@ public class CallActivity extends AppCompatActivity {
             // Callee accepted from IncomingCallActivity
             onCallConnected();
         }
+    }
 
-        // Start video frame streaming loop if video call
-        if ("video".equalsIgnoreCase(callType)) {
-            startFrameExchangeLoops();
+    private Size chooseOptimalSize(Size[] choices) {
+        if (choices == null || choices.length == 0) return new Size(640, 480);
+        Size best = null;
+        for (Size s : choices) {
+            int w = s.getWidth();
+            int h = s.getHeight();
+            // Pick 4:3 resolution around 480x360 .. 640x480 for crisp unstretched video
+            if (w >= 320 && w <= 640 && h >= 240 && h <= 480 && (w * 3 == h * 4)) {
+                if (best == null || w > best.getWidth()) best = s;
+            }
         }
+        if (best != null) return best;
+        for (Size s : choices) {
+            if (s.getWidth() <= 640 && s.getHeight() <= 480) {
+                if (best == null || s.getWidth() > best.getWidth()) best = s;
+            }
+        }
+        return best != null ? best : choices[0];
     }
 
     private void setupCameraIds() {
@@ -355,6 +464,16 @@ public class CallActivity extends AppCompatActivity {
 
         try {
             closeCamera();
+            CameraCharacteristics chars = manager.getCameraCharacteristics(targetId);
+            Integer orient = chars.get(CameraCharacteristics.SENSOR_ORIENTATION);
+            sensorOrientation = (orient != null) ? orient : 90;
+            StreamConfigurationMap map = chars.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (map != null) {
+                previewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class));
+            }
+            if (textureLocalCamera != null && textureLocalCamera.isAvailable()) {
+                runOnUiThread(() -> configureTransform(textureLocalCamera.getWidth(), textureLocalCamera.getHeight()));
+            }
             manager.openCamera(targetId, new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(@NonNull CameraDevice camera) {
@@ -380,30 +499,53 @@ public class CallActivity extends AppCompatActivity {
     }
 
     private void configureTransform(int viewWidth, int viewHeight) {
-        if (textureLocalCamera == null || !textureLocalCamera.isAvailable() || viewWidth == 0 || viewHeight == 0) return;
-        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-        if (manager == null) return;
+        if (textureLocalCamera == null || !textureLocalCamera.isAvailable() || viewWidth <= 0 || viewHeight <= 0) return;
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        Matrix matrix = new Matrix();
+        RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
+        float centerX = viewRect.centerX();
+        float centerY = viewRect.centerY();
+
+        boolean swappedDimensions = (sensorOrientation == 90 || sensorOrientation == 270);
+        if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
+            swappedDimensions = !swappedDimensions;
+        }
+        int contentW = swappedDimensions ? previewSize.getHeight() : previewSize.getWidth();
+        int contentH = swappedDimensions ? previewSize.getWidth() : previewSize.getHeight();
+
+        // Aspect-ratio-preserving center-crop scaling across ALL rotations (including ROTATION_0 portrait)
+        float scaleX = (float) contentW / viewWidth;
+        float scaleY = (float) contentH / viewHeight;
+        float maxScale = Math.max(scaleX, scaleY);
+        float targetScaleX = (maxScale > 0) ? (scaleX / maxScale) * ((float) viewHeight / contentH > (float) viewWidth / contentW ? ((float) viewHeight * contentW) / ((float) viewWidth * contentH) : 1.0f) : 1.0f;
+
+        float ratioView = (float) viewWidth / (float) viewHeight;
+        float ratioContent = (float) contentW / (float) contentH;
+        if (ratioContent > ratioView) {
+            matrix.setScale(ratioContent / ratioView, 1.0f, centerX, centerY);
+        } else {
+            matrix.setScale(1.0f, ratioView / ratioContent, centerX, centerY);
+        }
+
+        if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
+            matrix.postRotate(90 * (rotation - 2), centerX, centerY);
+        } else if (Surface.ROTATION_180 == rotation) {
+            matrix.postRotate(180, centerX, centerY);
+        }
+        textureLocalCamera.setTransform(matrix);
+    }
+
+    private int computeFrameRotationDegrees() {
+        int displayRot = Surface.ROTATION_0;
         try {
-            String targetId = isFrontCamera ? (frontCameraId != null ? frontCameraId : backCameraId) : (backCameraId != null ? backCameraId : frontCameraId);
-            if (targetId == null) return;
-            CameraCharacteristics chars = manager.getCameraCharacteristics(targetId);
-            int rotation = getWindowManager().getDefaultDisplay().getRotation();
-            Matrix matrix = new Matrix();
-            RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
-            RectF bufferRect = new RectF(0, 0, 480, 640);
-            float centerX = viewRect.centerX();
-            float centerY = viewRect.centerY();
-            if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
-                bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
-                matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
-                float scale = Math.max((float) viewHeight / 480, (float) viewWidth / 640);
-                matrix.postScale(scale, scale, centerX, centerY);
-                matrix.postRotate(90 * (rotation - 2), centerX, centerY);
-            } else if (Surface.ROTATION_180 == rotation) {
-                matrix.postRotate(180, centerX, centerY);
-            }
-            textureLocalCamera.setTransform(matrix);
+            displayRot = getWindowManager().getDefaultDisplay().getRotation();
         } catch (Exception ignored) {}
+        int deviceDegrees = displayRot * 90;
+        if (isFrontCamera) {
+            return (sensorOrientation + deviceDegrees) % 360;
+        } else {
+            return (sensorOrientation - deviceDegrees + 360) % 360;
+        }
     }
 
     private void startCameraPreview() {
@@ -411,19 +553,46 @@ public class CallActivity extends AppCompatActivity {
         try {
             SurfaceTexture texture = textureLocalCamera.getSurfaceTexture();
             if (texture == null) return;
-            texture.setDefaultBufferSize(480, 640);
-            Surface surface = new Surface(texture);
+            texture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
+            Surface previewSurface = new Surface(texture);
 
+            if (frameImageReader != null) {
+                try { frameImageReader.close(); } catch (Exception ignored) {}
+                frameImageReader = null;
+            }
+            startVideoBackgroundThread();
+            frameImageReader = ImageReader.newInstance(
+                    previewSize.getWidth(),
+                    previewSize.getHeight(),
+                    ImageFormat.YUV_420_888,
+                    2
+            );
+            frameImageReader.setOnImageAvailableListener(reader -> {
+                try (Image img = reader.acquireLatestImage()) {
+                    if (img == null || isDestroyed || !isConnected || !isCameraEnabled) return;
+                    long now = System.currentTimeMillis();
+                    int tier = ActiveCallManager.getInstance().getNetworkTier();
+                    long minIntervalMs = (tier == CallMediaEngine.TIER_LOW) ? 320L : ((tier == CallMediaEngine.TIER_MEDIUM) ? 180L : 95L);
+                    if ((now - lastVideoSendTimeMs) < minIntervalMs) return;
+                    if (!ActiveCallManager.getInstance().canSendVideoFrame()) return;
+                    lastVideoSendTimeMs = now;
+
+                    processAndSendCameraImage(img, tier);
+                } catch (Exception ignored) {}
+            }, videoHandler);
+
+            Surface readerSurface = frameImageReader.getSurface();
             CaptureRequest.Builder builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            builder.addTarget(surface);
+            builder.addTarget(previewSurface);
+            builder.addTarget(readerSurface);
 
-            cameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback() {
+            cameraDevice.createCaptureSession(Arrays.asList(previewSurface, readerSurface), new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession session) {
                     captureSession = session;
                     try {
                         builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
-                        session.setRepeatingRequest(builder.build(), null, mainHandler);
+                        session.setRepeatingRequest(builder.build(), null, videoHandler != null ? videoHandler : mainHandler);
                     } catch (CameraAccessException ignored) {}
                 }
 
@@ -432,6 +601,97 @@ public class CallActivity extends AppCompatActivity {
             }, mainHandler);
         } catch (Exception e) {
             Log.e(TAG, "startCameraPreview error: " + e.getMessage());
+        }
+    }
+
+    private void processAndSendCameraImage(Image image, int tier) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        byte[] nv21 = yuv420ToNv21(image);
+        if (nv21 == null) return;
+
+        YuvImage yuvImage = new YuvImage(nv21, ImageFormat.NV21, width, height, null);
+        ByteArrayOutputStream rawJpegOut = new ByteArrayOutputStream();
+        yuvImage.compressToJpeg(new Rect(0, 0, width, height), 80, rawJpegOut);
+        byte[] rawJpeg = rawJpegOut.toByteArray();
+
+        Bitmap decoded = BitmapFactory.decodeByteArray(rawJpeg, 0, rawJpeg.length);
+        if (decoded == null) return;
+
+        int rotationDeg = computeFrameRotationDegrees();
+        int maxDim = (tier == CallMediaEngine.TIER_LOW) ? 224 : ((tier == CallMediaEngine.TIER_MEDIUM) ? 320 : 480);
+        int quality = (tier == CallMediaEngine.TIER_LOW) ? 32 : ((tier == CallMediaEngine.TIER_MEDIUM) ? 46 : 62);
+
+        int rotW = (rotationDeg == 90 || rotationDeg == 270) ? decoded.getHeight() : decoded.getWidth();
+        int rotH = (rotationDeg == 90 || rotationDeg == 270) ? decoded.getWidth() : decoded.getHeight();
+        float scale = Math.min(1.0f, Math.min((float) maxDim / Math.max(1, rotW), (float) maxDim / Math.max(1, rotH)));
+
+        Matrix m = new Matrix();
+        if (rotationDeg != 0) m.postRotate(rotationDeg);
+        if (isFrontCamera) {
+            // Un-mirror front camera only visually or mirror to match selfie consistency cleanly
+            m.postScale(-scale, scale);
+        } else {
+            m.postScale(scale, scale);
+        }
+
+        Bitmap finalBmp = Bitmap.createBitmap(decoded, 0, 0, decoded.getWidth(), decoded.getHeight(), m, true);
+        if (finalBmp != decoded) decoded.recycle();
+
+        ByteArrayOutputStream finalOut = new ByteArrayOutputStream();
+        finalBmp.compress(Bitmap.CompressFormat.JPEG, quality, finalOut);
+        finalBmp.recycle();
+
+        ActiveCallManager.getInstance().sendVideoFrame(finalOut.toByteArray());
+    }
+
+    private static byte[] yuv420ToNv21(Image image) {
+        try {
+            int width = image.getWidth();
+            int height = image.getHeight();
+            int ySize = width * height;
+            int uvSize = ySize / 2;
+            byte[] nv21 = new byte[ySize + uvSize];
+
+            Image.Plane[] planes = image.getPlanes();
+            ByteBuffer yBuffer = planes[0].getBuffer();
+            ByteBuffer uBuffer = planes[1].getBuffer();
+            ByteBuffer vBuffer = planes[2].getBuffer();
+
+            int yRowStride = planes[0].getRowStride();
+            int yPixelStride = planes[0].getPixelStride();
+            int pos = 0;
+            for (int row = 0; row < height; row++) {
+                int rowStart = row * yRowStride;
+                if (yPixelStride == 1) {
+                    yBuffer.position(rowStart);
+                    yBuffer.get(nv21, pos, width);
+                    pos += width;
+                } else {
+                    for (int col = 0; col < width; col++) {
+                        nv21[pos++] = yBuffer.get(rowStart + col * yPixelStride);
+                    }
+                }
+            }
+
+            int chromaHeight = height / 2;
+            int chromaWidth = width / 2;
+            int uRowStride = planes[1].getRowStride();
+            int uPixelStride = planes[1].getPixelStride();
+            int vRowStride = planes[2].getRowStride();
+            int vPixelStride = planes[2].getPixelStride();
+            int uvPos = ySize;
+            for (int row = 0; row < chromaHeight; row++) {
+                int uRowStart = row * uRowStride;
+                int vRowStart = row * vRowStride;
+                for (int col = 0; col < chromaWidth; col++) {
+                    nv21[uvPos++] = vBuffer.get(vRowStart + col * vPixelStride);
+                    nv21[uvPos++] = uBuffer.get(uRowStart + col * uPixelStride);
+                }
+            }
+            return nv21;
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -445,8 +705,57 @@ public class CallActivity extends AppCompatActivity {
                 cameraDevice.close();
                 cameraDevice = null;
             }
+            if (frameImageReader != null) {
+                frameImageReader.close();
+                frameImageReader = null;
+            }
         } catch (Exception ignored) {}
     }
+
+    private final CallMediaEngine.MediaListener callMediaListener = new CallMediaEngine.MediaListener() {
+        @Override
+        public void onRemoteVideoFrame(byte[] jpegBytes) {
+            if (isDestroyed || jpegBytes == null) return;
+            decodeExecutor.execute(() -> {
+                Bitmap bmp = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.length);
+                if (bmp != null && !isDestroyed) {
+                    runOnUiThread(() -> {
+                        if (isDestroyed) {
+                            bmp.recycle();
+                            return;
+                        }
+                        if (ivRemoteVideo != null) {
+                            ivRemoteVideo.setScaleType(isRemoteFitCenter ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER_CROP);
+                            ivRemoteVideo.setImageBitmap(bmp);
+                            ivRemoteVideo.setVisibility(View.VISIBLE);
+                        }
+                        if (layoutAvatarBox != null) layoutAvatarBox.setVisibility(View.GONE);
+                        if (tvEncryptionNote != null) tvEncryptionNote.setVisibility(View.GONE);
+                    });
+                }
+            });
+        }
+
+        @Override
+        public void onRemoteHangup(String reason) {
+            if (isDestroyed) return;
+            tvCallStatus.setText("Call ended");
+            Toast.makeText(CallActivity.this, "Call ended", Toast.LENGTH_SHORT).show();
+            endCall(false);
+        }
+
+        @Override
+        public void onNetworkQualityChanged(int tier, int rttMs) {
+            if (isDestroyed || tvEncryptionNote == null) return;
+            if (tier == CallMediaEngine.TIER_LOW) {
+                tvEncryptionNote.setText("Low network · Audio prioritized (" + rttMs + "ms)");
+            } else if (tier == CallMediaEngine.TIER_MEDIUM) {
+                tvEncryptionNote.setText("Adaptive quality (" + rttMs + "ms)");
+            } else {
+                tvEncryptionNote.setText("HD · Encrypted (" + rttMs + "ms)");
+            }
+        }
+    };
 
     private final Runnable pollStatusRunnable = new Runnable() {
         @Override
@@ -457,15 +766,18 @@ public class CallActivity extends AppCompatActivity {
             httpClient.newCall(req).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    if (!isDestroyed && !isConnected) mainHandler.postDelayed(pollStatusRunnable, 1500);
+                    if (!isDestroyed && !isConnected) mainHandler.postDelayed(pollStatusRunnable, 650);
                 }
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
-                    if (isDestroyed || isConnected) return;
-                    if (response.isSuccessful() && response.body() != null) {
-                        try {
-                            String body = response.body().string();
+                    if (isDestroyed || isConnected) {
+                        response.close();
+                        return;
+                    }
+                    try (Response r = response) {
+                        if (r.isSuccessful() && r.body() != null) {
+                            String body = r.body().string();
                             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
                             String st = json.has("status") ? json.get("status").getAsString() : "";
                             if ("connected".equalsIgnoreCase(st)) {
@@ -477,20 +789,21 @@ public class CallActivity extends AppCompatActivity {
                                     String msg = "rejected".equalsIgnoreCase(st) ? "Call declined" : ("busy".equalsIgnoreCase(st) ? "User busy" : "Call ended");
                                     tvCallStatus.setText(msg);
                                     Toast.makeText(CallActivity.this, msg, Toast.LENGTH_SHORT).show();
-                                    mainHandler.postDelayed(() -> finish(), 1500);
+                                    ActiveCallManager.getInstance().endCall();
+                                    mainHandler.postDelayed(() -> finish(), 1000);
                                 });
                                 return;
                             }
-                        } catch (Exception ignored) {}
-                    }
-                    if (!isDestroyed && !isConnected) mainHandler.postDelayed(pollStatusRunnable, 1500);
+                        }
+                    } catch (Exception ignored) {}
+                    if (!isDestroyed && !isConnected) mainHandler.postDelayed(pollStatusRunnable, 650);
                 }
             });
         }
     };
 
     private void startCallerPolling() {
-        mainHandler.postDelayed(pollStatusRunnable, 1500);
+        mainHandler.postDelayed(pollStatusRunnable, 500);
     }
 
     private void onCallConnected() {
@@ -502,8 +815,11 @@ public class CallActivity extends AppCompatActivity {
         tvCallStatus.setText("00:00");
         mainHandler.post(timerRunnable);
 
-        // Keep polling status in background to detect when peer hangs up
+        ActiveCallManager.getInstance().startMedia(this, callMediaListener);
         startEndCallWatcher();
+        if ("video".equalsIgnoreCase(callType)) {
+            startHttpVideoFallbackPoller();
+        }
     }
 
     private final Runnable endWatcherRunnable = new Runnable() {
@@ -520,22 +836,25 @@ public class CallActivity extends AppCompatActivity {
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
-                    if (isDestroyed) return;
-                    if (response.isSuccessful() && response.body() != null) {
-                        try {
-                            String body = response.body().string();
+                    if (isDestroyed) {
+                        response.close();
+                        return;
+                    }
+                    try (Response r = response) {
+                        if (r.isSuccessful() && r.body() != null) {
+                            String body = r.body().string();
                             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
                             String st = json.has("status") ? json.get("status").getAsString() : "";
                             if ("ended".equalsIgnoreCase(st)) {
                                 mainHandler.post(() -> {
                                     tvCallStatus.setText("Call ended");
                                     Toast.makeText(CallActivity.this, "Call ended", Toast.LENGTH_SHORT).show();
-                                    mainHandler.postDelayed(() -> finish(), 1000);
+                                    endCall(false);
                                 });
                                 return;
                             }
-                        } catch (Exception ignored) {}
-                    }
+                        }
+                    } catch (Exception ignored) {}
                     if (!isDestroyed) mainHandler.postDelayed(endWatcherRunnable, 2000);
                 }
             });
@@ -546,128 +865,56 @@ public class CallActivity extends AppCompatActivity {
         mainHandler.postDelayed(endWatcherRunnable, 2000);
     }
 
-    private void startFrameExchangeLoops() {
-        // Send local camera frame every 250ms (non-blocking)
-        Runnable sendFrameTask = new Runnable() {
+    private void startHttpVideoFallbackPoller() {
+        Runnable fetchFallbackTask = new Runnable() {
             @Override
             public void run() {
                 if (isDestroyed) return;
-                if (isCameraEnabled && textureLocalCamera != null && textureLocalCamera.isAvailable()) {
-                    if (isSendingFrame.compareAndSet(false, true)) {
-                        try {
-                            Bitmap srcBmp = textureLocalCamera.getBitmap();
-                            if (srcBmp != null) {
-                                int origW = srcBmp.getWidth();
-                                int origH = srcBmp.getHeight();
-                                Bitmap scaled;
-                                if (origW > 0 && origH > 0) {
-                                    // Proportional scale preserving exact aspect ratio without stretching
-                                    float scale = Math.min(480f / origH, 360f / origW);
-                                    int targetW = Math.max(1, Math.round(origW * scale));
-                                    int targetH = Math.max(1, Math.round(origH * scale));
-                                    scaled = Bitmap.createScaledBitmap(srcBmp, targetW, targetH, true);
-                                } else {
-                                    scaled = srcBmp;
-                                }
-                                if (scaled != srcBmp) srcBmp.recycle();
-                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                scaled.compress(Bitmap.CompressFormat.JPEG, 55, baos);
-                                scaled.recycle();
-                                byte[] bytes = baos.toByteArray();
-                                String b64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
-
-                                String url = ChatApiClient.getBaseUrl(CallActivity.this) + "/api/call/frame";
-                                JsonObject json = new JsonObject();
-                                json.addProperty("callId", callId);
-                                json.addProperty("senderId", currentUserId);
-                                json.addProperty("frameBase64", b64);
-
-                                RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json; charset=utf-8"));
-                                Request req = new Request.Builder().url(url).post(body).build();
-                                httpClient.newCall(req).enqueue(new Callback() {
-                                    @Override
-                                    public void onFailure(Call call, IOException e) {
-                                        isSendingFrame.set(false);
-                                    }
-                                    @Override
-                                    public void onResponse(Call call, Response response) {
-                                        try { if (response.body() != null) response.body().close(); } catch (Exception ignored) {}
-                                        isSendingFrame.set(false);
-                                    }
-                                });
-                            } else {
-                                isSendingFrame.set(false);
-                            }
-                        } catch (Exception e) {
-                            isSendingFrame.set(false);
+                // Only poll HTTP when WebSocket relay is unavailable
+                if (!ActiveCallManager.getInstance().isCallActive()) return;
+                boolean wsUp = isConnected && ActiveCallManager.getInstance().getNetworkTier() < 3 && isWsUpSafe();
+                if (!wsUp && peerId != null && !peerId.isEmpty() && !isFetchingRemoteFallback) {
+                    isFetchingRemoteFallback = true;
+                    String url = ChatApiClient.getBaseUrl(CallActivity.this) + "/api/call/frame?callId=" + callId + "&senderId=" + peerId;
+                    httpClient.newCall(new Request.Builder().url(url).build()).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            isFetchingRemoteFallback = false;
                         }
-                    }
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            try (Response r = response) {
+                                if (!isDestroyed && r.isSuccessful() && r.body() != null) {
+                                    JsonObject json = JsonParser.parseString(r.body().string()).getAsJsonObject();
+                                    if (json.has("hasFrame") && json.get("hasFrame").getAsBoolean() && json.has("frame")) {
+                                        byte[] bytes = Base64.decode(json.get("frame").getAsString(), Base64.DEFAULT);
+                                        callMediaListener.onRemoteVideoFrame(bytes);
+                                    }
+                                }
+                            } catch (Exception ignored) {}
+                            isFetchingRemoteFallback = false;
+                        }
+                    });
                 }
-                if (!isDestroyed) frameHandler.postDelayed(this, 280);
+                if (!isDestroyed) frameHandler.postDelayed(this, 320);
             }
         };
-        frameHandler.postDelayed(sendFrameTask, 400);
+        frameHandler.postDelayed(fetchFallbackTask, 600);
+    }
 
-        // Fetch remote camera frame every 250ms (non-blocking)
-        Runnable fetchFrameTask = new Runnable() {
-            @Override
-            public void run() {
-                if (isDestroyed) return;
-                if (peerId != null && !peerId.isEmpty()) {
-                    if (isFetchingFrame.compareAndSet(false, true)) {
-                        String url = ChatApiClient.getBaseUrl(CallActivity.this) + "/api/call/frame?callId=" + callId + "&senderId=" + peerId;
-                        Request req = new Request.Builder().url(url).build();
-                        httpClient.newCall(req).enqueue(new Callback() {
-                            @Override
-                            public void onFailure(Call call, IOException e) {
-                                isFetchingFrame.set(false);
-                            }
-                            @Override
-                            public void onResponse(Call call, Response response) throws IOException {
-                                if (isDestroyed) {
-                                    isFetchingFrame.set(false);
-                                    return;
-                                }
-                                if (response.isSuccessful() && response.body() != null) {
-                                    try {
-                                        String body = response.body().string();
-                                        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
-                                        if (json.has("hasFrame") && json.get("hasFrame").getAsBoolean() && json.has("frame")) {
-                                            String b64 = json.get("frame").getAsString();
-                                            byte[] bytes = Base64.decode(b64, Base64.DEFAULT);
-                                            Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                                            if (bmp != null) {
-                                                runOnUiThread(() -> {
-                                                    if (ivRemoteVideo != null) {
-                                                        ivRemoteVideo.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                                                        ivRemoteVideo.setImageBitmap(bmp);
-                                                        ivRemoteVideo.setVisibility(View.VISIBLE);
-                                                    }
-                                                    if (layoutAvatarBox != null) {
-                                                        layoutAvatarBox.setVisibility(View.GONE);
-                                                    }
-                                                    if (tvEncryptionNote != null) {
-                                                        tvEncryptionNote.setVisibility(View.GONE);
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    } catch (Exception ignored) {}
-                                }
-                                isFetchingFrame.set(false);
-                            }
-                        });
-                    }
-                }
-                if (!isDestroyed) frameHandler.postDelayed(this, 280);
-            }
-        };
-        frameHandler.postDelayed(fetchFrameTask, 500);
+    private boolean isWsUpSafe() {
+        // Video streams over WebSocket whenever WebSocket connected; HTTP loop backs off automatically
+        return ActiveCallManager.getInstance().isWsMediaConnected();
     }
 
     private void toggleMute() {
         isMuted = !isMuted;
-        ActiveCallManager.getInstance().toggleMute(this);
+        ActiveCallManager.getInstance().setMuted(this, isMuted);
+        updateMuteUi();
+    }
+
+    private void updateMuteUi() {
+        if (btnMute == null) return;
         btnMute.setImageResource(isMuted ? R.drawable.ic_mic_off : R.drawable.ic_mic);
         btnMute.getBackground().mutate().setTint(isMuted ? android.graphics.Color.parseColor("#EF4444") : android.graphics.Color.parseColor("#40202C33"));
     }
@@ -726,6 +973,7 @@ public class CallActivity extends AppCompatActivity {
         ActiveCallManager.getInstance().endCall();
         stopOutgoingTone();
         closeCamera();
+        stopVideoBackgroundThread();
 
         if (audioManager != null) {
             audioManager.setMode(AudioManager.MODE_NORMAL);
@@ -763,6 +1011,8 @@ public class CallActivity extends AppCompatActivity {
         isDestroyed = true;
         stopOutgoingTone();
         closeCamera();
+        stopVideoBackgroundThread();
+        decodeExecutor.shutdownNow();
         mainHandler.removeCallbacksAndMessages(null);
         frameHandler.removeCallbacksAndMessages(null);
         if (audioManager != null) {

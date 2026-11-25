@@ -12,7 +12,9 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import com.zez.app.service.CallSyncWorker;
+import com.zez.app.service.QuackyBackgroundService;
 import com.zez.app.util.AlarmHelper;
+import com.zez.app.util.ChatNotificationManager;
 
 import java.util.concurrent.TimeUnit;
 
@@ -24,10 +26,13 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) ||
             Intent.ACTION_MY_PACKAGE_REPLACED.equals(intent.getAction())) {
-            Log.d(TAG, "Device booted or app replaced. Registering background sync.");
-            schedulePeriodicSync(context);
-            AlarmHelper.schedulePeriodicAlarmSync(context);
-            AlarmHelper.syncWithBackend(context, null);
+            Log.d(TAG, "Device booted or app replaced. Registering background sync & call/chat listener.");
+            Context appCtx = context.getApplicationContext();
+            schedulePeriodicSync(appCtx);
+            AlarmHelper.schedulePeriodicAlarmSync(appCtx);
+            AlarmHelper.syncWithBackend(appCtx, null);
+            ChatNotificationManager.getInstance().start(appCtx);
+            QuackyBackgroundService.ensureRunning(appCtx);
         }
     }
 

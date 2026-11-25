@@ -27,6 +27,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zez.app.util.ChatApiClient;
+import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatPreferencesHelper;
 
 import java.io.IOException;
@@ -218,6 +219,7 @@ public class IncomingCallActivity extends AppCompatActivity {
         if (isFinished) return;
         isFinished = true;
         stopRinging();
+        ChatNotificationHelper.cancelIncomingCallNotification(this);
 
         String currentUserId = ChatPreferencesHelper.getUserId(this);
         String url = ChatApiClient.getBaseUrl(this) + "/api/call/respond";
@@ -258,6 +260,8 @@ public class IncomingCallActivity extends AppCompatActivity {
         if (isFinished) return;
         isFinished = true;
         stopRinging();
+        ChatNotificationHelper.cancelIncomingCallNotification(this);
+        ChatNotificationHelper.clearHandledCall(callId);
 
         String currentUserId = ChatPreferencesHelper.getUserId(this);
         String url = ChatApiClient.getBaseUrl(this) + "/api/call/respond";
@@ -286,6 +290,8 @@ public class IncomingCallActivity extends AppCompatActivity {
     protected void onDestroy() {
         isFinished = true;
         stopRinging();
+        ChatNotificationHelper.clearHandledCall(callId);
+        ChatNotificationHelper.cancelIncomingCallNotification(this);
         pollHandler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }

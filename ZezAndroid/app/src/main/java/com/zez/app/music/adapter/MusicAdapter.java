@@ -124,6 +124,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.TrackViewHol
         View optPlayNext = view.findViewById(R.id.opt_play_next);
         View optAddQueue = view.findViewById(R.id.opt_add_queue);
         View optShare = view.findViewById(R.id.opt_share);
+        View optOpenExternal = view.findViewById(R.id.opt_open_external);
         View optDelete = view.findViewById(R.id.opt_delete);
 
         tvTitle.setText(track.getTitle());
@@ -179,6 +180,13 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.TrackViewHol
         });
 
         if (track.isDownloaded()) {
+            if (optOpenExternal != null) {
+                optOpenExternal.setVisibility(View.VISIBLE);
+                optOpenExternal.setOnClickListener(v -> {
+                    dialog.dismiss();
+                    openDownloadedInPhoneApp(track);
+                });
+            }
             optDelete.setVisibility(View.VISIBLE);
             optDelete.setOnClickListener(v -> {
                 dialog.dismiss();
@@ -188,10 +196,44 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.TrackViewHol
                 Toast.makeText(context, "Deleted from downloads", Toast.LENGTH_SHORT).show();
             });
         } else {
+            if (optOpenExternal != null) optOpenExternal.setVisibility(View.GONE);
             optDelete.setVisibility(View.GONE);
         }
 
         dialog.show();
+    }
+
+    private void openDownloadedInPhoneApp(MusicTrack track) {
+        if (track == null || track.getLocalFilePath() == null) {
+            Toast.makeText(context, "Downloaded file not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            String lp = track.getLocalFilePath();
+            android.net.Uri uri;
+            if (lp.startsWith("content://")) {
+                uri = android.net.Uri.parse(lp);
+            } else {
+                java.io.File file = new java.io.File(lp);
+                if (!file.exists()) {
+                    Toast.makeText(context, "File missing on device storage", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                uri = androidx.core.content.FileProvider.getUriForFile(
+                        context,
+                        context.getPackageName() + ".provider",
+                        file
+                );
+            }
+            Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+            String lower = lp.toLowerCase();
+            String mime = lower.endsWith(".mp4") ? "video/*" : (lower.endsWith(".mp3") ? "audio/mpeg" : (lower.endsWith(".webm") ? "audio/webm" : "audio/*"));
+            viewIntent.setDataAndType(uri, mime);
+            viewIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(Intent.createChooser(viewIntent, "Play with phone media app"));
+        } catch (Exception e) {
+            Toast.makeText(context, "Saved in Music/Quacky (" + e.getMessage() + ")", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

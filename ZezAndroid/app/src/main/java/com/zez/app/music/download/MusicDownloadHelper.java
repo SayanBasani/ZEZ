@@ -165,9 +165,14 @@ public class MusicDownloadHelper {
                             valid.add(t);
                             continue;
                         }
+                        File pub = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Quacky/" + f.getName());
+                        if (pub.exists() && pub.length() > 0) {
+                            t.setLocalFilePath(pub.getAbsolutePath());
+                            valid.add(t);
+                            continue;
+                        }
                     }
                 }
-                valid.add(t);
             }
             return valid;
         } catch (Exception e) {
