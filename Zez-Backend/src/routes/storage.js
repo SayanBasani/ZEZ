@@ -84,7 +84,32 @@ router.get("/file/*key", async (req, res) => {
       });
     }
 
-    // 2. Cache Miss: Stream from Backblaze B2 and cache for future requests
+    // 2. Cache Miss: Handle HEAD cleanly without pulling the full object body
+    if (req.method === "HEAD") {
+      const meta = await b2Storage.getFileMetadata(objectKey);
+      if (!meta.exists) {
+        return res.status(404).end();
+      }
+      const headHeaders = {
+        "Content-Type": isApk ? "application/vnd.android.package-archive" : (meta.contentType || "application/octet-stream"),
+        "Accept-Ranges": "bytes",
+        "Cache-Control": "public, max-age=86400, immutable"
+      };
+      if (isApk || req.query.download === "true") {
+        let dlName = path.basename(objectKey);
+        if (meta.metadata?.originalname) {
+          try { dlName = path.basename(decodeURIComponent(meta.metadata.originalname)); } catch {}
+        }
+        headHeaders["Content-Disposition"] = `attachment; filename="${dlName}"`;
+      }
+      if (meta.contentLength !== undefined) headHeaders["Content-Length"] = meta.contentLength;
+      if (meta.etag) headHeaders["ETag"] = meta.etag;
+      if (meta.lastModified) headHeaders["Last-Modified"] = new Date(meta.lastModified).toUTCString();
+      res.writeHead(200, headHeaders);
+      return res.end();
+    }
+
+    // 3. Cache Miss GET: Stream from Backblaze B2 and cache cleanly for future requests
     const rangeHeader = req.headers.range || null;
 
     let b2Res;
@@ -104,7 +129,11 @@ router.get("/file/*key", async (req, res) => {
     };
 
     if (isApk || req.query.download === "true") {
-      headers["Content-Disposition"] = `attachment; filename="${path.basename(objectKey)}"`;
+      let dlName = path.basename(objectKey);
+      if (b2Res.metadata?.originalname) {
+        try { dlName = path.basename(decodeURIComponent(b2Res.metadata.originalname)); } catch {}
+      }
+      headers["Content-Disposition"] = `attachment; filename="${dlName}"`;
     }
 
     if (b2Res.contentLength !== undefined) {
@@ -122,27 +151,48 @@ router.get("/file/*key", async (req, res) => {
 
     res.writeHead(b2Res.statusCode || 200, headers);
 
-    // Cache the full response body locally
+    let writeStream = null;
+    let tmpFile = null;
+    let completed = false;
     if (!rangeHeader && (!b2Res.statusCode || b2Res.statusCode === 200)) {
       try {
         fs.mkdirSync(path.dirname(cachedFilePath), { recursive: true });
-        const tmpFile = cachedFilePath + ".tmp." + Date.now();
-        const writeStream = fs.createWriteStream(tmpFile);
+        tmpFile = cachedFilePath + ".tmp." + Date.now();
+        writeStream = fs.createWriteStream(tmpFile);
         b2Res.stream.pipe(writeStream);
         writeStream.on("finish", () => {
           try {
-            if (fs.existsSync(tmpFile)) fs.renameSync(tmpFile, cachedFilePath);
+            if (completed && tmpFile && fs.existsSync(tmpFile)) {
+              fs.renameSync(tmpFile, cachedFilePath);
+            } else if (tmpFile && fs.existsSync(tmpFile)) {
+              fs.unlinkSync(tmpFile);
+            }
           } catch (_) {}
         });
         writeStream.on("error", () => {
-          try { if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
+          try { if (tmpFile && fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
         });
       } catch (_) {}
     }
 
-    req.on("close", () => {
-      if (b2Res.stream && typeof b2Res.stream.destroy === "function") {
+    b2Res.stream.on("end", () => {
+      completed = true;
+    });
+
+    b2Res.stream.on("error", (streamErr) => {
+      console.warn("B2 stream read error:", streamErr.message);
+      if (writeStream) writeStream.destroy();
+      try { if (tmpFile && fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
+      if (!res.writableEnded) res.destroy(streamErr);
+    });
+
+    res.on("close", () => {
+      if (!completed && b2Res.stream && typeof b2Res.stream.destroy === "function") {
         b2Res.stream.destroy();
+      }
+      if (!completed && writeStream) {
+        writeStream.destroy();
+        try { if (tmpFile && fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
       }
     });
 

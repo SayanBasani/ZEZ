@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -138,6 +140,7 @@ public class CallActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.zez.app.theme.ThemeManager.applyTheme(this, true);
         super.onCreate(savedInstanceState);
         getWindow().addFlags(
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
@@ -287,15 +290,19 @@ public class CallActivity extends AppCompatActivity {
         if ("video".equalsIgnoreCase(callType)) {
             setupCameraIds();
             if (textureLocalCamera.isAvailable()) {
+                configureTransform(textureLocalCamera.getWidth(), textureLocalCamera.getHeight());
                 openCamera();
             } else {
                 textureLocalCamera.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
                     @Override
                     public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
+                        configureTransform(width, height);
                         openCamera();
                     }
                     @Override
-                    public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {}
+                    public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
+                        configureTransform(width, height);
+                    }
                     @Override
                     public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) { return true; }
                     @Override
@@ -372,12 +379,39 @@ public class CallActivity extends AppCompatActivity {
         }
     }
 
+    private void configureTransform(int viewWidth, int viewHeight) {
+        if (textureLocalCamera == null || !textureLocalCamera.isAvailable() || viewWidth == 0 || viewHeight == 0) return;
+        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        if (manager == null) return;
+        try {
+            String targetId = isFrontCamera ? (frontCameraId != null ? frontCameraId : backCameraId) : (backCameraId != null ? backCameraId : frontCameraId);
+            if (targetId == null) return;
+            CameraCharacteristics chars = manager.getCameraCharacteristics(targetId);
+            int rotation = getWindowManager().getDefaultDisplay().getRotation();
+            Matrix matrix = new Matrix();
+            RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
+            RectF bufferRect = new RectF(0, 0, 480, 640);
+            float centerX = viewRect.centerX();
+            float centerY = viewRect.centerY();
+            if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
+                bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
+                matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+                float scale = Math.max((float) viewHeight / 480, (float) viewWidth / 640);
+                matrix.postScale(scale, scale, centerX, centerY);
+                matrix.postRotate(90 * (rotation - 2), centerX, centerY);
+            } else if (Surface.ROTATION_180 == rotation) {
+                matrix.postRotate(180, centerX, centerY);
+            }
+            textureLocalCamera.setTransform(matrix);
+        } catch (Exception ignored) {}
+    }
+
     private void startCameraPreview() {
         if (cameraDevice == null || !textureLocalCamera.isAvailable()) return;
         try {
             SurfaceTexture texture = textureLocalCamera.getSurfaceTexture();
             if (texture == null) return;
-            texture.setDefaultBufferSize(320, 240);
+            texture.setDefaultBufferSize(480, 640);
             Surface surface = new Surface(texture);
 
             CaptureRequest.Builder builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -523,10 +557,21 @@ public class CallActivity extends AppCompatActivity {
                         try {
                             Bitmap srcBmp = textureLocalCamera.getBitmap();
                             if (srcBmp != null) {
-                                Bitmap scaled = Bitmap.createScaledBitmap(srcBmp, 320, 240, true);
+                                int origW = srcBmp.getWidth();
+                                int origH = srcBmp.getHeight();
+                                Bitmap scaled;
+                                if (origW > 0 && origH > 0) {
+                                    // Proportional scale preserving exact aspect ratio without stretching
+                                    float scale = Math.min(480f / origH, 360f / origW);
+                                    int targetW = Math.max(1, Math.round(origW * scale));
+                                    int targetH = Math.max(1, Math.round(origH * scale));
+                                    scaled = Bitmap.createScaledBitmap(srcBmp, targetW, targetH, true);
+                                } else {
+                                    scaled = srcBmp;
+                                }
                                 if (scaled != srcBmp) srcBmp.recycle();
                                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                scaled.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+                                scaled.compress(Bitmap.CompressFormat.JPEG, 55, baos);
                                 scaled.recycle();
                                 byte[] bytes = baos.toByteArray();
                                 String b64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
@@ -594,6 +639,7 @@ public class CallActivity extends AppCompatActivity {
                                             if (bmp != null) {
                                                 runOnUiThread(() -> {
                                                     if (ivRemoteVideo != null) {
+                                                        ivRemoteVideo.setScaleType(ImageView.ScaleType.CENTER_CROP);
                                                         ivRemoteVideo.setImageBitmap(bmp);
                                                         ivRemoteVideo.setVisibility(View.VISIBLE);
                                                     }
@@ -641,6 +687,9 @@ public class CallActivity extends AppCompatActivity {
 
     private void flipCamera() {
         isFrontCamera = !isFrontCamera;
+        if (textureLocalCamera != null && textureLocalCamera.isAvailable()) {
+            configureTransform(textureLocalCamera.getWidth(), textureLocalCamera.getHeight());
+        }
         openCamera();
         Toast.makeText(this, isFrontCamera ? "Front camera" : "Back camera", Toast.LENGTH_SHORT).show();
     }

@@ -15,7 +15,7 @@
         android:layout_height="62dp"
         app:cardCornerRadius="10dp"
         app:cardElevation="2dp"
-        app:cardBackgroundColor="@color/surface_variant">
+        app:cardBackgroundColor="?attr/colorThemeSurfaceVariant">
 
         <ImageView
             android:id="@+id/iv_track_thumbnail"
@@ -53,7 +53,7 @@
             android:text="Track Title Goes Here"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="@color/theme_text_primary"
+            android:textColor="?attr/colorThemeTextPrimary"
             android:maxLines="2"
             android:ellipsize="end" />
 
@@ -70,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:text="Artist Name"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_muted"
+                android:textColor="?attr/colorThemeTextMuted"
                 android:maxLines="1"
                 android:ellipsize="end" />
 
@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:text=" · 2.4M views"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_muted"
+                android:textColor="?attr/colorThemeTextMuted"
                 android:maxLines="1" />
         </LinearLayout>
     </LinearLayout>
@@ -92,6 +92,6 @@
         android:layout_height="36dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_more_vert"
-        app:tint="@color/theme_icon_tint"
+        app:tint="?attr/colorThemeIconTint"
         android:contentDescription="More options" />
 </LinearLayout>

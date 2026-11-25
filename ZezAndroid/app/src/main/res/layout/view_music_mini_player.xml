@@ -8,7 +8,7 @@
     android:layout_marginBottom="8dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="6dp"
-    app:cardBackgroundColor="@color/theme_surface"
+    app:cardBackgroundColor="?attr/colorThemeSurface"
     android:visibility="gone">
 
     <RelativeLayout
@@ -61,7 +61,7 @@
                     android:text="Track Title"
                     android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_primary"
+                    android:textColor="?attr/colorThemeTextPrimary"
                     android:maxLines="1"
                     android:ellipsize="end" />
 
@@ -71,7 +71,7 @@
                     android:layout_height="wrap_content"
                     android:text="Artist"
                     android:textSize="11sp"
-                    android:textColor="@color/theme_text_muted"
+                    android:textColor="?attr/colorThemeTextMuted"
                     android:maxLines="1"
                     android:ellipsize="end" />
             </LinearLayout>
@@ -91,7 +91,7 @@
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_skip_next"
-                app:tint="@color/theme_icon_tint"
+                app:tint="?attr/colorThemeIconTint"
                 android:contentDescription="Next track" />
 
             <ImageButton
@@ -101,7 +101,7 @@
                 android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_close"
-                app:tint="@color/theme_text_muted"
+                app:tint="?attr/colorThemeTextMuted"
                 android:contentDescription="Close and stop player" />
         </LinearLayout>
     </RelativeLayout>

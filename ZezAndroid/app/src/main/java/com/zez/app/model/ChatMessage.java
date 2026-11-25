@@ -156,6 +156,103 @@ public class ChatMessage implements Serializable {
         return "[reply:" + cleanSender + "|" + cleanSnippet + mediaPart + "]\n" + (actualText != null ? actualText : "");
     }
 
+    public static String formatGameInvite(String gameType, String gameId, String hostId, String hostName) {
+        String gType = (gameType != null && !gameType.trim().isEmpty()) ? gameType.trim() : "tictactoe";
+        String gId = gameId != null ? gameId.replace("|", "").replace("]", "").trim() : "";
+        String hId = hostId != null ? hostId.replace("|", "").replace("]", "").trim() : "";
+        String hName = hostName != null ? hostName.replace("|", " ").replace("]", ")").trim() : "Friend";
+        return "[game:" + gType + "|" + gId + "|" + hId + "|" + hName + "]";
+    }
+
+    public static String formatGameSummary(String gameType, String gameId, String summary) {
+        String gType = (gameType != null && !gameType.trim().isEmpty()) ? gameType.trim() : "tictactoe";
+        String gId = gameId != null ? gameId.replace("|", "").replace("]", "").trim() : "";
+        String cleanSum = summary != null ? summary.replace("|", "-").replace("]", ")").trim() : "Match ended";
+        return "[game_end:" + gType + "|" + gId + "|" + cleanSum + "]";
+    }
+
+    public static String formatContactShare(String name, String phone) {
+        String cleanName = (name != null && !name.trim().isEmpty()) ? name.replace("|", " ").replace("]", ")").trim() : "Contact";
+        String cleanPhone = phone != null ? phone.replace("|", " ").replace("]", ")").trim() : "";
+        return "[contact|" + cleanName + "|" + cleanPhone + "]";
+    }
+
+    private String safeCleanTrimmed() {
+        String clean = getCleanMessageText();
+        return clean != null ? clean.trim() : "";
+    }
+
+    public boolean isGameInvite() {
+        String clean = safeCleanTrimmed();
+        return clean.startsWith("[game:") && clean.endsWith("]");
+    }
+
+    public boolean isGameSummary() {
+        String clean = safeCleanTrimmed();
+        return clean.startsWith("[game_end:") && clean.endsWith("]");
+    }
+
+    public boolean isContactCard() {
+        String clean = safeCleanTrimmed();
+        return clean.startsWith("[contact|") && clean.endsWith("]");
+    }
+
+    private String[] splitTagParts(String prefix) {
+        String clean = safeCleanTrimmed();
+        if (!clean.startsWith(prefix) || !clean.endsWith("]")) return new String[0];
+        String inner = clean.substring(prefix.length(), clean.length() - 1);
+        return inner.split("\\|", -1);
+    }
+
+    public String getGameType() {
+        if (isGameInvite()) {
+            String[] p = splitTagParts("[game:");
+            return p.length > 0 && !p[0].isEmpty() ? p[0] : "tictactoe";
+        }
+        if (isGameSummary()) {
+            String[] p = splitTagParts("[game_end:");
+            return p.length > 0 && !p[0].isEmpty() ? p[0] : "tictactoe";
+        }
+        return "tictactoe";
+    }
+
+    public String getGameId() {
+        if (isGameInvite()) {
+            String[] p = splitTagParts("[game:");
+            return p.length > 1 ? p[1] : "";
+        }
+        if (isGameSummary()) {
+            String[] p = splitTagParts("[game_end:");
+            return p.length > 1 ? p[1] : "";
+        }
+        return "";
+    }
+
+    public String getGameHostId() {
+        String[] p = splitTagParts("[game:");
+        return p.length > 2 ? p[2] : "";
+    }
+
+    public String getGameHostName() {
+        String[] p = splitTagParts("[game:");
+        return p.length > 3 && !p[3].isEmpty() ? p[3] : "Friend";
+    }
+
+    public String getGameSummaryText() {
+        String[] p = splitTagParts("[game_end:");
+        return p.length > 2 && !p[2].isEmpty() ? p[2] : "Tic Tac Toe match ended";
+    }
+
+    public String getSharedContactName() {
+        String[] p = splitTagParts("[contact|");
+        return p.length > 0 && !p[0].isEmpty() ? p[0] : "Contact";
+    }
+
+    public String getSharedContactPhone() {
+        String[] p = splitTagParts("[contact|");
+        return p.length > 1 ? p[1] : "";
+    }
+
     public boolean hasQuotedReply() {
         return messageText != null && messageText.startsWith("[reply:") && messageText.contains("]\n");
     }
@@ -219,6 +316,9 @@ public class ChatMessage implements Serializable {
     }
 
     public String getDisplaySnippet() {
+        if (isGameInvite()) return "🎮 Tic Tac Toe Challenge";
+        if (isGameSummary()) return "🎮 " + getGameSummaryText();
+        if (isContactCard()) return "👤 Contact: " + getSharedContactName();
         String clean = getCleanMessageText();
         if (clean != null && !clean.trim().isEmpty()) {
             return clean.replace("\n", " ").trim();

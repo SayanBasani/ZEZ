@@ -15,5 +15,5 @@
         android:paddingVertical="4dp"
         android:text="Today"
         android:textSize="11sp"
-        android:textColor="@color/theme_text_muted" />
+        android:textColor="?attr/colorThemeTextMuted" />
 </LinearLayout>

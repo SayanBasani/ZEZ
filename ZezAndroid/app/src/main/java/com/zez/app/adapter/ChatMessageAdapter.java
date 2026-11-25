@@ -72,8 +72,13 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         void onMediaRetry(ChatMessage message);
     }
 
+    public interface OnGameInviteClickListener {
+        void onGameInviteClick(ChatMessage message);
+    }
+
     private OnMessageActionListener actionListener;
     private OnMediaRetryListener retryListener;
+    private OnGameInviteClickListener gameInviteClickListener;
 
     public void setOnMessageActionListener(OnMessageActionListener listener) {
         this.actionListener = listener;
@@ -81,6 +86,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void setOnMediaRetryListener(OnMediaRetryListener retryListener) {
         this.retryListener = retryListener;
+    }
+
+    public void setOnGameInviteClickListener(OnGameInviteClickListener listener) {
+        this.gameInviteClickListener = listener;
     }
 
     public String findMediaUrlForQuote(String quotedSender, String quotedText) {
@@ -426,7 +435,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ChatMessage msg = item.message;
 
         if (selectedMessageIds.contains(msg.getId())) {
-            holder.itemView.setBackgroundColor(Color.parseColor("#3322C55E"));
+            holder.itemView.setBackgroundColor(com.zez.app.theme.ThemeManager.getSelectionHighlightColor(holder.itemView.getContext()));
         } else if (highlightedMessageId != null && highlightedMessageId.equals(msg.getId())) {
             holder.itemView.setBackgroundColor(Color.parseColor("#44F59E0B"));
         } else {
@@ -485,6 +494,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ImageView ivQuoteImage;
         LinearLayout layoutReaction;
         TextView tvReaction;
+        LinearLayout layoutGameCard;
+        TextView tvGameSubtitle;
+        TextView tvGameCta;
         View layoutBubble;
 
         OutgoingViewHolder(@NonNull View itemView) {
@@ -509,6 +521,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             ivQuoteImage = itemView.findViewById(R.id.iv_msg_outgoing_quote_image);
             layoutReaction = itemView.findViewById(R.id.layout_msg_outgoing_reaction);
             tvReaction = itemView.findViewById(R.id.tv_msg_outgoing_reaction);
+            layoutGameCard = itemView.findViewById(R.id.layout_msg_outgoing_game_card);
+            tvGameSubtitle = itemView.findViewById(R.id.tv_msg_outgoing_game_subtitle);
+            tvGameCta = itemView.findViewById(R.id.tv_msg_outgoing_game_cta);
         }
 
         void bindStatusOnly(ChatMessage msg) {
@@ -563,6 +578,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (layoutFile != null) layoutFile.setVisibility(View.GONE);
                 if (layoutQuote != null) layoutQuote.setVisibility(View.GONE);
                 if (layoutReaction != null) layoutReaction.setVisibility(View.GONE);
+                if (layoutGameCard != null) layoutGameCard.setVisibility(View.GONE);
                 if (ivTick != null) ivTick.setVisibility(View.GONE);
                 tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
                 return;
@@ -576,7 +592,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (msg.hasQuotedReply()) {
                     layoutQuote.setVisibility(View.VISIBLE);
                     if (tvQuoteSender != null) tvQuoteSender.setText(msg.getQuotedSender());
-                    if (tvQuoteText != null) tvQuoteText.setText(msg.getQuotedText());
+                    if (tvQuoteText != null) tvQuoteText.setText(com.zez.app.util.MarkdownRenderer.render(msg.getQuotedText()));
                     if (ivQuoteImage != null) {
                         String qMediaUrl = msg.getQuotedMediaUrl();
                         String qText = msg.getQuotedText();
@@ -630,15 +646,48 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (layoutMediaRetry != null) layoutMediaRetry.setVisibility(View.GONE);
             }
 
-            String text = msg.getCleanMessageText();
-            if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
-                tvText.setVisibility(View.VISIBLE);
-                tvText.setText(text);
-            } else if (msg.getMediaUrl() == null || msg.getMediaUrl().isEmpty()) {
-                tvText.setVisibility(View.VISIBLE);
-                tvText.setText(text != null ? text : "");
-            } else {
+            tvText.setOnClickListener(null);
+            if (msg.isGameInvite() && layoutGameCard != null) {
+                layoutGameCard.setVisibility(View.VISIBLE);
                 tvText.setVisibility(View.GONE);
+                if (tvGameSubtitle != null) tvGameSubtitle.setText("Tap Open to play together");
+                View.OnClickListener openGame = v -> {
+                    if (adapter.gameInviteClickListener != null) {
+                        adapter.gameInviteClickListener.onGameInviteClick(msg);
+                    }
+                };
+                layoutGameCard.setOnClickListener(openGame);
+                if (tvGameCta != null) tvGameCta.setOnClickListener(openGame);
+            } else {
+                if (layoutGameCard != null) layoutGameCard.setVisibility(View.GONE);
+                if (msg.isGameSummary()) {
+                    tvText.setVisibility(View.VISIBLE);
+                    tvText.setText("\uD83C\uDFAE " + msg.getGameSummaryText());
+                } else if (msg.isContactCard()) {
+                    String cName = msg.getSharedContactName();
+                    String cPhone = msg.getSharedContactPhone();
+                    tvText.setVisibility(View.VISIBLE);
+                    tvText.setText(com.zez.app.util.MarkdownRenderer.render("\uD83D\uDC64 **" + cName + "**\n" + cPhone));
+                    if (cPhone != null && !cPhone.trim().isEmpty()) {
+                        tvText.setOnClickListener(v -> {
+                            try {
+                                Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + cPhone.trim()));
+                                itemView.getContext().startActivity(dial);
+                            } catch (Exception ignored) {}
+                        });
+                    }
+                } else {
+                    String text = msg.getCleanMessageText();
+                    if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
+                        tvText.setVisibility(View.VISIBLE);
+                        tvText.setText(com.zez.app.util.MarkdownRenderer.render(text));
+                    } else if (msg.getMediaUrl() == null || msg.getMediaUrl().isEmpty()) {
+                        tvText.setVisibility(View.VISIBLE);
+                        tvText.setText(text != null ? com.zez.app.util.MarkdownRenderer.render(text) : "");
+                    } else {
+                        tvText.setVisibility(View.GONE);
+                    }
+                }
             }
 
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
@@ -663,6 +712,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ImageView ivQuoteImage;
         LinearLayout layoutReaction;
         TextView tvReaction;
+        LinearLayout layoutGameCard;
+        TextView tvGameSubtitle;
+        TextView tvGameCta;
 
         IncomingViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -681,6 +733,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             ivQuoteImage = itemView.findViewById(R.id.iv_msg_incoming_quote_image);
             layoutReaction = itemView.findViewById(R.id.layout_msg_incoming_reaction);
             tvReaction = itemView.findViewById(R.id.tv_msg_incoming_reaction);
+            layoutGameCard = itemView.findViewById(R.id.layout_msg_incoming_game_card);
+            tvGameSubtitle = itemView.findViewById(R.id.tv_msg_incoming_game_subtitle);
+            tvGameCta = itemView.findViewById(R.id.tv_msg_incoming_game_cta);
         }
 
         void bindReactionOnly(ChatMessage msg) {
@@ -735,6 +790,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (layoutFile != null) layoutFile.setVisibility(View.GONE);
                 if (layoutQuote != null) layoutQuote.setVisibility(View.GONE);
                 if (layoutReaction != null) layoutReaction.setVisibility(View.GONE);
+                if (layoutGameCard != null) layoutGameCard.setVisibility(View.GONE);
                 tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
                 return;
             }
@@ -753,7 +809,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         tvQuoteSender.setTextColor(bubbleIsDark ? Color.parseColor("#4ADE80") : Color.parseColor("#16A34A"));
                     }
                     if (tvQuoteText != null) {
-                        tvQuoteText.setText(msg.getQuotedText());
+                        tvQuoteText.setText(com.zez.app.util.MarkdownRenderer.render(msg.getQuotedText()));
                         tvQuoteText.setTextColor(bubbleIsDark ? Color.parseColor("#CBD5E1") : Color.parseColor("#334155"));
                     }
                     if (ivQuoteImage != null) {
@@ -792,15 +848,48 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             bindMedia(itemView.getContext(), msg, layoutMedia, ivImage, ivPlay, layoutFile, tvFileName, tvFileSize);
 
-            String text = msg.getCleanMessageText();
-            if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
-                tvText.setVisibility(View.VISIBLE);
-                tvText.setText(text);
-            } else if (msg.getMediaUrl() == null || msg.getMediaUrl().isEmpty()) {
-                tvText.setVisibility(View.VISIBLE);
-                tvText.setText(text != null ? text : "");
-            } else {
+            tvText.setOnClickListener(null);
+            if (msg.isGameInvite() && layoutGameCard != null) {
+                layoutGameCard.setVisibility(View.VISIBLE);
                 tvText.setVisibility(View.GONE);
+                if (tvGameSubtitle != null) tvGameSubtitle.setText(msg.getGameHostName() + " invited you to play!");
+                View.OnClickListener openGame = v -> {
+                    if (adapter.gameInviteClickListener != null) {
+                        adapter.gameInviteClickListener.onGameInviteClick(msg);
+                    }
+                };
+                layoutGameCard.setOnClickListener(openGame);
+                if (tvGameCta != null) tvGameCta.setOnClickListener(openGame);
+            } else {
+                if (layoutGameCard != null) layoutGameCard.setVisibility(View.GONE);
+                if (msg.isGameSummary()) {
+                    tvText.setVisibility(View.VISIBLE);
+                    tvText.setText("\uD83C\uDFAE " + msg.getGameSummaryText());
+                } else if (msg.isContactCard()) {
+                    String cName = msg.getSharedContactName();
+                    String cPhone = msg.getSharedContactPhone();
+                    tvText.setVisibility(View.VISIBLE);
+                    tvText.setText(com.zez.app.util.MarkdownRenderer.render("\uD83D\uDC64 **" + cName + "**\n" + cPhone));
+                    if (cPhone != null && !cPhone.trim().isEmpty()) {
+                        tvText.setOnClickListener(v -> {
+                            try {
+                                Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + cPhone.trim()));
+                                itemView.getContext().startActivity(dial);
+                            } catch (Exception ignored) {}
+                        });
+                    }
+                } else {
+                    String text = msg.getCleanMessageText();
+                    if (text != null && !text.isEmpty() && !text.equals("📷 Photo") && !text.equals("🎥 Video") && !text.equals("🎵 Audio") && !text.startsWith("📄 ") && !text.equals("📎 Attachment")) {
+                        tvText.setVisibility(View.VISIBLE);
+                        tvText.setText(com.zez.app.util.MarkdownRenderer.render(text));
+                    } else if (msg.getMediaUrl() == null || msg.getMediaUrl().isEmpty()) {
+                        tvText.setVisibility(View.VISIBLE);
+                        tvText.setText(text != null ? com.zez.app.util.MarkdownRenderer.render(text) : "");
+                    } else {
+                        tvText.setVisibility(View.GONE);
+                    }
+                }
             }
 
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));

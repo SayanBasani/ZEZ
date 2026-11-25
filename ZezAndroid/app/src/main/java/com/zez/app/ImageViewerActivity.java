@@ -82,6 +82,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.zez.app.theme.ThemeManager.applyTheme(this, true);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_viewer);
 

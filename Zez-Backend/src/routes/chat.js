@@ -213,6 +213,31 @@ router.post("/profile", async (req, res) => {
   }
 });
 
+// 3c. Delete Chat User Account & Associated Data (Google Play Policy Compliance)
+// POST /api/chat/account/delete or /api/chat/delete-account
+router.post(["/account/delete", "/delete-account"], async (req, res) => {
+  try {
+    const userId = req.body.userId || req.body.id;
+    if (!userId) {
+      return res.status(400).json({ error: "User id is required to delete account." });
+    }
+
+    const result = await pool.query(
+      "DELETE FROM public.chat_users WHERE id = $1 RETURNING id",
+      [userId]
+    );
+
+    return res.json({
+      success: true,
+      deleted: result.rowCount > 0,
+      message: "Chat account and associated data deleted successfully."
+    });
+  } catch (err) {
+    console.error("Error in /api/chat/account/delete:", err);
+    return res.status(500).json({ error: "Failed to delete chat account." });
+  }
+});
+
 // 3b. Upload Chat Media (Images, Videos, Files, Audio) - Backblaze B2 Object Storage
 // POST /api/chat/upload
 router.post("/upload", uploadMedia.single("file"), async (req, res) => {
@@ -848,11 +873,24 @@ router.post(["/messages/send", "/messages"], async (req, res) => {
       );
     }
 
+    // Fetch sender info for instant push notification display
+    let enrichedMessage = { ...sentMessage };
+    try {
+      const senderRes = await pool.query(
+        "SELECT name, phone_number FROM public.chat_users WHERE id = $1",
+        [sender_id]
+      );
+      if (senderRes.rows.length > 0) {
+        enrichedMessage.sender_name = senderRes.rows[0].name;
+        enrichedMessage.sender_phone = senderRes.rows[0].phone_number;
+      }
+    } catch (_) {}
+
     // Update sender last_seen
     pool.query("UPDATE public.chat_users SET last_seen = NOW() WHERE id = $1", [sender_id]).catch(() => {});
 
     // Immediately dispatch real-time event to wake receiver's live connection (<1ms)
-    chatEventEmitter.emit(`message:${receiver_id}`, sentMessage);
+    chatEventEmitter.emit(`message:${receiver_id}`, enrichedMessage);
 
     return res.json({ success: true, message: sentMessage });
   } catch (err) {
@@ -862,43 +900,75 @@ router.post(["/messages/send", "/messages"], async (req, res) => {
 });
 
 /**
- * GET /api/chat/live-updates?userId=...
- * Real-time event-driven endpoint: returns instantly if there are unread messages,
- * or holds connection open up to 25s for immediate sub-second notification delivery (WhatsApp-speed).
+ * GET /api/chat/live-updates?userId=...&since=...
+ * Real-time event-driven endpoint:
+ * - Only returns unpushed messages (status = 'sent', or created_at > since), ordered ASC
+ * - Marks fetched 'sent' messages as 'delivered' so it NEVER returns the same backlog in a spin loop
+ * - Otherwise holds connection open up to 25s for sub-second push wake-up.
  */
 router.get("/live-updates", async (req, res) => {
   try {
-    const { userId } = req.query;
+    const { userId, since } = req.query;
     if (!userId) {
       return res.status(400).json({ success: false, error: "userId query parameter is required." });
     }
 
-    // 1. Check for any pending unread messages for this user
+    // 1. Check only truly unpushed incoming messages (status = 'sent' or newer than client's since cursor)
     try {
-      const unreadCheck = await pool.query(
-        `SELECT m.id, m.conversation_id, m.sender_id, m.receiver_id, m.message_text,
-                m.media_url, m.media_type, m.created_at, u.name AS sender_name, u.phone_number AS sender_phone
-         FROM public.chat_messages m
-         JOIN public.chat_users u ON m.sender_id = u.id
-         WHERE m.receiver_id = $1 AND m.sender_id != $1 AND m.status != 'read'
-         ORDER BY m.created_at DESC
-         LIMIT 10`,
-        [userId]
-      );
+      let sinceDate = null;
+      if (since) {
+        const parsed = new Date(since);
+        if (!isNaN(parsed.getTime()) && parsed.getTime() <= Date.now() + 2000) {
+          sinceDate = parsed;
+        }
+      }
+
+      const query = sinceDate
+        ? `SELECT m.id, m.conversation_id, m.sender_id, m.receiver_id, m.message_text,
+                  m.media_url, m.media_type, m.file_name, m.file_size, m.mode, m.secret_session_id,
+                  m.status, m.created_at, u.name AS sender_name, u.phone_number AS sender_phone
+           FROM public.chat_messages m
+           JOIN public.chat_users u ON m.sender_id = u.id
+           WHERE m.receiver_id = $1 AND m.sender_id != $1
+             AND (m.status = 'sent' OR (m.status != 'read' AND m.created_at > $2))
+           ORDER BY m.created_at ASC
+           LIMIT 20`
+        : `SELECT m.id, m.conversation_id, m.sender_id, m.receiver_id, m.message_text,
+                  m.media_url, m.media_type, m.file_name, m.file_size, m.mode, m.secret_session_id,
+                  m.status, m.created_at, u.name AS sender_name, u.phone_number AS sender_phone
+           FROM public.chat_messages m
+           JOIN public.chat_users u ON m.sender_id = u.id
+           WHERE m.receiver_id = $1 AND m.sender_id != $1 AND m.status = 'sent'
+           ORDER BY m.created_at ASC
+           LIMIT 20`;
+
+      const params = sinceDate ? [userId, sinceDate] : [userId];
+      const unreadCheck = await pool.query(query, params);
 
       if (unreadCheck.rows.length > 0) {
+        const ids = unreadCheck.rows.map(r => r.id);
+        pool.query(
+          "UPDATE public.chat_messages SET status = 'delivered', updated_at = NOW() WHERE id = ANY($1::uuid[]) AND status = 'sent'",
+          [ids]
+        ).catch(() => {});
         return res.json({ success: true, hasNew: true, messages: unreadCheck.rows });
       }
     } catch (dbErr) {
       console.warn("Error in unreadCheck for live-updates:", dbErr.message);
     }
 
-    // 2. No unread messages: hold connection and await instant push event
+    // 2. No unpushed messages: hold connection and await instant push event
     let finished = false;
     const onNewMessage = (msg) => {
       if (finished) return;
       finished = true;
       clearTimeout(timeoutId);
+      if (msg && msg.id && msg.status === "sent") {
+        pool.query(
+          "UPDATE public.chat_messages SET status = 'delivered', updated_at = NOW() WHERE id = $1 AND status = 'sent'",
+          [msg.id]
+        ).catch(() => {});
+      }
       res.json({ success: true, hasNew: true, messages: [msg] });
     };
 
@@ -1286,6 +1356,393 @@ router.post(["/conversations/:id/clear", "/conversation/:id/clear"], async (req,
   } catch (err) {
     console.error("Error clearing conversation messages:", err);
     return res.status(500).json({ error: "Failed to clear conversation messages." });
+  }
+});
+
+// =========================================================================
+// 14. Two-Player In-Chat Games (Tic Tac Toe Live Sync Engine)
+// =========================================================================
+
+const TTT_WIN_LINES = [
+  [0, 1, 2], [3, 4, 5], [6, 7, 8],
+  [0, 3, 6], [1, 4, 7], [2, 5, 8],
+  [0, 4, 8], [2, 4, 6]
+];
+
+function checkTicTacToeWinner(board) {
+  for (const line of TTT_WIN_LINES) {
+    const [a, b, c] = line;
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return { symbol: board[a], line };
+    }
+  }
+  return null;
+}
+
+function serializeGame(row) {
+  if (!row) return null;
+  let board = row.board;
+  if (typeof board === "string") {
+    try { board = JSON.parse(board); } catch (_) { board = ["","","","","","","","",""]; }
+  }
+  let winLine = row.winning_line;
+  if (typeof winLine === "string") {
+    try { winLine = JSON.parse(winLine); } catch (_) { winLine = null; }
+  }
+  return {
+    id: row.id,
+    conversationId: row.conversation_id,
+    gameType: row.game_type || "tictactoe",
+    hostId: row.host_id,
+    guestId: row.guest_id,
+    hostName: row.host_name || "Player X",
+    guestName: row.guest_name || "Player O",
+    board: Array.isArray(board) ? board : ["","","","","","","","",""],
+    currentTurn: row.current_turn,
+    winnerId: row.winner_id || null,
+    winningLine: Array.isArray(winLine) ? winLine : null,
+    isDraw: !!row.is_draw,
+    status: row.status,
+    hostScore: Number(row.host_score || 0),
+    guestScore: Number(row.guest_score || 0),
+    drawsCount: Number(row.draws_count || 0),
+    roundNumber: Number(row.round_number || 1),
+    guestJoined: !!row.guest_joined,
+    version: Number(row.version || 1),
+    endedBy: row.ended_by || null,
+    updatedAt: row.updated_at
+  };
+}
+
+// POST /api/chat/game/create
+router.post("/game/create", async (req, res) => {
+  try {
+    const { gameId, conversationId, hostId, guestId, hostName, guestName, gameType = "tictactoe" } = req.body || {};
+    if (!gameId || !hostId || !guestId) {
+      return res.status(400).json({ success: false, error: "gameId, hostId, and guestId are required." });
+    }
+
+    let convId = conversationId || null;
+    if (!convId) {
+      try {
+        const conv = await getOrCreateConversation(hostId, guestId);
+        convId = conv.id;
+      } catch (_) {}
+    }
+
+    const existing = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
+    if (existing.rows.length > 0) {
+      return res.json({ success: true, game: serializeGame(existing.rows[0]) });
+    }
+
+    const insertRes = await pool.query(
+      `INSERT INTO public.chat_games (
+         id, conversation_id, game_type, host_id, guest_id, host_name, guest_name,
+         board, current_turn, status, guest_joined, version
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $4, 'waiting', $9, 1)
+       RETURNING *`,
+      [
+        gameId,
+        convId,
+        gameType,
+        hostId,
+        guestId,
+        hostName || "Player X",
+        guestName || "Player O",
+        JSON.stringify(["","","","","","","","",""]),
+        hostId === guestId
+      ]
+    );
+
+    const game = serializeGame(insertRes.rows[0]);
+    chatEventEmitter.emit(`game:${gameId}`, game);
+    return res.json({ success: true, game });
+  } catch (err) {
+    console.error("Error in /api/chat/game/create:", err);
+    return res.status(500).json({ success: false, error: "Failed to create game session." });
+  }
+});
+
+// POST /api/chat/game/:gameId/join
+router.post("/game/:gameId/join", async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { userId } = req.body || {};
+    if (!userId) return res.status(400).json({ success: false, error: "userId is required." });
+
+    const existingRes = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
+    if (existingRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Game session not found." });
+    }
+    const row = existingRes.rows[0];
+    if (row.host_id !== userId && row.guest_id !== userId) {
+      return res.status(403).json({ success: false, error: "Not a participant in this game." });
+    }
+
+    let updatedRow = row;
+    if (row.guest_id === userId && (!row.guest_joined || row.status === "waiting")) {
+      const nextStatus = row.status === "waiting" ? "playing" : row.status;
+      const upd = await pool.query(
+        `UPDATE public.chat_games
+         SET guest_joined = TRUE,
+             status = $2,
+             version = version + 1,
+             updated_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [gameId, nextStatus]
+      );
+      updatedRow = upd.rows[0];
+      chatEventEmitter.emit(`game:${gameId}`, serializeGame(updatedRow));
+    }
+
+    return res.json({ success: true, game: serializeGame(updatedRow) });
+  } catch (err) {
+    console.error("Error in /api/chat/game/:gameId/join:", err);
+    return res.status(500).json({ success: false, error: "Failed to join game." });
+  }
+});
+
+// GET /api/chat/game/:gameId
+router.get("/game/:gameId", async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const result = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Game not found." });
+    }
+    return res.json({ success: true, game: serializeGame(result.rows[0]) });
+  } catch (err) {
+    console.error("Error in GET /api/chat/game/:gameId:", err);
+    return res.status(500).json({ success: false, error: "Failed to load game state." });
+  }
+});
+
+// GET /api/chat/game/:gameId/events?sinceVersion=...
+router.get("/game/:gameId/events", async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const sinceVersion = parseInt(req.query.sinceVersion || "0", 10);
+
+    const result = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Game not found." });
+    }
+    const current = serializeGame(result.rows[0]);
+    if (current.version > sinceVersion || current.status === "ended") {
+      return res.json({ success: true, changed: true, game: current });
+    }
+
+    let finished = false;
+    const onGameUpdate = (game) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timeoutId);
+      res.json({ success: true, changed: true, game });
+    };
+
+    chatEventEmitter.once(`game:${gameId}`, onGameUpdate);
+
+    const timeoutId = setTimeout(() => {
+      if (finished) return;
+      finished = true;
+      chatEventEmitter.removeListener(`game:${gameId}`, onGameUpdate);
+      res.json({ success: true, changed: false, timeout: true, game: current });
+    }, 20000);
+
+    req.on("close", () => {
+      if (!finished) {
+        finished = true;
+        clearTimeout(timeoutId);
+        chatEventEmitter.removeListener(`game:${gameId}`, onGameUpdate);
+      }
+    });
+  } catch (err) {
+    console.error("Error in GET /api/chat/game/:gameId/events:", err);
+    return res.status(500).json({ success: false, error: "Failed to stream game updates." });
+  }
+});
+
+// POST /api/chat/game/:gameId/move
+router.post("/game/:gameId/move", async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { userId, cellIndex } = req.body || {};
+    const idx = parseInt(cellIndex, 10);
+
+    if (!userId || isNaN(idx) || idx < 0 || idx > 8) {
+      return res.status(400).json({ success: false, error: "Valid userId and cellIndex (0-8) required." });
+    }
+
+    const resGame = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
+    if (resGame.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Game not found." });
+    }
+
+    const row = resGame.rows[0];
+    if (row.status === "ended" || row.status === "won" || row.status === "draw") {
+      return res.status(409).json({ success: false, error: "Round already finished.", game: serializeGame(row) });
+    }
+
+    const isSelfPlay = row.host_id === row.guest_id;
+    let board = typeof row.board === "string" ? JSON.parse(row.board) : [...row.board];
+    if (!Array.isArray(board) || board.length !== 9) board = ["","","","","","","","",""];
+
+    if (!isSelfPlay && row.current_turn !== userId) {
+      return res.status(409).json({ success: false, error: "Not your turn yet.", game: serializeGame(row) });
+    }
+    if (board[idx] && board[idx] !== "") {
+      return res.status(409).json({ success: false, error: "Cell already taken.", game: serializeGame(row) });
+    }
+
+    // Determine symbol ('X' for host, 'O' for guest)
+    let symbol;
+    if (isSelfPlay) {
+      const xCount = board.filter(c => c === "X").length;
+      const oCount = board.filter(c => c === "O").length;
+      symbol = xCount <= oCount ? "X" : "O";
+    } else {
+      symbol = row.host_id === userId ? "X" : "O";
+    }
+    board[idx] = symbol;
+
+    const winInfo = checkTicTacToeWinner(board);
+    const isBoardFull = board.every(c => c === "X" || c === "O");
+
+    let newStatus = "playing";
+    let winnerId = null;
+    let winningLine = null;
+    let isDraw = false;
+    let hostScore = Number(row.host_score || 0);
+    let guestScore = Number(row.guest_score || 0);
+    let drawsCount = Number(row.draws_count || 0);
+    let nextTurn = (row.current_turn === row.host_id) ? row.guest_id : row.host_id;
+
+    if (winInfo) {
+      newStatus = "won";
+      winningLine = winInfo.line;
+      if (winInfo.symbol === "X") {
+        winnerId = row.host_id;
+        hostScore += 1;
+      } else {
+        winnerId = row.guest_id;
+        guestScore += 1;
+      }
+    } else if (isBoardFull) {
+      newStatus = "draw";
+      isDraw = true;
+      drawsCount += 1;
+    }
+
+    const upd = await pool.query(
+      `UPDATE public.chat_games
+       SET board = $2::jsonb,
+           current_turn = $3,
+           winner_id = $4,
+           winning_line = $5::jsonb,
+           is_draw = $6,
+           status = $7,
+           host_score = $8,
+           guest_score = $9,
+           draws_count = $10,
+           version = version + 1,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [
+        gameId,
+        JSON.stringify(board),
+        nextTurn,
+        winnerId,
+        winningLine ? JSON.stringify(winningLine) : null,
+        isDraw,
+        newStatus,
+        hostScore,
+        guestScore,
+        drawsCount
+      ]
+    );
+
+    const game = serializeGame(upd.rows[0]);
+    chatEventEmitter.emit(`game:${gameId}`, game);
+    return res.json({ success: true, game });
+  } catch (err) {
+    console.error("Error in POST /api/chat/game/:gameId/move:", err);
+    return res.status(500).json({ success: false, error: "Failed to make move." });
+  }
+});
+
+// POST /api/chat/game/:gameId/rematch
+router.post("/game/:gameId/rematch", async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { userId } = req.body || {};
+
+    const resGame = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
+    if (resGame.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Game not found." });
+    }
+    const row = resGame.rows[0];
+    if (userId && row.host_id !== userId && row.guest_id !== userId) {
+      return res.status(403).json({ success: false, error: "Not authorized." });
+    }
+
+    const nextRound = Number(row.round_number || 1) + 1;
+    const nextStarter = (nextRound % 2 === 1) ? row.host_id : row.guest_id;
+
+    const upd = await pool.query(
+      `UPDATE public.chat_games
+       SET board = $2::jsonb,
+           current_turn = $3,
+           winner_id = NULL,
+           winning_line = NULL,
+           is_draw = FALSE,
+           status = 'playing',
+           round_number = $4,
+           ended_by = NULL,
+           version = version + 1,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [gameId, JSON.stringify(["","","","","","","","",""]), nextStarter, nextRound]
+    );
+
+    const game = serializeGame(upd.rows[0]);
+    chatEventEmitter.emit(`game:${gameId}`, game);
+    return res.json({ success: true, game });
+  } catch (err) {
+    console.error("Error in POST /api/chat/game/:gameId/rematch:", err);
+    return res.status(500).json({ success: false, error: "Failed to start next round." });
+  }
+});
+
+// POST /api/chat/game/:gameId/end
+router.post("/game/:gameId/end", async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { userId } = req.body || {};
+
+    const upd = await pool.query(
+      `UPDATE public.chat_games
+       SET status = 'ended',
+           ended_by = $2,
+           version = version + 1,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [gameId, userId || null]
+    );
+
+    if (upd.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Game not found." });
+    }
+
+    const game = serializeGame(upd.rows[0]);
+    chatEventEmitter.emit(`game:${gameId}`, game);
+    return res.json({ success: true, game });
+  } catch (err) {
+    console.error("Error in POST /api/chat/game/:gameId/end:", err);
+    return res.status(500).json({ success: false, error: "Failed to end game." });
   }
 });
 

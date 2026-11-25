@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:textSize="12sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_secondary"
+        android:textColor="?attr/colorThemeTextSecondary"
         android:letterSpacing="0.05"
         android:text="Today" />
 

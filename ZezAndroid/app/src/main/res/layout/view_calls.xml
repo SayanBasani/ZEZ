@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/theme_background"
+    android:background="?attr/colorThemeBackground"
     android:visibility="gone">
 
     <!-- Search Input -->
@@ -24,7 +24,7 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_search"
-            app:tint="@color/theme_text_muted" />
+            app:tint="?attr/colorThemeTextMuted" />
 
         <EditText
             android:id="@+id/et_search_calls"
@@ -32,8 +32,8 @@
             android:layout_height="match_parent"
             android:background="@null"
             android:hint="Search calls..."
-            android:textColor="@color/theme_text_primary"
-            android:textColorHint="@color/theme_text_muted"
+            android:textColor="?attr/colorThemeTextPrimary"
+            android:textColorHint="?attr/colorThemeTextMuted"
             android:textSize="13sp"
             android:paddingStart="10dp"
             android:singleLine="true" />
@@ -81,7 +81,7 @@
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:src="@drawable/ic_call"
-                app:tint="@color/theme_text_muted" />
+                app:tint="?attr/colorThemeTextMuted" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -89,7 +89,7 @@
                 android:text="No Calls Yet"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/theme_text_primary"
+                android:textColor="?attr/colorThemeTextPrimary"
                 android:layout_marginTop="12dp" />
 
             <TextView
@@ -97,7 +97,7 @@
                 android:layout_height="wrap_content"
                 android:text="Voice and video calls will appear here"
                 android:textSize="13sp"
-                android:textColor="@color/theme_text_muted"
+                android:textColor="?attr/colorThemeTextMuted"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 

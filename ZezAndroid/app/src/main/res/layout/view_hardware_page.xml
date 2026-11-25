@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/theme_background"
+    android:background="?attr/colorThemeBackground"
     android:visibility="gone">
 
     <!-- Top Futuristic Sub-Page Bar -->
@@ -16,7 +16,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="12dp"
-        android:background="@color/theme_app_bar"
+        android:background="?attr/colorThemeSurface"
         android:elevation="2dp">
 
         <ImageButton
@@ -25,7 +25,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Back" />
 
         <LinearLayout
@@ -41,14 +41,14 @@
                 android:text="System Telemetry"
                 android:textSize="17sp"
                 android:textStyle="bold"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Hardware Diagnostics &amp; Real-time Metrics"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_muted" />
+                android:textColor="?attr/colorThemeTextMuted" />
         </LinearLayout>
 
         <!-- Live Status Pill -->
@@ -99,8 +99,8 @@
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="@color/theme_card_border"
-                app:cardBackgroundColor="@color/theme_surface">
+                app:strokeColor="?attr/colorThemeBorder"
+                app:cardBackgroundColor="?attr/colorThemeSurface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -133,14 +133,14 @@
                                 android:text="Primary Flash Storage"
                                 android:textSize="15sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/theme_text_primary" />
+                                android:textColor="?attr/colorThemeTextPrimary" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Internal NVMe / eMMC storage block"
                                 android:textSize="11sp"
-                                android:textColor="@color/theme_text_muted" />
+                                android:textColor="?attr/colorThemeTextMuted" />
                         </LinearLayout>
 
                         <TextView
@@ -177,7 +177,7 @@
                             android:layout_weight="1"
                             android:text="Used: 0 GB / Total: 0 GB"
                             android:textSize="12sp"
-                            android:textColor="@color/theme_text_secondary" />
+                            android:textColor="?attr/colorThemeTextSecondary" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -197,8 +197,8 @@
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="@color/theme_card_border"
-                app:cardBackgroundColor="@color/theme_surface">
+                app:strokeColor="?attr/colorThemeBorder"
+                app:cardBackgroundColor="?attr/colorThemeSurface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -231,14 +231,14 @@
                                 android:text="System Memory (RAM)"
                                 android:textSize="15sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/theme_text_primary" />
+                                android:textColor="?attr/colorThemeTextPrimary" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Physical LPDDR cache &amp; app allocations"
                                 android:textSize="11sp"
-                                android:textColor="@color/theme_text_muted" />
+                                android:textColor="?attr/colorThemeTextMuted" />
                         </LinearLayout>
 
                         <TextView
@@ -268,7 +268,7 @@
                         android:layout_height="wrap_content"
                         android:text="Used: 0 GB / Total: 0 GB"
                         android:textSize="12sp"
-                        android:textColor="@color/theme_text_secondary"
+                        android:textColor="?attr/colorThemeTextSecondary"
                         android:layout_marginBottom="12dp" />
 
                     <!-- Live RAM Telemetry Section -->
@@ -287,14 +287,14 @@
                             android:textSize="10sp"
                             android:textStyle="bold"
                             android:letterSpacing="0.08"
-                            android:textColor="@color/theme_text_muted" />
+                            android:textColor="?attr/colorThemeTextMuted" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="1.5s SAMPLE"
                             android:textSize="9sp"
-                            android:textColor="@color/theme_text_muted" />
+                            android:textColor="?attr/colorThemeTextMuted" />
                     </LinearLayout>
 
                     <com.zez.app.util.TelemetryGraphView
@@ -313,8 +313,8 @@
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="@color/theme_card_border"
-                app:cardBackgroundColor="@color/theme_surface">
+                app:strokeColor="?attr/colorThemeBorder"
+                app:cardBackgroundColor="?attr/colorThemeSurface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -347,14 +347,14 @@
                                 android:text="Compute &amp; Processing Unit"
                                 android:textSize="15sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/theme_text_primary" />
+                                android:textColor="?attr/colorThemeTextPrimary" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Multi-core processor workload &amp; clocks"
                                 android:textSize="11sp"
-                                android:textColor="@color/theme_text_muted" />
+                                android:textColor="?attr/colorThemeTextMuted" />
                         </LinearLayout>
 
                         <TextView
@@ -383,14 +383,14 @@
                             android:textSize="10sp"
                             android:textStyle="bold"
                             android:letterSpacing="0.08"
-                            android:textColor="@color/theme_text_muted" />
+                            android:textColor="?attr/colorThemeTextMuted" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="GOVERNOR: SCHEDUTIL"
                             android:textSize="9sp"
-                            android:textColor="@color/theme_text_muted" />
+                            android:textColor="?attr/colorThemeTextMuted" />
                     </LinearLayout>
 
                     <!-- Live CPU/GPU Telemetry Graph -->
@@ -403,7 +403,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="@color/theme_card_border"
+                        android:background="?attr/colorThemeBorder"
                         android:layout_marginVertical="14dp" />
 
                     <!-- CPU 3-Column Metrics (Cores, Speed, ABI) -->
@@ -428,20 +428,20 @@
                                 android:text="8 Cores"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/theme_text_primary" />
+                                android:textColor="?attr/colorThemeTextPrimary" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="CPU Cores"
                                 android:textSize="11sp"
-                                android:textColor="@color/theme_text_muted" />
+                                android:textColor="?attr/colorThemeTextMuted" />
                         </LinearLayout>
 
                         <View
                             android:layout_width="1dp"
                             android:layout_height="32dp"
-                            android:background="@color/theme_card_border" />
+                            android:background="?attr/colorThemeBorder" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -457,20 +457,20 @@
                                 android:text="2.40 GHz"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/theme_text_primary" />
+                                android:textColor="?attr/colorThemeTextPrimary" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Max Clock"
                                 android:textSize="11sp"
-                                android:textColor="@color/theme_text_muted" />
+                                android:textColor="?attr/colorThemeTextMuted" />
                         </LinearLayout>
 
                         <View
                             android:layout_width="1dp"
                             android:layout_height="32dp"
-                            android:background="@color/theme_card_border" />
+                            android:background="?attr/colorThemeBorder" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -486,14 +486,14 @@
                                 android:text="arm64-v8a"
                                 android:textSize="13sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/theme_text_primary" />
+                                android:textColor="?attr/colorThemeTextPrimary" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Instruction Set"
                                 android:textSize="11sp"
-                                android:textColor="@color/theme_text_muted" />
+                                android:textColor="?attr/colorThemeTextMuted" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -503,7 +503,7 @@
                         android:layout_height="wrap_content"
                         android:text="Hardware: Unknown"
                         android:textSize="12sp"
-                        android:textColor="@color/theme_text_secondary"
+                        android:textColor="?attr/colorThemeTextSecondary"
                         android:layout_marginTop="12dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -516,7 +516,7 @@
                 android:gravity="center"
                 android:text="System Diagnostics &amp; Telemetry Integrity"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_muted"
+                android:textColor="?attr/colorThemeTextMuted"
                 android:paddingVertical="14dp"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
@@ -532,8 +532,8 @@
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="@color/theme_card_border"
-                app:cardBackgroundColor="@color/theme_surface"
+                app:strokeColor="?attr/colorThemeBorder"
+                app:cardBackgroundColor="?attr/colorThemeSurface"
                 android:visibility="gone">
 
                 <LinearLayout
@@ -553,7 +553,7 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@drawable/ic_cloud"
-                            app:tint="@color/theme_icon_tint"
+                            app:tint="?attr/colorThemeIconTint"
                             android:layout_marginEnd="12dp" />
 
                         <LinearLayout
@@ -568,14 +568,14 @@
                                 android:text="Server Endpoint URL"
                                 android:textSize="15sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/theme_text_primary" />
+                                android:textColor="?attr/colorThemeTextPrimary" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Configured endpoint for calls, chat, and telemetry"
                                 android:textSize="12sp"
-                                android:textColor="@color/theme_text_secondary" />
+                                android:textColor="?attr/colorThemeTextSecondary" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -598,7 +598,7 @@
                             android:inputType="textUri"
                             android:singleLine="true"
                             android:textSize="13sp"
-                            android:textColor="@color/theme_text_primary" />
+                            android:textColor="?attr/colorThemeTextPrimary" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <LinearLayout
@@ -616,8 +616,8 @@
                             android:text="Reset Default"
                             android:textSize="12sp"
                             android:textAllCaps="false"
-                            app:strokeColor="@color/theme_card_border"
-                            android:textColor="@color/theme_text_secondary" />
+                            app:strokeColor="?attr/colorThemeBorder"
+                            android:textColor="?attr/colorThemeTextSecondary" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_setting_save_url"
@@ -636,7 +636,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:textSize="11sp"
-                        android:textColor="@color/theme_text_muted"
+                        android:textColor="?attr/colorThemeTextMuted"
                         android:text="Active: https://zez-chat-backend.onrender.com" />
 
                 </LinearLayout>

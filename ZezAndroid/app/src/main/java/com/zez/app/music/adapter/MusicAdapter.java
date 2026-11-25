@@ -47,6 +47,28 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.TrackViewHol
         notifyDataSetChanged();
     }
 
+    public void appendTracks(List<MusicTrack> moreTracks) {
+        if (moreTracks == null || moreTracks.isEmpty()) return;
+        int startPos = tracks.size();
+        List<MusicTrack> uniqueTracks = new ArrayList<>();
+        java.util.Set<String> existingIds = new java.util.HashSet<>();
+        for (MusicTrack t : tracks) {
+            if (t != null && t.getId() != null) {
+                existingIds.add(t.getId());
+            }
+        }
+        for (MusicTrack t : moreTracks) {
+            if (t != null && t.getId() != null && !existingIds.contains(t.getId())) {
+                uniqueTracks.add(t);
+                existingIds.add(t.getId());
+            }
+        }
+        if (!uniqueTracks.isEmpty()) {
+            tracks.addAll(uniqueTracks);
+            notifyItemRangeInserted(startPos, uniqueTracks.size());
+        }
+    }
+
     public List<MusicTrack> getTracks() {
         return tracks;
     }

@@ -7,7 +7,7 @@
     android:layout_marginEnd="6dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="0dp"
-    app:cardBackgroundColor="@color/theme_card_border">
+    app:cardBackgroundColor="?attr/colorThemeBorder">
 
     <FrameLayout
         android:layout_width="match_parent"

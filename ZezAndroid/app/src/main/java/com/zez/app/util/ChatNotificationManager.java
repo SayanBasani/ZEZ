@@ -7,9 +7,15 @@ import android.util.Log;
 
 import com.zez.app.ChatActivity;
 import com.zez.app.model.ChatConversation;
+import com.zez.app.model.ChatMessage;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,6 +31,9 @@ public class ChatNotificationManager {
     private Thread realtimeWorkerThread;
     private volatile boolean isRunning = false;
     private final Map<String, String> lastNotifiedMsgTimeMap = new ConcurrentHashMap<>();
+    private final Set<String> seenLiveMessageIds = Collections.synchronizedSet(new LinkedHashSet<>());
+    private volatile String lastLiveSince = null;
+    private volatile long lastPollSyncMs = 0L;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Context appContext;
     private int alarmSyncCounter = 0;
@@ -33,7 +42,12 @@ public class ChatNotificationManager {
         void onChatsUpdated(List<ChatConversation> conversations);
     }
 
+    public interface LiveMessageListener {
+        void onMessagesReceived(List<ChatMessage> messages);
+    }
+
     private OnChatsUpdateListener chatsUpdateListener;
+    private volatile LiveMessageListener liveMessageListener;
 
     private ChatNotificationManager() {}
 
@@ -61,12 +75,16 @@ public class ChatNotificationManager {
 
         ChatNotificationHelper.createNotificationChannel(appContext);
 
-        pollingTask = scheduler.scheduleWithFixedDelay(this::pollConversationsForNotifications, 1, 3, TimeUnit.SECONDS);
-        Log.d(TAG, "Chat notification background poller started (3s interval)");
+        pollingTask = scheduler.scheduleWithFixedDelay(this::pollConversationsForNotifications, 2, 8, TimeUnit.SECONDS);
+        Log.d(TAG, "Chat notification background poller started (8s interval)");
     }
 
     private synchronized void startRealtimeListener() {
         if (realtimeWorkerThread != null && realtimeWorkerThread.isAlive()) return;
+        if (lastLiveSince == null && appContext != null) {
+            lastLiveSince = appContext.getSharedPreferences("zez_chat_notif_dedup", Context.MODE_PRIVATE)
+                    .getString("last_live_since_ts", null);
+        }
         realtimeWorkerThread = new Thread(() -> {
             Log.i(TAG, "Chat notification real-time push listener active");
             while (isRunning) {
@@ -81,39 +99,78 @@ public class ChatNotificationManager {
                         continue;
                     }
 
-                    ChatApiClient.LiveUpdateResult result = ChatApiClient.listenForLiveUpdatesSync(appContext, userId);
+                    ChatApiClient.LiveUpdateResult result = ChatApiClient.listenForLiveUpdatesSync(appContext, userId, lastLiveSince);
                     if (result != null && result.hasNew && result.messages != null && !result.messages.isEmpty()) {
-                        Log.i(TAG, "Instant real-time message received! Dispatching notifications...");
-                        for (com.zez.app.model.ChatMessage msg : result.messages) {
-                            String convId = msg.getConversationId();
-                            if (convId != null) {
-                                if (ChatActivity.activeConversationId != null && convId.equals(ChatActivity.activeConversationId)) {
-                                    continue;
+                        List<ChatMessage> unseen = new ArrayList<>();
+                        synchronized (seenLiveMessageIds) {
+                            for (ChatMessage msg : result.messages) {
+                                if (msg == null) continue;
+                                String ts = msg.getCreatedAt();
+                                if (ts != null && !ts.isEmpty() && (lastLiveSince == null || ts.compareTo(lastLiveSince) > 0)) {
+                                    lastLiveSince = ts;
+                                    if (appContext != null) {
+                                        appContext.getSharedPreferences("zez_chat_notif_dedup", Context.MODE_PRIVATE)
+                                                .edit().putString("last_live_since_ts", lastLiveSince).apply();
+                                    }
                                 }
-                                if (ChatPreferencesHelper.isConversationMuted(appContext, convId)) {
-                                    continue;
-                                }
-                                String msgTime = msg.getCreatedAt();
-                                String prev = lastNotifiedMsgTimeMap.get(convId);
-                                if (msgTime != null && !msgTime.equals(prev)) {
-                                    lastNotifiedMsgTimeMap.put(convId, msgTime);
-                                    appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE)
-                                            .edit().putString("last_notified_" + convId, msgTime).apply();
-                                    ChatNotificationHelper.showChatNotification(
-                                            appContext,
-                                            convId,
-                                            msg.getSenderId(),
-                                            msg.getSenderName() != null ? msg.getSenderName() : "Chat",
-                                            msg.getSenderPhone() != null ? msg.getSenderPhone() : "",
-                                            msg.getMessageText(),
-                                            null
-                                    );
+                                String mid = msg.getId();
+                                String dedupKey = (mid != null && !mid.isEmpty())
+                                        ? mid
+                                        : ((msg.getConversationId() != null ? msg.getConversationId() : "") + "|" + (ts != null ? ts : "") + "|" + (msg.getSenderId() != null ? msg.getSenderId() : ""));
+                                if (!seenLiveMessageIds.contains(dedupKey)) {
+                                    seenLiveMessageIds.add(dedupKey);
+                                    while (seenLiveMessageIds.size() > 300) {
+                                        String oldest = seenLiveMessageIds.iterator().next();
+                                        seenLiveMessageIds.remove(oldest);
+                                    }
+                                    unseen.add(msg);
                                 }
                             }
                         }
-                        pollSync(appContext);
+
+                        if (!unseen.isEmpty()) {
+                            Collections.sort(unseen, (a, b) -> {
+                                String ta = a.getCreatedAt() != null ? a.getCreatedAt() : "";
+                                String tb = b.getCreatedAt() != null ? b.getCreatedAt() : "";
+                                return ta.compareTo(tb);
+                            });
+                            final List<ChatMessage> deliveredBatch = unseen;
+                            LiveMessageListener activeListener = liveMessageListener;
+                            if (activeListener != null) {
+                                mainHandler.post(() -> {
+                                    LiveMessageListener l = liveMessageListener;
+                                    if (l != null) {
+                                        l.onMessagesReceived(deliveredBatch);
+                                    }
+                                });
+                            }
+
+                            for (ChatMessage msg : deliveredBatch) {
+                                String convId = msg.getConversationId();
+                                if (convId == null) continue;
+                                ChatNotificationHelper.showChatNotificationIfNew(
+                                        appContext,
+                                        convId,
+                                        msg.getId(),
+                                        msg.getSenderId(),
+                                        msg.getSenderName() != null ? msg.getSenderName() : "Chat",
+                                        msg.getSenderPhone() != null ? msg.getSenderPhone() : "",
+                                        msg.getMessageText(),
+                                        msg.getMediaType(),
+                                        msg.getCreatedAt()
+                                );
+                            }
+
+                            long now = System.currentTimeMillis();
+                            if (now - lastPollSyncMs >= 2500L) {
+                                scheduler.execute(() -> pollSync(appContext));
+                            }
+                        } else {
+                            // Server returned only previously seen unread rows without blocking; avoid tight spin loop
+                            Thread.sleep(2500);
+                        }
                     } else if (result != null && result.timeout) {
-                        // Loop immediately to re-establish connection
+                        // Long-poll window closed cleanly; re-open immediately
                     } else {
                         Thread.sleep(2000);
                     }
@@ -145,6 +202,10 @@ public class ChatNotificationManager {
         this.chatsUpdateListener = listener;
     }
 
+    public void setLiveMessageListener(LiveMessageListener listener) {
+        this.liveMessageListener = listener;
+    }
+
     public void pollOnce(Context context) {
         if (context != null) {
             this.appContext = context.getApplicationContext();
@@ -160,6 +221,10 @@ public class ChatNotificationManager {
         if (!ChatPreferencesHelper.isChatRegistered(appContext)) return;
         String userId = ChatPreferencesHelper.getUserId(appContext);
         if (userId == null) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastPollSyncMs < 1500L) return;
+        lastPollSyncMs = now;
 
         try {
             List<ChatConversation> conversations = ChatApiClient.getConversationsSync(appContext, userId);
@@ -187,35 +252,17 @@ public class ChatNotificationManager {
             if (unread > 0) {
                 String convId = conv.getConversationId();
                 if (convId != null) {
-                    // Skip notification if user is currently inside ChatActivity for this conversation
-                    if (ChatActivity.activeConversationId != null && convId.equals(ChatActivity.activeConversationId)) {
-                        continue;
-                    }
-
-                    // Skip notification if muted
-                    if (ChatPreferencesHelper.isConversationMuted(appContext, convId)) {
-                        continue;
-                    }
-
-                    String lastTime = conv.getLastMessageTime();
-                    String prevTime = lastNotifiedMsgTimeMap.get(convId);
-                    if (prevTime == null) {
-                        prevTime = appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE).getString("last_notified_" + convId, null);
-                    }
-                    if (lastTime != null && !lastTime.equals(prevTime)) {
-                        lastNotifiedMsgTimeMap.put(convId, lastTime);
-                        appContext.getSharedPreferences("chat_notif_prefs", Context.MODE_PRIVATE)
-                                .edit().putString("last_notified_" + convId, lastTime).apply();
-                        ChatNotificationHelper.showChatNotification(
-                                appContext,
-                                convId,
-                                conv.getOtherUserId(),
-                                conv.getOtherUserName(),
-                                conv.getOtherUserPhone(),
-                                conv.getLastMessageText(),
-                                null
-                        );
-                    }
+                    ChatNotificationHelper.showChatNotificationIfNew(
+                            appContext,
+                            convId,
+                            null,
+                            conv.getOtherUserId(),
+                            conv.getOtherUserName(),
+                            conv.getOtherUserPhone(),
+                            conv.getLastMessageText(),
+                            null,
+                            conv.getLastMessageTime()
+                    );
                 }
             }
         }
@@ -224,9 +271,9 @@ public class ChatNotificationManager {
     private void pollConversationsForNotifications() {
         if (appContext == null) return;
 
-        // Periodic background alarm sync (every ~30 seconds, 10 ticks x 3s)
+        // Periodic background alarm sync (every ~32 seconds, 4 ticks x 8s)
         alarmSyncCounter++;
-        if (alarmSyncCounter >= 10) {
+        if (alarmSyncCounter >= 4) {
             alarmSyncCounter = 0;
             try {
                 AlarmHelper.syncWithBackend(appContext, null);

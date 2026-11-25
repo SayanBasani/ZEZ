@@ -2,6 +2,7 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_alarm_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
@@ -9,8 +10,8 @@
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
     app:strokeWidth="1dp"
-    app:strokeColor="@color/theme_card_border"
-    app:cardBackgroundColor="@color/theme_surface">
+    app:strokeColor="?attr/colorThemeBorder"
+    app:cardBackgroundColor="?attr/colorThemeSurface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,6 +24,16 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
+
+            <!-- Selection Checkbox Icon (Visible in Multi-Select Mode) -->
+            <ImageView
+                android:id="@+id/iv_alarm_select_check"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_check_circle"
+                android:visibility="gone"
+                android:contentDescription="Select alarm" />
 
             <!-- Time Display -->
             <LinearLayout
@@ -40,7 +51,7 @@
                     android:text="07:00"
                     android:textSize="38sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_primary" />
+                    android:textColor="?attr/colorThemeTextPrimary" />
 
                 <TextView
                     android:id="@+id/tv_alarm_ampm"
@@ -49,7 +60,7 @@
                     android:text="AM"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_secondary"
+                    android:textColor="?attr/colorThemeTextSecondary"
                     android:layout_marginStart="6dp"
                     android:layout_marginBottom="6dp" />
             </LinearLayout>
@@ -76,7 +87,7 @@
                 android:layout_weight="1"
                 android:text="Morning Alarm"
                 android:textSize="13sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
 
             <TextView
                 android:id="@+id/tv_alarm_days"
@@ -94,7 +105,7 @@
             android:layout_height="wrap_content"
             android:text="Default Alarm Ringtone"
             android:textSize="11sp"
-            android:textColor="@color/theme_text_muted"
+            android:textColor="?attr/colorThemeTextMuted"
             android:layout_marginTop="2dp" />
 
         <TextView

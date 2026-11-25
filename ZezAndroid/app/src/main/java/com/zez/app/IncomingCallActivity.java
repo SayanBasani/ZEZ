@@ -63,6 +63,7 @@ public class IncomingCallActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.zez.app.theme.ThemeManager.applyTheme(this, true);
         super.onCreate(savedInstanceState);
 
         // Turn screen on and show over lockscreen

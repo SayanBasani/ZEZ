@@ -13,9 +13,23 @@ public class PreferencesHelper {
     private static final String KEY_API_URL = "api_url";
     private static final String KEY_LAST_SYNC = "last_sync_time";
     public static final String KEY_THEME_MODE = "theme_mode";
+    public static final String KEY_THEME_PALETTE = "theme_palette";
+    public static final String KEY_DYNAMIC_COLOR = "dynamic_color";
     public static final String KEY_FONT_SCALE = "font_scale";
+    public static final String KEY_FONT_FAMILY = "font_family";
     public static final String KEY_ACCENT_COLOR = "accent_color";
     public static final String KEY_INCOMING_BUBBLE_COLOR = "incoming_bubble_color";
+
+    public static final String PALETTE_GRAPHITE = "graphite";
+    public static final String PALETTE_ARCTIC = "arctic";
+    public static final String PALETTE_MIDNIGHT = "midnight";
+    public static final String PALETTE_AMOLED = "amoled";
+    public static final String PALETTE_OCEAN = "ocean";
+    public static final String PALETTE_SAGE = "sage";
+    public static final String PALETTE_SUNSET = "sunset";
+    public static final String PALETTE_ROSE = "rose";
+
+    public static final String DEFAULT_PALETTE = PALETTE_GRAPHITE;
 
     public static final String DEFAULT_ACCENT_COLOR = "#2563EB";
     public static final String COLOR_EMERALD = "#10B981";
@@ -39,6 +53,16 @@ public class PreferencesHelper {
     public static final float FONT_SCALE_DEFAULT = 1.0f;
     public static final float FONT_SCALE_LARGE = 1.15f;
     public static final float FONT_SCALE_HUGE = 1.30f;
+
+    public static final String FONT_FAMILY_SANS = "sans";
+    public static final String FONT_FAMILY_CONDENSED = "condensed";
+    public static final String FONT_FAMILY_MEDIUM = "medium";
+    public static final String FONT_FAMILY_SERIF = "serif";
+    public static final String FONT_FAMILY_MONOSPACE = "monospace";
+    public static final String FONT_FAMILY_CASUAL = "casual";
+    public static final String FONT_FAMILY_CURSIVE = "cursive";
+    public static final String FONT_FAMILY_LIGHT = "light";
+    public static final String FONT_FAMILY_BLACK = "black";
 
     public static final int THEME_SYSTEM = androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM; // -1
     public static final int THEME_LIGHT = androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO; // 1
@@ -149,12 +173,44 @@ public class PreferencesHelper {
         getPrefs(context).edit().putInt(KEY_THEME_MODE, mode).apply();
     }
 
+    public static String getThemePalette(Context context) {
+        return getPrefs(context).getString(KEY_THEME_PALETTE, DEFAULT_PALETTE);
+    }
+
+    public static void setThemePalette(Context context, String palette) {
+        if (palette != null) {
+            getPrefs(context).edit().putString(KEY_THEME_PALETTE, palette).apply();
+        }
+    }
+
+    public static boolean isDynamicColorEnabled(Context context) {
+        return getPrefs(context).getBoolean(KEY_DYNAMIC_COLOR, false);
+    }
+
+    public static void setDynamicColorEnabled(Context context, boolean enabled) {
+        getPrefs(context).edit().putBoolean(KEY_DYNAMIC_COLOR, enabled).apply();
+    }
+
+    public static void resetAppearance(Context context) {
+        setThemeMode(context, THEME_SYSTEM);
+        setThemePalette(context, DEFAULT_PALETTE);
+        setDynamicColorEnabled(context, false);
+    }
+
     public static float getFontScale(Context context) {
         return getPrefs(context).getFloat(KEY_FONT_SCALE, FONT_SCALE_DEFAULT);
     }
 
     public static void setFontScale(Context context, float scale) {
         getPrefs(context).edit().putFloat(KEY_FONT_SCALE, scale).apply();
+    }
+
+    public static String getFontFamily(Context context) {
+        return getPrefs(context).getString(KEY_FONT_FAMILY, FONT_FAMILY_SANS);
+    }
+
+    public static void setFontFamily(Context context, String family) {
+        getPrefs(context).edit().putString(KEY_FONT_FAMILY, family).apply();
     }
 
     public static String getAccentColor(Context context) {

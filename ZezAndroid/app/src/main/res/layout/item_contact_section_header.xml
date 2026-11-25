@@ -11,5 +11,5 @@
     android:textSize="12sp"
     android:textStyle="bold"
     android:letterSpacing="0.08"
-    android:textColor="@color/theme_text_muted"
+    android:textColor="?attr/colorThemeTextMuted"
     android:text="CONTACTS ON ZEZ" />

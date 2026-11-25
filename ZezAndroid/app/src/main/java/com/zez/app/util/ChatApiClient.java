@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 import android.net.Uri;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.ConnectionPool;
+import okhttp3.Dispatcher;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -38,7 +40,16 @@ public class ChatApiClient {
             .setFieldNamingPolicy(com.google.gson.FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
 
+    private static final Dispatcher dispatcher;
+    static {
+        dispatcher = new Dispatcher();
+        dispatcher.setMaxRequests(64);
+        dispatcher.setMaxRequestsPerHost(24);
+    }
+
     private static final OkHttpClient client = new OkHttpClient.Builder()
+            .dispatcher(dispatcher)
+            .connectionPool(new ConnectionPool(12, 5, TimeUnit.MINUTES))
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
             .writeTimeout(15, TimeUnit.SECONDS)
@@ -114,6 +125,50 @@ public class ChatApiClient {
                     }
                 } catch (Exception e) {
                     postError(callback, "Error: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    /**
+     * Deletes the chat account and associated data from the backend (Google Play policy compliance).
+     */
+    public static void deleteAccount(Context context, String userId, ChatCallback<Boolean> callback) {
+        if (userId == null || userId.trim().isEmpty()) {
+            postError(callback, "User ID is required.");
+            return;
+        }
+        String url = getBaseUrl(context) + "/api/chat/account/delete";
+        JsonObject body = new JsonObject();
+        body.addProperty("userId", userId);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Failed to connect to server: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful() || response.body() == null) {
+                    postError(callback, "Server returned HTTP " + response.code());
+                    return;
+                }
+                try {
+                    String str = response.body().string();
+                    JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                    if (json.has("success") && json.get("success").getAsBoolean()) {
+                        postSuccess(callback, true);
+                    } else {
+                        postError(callback, json.has("error") ? json.get("error").getAsString() : "Deletion failed.");
+                    }
+                } catch (Exception e) {
+                    postError(callback, "Response error: " + e.getMessage());
                 }
             }
         });
@@ -475,10 +530,9 @@ public class ChatApiClient {
 
     public static List<ChatConversation> getConversationsSync(Context context, String userId) {
         if (context == null || userId == null) return new ArrayList<>();
-        try {
-            String url = getBaseUrl(context) + "/api/chat/conversations?userId=" + userId;
-            Request request = new Request.Builder().url(url).get().build();
-            Response response = client.newCall(request).execute();
+        String url = getBaseUrl(context) + "/api/chat/conversations?userId=" + Uri.encode(userId);
+        Request request = new Request.Builder().url(url).get().build();
+        try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful() || response.body() == null) {
                 return new ArrayList<>();
             }
@@ -542,16 +596,23 @@ public class ChatApiClient {
     }
 
     public static LiveUpdateResult listenForLiveUpdatesSync(Context context, String userId) {
-        if (context == null || userId == null) return null;
-        try {
-            String url = getBaseUrl(context) + "/api/chat/live-updates?userId=" + userId;
-            Request request = new Request.Builder().url(url).get().build();
-            OkHttpClient longPollClient = client.newBuilder()
-                    .readTimeout(35, TimeUnit.SECONDS)
-                    .connectTimeout(15, TimeUnit.SECONDS)
-                    .build();
+        return listenForLiveUpdatesSync(context, userId, null);
+    }
 
-            Response response = longPollClient.newCall(request).execute();
+    public static LiveUpdateResult listenForLiveUpdatesSync(Context context, String userId, String sinceTimestamp) {
+        if (context == null || userId == null) return null;
+        StringBuilder sb = new StringBuilder(getBaseUrl(context))
+                .append("/api/chat/live-updates?userId=").append(Uri.encode(userId));
+        if (sinceTimestamp != null && !sinceTimestamp.trim().isEmpty()) {
+            sb.append("&since=").append(Uri.encode(sinceTimestamp.trim()));
+        }
+        Request request = new Request.Builder().url(sb.toString()).get().build();
+        OkHttpClient longPollClient = client.newBuilder()
+                .readTimeout(35, TimeUnit.SECONDS)
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .build();
+
+        try (Response response = longPollClient.newCall(request).execute()) {
             if (!response.isSuccessful() || response.body() == null) {
                 return null;
             }
@@ -593,25 +654,27 @@ public class ChatApiClient {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (!response.isSuccessful() || response.body() == null) {
-                    postError(callback, "HTTP " + response.code());
-                    return;
-                }
-                try {
-                    String str = response.body().string();
-                    JsonObject json = JsonParser.parseString(str).getAsJsonObject();
-                    ConversationModeInfo info = new ConversationModeInfo();
-                    if (json.has("conversationId")) info.conversationId = json.get("conversationId").getAsString();
-                    if (json.has("isSecretMode")) info.isSecretMode = json.get("isSecretMode").getAsBoolean();
-                    if (json.has("secretSessionId") && !json.get("secretSessionId").isJsonNull()) {
-                        info.secretSessionId = json.get("secretSessionId").getAsString();
+                try (Response resp = response) {
+                    if (!resp.isSuccessful() || resp.body() == null) {
+                        postError(callback, "HTTP " + resp.code());
+                        return;
                     }
-                    if (json.has("secretModeUpdatedAt") && !json.get("secretModeUpdatedAt").isJsonNull()) {
-                        info.secretModeUpdatedAt = json.get("secretModeUpdatedAt").getAsString();
+                    try {
+                        String str = resp.body().string();
+                        JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                        ConversationModeInfo info = new ConversationModeInfo();
+                        if (json.has("conversationId")) info.conversationId = json.get("conversationId").getAsString();
+                        if (json.has("isSecretMode")) info.isSecretMode = json.get("isSecretMode").getAsBoolean();
+                        if (json.has("secretSessionId") && !json.get("secretSessionId").isJsonNull()) {
+                            info.secretSessionId = json.get("secretSessionId").getAsString();
+                        }
+                        if (json.has("secretModeUpdatedAt") && !json.get("secretModeUpdatedAt").isJsonNull()) {
+                            info.secretModeUpdatedAt = json.get("secretModeUpdatedAt").getAsString();
+                        }
+                        postSuccess(callback, info);
+                    } catch (Exception e) {
+                        postError(callback, "Parse error: " + e.getMessage());
                     }
-                    postSuccess(callback, info);
-                } catch (Exception e) {
-                    postError(callback, "Parse error: " + e.getMessage());
                 }
             }
         });
@@ -643,50 +706,52 @@ public class ChatApiClient {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (!response.isSuccessful() || response.body() == null) {
-                    postError(callback, "HTTP " + response.code());
-                    return;
-                }
-                try {
-                    String str = response.body().string();
-                    JsonObject json = JsonParser.parseString(str).getAsJsonObject();
-                    MessagesResult res = new MessagesResult();
-                    if (json.has("conversation_id") && !json.get("conversation_id").isJsonNull()) {
-                        res.conversationId = json.get("conversation_id").getAsString();
-                    } else if (json.has("conversationId") && !json.get("conversationId").isJsonNull()) {
-                        res.conversationId = json.get("conversationId").getAsString();
+                try (Response resp = response) {
+                    if (!resp.isSuccessful() || resp.body() == null) {
+                        postError(callback, "HTTP " + resp.code());
+                        return;
                     }
-                    if (json.has("timestamp") && !json.get("timestamp").isJsonNull()) {
-                        res.timestamp = json.get("timestamp").getAsString();
-                    }
-                    if (json.has("isSecretMode")) res.isSecretMode = json.get("isSecretMode").getAsBoolean();
-                    if (json.has("secretSessionId") && !json.get("secretSessionId").isJsonNull()) {
-                        res.secretSessionId = json.get("secretSessionId").getAsString();
-                    }
-
-                    if (json.has("peer_status") && !json.get("peer_status").isJsonNull()) {
-                        JsonObject ps = json.getAsJsonObject("peer_status");
-                        PeerStatus peerStatus = new PeerStatus();
-                        if (ps.has("userId")) peerStatus.userId = ps.get("userId").getAsString();
-                        if (ps.has("isOnline")) peerStatus.isOnline = ps.get("isOnline").getAsBoolean();
-                        if (ps.has("isTyping")) peerStatus.isTyping = ps.get("isTyping").getAsBoolean();
-                        if (ps.has("lastSeen") && !ps.get("lastSeen").isJsonNull()) peerStatus.lastSeen = ps.get("lastSeen").getAsString();
-                        if (ps.has("avatarUrl") && !ps.get("avatarUrl").isJsonNull()) peerStatus.avatarUrl = ps.get("avatarUrl").getAsString();
-                        if (ps.has("name") && !ps.get("name").isJsonNull()) peerStatus.name = ps.get("name").getAsString();
-                        res.peerStatus = peerStatus;
-                    }
-
-                    if (json.has("messages")) {
-                        JsonArray arr = json.getAsJsonArray("messages");
-                        for (int i = 0; i < arr.size(); i++) {
-                            JsonObject m = arr.get(i).getAsJsonObject();
-                            ChatMessage msg = gson.fromJson(m, ChatMessage.class);
-                            res.messages.add(msg);
+                    try {
+                        String str = resp.body().string();
+                        JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                        MessagesResult res = new MessagesResult();
+                        if (json.has("conversation_id") && !json.get("conversation_id").isJsonNull()) {
+                            res.conversationId = json.get("conversation_id").getAsString();
+                        } else if (json.has("conversationId") && !json.get("conversationId").isJsonNull()) {
+                            res.conversationId = json.get("conversationId").getAsString();
                         }
+                        if (json.has("timestamp") && !json.get("timestamp").isJsonNull()) {
+                            res.timestamp = json.get("timestamp").getAsString();
+                        }
+                        if (json.has("isSecretMode")) res.isSecretMode = json.get("isSecretMode").getAsBoolean();
+                        if (json.has("secretSessionId") && !json.get("secretSessionId").isJsonNull()) {
+                            res.secretSessionId = json.get("secretSessionId").getAsString();
+                        }
+
+                        if (json.has("peer_status") && !json.get("peer_status").isJsonNull()) {
+                            JsonObject ps = json.getAsJsonObject("peer_status");
+                            PeerStatus peerStatus = new PeerStatus();
+                            if (ps.has("userId")) peerStatus.userId = ps.get("userId").getAsString();
+                            if (ps.has("isOnline")) peerStatus.isOnline = ps.get("isOnline").getAsBoolean();
+                            if (ps.has("isTyping")) peerStatus.isTyping = ps.get("isTyping").getAsBoolean();
+                            if (ps.has("lastSeen") && !ps.get("lastSeen").isJsonNull()) peerStatus.lastSeen = ps.get("lastSeen").getAsString();
+                            if (ps.has("avatarUrl") && !ps.get("avatarUrl").isJsonNull()) peerStatus.avatarUrl = ps.get("avatarUrl").getAsString();
+                            if (ps.has("name") && !ps.get("name").isJsonNull()) peerStatus.name = ps.get("name").getAsString();
+                            res.peerStatus = peerStatus;
+                        }
+
+                        if (json.has("messages")) {
+                            JsonArray arr = json.getAsJsonArray("messages");
+                            for (int i = 0; i < arr.size(); i++) {
+                                JsonObject m = arr.get(i).getAsJsonObject();
+                                ChatMessage msg = gson.fromJson(m, ChatMessage.class);
+                                res.messages.add(msg);
+                            }
+                        }
+                        postSuccess(callback, res);
+                    } catch (Exception e) {
+                        postError(callback, "Parse error: " + e.getMessage());
                     }
-                    postSuccess(callback, res);
-                } catch (Exception e) {
-                    postError(callback, "Parse error: " + e.getMessage());
                 }
             }
         });
@@ -727,22 +792,24 @@ public class ChatApiClient {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (!response.isSuccessful() || response.body() == null) {
-                    postError(callback, "Send error HTTP " + response.code());
-                    return;
-                }
-                try {
-                    String str = response.body().string();
-                    JsonObject json = JsonParser.parseString(str).getAsJsonObject();
-                    if (json.has("success") && json.get("success").getAsBoolean() && json.has("message")) {
-                        JsonObject m = json.getAsJsonObject("message");
-                        ChatMessage msg = gson.fromJson(m, ChatMessage.class);
-                        postSuccess(callback, msg);
-                    } else {
-                        postError(callback, "Failed to send message.");
+                try (Response resp = response) {
+                    if (!resp.isSuccessful() || resp.body() == null) {
+                        postError(callback, "Send error HTTP " + resp.code());
+                        return;
                     }
-                } catch (Exception e) {
-                    postError(callback, "Parse error: " + e.getMessage());
+                    try {
+                        String str = resp.body().string();
+                        JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+                        if (json.has("success") && json.get("success").getAsBoolean() && json.has("message")) {
+                            JsonObject m = json.getAsJsonObject("message");
+                            ChatMessage msg = gson.fromJson(m, ChatMessage.class);
+                            postSuccess(callback, msg);
+                        } else {
+                            postError(callback, "Failed to send message.");
+                        }
+                    } catch (Exception e) {
+                        postError(callback, "Parse error: " + e.getMessage());
+                    }
                 }
             }
         });
@@ -791,9 +858,9 @@ public class ChatApiClient {
     }
 
     public static void pollUpdates(Context context, String userId, String sinceTimestamp, String conversationId, ChatCallback<PollResult> callback) {
-        StringBuilder sb = new StringBuilder(getBaseUrl(context)).append("/api/chat/poll?userId=").append(userId);
-        if (sinceTimestamp != null) sb.append("&since=").append(sinceTimestamp);
-        if (conversationId != null) sb.append("&conversationId=").append(conversationId);
+        StringBuilder sb = new StringBuilder(getBaseUrl(context)).append("/api/chat/poll?userId=").append(Uri.encode(userId));
+        if (sinceTimestamp != null && !sinceTimestamp.isEmpty()) sb.append("&since=").append(Uri.encode(sinceTimestamp));
+        if (conversationId != null && !conversationId.isEmpty()) sb.append("&conversationId=").append(Uri.encode(conversationId));
 
         Request request = new Request.Builder().url(sb.toString()).get().build();
         client.newCall(request).enqueue(new Callback() {
@@ -804,10 +871,11 @@ public class ChatApiClient {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (!response.isSuccessful() || response.body() == null) {
-                    postError(callback, "Poll HTTP " + response.code());
-                    return;
-                }
+                try (Response resp = response) {
+                    if (!resp.isSuccessful() || resp.body() == null) {
+                        postError(callback, "Poll HTTP " + resp.code());
+                        return;
+                    }
                 try {
                     String str = response.body().string();
                     JsonObject json = JsonParser.parseString(str).getAsJsonObject();
@@ -864,6 +932,7 @@ public class ChatApiClient {
                     postSuccess(callback, pr);
                 } catch (Exception e) {
                     postError(callback, "Poll parse error: " + e.getMessage());
+                }
                 }
             }
         });
@@ -1069,13 +1138,212 @@ public class ChatApiClient {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (!response.isSuccessful()) {
-                    postError(callback, "Clear chat HTTP " + response.code());
-                    return;
+                try (Response resp = response) {
+                    if (!resp.isSuccessful()) {
+                        postError(callback, "Clear chat HTTP " + resp.code());
+                        return;
+                    }
+                    postSuccess(callback, null);
                 }
-                postSuccess(callback, null);
             }
         });
+    }
+
+    // ==================== Two-Player Tic Tac Toe Game APIs ====================
+
+    public static class GameState {
+        public String id;
+        public String conversationId;
+        public String gameType;
+        public String hostId;
+        public String guestId;
+        public String hostName;
+        public String guestName;
+        public String[] board = new String[]{"", "", "", "", "", "", "", "", ""};
+        public String currentTurn;
+        public String winnerId;
+        public int[] winningLine;
+        public boolean isDraw;
+        public String status;
+        public int hostScore;
+        public int guestScore;
+        public int drawsCount;
+        public int roundNumber = 1;
+        public boolean guestJoined;
+        public int version = 1;
+        public String endedBy;
+    }
+
+    public static class GameEventsResult {
+        public boolean changed;
+        public boolean timeout;
+        public GameState game;
+    }
+
+    private static String optStr(JsonObject obj, String key, String defVal) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) return defVal;
+        return obj.get(key).getAsString();
+    }
+
+    private static GameState parseGameState(JsonObject g) {
+        if (g == null) return null;
+        GameState s = new GameState();
+        s.id = optStr(g, "id", null);
+        s.conversationId = optStr(g, "conversationId", null);
+        s.gameType = optStr(g, "gameType", "tictactoe");
+        s.hostId = optStr(g, "hostId", null);
+        s.guestId = optStr(g, "guestId", null);
+        s.hostName = optStr(g, "hostName", "Player X");
+        s.guestName = optStr(g, "guestName", "Player O");
+        if (g.has("board") && g.get("board").isJsonArray()) {
+            JsonArray arr = g.getAsJsonArray("board");
+            for (int i = 0; i < Math.min(9, arr.size()); i++) {
+                s.board[i] = arr.get(i).isJsonNull() ? "" : arr.get(i).getAsString();
+            }
+        }
+        s.currentTurn = optStr(g, "currentTurn", null);
+        s.winnerId = optStr(g, "winnerId", null);
+        if (g.has("winningLine") && g.get("winningLine").isJsonArray()) {
+            JsonArray wl = g.getAsJsonArray("winningLine");
+            if (wl.size() >= 3) {
+                s.winningLine = new int[]{wl.get(0).getAsInt(), wl.get(1).getAsInt(), wl.get(2).getAsInt()};
+            }
+        }
+        s.isDraw = g.has("isDraw") && !g.get("isDraw").isJsonNull() && g.get("isDraw").getAsBoolean();
+        s.status = optStr(g, "status", "waiting");
+        s.hostScore = (g.has("hostScore") && !g.get("hostScore").isJsonNull()) ? g.get("hostScore").getAsInt() : 0;
+        s.guestScore = (g.has("guestScore") && !g.get("guestScore").isJsonNull()) ? g.get("guestScore").getAsInt() : 0;
+        s.drawsCount = (g.has("drawsCount") && !g.get("drawsCount").isJsonNull()) ? g.get("drawsCount").getAsInt() : 0;
+        s.roundNumber = (g.has("roundNumber") && !g.get("roundNumber").isJsonNull()) ? g.get("roundNumber").getAsInt() : 1;
+        s.guestJoined = g.has("guestJoined") && !g.get("guestJoined").isJsonNull() && g.get("guestJoined").getAsBoolean();
+        s.version = (g.has("version") && !g.get("version").isJsonNull()) ? g.get("version").getAsInt() : 1;
+        s.endedBy = optStr(g, "endedBy", null);
+        return s;
+    }
+
+    private static void executeGameCall(Request request, ChatCallback<GameState> callback) {
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                postError(callback, "Network error: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try (Response resp = response) {
+                    String str = resp.body() != null ? resp.body().string() : "";
+                    try {
+                        JsonObject json = !str.isEmpty() ? JsonParser.parseString(str).getAsJsonObject() : new JsonObject();
+                        boolean ok = json.has("success") && json.get("success").getAsBoolean();
+                        if (resp.isSuccessful() && ok && json.has("game") && json.get("game").isJsonObject()) {
+                            postSuccess(callback, parseGameState(json.getAsJsonObject("game")));
+                            return;
+                        }
+                        String errMsg = optStr(json, "error", "Game HTTP " + resp.code());
+                        postError(callback, errMsg);
+                    } catch (Exception e) {
+                        if (resp.code() == 404) {
+                            postError(callback, "Deploy backend update to enable live games (HTTP 404)");
+                        } else {
+                            postError(callback, "Game HTTP " + resp.code());
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    public static void createGame(Context context, String gameId, String conversationId, String hostId, String guestId, String hostName, String guestName, ChatCallback<GameState> callback) {
+        String url = getBaseUrl(context) + "/api/chat/game/create";
+        JsonObject body = new JsonObject();
+        body.addProperty("gameId", gameId);
+        if (conversationId != null) body.addProperty("conversationId", conversationId);
+        body.addProperty("hostId", hostId);
+        body.addProperty("guestId", guestId);
+        body.addProperty("hostName", hostName != null ? hostName : "Player X");
+        body.addProperty("guestName", guestName != null ? guestName : "Player O");
+        body.addProperty("gameType", "tictactoe");
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+        executeGameCall(request, callback);
+    }
+
+    public static void joinGame(Context context, String gameId, String userId, ChatCallback<GameState> callback) {
+        String url = getBaseUrl(context) + "/api/chat/game/" + Uri.encode(gameId) + "/join";
+        JsonObject body = new JsonObject();
+        body.addProperty("userId", userId);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+        executeGameCall(request, callback);
+    }
+
+    public static void getGame(Context context, String gameId, ChatCallback<GameState> callback) {
+        String url = getBaseUrl(context) + "/api/chat/game/" + Uri.encode(gameId);
+        Request request = new Request.Builder().url(url).get().build();
+        executeGameCall(request, callback);
+    }
+
+    public static GameEventsResult listenGameEventsSync(Context context, String gameId, int sinceVersion) {
+        if (context == null || gameId == null) return null;
+        String url = getBaseUrl(context) + "/api/chat/game/" + Uri.encode(gameId) + "/events?sinceVersion=" + sinceVersion;
+        Request request = new Request.Builder().url(url).get().build();
+        OkHttpClient gamePollClient = client.newBuilder()
+                .readTimeout(25, TimeUnit.SECONDS)
+                .connectTimeout(12, TimeUnit.SECONDS)
+                .build();
+        try (Response resp = gamePollClient.newCall(request).execute()) {
+            if (!resp.isSuccessful() || resp.body() == null) return null;
+            String str = resp.body().string();
+            JsonObject json = JsonParser.parseString(str).getAsJsonObject();
+            GameEventsResult res = new GameEventsResult();
+            res.changed = json.has("changed") && json.get("changed").getAsBoolean();
+            res.timeout = json.has("timeout") && json.get("timeout").getAsBoolean();
+            if (json.has("game") && json.get("game").isJsonObject()) {
+                res.game = parseGameState(json.getAsJsonObject("game"));
+            }
+            return res;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static void makeGameMove(Context context, String gameId, String userId, int cellIndex, ChatCallback<GameState> callback) {
+        String url = getBaseUrl(context) + "/api/chat/game/" + Uri.encode(gameId) + "/move";
+        JsonObject body = new JsonObject();
+        body.addProperty("userId", userId);
+        body.addProperty("cellIndex", cellIndex);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+        executeGameCall(request, callback);
+    }
+
+    public static void rematchGame(Context context, String gameId, String userId, ChatCallback<GameState> callback) {
+        String url = getBaseUrl(context) + "/api/chat/game/" + Uri.encode(gameId) + "/rematch";
+        JsonObject body = new JsonObject();
+        if (userId != null) body.addProperty("userId", userId);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+        executeGameCall(request, callback);
+    }
+
+    public static void endGame(Context context, String gameId, String userId, ChatCallback<GameState> callback) {
+        String url = getBaseUrl(context) + "/api/chat/game/" + Uri.encode(gameId) + "/end";
+        JsonObject body = new JsonObject();
+        if (userId != null) body.addProperty("userId", userId);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(RequestBody.create(body.toString(), JSON))
+                .build();
+        executeGameCall(request, callback);
     }
 
     private static <T> void postSuccess(ChatCallback<T> callback, T data) {

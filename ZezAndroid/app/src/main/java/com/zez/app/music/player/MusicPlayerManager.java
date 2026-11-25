@@ -175,6 +175,10 @@ public class MusicPlayerManager {
         isPlaying = true;
         isBuffering = true;
 
+        if (appContext != null && currentTrack != null) {
+            com.zez.app.music.util.MusicHistoryManager.addTrackToPlaybackHistory(appContext, currentTrack);
+        }
+
         notifyTrackChanged(currentTrack);
         notifyPlaybackState(true, true);
         notifyProgress(0, totalSeconds);

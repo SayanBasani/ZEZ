@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/theme_background">
+    android:background="?attr/colorThemeBackground">
 
     <!-- Top Action Bar -->
     <LinearLayout
@@ -14,7 +14,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
-        android:background="@color/theme_surface">
+        android:background="?attr/colorThemeSurface">
 
         <ImageButton
             android:id="@+id/btn_profile_back"
@@ -22,7 +22,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Back" />
 
         <View
@@ -36,7 +36,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_more_vert"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="More options" />
     </LinearLayout>
 
@@ -59,7 +59,7 @@
                 android:gravity="center_horizontal"
                 android:paddingTop="20dp"
                 android:paddingBottom="24dp"
-                android:background="@color/theme_surface">
+                android:background="?attr/colorThemeSurface">
 
                 <FrameLayout
                     android:layout_width="110dp"
@@ -93,7 +93,7 @@
                     android:text="Contact Name"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_primary" />
+                    android:textColor="?attr/colorThemeTextPrimary" />
 
                 <TextView
                     android:id="@+id/tv_profile_phone"
@@ -102,7 +102,7 @@
                     android:layout_marginTop="4dp"
                     android:text="+91 97351 54080"
                     android:textSize="14sp"
-                    android:textColor="@color/theme_text_secondary" />
+                    android:textColor="?attr/colorThemeTextSecondary" />
 
                 <TextView
                     android:id="@+id/tv_profile_last_seen"
@@ -111,7 +111,7 @@
                     android:layout_marginTop="2dp"
                     android:text="last seen today at 7:01 AM"
                     android:textSize="13sp"
-                    android:textColor="@color/theme_text_muted" />
+                    android:textColor="?attr/colorThemeTextMuted" />
 
                 <!-- Action Buttons: Voice, Video, Pay, Search -->
                 <LinearLayout
@@ -144,7 +144,7 @@
                                 android:layout_height="22dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_call"
-                                app:tint="@color/theme_icon_tint" />
+                                app:tint="?attr/colorThemeIconTint" />
                         </FrameLayout>
 
                         <TextView
@@ -153,7 +153,7 @@
                             android:layout_marginTop="6dp"
                             android:text="Voice"
                             android:textSize="12sp"
-                            android:textColor="@color/theme_text_secondary" />
+                            android:textColor="?attr/colorThemeTextSecondary" />
                     </LinearLayout>
 
                     <!-- Video Call -->
@@ -178,7 +178,7 @@
                                 android:layout_height="22dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_videocall"
-                                app:tint="@color/theme_icon_tint" />
+                                app:tint="?attr/colorThemeIconTint" />
                         </FrameLayout>
 
                         <TextView
@@ -187,7 +187,7 @@
                             android:layout_marginTop="6dp"
                             android:text="Video"
                             android:textSize="12sp"
-                            android:textColor="@color/theme_text_secondary" />
+                            android:textColor="?attr/colorThemeTextSecondary" />
                     </LinearLayout>
 
                     <!-- Search -->
@@ -212,7 +212,7 @@
                                 android:layout_height="22dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_search"
-                                app:tint="@color/theme_icon_tint" />
+                                app:tint="?attr/colorThemeIconTint" />
                         </FrameLayout>
 
                         <TextView
@@ -221,7 +221,7 @@
                             android:layout_marginTop="6dp"
                             android:text="Search"
                             android:textSize="12sp"
-                            android:textColor="@color/theme_text_secondary" />
+                            android:textColor="?attr/colorThemeTextSecondary" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -236,7 +236,7 @@
                 android:orientation="vertical"
                 android:layout_marginTop="12dp"
                 android:paddingVertical="14dp"
-                android:background="@color/theme_surface">
+                android:background="?attr/colorThemeSurface">
 
                 <LinearLayout
                     android:id="@+id/btn_profile_view_all_media"
@@ -257,7 +257,7 @@
                         android:text="Media, links and docs"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="@color/theme_text_primary" />
+                        android:textColor="?attr/colorThemeTextPrimary" />
 
                     <TextView
                         android:id="@+id/tv_profile_media_count"
@@ -265,7 +265,7 @@
                         android:layout_height="wrap_content"
                         android:text="0 >"
                         android:textSize="13sp"
-                        android:textColor="@color/theme_text_muted" />
+                        android:textColor="?attr/colorThemeTextMuted" />
                 </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
@@ -284,7 +284,7 @@
                     android:padding="16dp"
                     android:text="No media shared yet"
                     android:textSize="13sp"
-                    android:textColor="@color/theme_text_muted"
+                    android:textColor="?attr/colorThemeTextMuted"
                     android:visibility="gone" />
             </LinearLayout>
 
@@ -294,7 +294,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_marginTop="12dp"
-                android:background="@color/theme_surface">
+                android:background="?attr/colorThemeSurface">
 
                 <!-- Manage Storage -->
                 <LinearLayout
@@ -313,7 +313,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_folder"
-                        app:tint="@color/theme_icon_tint"
+                        app:tint="?attr/colorThemeIconTint"
                         android:layout_marginEnd="16dp" />
 
                     <LinearLayout
@@ -327,7 +327,7 @@
                             android:layout_height="wrap_content"
                             android:text="Manage storage"
                             android:textSize="15sp"
-                            android:textColor="@color/theme_text_primary" />
+                            android:textColor="?attr/colorThemeTextPrimary" />
 
                         <TextView
                             android:id="@+id/tv_profile_storage_size"
@@ -335,7 +335,7 @@
                             android:layout_height="wrap_content"
                             android:text="0 B"
                             android:textSize="12sp"
-                            android:textColor="@color/theme_text_muted" />
+                            android:textColor="?attr/colorThemeTextMuted" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -343,7 +343,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginStart="56dp"
-                    android:background="@color/theme_card_border" />
+                    android:background="?attr/colorThemeBorder" />
 
                 <!-- Pin Chat -->
                 <LinearLayout
@@ -363,7 +363,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_pin"
-                        app:tint="@color/theme_icon_tint"
+                        app:tint="?attr/colorThemeIconTint"
                         android:layout_marginEnd="16dp" />
 
                     <LinearLayout
@@ -377,7 +377,7 @@
                             android:layout_height="wrap_content"
                             android:text="Pin chat"
                             android:textSize="15sp"
-                            android:textColor="@color/theme_text_primary" />
+                            android:textColor="?attr/colorThemeTextPrimary" />
 
                         <TextView
                             android:id="@+id/tv_profile_pin_sub"
@@ -385,7 +385,7 @@
                             android:layout_height="wrap_content"
                             android:text="Keep this chat at the top of your chats list"
                             android:textSize="12sp"
-                            android:textColor="@color/theme_text_muted" />
+                            android:textColor="?attr/colorThemeTextMuted" />
                     </LinearLayout>
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
@@ -398,7 +398,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginStart="56dp"
-                    android:background="@color/theme_card_border" />
+                    android:background="?attr/colorThemeBorder" />
 
                 <!-- Notifications -->
                 <LinearLayout
@@ -417,7 +417,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_notifications"
-                        app:tint="@color/theme_icon_tint"
+                        app:tint="?attr/colorThemeIconTint"
                         android:layout_marginEnd="16dp" />
 
                     <LinearLayout
@@ -431,7 +431,7 @@
                             android:layout_height="wrap_content"
                             android:text="Notifications"
                             android:textSize="15sp"
-                            android:textColor="@color/theme_text_primary" />
+                            android:textColor="?attr/colorThemeTextPrimary" />
 
                         <TextView
                             android:id="@+id/tv_profile_notifications_sub"
@@ -439,7 +439,7 @@
                             android:layout_height="wrap_content"
                             android:text="Off"
                             android:textSize="12sp"
-                            android:textColor="@color/theme_text_muted" />
+                            android:textColor="?attr/colorThemeTextMuted" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -447,7 +447,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginStart="56dp"
-                    android:background="@color/theme_card_border" />
+                    android:background="?attr/colorThemeBorder" />
 
                 <!-- Media Visibility -->
                 <LinearLayout
@@ -466,7 +466,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_photo_library"
-                        app:tint="@color/theme_icon_tint"
+                        app:tint="?attr/colorThemeIconTint"
                         android:layout_marginEnd="16dp" />
 
                     <LinearLayout
@@ -480,7 +480,7 @@
                             android:layout_height="wrap_content"
                             android:text="Media visibility"
                             android:textSize="15sp"
-                            android:textColor="@color/theme_text_primary" />
+                            android:textColor="?attr/colorThemeTextPrimary" />
 
                         <TextView
                             android:id="@+id/tv_profile_visibility_sub"
@@ -488,7 +488,7 @@
                             android:layout_height="wrap_content"
                             android:text="Default (Yes)"
                             android:textSize="12sp"
-                            android:textColor="@color/theme_text_muted" />
+                            android:textColor="?attr/colorThemeTextMuted" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -496,7 +496,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginStart="56dp"
-                    android:background="@color/theme_card_border" />
+                    android:background="?attr/colorThemeBorder" />
 
                 <!-- Starred Messages -->
                 <LinearLayout
@@ -515,7 +515,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_star_filled"
-                        app:tint="@color/theme_icon_tint"
+                        app:tint="?attr/colorThemeIconTint"
                         android:layout_marginEnd="16dp" />
 
                     <TextView
@@ -524,7 +524,7 @@
                         android:layout_weight="1"
                         android:text="Starred messages"
                         android:textSize="15sp"
-                        android:textColor="@color/theme_text_primary" />
+                        android:textColor="?attr/colorThemeTextPrimary" />
 
                     <TextView
                         android:id="@+id/tv_profile_starred_count"
@@ -532,14 +532,14 @@
                         android:layout_height="wrap_content"
                         android:text="0"
                         android:textSize="13sp"
-                        android:textColor="@color/theme_text_muted" />
+                        android:textColor="?attr/colorThemeTextMuted" />
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginStart="56dp"
-                    android:background="@color/theme_card_border" />
+                    android:background="?attr/colorThemeBorder" />
 
                 <!-- Encryption -->
                 <LinearLayout
@@ -558,7 +558,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_lock"
-                        app:tint="@color/theme_icon_tint"
+                        app:tint="?attr/colorThemeIconTint"
                         android:layout_marginEnd="16dp" />
 
                     <LinearLayout
@@ -572,14 +572,14 @@
                             android:layout_height="wrap_content"
                             android:text="Encryption"
                             android:textSize="15sp"
-                            android:textColor="@color/theme_text_primary" />
+                            android:textColor="?attr/colorThemeTextPrimary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Messages and calls are end-to-end encrypted. Tap to verify."
                             android:textSize="12sp"
-                            android:textColor="@color/theme_text_muted" />
+                            android:textColor="?attr/colorThemeTextMuted" />
                     </LinearLayout>
                 </LinearLayout>
 

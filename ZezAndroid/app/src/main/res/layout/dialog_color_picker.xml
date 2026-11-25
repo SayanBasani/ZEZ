@@ -22,14 +22,14 @@
         android:text="Full-Spectrum Color Studio"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_primary" />
+        android:textColor="?attr/colorThemeTextPrimary" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Customize outgoing accents or incoming message bubbles"
         android:textSize="12sp"
-        android:textColor="@color/theme_text_secondary"
+        android:textColor="?attr/colorThemeTextSecondary"
         android:layout_marginTop="2dp"
         android:layout_marginBottom="16dp" />
 
@@ -50,7 +50,7 @@
             android:text="Outgoing / Accent"
             android:textSize="13sp"
             android:checked="true"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <RadioButton
             android:id="@+id/rb_target_incoming"
@@ -59,7 +59,7 @@
             android:layout_weight="1"
             android:text="Incoming Bubble"
             android:textSize="13sp"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
     </RadioGroup>
 
     <!-- Live Preview Card -->
@@ -77,7 +77,7 @@
             android:text="LIVE PREVIEW"
             android:textSize="10sp"
             android:textStyle="bold"
-            android:textColor="@color/theme_text_muted"
+            android:textColor="?attr/colorThemeTextMuted"
             android:letterSpacing="0.08"
             android:layout_marginBottom="8dp" />
 
@@ -147,7 +147,7 @@
             android:layout_height="wrap_content"
             android:text="Hue"
             android:textSize="13sp"
-            android:textColor="@color/theme_text_secondary" />
+            android:textColor="?attr/colorThemeTextSecondary" />
 
         <SeekBar
             android:id="@+id/sb_hue"
@@ -171,7 +171,7 @@
             android:layout_height="wrap_content"
             android:text="Saturation"
             android:textSize="13sp"
-            android:textColor="@color/theme_text_secondary" />
+            android:textColor="?attr/colorThemeTextSecondary" />
 
         <SeekBar
             android:id="@+id/sb_saturation"
@@ -195,7 +195,7 @@
             android:layout_height="wrap_content"
             android:text="Brightness"
             android:textSize="13sp"
-            android:textColor="@color/theme_text_secondary" />
+            android:textColor="?attr/colorThemeTextSecondary" />
 
         <SeekBar
             android:id="@+id/sb_value"
@@ -247,7 +247,7 @@
         android:text="PRESET PALETTE"
         android:textSize="11sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_muted"
+        android:textColor="?attr/colorThemeTextMuted"
         android:layout_marginBottom="8dp" />
 
     <HorizontalScrollView
@@ -277,7 +277,7 @@
             android:layout_height="wrap_content"
             android:text="Reset Default"
             style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:textColor="@color/theme_text_secondary"
+            android:textColor="?attr/colorThemeTextSecondary"
             android:layout_marginEnd="8dp" />
 
         <Button
@@ -286,7 +286,7 @@
             android:layout_height="wrap_content"
             android:text="Cancel"
             style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:textColor="@color/theme_text_secondary"
+            android:textColor="?attr/colorThemeTextSecondary"
             android:layout_marginEnd="8dp" />
 
         <Button

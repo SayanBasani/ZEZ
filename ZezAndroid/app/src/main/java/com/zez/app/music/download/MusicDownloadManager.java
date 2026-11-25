@@ -177,123 +177,205 @@ public class MusicDownloadManager {
 
     private void executeDownload(Context context, DownloadTask task, boolean isAudio) {
         String videoId = task.getVideoId();
-        OkHttpClient client = ChatApiClient.getOkHttpClient();
+        OkHttpClient client = com.zez.app.music.util.YouTubeApiHelper.getInstance().getDownloadHttpClient();
 
-        File destFile = task.getDestinationFile();
-        File tempFile = new File(destFile.getAbsolutePath() + ".download");
+        // Always download into app-private cache first to guarantee Scoped Storage write reliability
+        File cacheDir = context.getCacheDir();
+        String ext = task.getFileName().contains(".")
+                ? task.getFileName().substring(task.getFileName().lastIndexOf('.'))
+                : (isAudio ? ".m4a" : ".mp4");
+        File tempFile = new File(cacheDir, "ymusic_tmp_" + videoId + "_" + System.currentTimeMillis() + ext);
 
         int notifId = Math.abs(videoId.hashCode());
         NotificationManagerCompat nm = NotificationManagerCompat.from(context);
 
         try {
-            String directUrl = resolveStreamUrl(context, videoId);
-
-            if (directUrl == null || directUrl.isEmpty()) {
-                throw new Exception("Could not resolve media stream for download. Please verify your connection.");
-            }
-
-            String downloadUrl = directUrl;
-            Log.i(TAG, "Executing client-side download via direct googlevideo URL for " + videoId);
-            Request.Builder reqBuilder = new Request.Builder()
-                    .url(downloadUrl)
-                    .get()
-                    .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                    .addHeader("Accept", "*/*")
-                    .addHeader("Referer", "https://www.youtube.com/")
-                    .addHeader("Origin", "https://www.youtube.com");
-
-            try {
-                String cookies = android.webkit.CookieManager.getInstance().getCookie("https://www.youtube.com");
-                if (cookies != null && !cookies.isEmpty()) {
-                    reqBuilder.addHeader("Cookie", cookies);
-                }
-            } catch (Exception ignored) {}
-
-            Call call = client.newCall(reqBuilder.build());
-            task.setActiveCall(call);
-
-            Response response = call.execute();
-            if (!response.isSuccessful() || response.body() == null) {
-                throw new Exception("HTTP response unsuccessful: " + response.code());
-            }
-
-            ResponseBody body = response.body();
-            long contentLength = body.contentLength();
-            if (contentLength > 0) {
-                task.setTotalBytes(contentLength);
-            }
+            long totalRead = 0L;
+            long knownTotalBytes = -1L;
+            final long CHUNK_SIZE = 512L * 1024L; // 512 KB range slices bypass YouTube stream throttling & prevent read timeouts
 
             if (tempFile.getParentFile() != null && !tempFile.getParentFile().exists()) {
                 tempFile.getParentFile().mkdirs();
             }
 
-            try (InputStream is = body.byteStream();
-                 FileOutputStream fos = new FileOutputStream(tempFile)) {
+            Exception lastErr = null;
+            boolean downloadFinished = false;
+            String currentUrl = null;
+            boolean usingBackendFallback = false;
 
-                byte[] buffer = new byte[8192];
-                int read;
-                long totalRead = 0;
-                long lastTime = System.currentTimeMillis();
-                long lastBytes = 0;
-                long lastNotifUpdate = 0;
+            try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(tempFile, "rw")) {
+                raf.setLength(0L);
 
-                while ((read = is.read(buffer)) != -1) {
+                for (int attempt = 0; attempt < 4 && !downloadFinished; attempt++) {
                     if (task.getStatus() == DownloadTask.STATUS_CANCELLED) {
                         try { tempFile.delete(); } catch (Exception ignored) {}
+                        activeTasks.remove(videoId);
                         return;
                     }
 
-                    fos.write(buffer, 0, read);
-                    totalRead += read;
-                    task.setDownloadedBytes(totalRead);
+                    if (attempt == 0) {
+                        currentUrl = resolveStreamUrl(context, videoId);
+                    } else if (attempt < 3) {
+                        capturedStreamUrls.remove(videoId);
+                        com.zez.app.music.util.YouTubeApiHelper.getInstance().invalidateCachedStream(videoId);
+                        currentUrl = com.zez.app.music.util.YouTubeApiHelper.getInstance().getStreamUrlSync(videoId, attempt == 2);
+                    } else {
+                        // Last-resort proxy fallback via configured backend
+                        usingBackendFallback = true;
+                        currentUrl = com.zez.app.util.PreferencesHelper.getApiUrl(context)
+                                + "/api/music/download?videoId=" + URLEncoder.encode(videoId, "UTF-8")
+                                + "&title=" + URLEncoder.encode(task.getTitle(), "UTF-8");
+                    }
 
-                    long now = System.currentTimeMillis();
-                    long timeDelta = now - lastTime;
-                    if (timeDelta >= 400) {
-                        long bytesDelta = totalRead - lastBytes;
-                        long speed = (bytesDelta * 1000) / timeDelta;
-                        task.setSpeedBytesPerSec(speed);
+                    if (currentUrl == null || currentUrl.trim().isEmpty() || currentUrl.contains(".m3u8")) {
+                        lastErr = new Exception("No downloadable audio stream URL found for " + videoId);
+                        continue;
+                    }
 
-                        lastTime = now;
-                        lastBytes = totalRead;
+                    try {
+                        long lastTime = System.currentTimeMillis();
+                        long lastBytes = totalRead;
+                        long lastNotifUpdate = 0L;
 
-                        mainHandler.post(() -> {
-                            for (DownloadProgressListener l : listeners) {
-                                l.onProgress(task);
+                        while (true) {
+                            if (task.getStatus() == DownloadTask.STATUS_CANCELLED) {
+                                try { tempFile.delete(); } catch (Exception ignored) {}
+                                activeTasks.remove(videoId);
+                                return;
                             }
-                        });
 
-                        if (now - lastNotifUpdate >= 1000) {
-                            lastNotifUpdate = now;
-                            updateProgressNotification(context, nm, task, notifId);
+                            Request.Builder reqBuilder = new Request.Builder()
+                                    .url(currentUrl)
+                                    .get()
+                                    .addHeader("Accept", "*/*")
+                                    .addHeader("Accept-Encoding", "identity")
+                                    .addHeader("User-Agent", "Mozilla/5.0 (Linux; Android 12; Quest 3) AppleWebKit/537.36");
+
+                            if (!usingBackendFallback) {
+                                long rangeEnd = (knownTotalBytes > 0)
+                                        ? Math.min(knownTotalBytes - 1, totalRead + CHUNK_SIZE - 1)
+                                        : (totalRead + CHUNK_SIZE - 1);
+                                reqBuilder.addHeader("Range", "bytes=" + totalRead + "-" + rangeEnd);
+                            } else if (totalRead > 0) {
+                                reqBuilder.addHeader("Range", "bytes=" + totalRead + "-");
+                            }
+
+                            Call call = client.newCall(reqBuilder.build());
+                            task.setActiveCall(call);
+
+                            try (Response response = call.execute()) {
+                                int code = response.code();
+                                if (code == 416 && knownTotalBytes > 0 && totalRead >= knownTotalBytes) {
+                                    downloadFinished = true;
+                                    break;
+                                }
+                                if (!response.isSuccessful() || response.body() == null) {
+                                    throw new java.io.IOException("HTTP " + code + " reading stream");
+                                }
+
+                                ResponseBody body = response.body();
+                                String contentRange = response.header("Content-Range");
+                                boolean isPartial = (code == 206 && contentRange != null);
+                                if (isPartial) {
+                                    int slash = contentRange.lastIndexOf('/');
+                                    if (slash > 0) {
+                                        try {
+                                            long parsedTotal = Long.parseLong(contentRange.substring(slash + 1).trim());
+                                            if (parsedTotal > 0) {
+                                                knownTotalBytes = parsedTotal;
+                                                task.setTotalBytes(knownTotalBytes);
+                                            }
+                                        } catch (NumberFormatException ignored) {}
+                                    }
+                                } else {
+                                    // Full stream returned (200 OK): rewind to 0 unless backend resumed
+                                    if (code == 200) {
+                                        totalRead = 0L;
+                                        raf.seek(0L);
+                                    }
+                                    long cl = body.contentLength();
+                                    if (cl > 0) {
+                                        knownTotalBytes = totalRead + cl;
+                                        task.setTotalBytes(knownTotalBytes);
+                                    }
+                                }
+
+                                raf.seek(totalRead);
+                                byte[] buffer = new byte[65536];
+                                int read;
+                                try (InputStream is = body.byteStream()) {
+                                    while ((read = is.read(buffer)) != -1) {
+                                        if (task.getStatus() == DownloadTask.STATUS_CANCELLED) {
+                                            try { tempFile.delete(); } catch (Exception ignored) {}
+                                            activeTasks.remove(videoId);
+                                            return;
+                                        }
+                                        raf.write(buffer, 0, read);
+                                        totalRead += read;
+                                        task.setDownloadedBytes(totalRead);
+
+                                        long now = System.currentTimeMillis();
+                                        long timeDelta = now - lastTime;
+                                        if (timeDelta >= 350) {
+                                            long bytesDelta = totalRead - lastBytes;
+                                            long speed = (bytesDelta * 1000) / Math.max(1L, timeDelta);
+                                            task.setSpeedBytesPerSec(speed);
+                                            lastTime = now;
+                                            lastBytes = totalRead;
+
+                                            mainHandler.post(() -> {
+                                                for (DownloadProgressListener l : listeners) {
+                                                    l.onProgress(task);
+                                                }
+                                            });
+
+                                            if (now - lastNotifUpdate >= 1000) {
+                                                lastNotifUpdate = now;
+                                                updateProgressNotification(context, nm, task, notifId);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (!isPartial || (knownTotalBytes > 0 && totalRead >= knownTotalBytes) || body.contentLength() == 0) {
+                                    downloadFinished = true;
+                                    break;
+                                }
+                            }
                         }
+                    } catch (Exception chunkErr) {
+                        lastErr = chunkErr;
+                        Log.w(TAG, "Download attempt " + attempt + " failed at " + totalRead + " bytes: " + chunkErr.getMessage());
+                        try { Thread.sleep(400); } catch (InterruptedException ignored) { break; }
                     }
                 }
-                fos.flush();
             }
 
-            // Rename tempFile to destFile
-            if (destFile.exists()) destFile.delete();
-            if (!tempFile.renameTo(destFile)) {
-                // If rename fails, fallback copy
-                copyFile(tempFile, destFile);
-                tempFile.delete();
+            if (!downloadFinished || tempFile.length() == 0) {
+                throw (lastErr != null) ? lastErr : new java.io.IOException("Stream returned 0 bytes");
+            }
+
+            // Publish safely to /Music/Quacky (MediaStore on Android 10+, public dir fallback on legacy)
+            String savedLocation = com.zez.app.util.QuackyStorageHelper.saveAudioToPublicStorage(
+                    context, tempFile, task.getFileName(), isAudio);
+            try { tempFile.delete(); } catch (Exception ignored) {}
+
+            if (savedLocation == null || savedLocation.trim().isEmpty()) {
+                throw new java.io.IOException("Failed to write downloaded track to device storage");
             }
 
             // Success!
             task.setStatus(DownloadTask.STATUS_COMPLETED);
             MusicTrack orig = task.getOriginalTrack();
             orig.setDownloaded(true);
-            orig.setLocalFilePath(destFile.getAbsolutePath());
+            orig.setLocalFilePath(savedLocation);
             MusicDownloadHelper.saveDownloadedTrack(context, orig);
 
             activeTasks.remove(videoId);
-
-            // Post completion notification
             showCompletedNotification(context, nm, task, notifId);
 
             mainHandler.post(() -> {
-                Toast.makeText(context, "Downloaded: " + task.getTitle(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Saved to Music/Quacky: " + task.getTitle(), Toast.LENGTH_SHORT).show();
                 for (DownloadProgressListener l : listeners) {
                     l.onCompleted(task);
                 }

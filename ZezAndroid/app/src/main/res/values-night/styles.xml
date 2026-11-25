@@ -1,4 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base Theme (Night) -->
     <style name="Theme.Zez" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
@@ -7,13 +8,241 @@
         <item name="colorSurface">@color/theme_surface</item>
         <item name="android:statusBarColor">@color/theme_surface</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+
+        <!-- Semantic Theme Attributes (Default: Graphite Dark) -->
+        <item name="colorThemeBackground">@color/theme_background</item>
+        <item name="colorThemeSurface">@color/theme_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/theme_surface_variant</item>
+        <item name="colorThemeAppBar">@color/theme_surface</item>
+        <item name="colorThemeCardBg">@color/theme_surface</item>
+        <item name="colorThemeInputBg">@color/theme_surface_variant</item>
+        <item name="colorThemeNavBg">@color/theme_surface</item>
+        <item name="colorThemeBorder">@color/theme_border</item>
+        <item name="colorThemeDivider">@color/theme_divider</item>
+        <item name="colorThemeTextPrimary">@color/theme_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/theme_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/theme_text_muted</item>
+        <item name="colorThemeIconTint">@color/theme_icon_tint</item>
+        <item name="colorThemePrimary">@color/primary</item>
+        <item name="colorThemeAccent">@color/accent</item>
+        <item name="colorThemeBadge">@color/primary</item>
     </style>
 
+    <!-- PALETTE 1: Graphite (Dark) -->
+    <style name="Theme.Zez.Graphite" parent="Theme.Zez">
+        <item name="colorPrimary">@color/graphite_dark_primary</item>
+        <item name="colorPrimaryDark">@color/graphite_dark_primary</item>
+        <item name="colorAccent">@color/graphite_dark_accent</item>
+        <item name="android:windowBackground">@color/graphite_dark_bg</item>
+        <item name="colorSurface">@color/graphite_dark_surface</item>
+        <item name="android:statusBarColor">@color/graphite_dark_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorThemeBackground">@color/graphite_dark_bg</item>
+        <item name="colorThemeSurface">@color/graphite_dark_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/graphite_dark_surface_variant</item>
+        <item name="colorThemeCardBg">@color/graphite_dark_surface</item>
+        <item name="colorThemeInputBg">@color/graphite_dark_surface_variant</item>
+        <item name="colorThemeNavBg">@color/graphite_dark_surface</item>
+        <item name="colorThemeBorder">@color/graphite_dark_border</item>
+        <item name="colorThemeDivider">@color/graphite_dark_border</item>
+        <item name="colorThemeTextPrimary">@color/graphite_dark_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/graphite_dark_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/graphite_dark_text_muted</item>
+        <item name="colorThemeIconTint">@color/graphite_dark_text_secondary</item>
+        <item name="colorThemePrimary">@color/graphite_dark_primary</item>
+        <item name="colorThemeAccent">@color/graphite_dark_accent</item>
+        <item name="colorThemeBadge">@color/graphite_dark_primary</item>
+    </style>
+
+    <!-- PALETTE 2: Arctic Light (Dark) -->
+    <style name="Theme.Zez.Arctic" parent="Theme.Zez">
+        <item name="colorPrimary">@color/arctic_dark_primary</item>
+        <item name="colorPrimaryDark">@color/arctic_dark_primary</item>
+        <item name="colorAccent">@color/arctic_dark_accent</item>
+        <item name="android:windowBackground">@color/arctic_dark_bg</item>
+        <item name="colorSurface">@color/arctic_dark_surface</item>
+        <item name="android:statusBarColor">@color/arctic_dark_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorThemeBackground">@color/arctic_dark_bg</item>
+        <item name="colorThemeSurface">@color/arctic_dark_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/arctic_dark_surface_variant</item>
+        <item name="colorThemeCardBg">@color/arctic_dark_surface</item>
+        <item name="colorThemeInputBg">@color/arctic_dark_surface_variant</item>
+        <item name="colorThemeNavBg">@color/arctic_dark_surface</item>
+        <item name="colorThemeBorder">@color/arctic_dark_border</item>
+        <item name="colorThemeDivider">@color/arctic_dark_border</item>
+        <item name="colorThemeTextPrimary">@color/arctic_dark_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/arctic_dark_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/arctic_dark_text_muted</item>
+        <item name="colorThemeIconTint">@color/arctic_dark_text_secondary</item>
+        <item name="colorThemePrimary">@color/arctic_dark_primary</item>
+        <item name="colorThemeAccent">@color/arctic_dark_accent</item>
+        <item name="colorThemeBadge">@color/arctic_dark_primary</item>
+    </style>
+
+    <!-- PALETTE 3: Midnight (Dark) -->
+    <style name="Theme.Zez.Midnight" parent="Theme.Zez">
+        <item name="colorPrimary">@color/midnight_dark_primary</item>
+        <item name="colorPrimaryDark">@color/midnight_dark_primary</item>
+        <item name="colorAccent">@color/midnight_dark_accent</item>
+        <item name="android:windowBackground">@color/midnight_dark_bg</item>
+        <item name="colorSurface">@color/midnight_dark_surface</item>
+        <item name="android:statusBarColor">@color/midnight_dark_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorThemeBackground">@color/midnight_dark_bg</item>
+        <item name="colorThemeSurface">@color/midnight_dark_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/midnight_dark_surface_variant</item>
+        <item name="colorThemeCardBg">@color/midnight_dark_surface</item>
+        <item name="colorThemeInputBg">@color/midnight_dark_surface_variant</item>
+        <item name="colorThemeNavBg">@color/midnight_dark_surface</item>
+        <item name="colorThemeBorder">@color/midnight_dark_border</item>
+        <item name="colorThemeDivider">@color/midnight_dark_border</item>
+        <item name="colorThemeTextPrimary">@color/midnight_dark_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/midnight_dark_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/midnight_dark_text_muted</item>
+        <item name="colorThemeIconTint">@color/midnight_dark_text_secondary</item>
+        <item name="colorThemePrimary">@color/midnight_dark_primary</item>
+        <item name="colorThemeAccent">@color/midnight_dark_accent</item>
+        <item name="colorThemeBadge">@color/midnight_dark_primary</item>
+    </style>
+
+    <!-- PALETTE 4: AMOLED (Pitch Black #000000) -->
+    <style name="Theme.Zez.Amoled" parent="Theme.Zez">
+        <item name="colorPrimary">@color/amoled_dark_primary</item>
+        <item name="colorPrimaryDark">@color/amoled_dark_primary</item>
+        <item name="colorAccent">@color/amoled_dark_accent</item>
+        <item name="android:windowBackground">@color/amoled_dark_bg</item>
+        <item name="colorSurface">@color/amoled_dark_surface</item>
+        <item name="android:statusBarColor">@color/amoled_dark_bg</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorThemeBackground">@color/amoled_dark_bg</item>
+        <item name="colorThemeSurface">@color/amoled_dark_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/amoled_dark_surface_variant</item>
+        <item name="colorThemeCardBg">@color/amoled_dark_surface</item>
+        <item name="colorThemeInputBg">@color/amoled_dark_surface_variant</item>
+        <item name="colorThemeNavBg">@color/amoled_dark_surface</item>
+        <item name="colorThemeBorder">@color/amoled_dark_border</item>
+        <item name="colorThemeDivider">@color/amoled_dark_border</item>
+        <item name="colorThemeTextPrimary">@color/amoled_dark_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/amoled_dark_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/amoled_dark_text_muted</item>
+        <item name="colorThemeIconTint">@color/amoled_dark_text_secondary</item>
+        <item name="colorThemePrimary">@color/amoled_dark_primary</item>
+        <item name="colorThemeAccent">@color/amoled_dark_accent</item>
+        <item name="colorThemeBadge">@color/amoled_dark_primary</item>
+    </style>
+
+    <!-- PALETTE 5: Ocean (Dark) -->
+    <style name="Theme.Zez.Ocean" parent="Theme.Zez">
+        <item name="colorPrimary">@color/ocean_dark_primary</item>
+        <item name="colorPrimaryDark">@color/ocean_dark_primary</item>
+        <item name="colorAccent">@color/ocean_dark_accent</item>
+        <item name="android:windowBackground">@color/ocean_dark_bg</item>
+        <item name="colorSurface">@color/ocean_dark_surface</item>
+        <item name="android:statusBarColor">@color/ocean_dark_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorThemeBackground">@color/ocean_dark_bg</item>
+        <item name="colorThemeSurface">@color/ocean_dark_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/ocean_dark_surface_variant</item>
+        <item name="colorThemeCardBg">@color/ocean_dark_surface</item>
+        <item name="colorThemeInputBg">@color/ocean_dark_surface_variant</item>
+        <item name="colorThemeNavBg">@color/ocean_dark_surface</item>
+        <item name="colorThemeBorder">@color/ocean_dark_border</item>
+        <item name="colorThemeDivider">@color/ocean_dark_border</item>
+        <item name="colorThemeTextPrimary">@color/ocean_dark_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/ocean_dark_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/ocean_dark_text_muted</item>
+        <item name="colorThemeIconTint">@color/ocean_dark_text_secondary</item>
+        <item name="colorThemePrimary">@color/ocean_dark_primary</item>
+        <item name="colorThemeAccent">@color/ocean_dark_accent</item>
+        <item name="colorThemeBadge">@color/ocean_dark_primary</item>
+    </style>
+
+    <!-- PALETTE 6: Sage (Dark) -->
+    <style name="Theme.Zez.Sage" parent="Theme.Zez">
+        <item name="colorPrimary">@color/sage_dark_primary</item>
+        <item name="colorPrimaryDark">@color/sage_dark_primary</item>
+        <item name="colorAccent">@color/sage_dark_accent</item>
+        <item name="android:windowBackground">@color/sage_dark_bg</item>
+        <item name="colorSurface">@color/sage_dark_surface</item>
+        <item name="android:statusBarColor">@color/sage_dark_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorThemeBackground">@color/sage_dark_bg</item>
+        <item name="colorThemeSurface">@color/sage_dark_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/sage_dark_surface_variant</item>
+        <item name="colorThemeCardBg">@color/sage_dark_surface</item>
+        <item name="colorThemeInputBg">@color/sage_dark_surface_variant</item>
+        <item name="colorThemeNavBg">@color/sage_dark_surface</item>
+        <item name="colorThemeBorder">@color/sage_dark_border</item>
+        <item name="colorThemeDivider">@color/sage_dark_border</item>
+        <item name="colorThemeTextPrimary">@color/sage_dark_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/sage_dark_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/sage_dark_text_muted</item>
+        <item name="colorThemeIconTint">@color/sage_dark_text_secondary</item>
+        <item name="colorThemePrimary">@color/sage_dark_primary</item>
+        <item name="colorThemeAccent">@color/sage_dark_accent</item>
+        <item name="colorThemeBadge">@color/sage_dark_primary</item>
+    </style>
+
+    <!-- PALETTE 7: Sunset (Dark) -->
+    <style name="Theme.Zez.Sunset" parent="Theme.Zez">
+        <item name="colorPrimary">@color/sunset_dark_primary</item>
+        <item name="colorPrimaryDark">@color/sunset_dark_primary</item>
+        <item name="colorAccent">@color/sunset_dark_accent</item>
+        <item name="android:windowBackground">@color/sunset_dark_bg</item>
+        <item name="colorSurface">@color/sunset_dark_surface</item>
+        <item name="android:statusBarColor">@color/sunset_dark_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorThemeBackground">@color/sunset_dark_bg</item>
+        <item name="colorThemeSurface">@color/sunset_dark_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/sunset_dark_surface_variant</item>
+        <item name="colorThemeCardBg">@color/sunset_dark_surface</item>
+        <item name="colorThemeInputBg">@color/sunset_dark_surface_variant</item>
+        <item name="colorThemeNavBg">@color/sunset_dark_surface</item>
+        <item name="colorThemeBorder">@color/sunset_dark_border</item>
+        <item name="colorThemeDivider">@color/sunset_dark_border</item>
+        <item name="colorThemeTextPrimary">@color/sunset_dark_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/sunset_dark_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/sunset_dark_text_muted</item>
+        <item name="colorThemeIconTint">@color/sunset_dark_text_secondary</item>
+        <item name="colorThemePrimary">@color/sunset_dark_primary</item>
+        <item name="colorThemeAccent">@color/sunset_dark_accent</item>
+        <item name="colorThemeBadge">@color/sunset_dark_primary</item>
+    </style>
+
+    <!-- PALETTE 8: Rose (Dark) -->
+    <style name="Theme.Zez.Rose" parent="Theme.Zez">
+        <item name="colorPrimary">@color/rose_dark_primary</item>
+        <item name="colorPrimaryDark">@color/rose_dark_primary</item>
+        <item name="colorAccent">@color/rose_dark_accent</item>
+        <item name="android:windowBackground">@color/rose_dark_bg</item>
+        <item name="colorSurface">@color/rose_dark_surface</item>
+        <item name="android:statusBarColor">@color/rose_dark_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorThemeBackground">@color/rose_dark_bg</item>
+        <item name="colorThemeSurface">@color/rose_dark_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/rose_dark_surface_variant</item>
+        <item name="colorThemeCardBg">@color/rose_dark_surface</item>
+        <item name="colorThemeInputBg">@color/rose_dark_surface_variant</item>
+        <item name="colorThemeNavBg">@color/rose_dark_surface</item>
+        <item name="colorThemeBorder">@color/rose_dark_border</item>
+        <item name="colorThemeDivider">@color/rose_dark_border</item>
+        <item name="colorThemeTextPrimary">@color/rose_dark_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/rose_dark_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/rose_dark_text_muted</item>
+        <item name="colorThemeIconTint">@color/rose_dark_text_secondary</item>
+        <item name="colorThemePrimary">@color/rose_dark_primary</item>
+        <item name="colorThemeAccent">@color/rose_dark_accent</item>
+        <item name="colorThemeBadge">@color/rose_dark_primary</item>
+    </style>
+
+    <!-- Fullscreen style -->
     <style name="Theme.Zez.Fullscreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowBackground">#000000</item>
     </style>
 
+    <!-- Bottom sheet styles -->
     <style name="Theme.Zez.BottomSheetDialog" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/Theme.Zez.BottomSheetModal</item>
     </style>

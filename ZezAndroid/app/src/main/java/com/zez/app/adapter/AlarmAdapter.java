@@ -1,19 +1,25 @@
 package com.zez.app.adapter;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.zez.app.R;
 import com.zez.app.model.AlarmItem;
+import com.zez.app.util.PreferencesHelper;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHolder> {
 
@@ -21,10 +27,13 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         void onAlarmClick(AlarmItem alarm);
         void onAlarmToggle(AlarmItem alarm, boolean isEnabled);
         void onAlarmLongClick(AlarmItem alarm);
+        default void onSelectionChanged(int selectedCount, boolean selectionMode) {}
     }
 
     private List<AlarmItem> alarms = new ArrayList<>();
     private final OnAlarmClickListener listener;
+    private final Set<Long> selectedIds = new LinkedHashSet<>();
+    private boolean selectionMode = false;
 
     public AlarmAdapter(OnAlarmClickListener listener) {
         this.listener = listener;
@@ -32,7 +41,73 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
 
     public void setAlarms(List<AlarmItem> list) {
         this.alarms = (list != null) ? list : new ArrayList<>();
+        // Prune selected IDs no longer present
+        Set<Long> validIds = new LinkedHashSet<>();
+        for (AlarmItem a : this.alarms) {
+            if (selectedIds.contains(a.id)) {
+                validIds.add(a.id);
+            }
+        }
+        selectedIds.clear();
+        selectedIds.addAll(validIds);
         notifyDataSetChanged();
+        if (listener != null) {
+            listener.onSelectionChanged(selectedIds.size(), selectionMode);
+        }
+    }
+
+    public boolean isSelectionMode() {
+        return selectionMode;
+    }
+
+    public void enterSelectionMode() {
+        selectionMode = true;
+        notifyDataSetChanged();
+        if (listener != null) {
+            listener.onSelectionChanged(selectedIds.size(), true);
+        }
+    }
+
+    public void clearSelection() {
+        selectionMode = false;
+        selectedIds.clear();
+        notifyDataSetChanged();
+        if (listener != null) {
+            listener.onSelectionChanged(0, false);
+        }
+    }
+
+    public void toggleSelectAll() {
+        selectionMode = true;
+        if (selectedIds.size() >= alarms.size() && !alarms.isEmpty()) {
+            selectedIds.clear();
+        } else {
+            selectedIds.clear();
+            for (AlarmItem a : alarms) {
+                selectedIds.add(a.id);
+            }
+        }
+        notifyDataSetChanged();
+        if (listener != null) {
+            listener.onSelectionChanged(selectedIds.size(), true);
+        }
+    }
+
+    public List<Long> getSelectedIds() {
+        return new ArrayList<>(selectedIds);
+    }
+
+    public void toggleSelection(long id) {
+        selectionMode = true;
+        if (selectedIds.contains(id)) {
+            selectedIds.remove(id);
+        } else {
+            selectedIds.add(id);
+        }
+        notifyDataSetChanged();
+        if (listener != null) {
+            listener.onSelectionChanged(selectedIds.size(), selectionMode);
+        }
     }
 
     @NonNull
@@ -52,8 +127,31 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         holder.tvRingtone.setText("Sound: " + item.ringtoneTitle);
         holder.tvJitBadge.setVisibility(item.isJitMode ? View.VISIBLE : View.GONE);
 
+        int accentColor = PreferencesHelper.getAccentColorInt(holder.itemView.getContext());
+        boolean isSelected = selectionMode && selectedIds.contains(item.id);
+        if (holder.ivSelectCheck != null) {
+            holder.ivSelectCheck.setVisibility(selectionMode ? View.VISIBLE : View.GONE);
+            if (isSelected) {
+                holder.ivSelectCheck.setImageResource(R.drawable.ic_check_circle);
+                holder.ivSelectCheck.setColorFilter(accentColor);
+            } else {
+                holder.ivSelectCheck.setImageResource(R.drawable.ic_check_circle);
+                holder.ivSelectCheck.setColorFilter(Color.parseColor("#64748B"));
+            }
+        }
+        if (holder.cardRoot != null) {
+            if (isSelected) {
+                holder.cardRoot.setStrokeColor(accentColor);
+                holder.cardRoot.setStrokeWidth((int) (2 * holder.itemView.getResources().getDisplayMetrics().density));
+            } else {
+                holder.cardRoot.setStrokeWidth((int) (1 * holder.itemView.getResources().getDisplayMetrics().density));
+                holder.cardRoot.setStrokeColor(Color.parseColor("#2A3244"));
+            }
+        }
+
         holder.switchAlarm.setOnCheckedChangeListener(null);
         holder.switchAlarm.setChecked(item.isEnabled);
+        holder.switchAlarm.setVisibility(selectionMode ? View.GONE : View.VISIBLE);
         holder.switchAlarm.setOnCheckedChangeListener((btn, isChecked) -> {
             if (listener != null) {
                 listener.onAlarmToggle(item, isChecked);
@@ -70,11 +168,19 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         holder.tvJitBadge.setAlpha(alpha);
 
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onAlarmClick(item);
+            if (selectionMode) {
+                toggleSelection(item.id);
+            } else if (listener != null) {
+                listener.onAlarmClick(item);
+            }
         });
 
         holder.itemView.setOnLongClickListener(v -> {
-            if (listener != null) listener.onAlarmLongClick(item);
+            if (!selectionMode) {
+                toggleSelection(item.id);
+            } else if (listener != null) {
+                listener.onAlarmLongClick(item);
+            }
             return true;
         });
     }
@@ -85,11 +191,15 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     }
 
     static class AlarmViewHolder extends RecyclerView.ViewHolder {
+        MaterialCardView cardRoot;
+        ImageView ivSelectCheck;
         TextView tvTime, tvAmPm, tvLabel, tvDays, tvRingtone, tvJitBadge;
         SwitchMaterial switchAlarm;
 
         public AlarmViewHolder(@NonNull View itemView) {
             super(itemView);
+            cardRoot = itemView.findViewById(R.id.card_alarm_root);
+            ivSelectCheck = itemView.findViewById(R.id.iv_alarm_select_check);
             tvTime = itemView.findViewById(R.id.tv_alarm_time);
             tvAmPm = itemView.findViewById(R.id.tv_alarm_ampm);
             tvLabel = itemView.findViewById(R.id.tv_alarm_label);

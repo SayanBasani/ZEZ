@@ -15,7 +15,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_pill_badge"
-        android:backgroundTint="@color/theme_card_border" />
+        android:backgroundTint="?attr/colorThemeBorder" />
 
     <TextView
         android:layout_width="match_parent"
@@ -23,7 +23,7 @@
         android:text="Chat theme &amp; wallpaper"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_primary"
+        android:textColor="?attr/colorThemeTextPrimary"
         android:layout_marginBottom="16dp" />
 
     <LinearLayout
@@ -59,7 +59,7 @@
                 android:layout_marginTop="6dp"
                 android:text="Default"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
         </LinearLayout>
 
         <!-- Theme 2: Charcoal -->
@@ -88,7 +88,7 @@
                 android:layout_marginTop="6dp"
                 android:text="Charcoal"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
         </LinearLayout>
 
         <!-- Theme 3: Emerald -->
@@ -117,7 +117,7 @@
                 android:layout_marginTop="6dp"
                 android:text="Emerald"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
         </LinearLayout>
 
         <!-- Theme 4: Ocean -->
@@ -146,7 +146,7 @@
                 android:layout_marginTop="6dp"
                 android:text="Ocean"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
         </LinearLayout>
 
         <!-- Theme 5: Sunset -->
@@ -175,7 +175,7 @@
                 android:layout_marginTop="6dp"
                 android:text="Sunset"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
         </LinearLayout>
 
     </LinearLayout>
@@ -183,7 +183,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/theme_card_border"
+        android:background="?attr/colorThemeBorder"
         android:layout_marginVertical="12dp" />
 
     <!-- Custom Wallpaper from Gallery -->
@@ -195,7 +195,7 @@
         android:gravity="center_vertical"
         android:padding="12dp"
         android:background="@drawable/bg_pill_badge"
-        android:backgroundTint="@color/theme_card_border"
+        android:backgroundTint="?attr/colorThemeBorder"
         android:clickable="true"
         android:focusable="true">
 
@@ -218,21 +218,21 @@
                 android:text="Choose from Gallery"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Set a custom photo as chat wallpaper"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
         </LinearLayout>
 
         <ImageView
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@drawable/ic_chevron_right"
-            app:tint="@color/theme_icon_tint" />
+            app:tint="?attr/colorThemeIconTint" />
     </LinearLayout>
 
     <!-- Wallpaper Dimming Slider (WhatsApp Style) -->
@@ -256,7 +256,7 @@
                 android:text="Wallpaper Dimming"
                 android:textSize="13sp"
                 android:textStyle="bold"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
 
             <TextView
                 android:id="@+id/tv_wallpaper_dim_value"
@@ -280,7 +280,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/theme_card_border"
+        android:background="?attr/colorThemeBorder"
         android:layout_marginVertical="12dp" />
 
     <!-- Reset to Default Wallpaper Option -->
@@ -292,7 +292,7 @@
         android:gravity="center_vertical"
         android:padding="12dp"
         android:background="@drawable/bg_pill_badge"
-        android:backgroundTint="@color/theme_card_border"
+        android:backgroundTint="?attr/colorThemeBorder"
         android:clickable="true"
         android:focusable="true">
 
@@ -300,7 +300,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_refresh"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:layout_marginEnd="12dp" />
 
         <TextView
@@ -309,7 +309,7 @@
             android:layout_weight="1"
             android:text="Reset to Default Wallpaper"
             android:textSize="14sp"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
     </LinearLayout>
 
 </LinearLayout>

@@ -135,6 +135,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvFooterAppVersion;
     private String actualDeviceId = "";
 
+    // Chat Account & Data Deletion (Google Play Compliance)
+    private View rowSettingDeleteChatAccount;
+    private TextView tvSettingChatAccountStatus;
+
     // Protected Developer / Admin Controls
     private View rowSettingServer;
     private View dividerSettingServer;
@@ -157,6 +161,16 @@ public class MainActivity extends AppCompatActivity {
     private android.widget.RadioButton rbFontDefault;
     private android.widget.RadioButton rbFontLarge;
     private android.widget.RadioButton rbFontHuge;
+    private android.widget.RadioGroup rgFontFamilyOptions;
+    private android.widget.RadioButton rbFamilySans;
+    private android.widget.RadioButton rbFamilyLight;
+    private android.widget.RadioButton rbFamilyCondensed;
+    private android.widget.RadioButton rbFamilyMedium;
+    private android.widget.RadioButton rbFamilyBlack;
+    private android.widget.RadioButton rbFamilySerif;
+    private android.widget.RadioButton rbFamilyMonospace;
+    private android.widget.RadioButton rbFamilyCasual;
+    private android.widget.RadioButton rbFamilyCursive;
     private android.widget.Button btnApplyFont;
 
     // Hardware Page Views
@@ -174,6 +188,40 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvPageCpuSpeed;
     private TextView tvPageCpuAbi;
     private TextView tvPageCpuHardware;
+
+    // Appearance & Multi-Theme System
+    private LinearLayout viewAppearancePage;
+    private ImageButton btnBackAppearance;
+    private ImageButton btnResetAppearanceTop;
+    private View previewContainer;
+    private View previewTopBar;
+    private TextView previewAppTitle;
+    private TextView previewTextTitle;
+    private TextView previewTextSubtitle;
+    private TextView previewBadgePrimary;
+    private TextView previewBadgeStatus;
+    private TextView previewBadgeTag;
+    private EditText previewInputField;
+    private com.google.android.material.button.MaterialButton previewBtnPrimary;
+    private com.google.android.material.button.MaterialButton previewBtnSecondary;
+    private ImageView previewBackIcon, previewSearchIcon;
+
+    private LinearLayout cardModeSystem, cardModeLight, cardModeDark;
+    private ImageView checkModeSystem, checkModeLight, checkModeDark;
+    private ImageView iconModeSystem, iconModeLight, iconModeDark;
+
+    private LinearLayout cardPaletteGraphite, cardPaletteArctic, cardPaletteMidnight, cardPaletteAmoled;
+    private LinearLayout cardPaletteOcean, cardPaletteSage, cardPaletteSunset, cardPaletteRose;
+    private ImageView checkPaletteGraphite, checkPaletteArctic, checkPaletteMidnight, checkPaletteAmoled;
+    private ImageView checkPaletteOcean, checkPaletteSage, checkPaletteSunset, checkPaletteRose;
+
+    private androidx.appcompat.widget.SwitchCompat switchDynamicColors;
+    private TextView tvDynamicColorsDesc;
+    private com.google.android.material.button.MaterialButton btnApplyAppearance, btnResetAppearanceFull;
+
+    private int stagedThemeMode = PreferencesHelper.THEME_SYSTEM;
+    private String stagedPalette = PreferencesHelper.PALETTE_GRAPHITE;
+    private boolean stagedDynamicColor = false;
 
     private android.os.Handler telemetryHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private Runnable telemetryRunnable;
@@ -212,12 +260,16 @@ public class MainActivity extends AppCompatActivity {
 
     // Alarms UI elements
     private android.widget.FrameLayout layoutAlarmsContainer;
+    private View layoutAlarmsQuickBar;
+    private View layoutAlarmsSelectionBar;
+    private TextView tvAlarmsSelCount;
     private RecyclerView recyclerAlarms;
     private LinearLayout layoutAlarmsEmpty;
     private com.google.android.material.floatingactionbutton.FloatingActionButton fabAddAlarm;
     private com.zez.app.adapter.AlarmAdapter alarmAdapter;
     private com.zez.app.model.AlarmItem pendingRingtoneAlarm;
     private TextView pendingRingtoneTextView;
+    private ActivityResultLauncher<Intent> musicActivityLauncher;
 
     // Chat Extra & Settings UI
     private ImageButton btnChatSettingsMenu;
@@ -249,6 +301,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.zez.app.theme.ThemeManager.applyTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -258,7 +311,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        musicActivityLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (bottomNav != null && currentTab != R.id.nav_chats) {
+                currentTab = R.id.nav_chats;
+                bottomNav.setSelectedItemId(R.id.nav_chats);
+            }
+        });
+
         initViews();
+        applyThemeColors();
         checkAndRequestPermissions();
         initDeviceAndSync();
 
@@ -319,6 +380,21 @@ public class MainActivity extends AppCompatActivity {
 
         tvFooterAppVersion = findViewById(R.id.tv_footer_app_version);
 
+        // Chat Account & Deletion Settings
+        tvSettingChatAccountStatus = findViewById(R.id.tv_setting_chat_account_status);
+        rowSettingDeleteChatAccount = findViewById(R.id.row_setting_delete_chat_account);
+        if (rowSettingDeleteChatAccount != null) {
+            rowSettingDeleteChatAccount.setOnClickListener(v -> confirmDeleteChatAccount());
+        }
+        View rowChatAccountInfo = findViewById(R.id.row_setting_chat_account_info);
+        if (rowChatAccountInfo != null) {
+            rowChatAccountInfo.setOnClickListener(v -> {
+                if (!ChatPreferencesHelper.isChatRegistered(this)) {
+                    showChatRegistrationDialog();
+                }
+            });
+        }
+
         // Sub-pages
         viewFontPage = findViewById(R.id.view_font_page);
         viewHardwarePage = findViewById(R.id.view_hardware_page);
@@ -332,6 +408,22 @@ public class MainActivity extends AppCompatActivity {
         rbFontDefault = findViewById(R.id.rb_font_default);
         rbFontLarge = findViewById(R.id.rb_font_large);
         rbFontHuge = findViewById(R.id.rb_font_huge);
+
+        // Font Family options
+        rgFontFamilyOptions = findViewById(R.id.rg_font_family_options);
+        rbFamilySans = findViewById(R.id.rb_family_sans);
+        rbFamilyLight = findViewById(R.id.rb_family_light);
+        rbFamilyCondensed = findViewById(R.id.rb_family_condensed);
+        rbFamilyMedium = findViewById(R.id.rb_family_medium);
+        rbFamilyBlack = findViewById(R.id.rb_family_black);
+        rbFamilySerif = findViewById(R.id.rb_family_serif);
+        rbFamilyMonospace = findViewById(R.id.rb_family_monospace);
+        rbFamilyCasual = findViewById(R.id.rb_family_casual);
+        rbFamilyCursive = findViewById(R.id.rb_family_cursive);
+
+        tvFontPreviewHeading = findViewById(R.id.tv_font_preview_heading);
+        tvFontPreviewBody = findViewById(R.id.tv_font_preview_body);
+
         btnApplyFont = findViewById(R.id.btn_apply_font);
 
         btnBackFont.setOnClickListener(v -> closeSubPages());
@@ -368,8 +460,18 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.row_setting_hardware).setOnClickListener(v -> openHardwarePage());
         View rowSettingTheme = findViewById(R.id.row_setting_theme);
         if (rowSettingTheme != null) {
-            rowSettingTheme.setOnClickListener(v -> showThemeDialog());
+            rowSettingTheme.setOnClickListener(v -> openAppearancePage());
         }
+        View rowSettingAccent = findViewById(R.id.row_setting_accent_color);
+        if (rowSettingAccent != null) {
+            rowSettingAccent.setOnClickListener(v -> openAppearancePage());
+        }
+        View btnFullColorStudio = findViewById(R.id.btn_open_full_color_picker);
+        if (btnFullColorStudio != null) {
+            btnFullColorStudio.setOnClickListener(v -> openAppearancePage());
+        }
+
+        initAppearanceViews();
         rowSettingServer = findViewById(R.id.row_setting_server);
         dividerSettingServer = findViewById(R.id.divider_setting_server);
         if (rowSettingServer != null) {
@@ -588,9 +690,19 @@ public class MainActivity extends AppCompatActivity {
 
         // Alarms views & adapter
         layoutAlarmsContainer = findViewById(R.id.layout_alarms_container);
+        layoutAlarmsQuickBar = findViewById(R.id.layout_alarms_quick_bar);
+        layoutAlarmsSelectionBar = findViewById(R.id.layout_alarms_selection_bar);
+        tvAlarmsSelCount = findViewById(R.id.tv_alarms_sel_count);
         recyclerAlarms = findViewById(R.id.recycler_alarms);
         layoutAlarmsEmpty = findViewById(R.id.layout_alarms_empty);
         fabAddAlarm = findViewById(R.id.fab_add_alarm);
+
+        View btnEnterAlarmSel = findViewById(R.id.btn_alarms_enter_select);
+        View btnAlarmSelClose = findViewById(R.id.btn_alarms_sel_close);
+        View btnAlarmSelAll = findViewById(R.id.btn_alarms_sel_all);
+        View btnAlarmSelOn = findViewById(R.id.btn_alarms_sel_on);
+        View btnAlarmSelOff = findViewById(R.id.btn_alarms_sel_off);
+        View btnAlarmSelDelete = findViewById(R.id.btn_alarms_sel_delete);
 
         alarmAdapter = new com.zez.app.adapter.AlarmAdapter(new com.zez.app.adapter.AlarmAdapter.OnAlarmClickListener() {
             @Override
@@ -606,19 +718,92 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onAlarmLongClick(com.zez.app.model.AlarmItem alarm) {
-                new com.google.android.material.dialog.MaterialAlertDialogBuilder(MainActivity.this)
-                        .setTitle("Delete Alarm")
-                        .setMessage("Delete alarm for " + alarm.getFormattedTime12() + " " + alarm.getAmPm() + "?")
-                        .setPositiveButton("Delete", (dialog, which) -> {
-                            com.zez.app.util.AlarmHelper.deleteAlarm(MainActivity.this, alarm.id);
-                            loadAlarmsData();
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+                if (alarmAdapter != null && !alarmAdapter.isSelectionMode()) {
+                    alarmAdapter.toggleSelection(alarm.id);
+                }
+            }
+
+            @Override
+            public void onSelectionChanged(int selectedCount, boolean selectionMode) {
+                if (layoutAlarmsSelectionBar != null) {
+                    layoutAlarmsSelectionBar.setVisibility(selectionMode ? View.VISIBLE : View.GONE);
+                }
+                if (layoutAlarmsQuickBar != null) {
+                    boolean hasAlarms = alarmAdapter != null && alarmAdapter.getItemCount() > 0;
+                    layoutAlarmsQuickBar.setVisibility(!selectionMode && hasAlarms ? View.VISIBLE : View.GONE);
+                }
+                if (tvAlarmsSelCount != null) {
+                    tvAlarmsSelCount.setText(selectedCount + " selected");
+                }
             }
         });
         recyclerAlarms.setLayoutManager(new LinearLayoutManager(this));
         recyclerAlarms.setAdapter(alarmAdapter);
+
+        if (btnEnterAlarmSel != null) {
+            btnEnterAlarmSel.setOnClickListener(v -> {
+                if (alarmAdapter != null) alarmAdapter.enterSelectionMode();
+            });
+        }
+        if (btnAlarmSelClose != null) {
+            btnAlarmSelClose.setOnClickListener(v -> {
+                if (alarmAdapter != null) alarmAdapter.clearSelection();
+            });
+        }
+        if (btnAlarmSelAll != null) {
+            btnAlarmSelAll.setOnClickListener(v -> {
+                if (alarmAdapter != null) alarmAdapter.toggleSelectAll();
+            });
+        }
+        if (btnAlarmSelOn != null) {
+            btnAlarmSelOn.setOnClickListener(v -> {
+                if (alarmAdapter == null) return;
+                List<Long> sel = alarmAdapter.getSelectedIds();
+                if (sel.isEmpty()) {
+                    Toast.makeText(this, "Select alarms first", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                com.zez.app.util.AlarmHelper.setAlarmsEnabled(this, sel, true);
+                alarmAdapter.clearSelection();
+                loadAlarmsData();
+                Toast.makeText(this, "Activated " + sel.size() + " alarm(s)", Toast.LENGTH_SHORT).show();
+            });
+        }
+        if (btnAlarmSelOff != null) {
+            btnAlarmSelOff.setOnClickListener(v -> {
+                if (alarmAdapter == null) return;
+                List<Long> sel = alarmAdapter.getSelectedIds();
+                if (sel.isEmpty()) {
+                    Toast.makeText(this, "Select alarms first", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                com.zez.app.util.AlarmHelper.setAlarmsEnabled(this, sel, false);
+                alarmAdapter.clearSelection();
+                loadAlarmsData();
+                Toast.makeText(this, "Turned off " + sel.size() + " alarm(s)", Toast.LENGTH_SHORT).show();
+            });
+        }
+        if (btnAlarmSelDelete != null) {
+            btnAlarmSelDelete.setOnClickListener(v -> {
+                if (alarmAdapter == null) return;
+                List<Long> sel = alarmAdapter.getSelectedIds();
+                if (sel.isEmpty()) {
+                    Toast.makeText(this, "Select alarms to delete", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(MainActivity.this)
+                        .setTitle("Delete Selected Alarms")
+                        .setMessage("Delete " + sel.size() + " selected alarm(s)?")
+                        .setPositiveButton("Delete", (dialog, which) -> {
+                            com.zez.app.util.AlarmHelper.deleteAlarms(MainActivity.this, sel);
+                            alarmAdapter.clearSelection();
+                            loadAlarmsData();
+                            Toast.makeText(MainActivity.this, "Deleted " + sel.size() + " alarm(s)", Toast.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
 
         fabAddAlarm.setOnClickListener(v -> {
             com.zez.app.model.AlarmItem newAlarm = new com.zez.app.model.AlarmItem();
@@ -771,6 +956,7 @@ public class MainActivity extends AppCompatActivity {
         scrollSettings.setVisibility(View.GONE);
         viewFontPage.setVisibility(View.GONE);
         viewHardwarePage.setVisibility(View.GONE);
+        if (viewAppearancePage != null) viewAppearancePage.setVisibility(View.GONE);
         viewGalleryContainer.setVisibility(View.GONE);
         stopTelemetryUpdates();
         layoutEmpty.setVisibility(View.GONE);
@@ -782,6 +968,9 @@ public class MainActivity extends AppCompatActivity {
             conversationsAdapter.clearSelection();
         }
 
+        if (alarmAdapter != null && alarmAdapter.isSelectionMode()) {
+            alarmAdapter.clearSelection();
+        }
         if (tabId == R.id.nav_chats) {
             tvTitle.setText("Chats");
             if (tvSubtitle != null) tvSubtitle.setText("Messages & encrypted conversations");
@@ -828,6 +1017,7 @@ public class MainActivity extends AppCompatActivity {
         scrollSettings.setVisibility(View.GONE);
         viewFontPage.setVisibility(View.GONE);
         viewHardwarePage.setVisibility(View.GONE);
+        if (viewAppearancePage != null) viewAppearancePage.setVisibility(View.GONE);
         viewGalleryContainer.setVisibility(View.GONE);
         stopTelemetryUpdates();
         layoutEmpty.setVisibility(View.GONE);
@@ -845,6 +1035,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        com.zez.app.util.AppUpdateHelper.resumePendingInstallIfPermitted(this);
         if (com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
             com.zez.app.service.NotificationCaptureService.ensureServiceBound(this);
         }
@@ -931,7 +1122,12 @@ public class MainActivity extends AppCompatActivity {
         btnMusicLauncher = findViewById(R.id.btn_music_launcher);
         if (btnMusicLauncher != null) {
             btnMusicLauncher.setOnClickListener(v -> {
-                startActivity(new Intent(MainActivity.this, com.zez.app.music.MusicActivity.class));
+                Intent musicIntent = new Intent(MainActivity.this, com.zez.app.music.MusicActivity.class);
+                if (musicActivityLauncher != null) {
+                    musicActivityLauncher.launch(musicIntent);
+                } else {
+                    startActivity(musicIntent);
+                }
             });
         }
 
@@ -942,10 +1138,16 @@ public class MainActivity extends AppCompatActivity {
             tvMainMiniArtist = layoutMainMiniPlayer.findViewById(R.id.tv_mini_artist);
             btnMainMiniPlayPause = layoutMainMiniPlayer.findViewById(R.id.btn_mini_play_pause);
             btnMainMiniNext = layoutMainMiniPlayer.findViewById(R.id.btn_mini_next);
+            View btnMainMiniClose = layoutMainMiniPlayer.findViewById(R.id.btn_mini_close);
             pbMainMiniProgress = layoutMainMiniPlayer.findViewById(R.id.pb_mini_progress);
 
             layoutMainMiniPlayer.setOnClickListener(v -> {
-                startActivity(new Intent(MainActivity.this, com.zez.app.music.MusicActivity.class));
+                Intent musicIntent = new Intent(MainActivity.this, com.zez.app.music.MusicActivity.class);
+                if (musicActivityLauncher != null) {
+                    musicActivityLauncher.launch(musicIntent);
+                } else {
+                    startActivity(musicIntent);
+                }
             });
 
             if (btnMainMiniPlayPause != null) {
@@ -956,6 +1158,12 @@ public class MainActivity extends AppCompatActivity {
             if (btnMainMiniNext != null) {
                 btnMainMiniNext.setOnClickListener(v -> {
                     com.zez.app.music.player.MusicPlayerManager.getInstance().next();
+                });
+            }
+            if (btnMainMiniClose != null) {
+                btnMainMiniClose.setOnClickListener(v -> {
+                    com.zez.app.music.player.MusicPlayerManager.getInstance().stop();
+                    layoutMainMiniPlayer.setVisibility(View.GONE);
                 });
             }
 
@@ -1210,20 +1418,17 @@ public class MainActivity extends AppCompatActivity {
                     if (ChatActivity.activeConversationId != null && conv.getConversationId().equals(ChatActivity.activeConversationId)) {
                         continue;
                     }
-                    String lastTime = conv.getLastMessageTime();
-                    String prevTime = lastNotifiedMsgTimeMap.get(conv.getConversationId());
-                    if (lastTime != null && !lastTime.equals(prevTime)) {
-                        lastNotifiedMsgTimeMap.put(conv.getConversationId(), lastTime);
-                        ChatNotificationHelper.showChatNotification(
-                                this,
-                                conv.getConversationId(),
-                                conv.getOtherUserId(),
-                                conv.getOtherUserName(),
-                                conv.getOtherUserPhone(),
-                                conv.getLastMessageText(),
-                                null
-                        );
-                    }
+                    com.zez.app.util.ChatNotificationHelper.showChatNotificationIfNew(
+                            this,
+                            conv.getConversationId(),
+                            null,
+                            conv.getOtherUserId(),
+                            conv.getOtherUserName(),
+                            conv.getOtherUserPhone(),
+                            conv.getLastMessageText(),
+                            null,
+                            conv.getLastMessageTime()
+                    );
                 }
             }
         }
@@ -2065,8 +2270,13 @@ public class MainActivity extends AppCompatActivity {
         alarmAdapter.setAlarms(alarms);
         if (alarms.isEmpty()) {
             layoutAlarmsEmpty.setVisibility(View.VISIBLE);
+            if (layoutAlarmsQuickBar != null) layoutAlarmsQuickBar.setVisibility(View.GONE);
+            if (layoutAlarmsSelectionBar != null) layoutAlarmsSelectionBar.setVisibility(View.GONE);
         } else {
             layoutAlarmsEmpty.setVisibility(View.GONE);
+            if (layoutAlarmsQuickBar != null && !alarmAdapter.isSelectionMode()) {
+                layoutAlarmsQuickBar.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -2300,7 +2510,7 @@ public class MainActivity extends AppCompatActivity {
         scrollSettings.setVisibility(View.GONE);
         viewHardwarePage.setVisibility(View.GONE);
         viewFontPage.setVisibility(View.VISIBLE);
-        tvTitle.setText("Font Size");
+        tvTitle.setText("Typography & Font");
 
         float currentScale = PreferencesHelper.getFontScale(this);
         if (Math.abs(currentScale - PreferencesHelper.FONT_SCALE_SMALL) < 0.05f) {
@@ -2317,7 +2527,29 @@ public class MainActivity extends AppCompatActivity {
             etCustomFontSize.setText(String.valueOf(Math.round(14f * currentScale)));
         }
 
-        updateFontPreview(currentScale);
+        String currentFamily = PreferencesHelper.getFontFamily(this);
+        setupFontRadioLabels();
+        if (PreferencesHelper.FONT_FAMILY_LIGHT.equals(currentFamily)) {
+            if (rbFamilyLight != null) rbFamilyLight.setChecked(true);
+        } else if (PreferencesHelper.FONT_FAMILY_CONDENSED.equals(currentFamily)) {
+            if (rbFamilyCondensed != null) rbFamilyCondensed.setChecked(true);
+        } else if (PreferencesHelper.FONT_FAMILY_MEDIUM.equals(currentFamily)) {
+            if (rbFamilyMedium != null) rbFamilyMedium.setChecked(true);
+        } else if (PreferencesHelper.FONT_FAMILY_BLACK.equals(currentFamily)) {
+            if (rbFamilyBlack != null) rbFamilyBlack.setChecked(true);
+        } else if (PreferencesHelper.FONT_FAMILY_SERIF.equals(currentFamily)) {
+            if (rbFamilySerif != null) rbFamilySerif.setChecked(true);
+        } else if (PreferencesHelper.FONT_FAMILY_MONOSPACE.equals(currentFamily)) {
+            if (rbFamilyMonospace != null) rbFamilyMonospace.setChecked(true);
+        } else if (PreferencesHelper.FONT_FAMILY_CASUAL.equals(currentFamily)) {
+            if (rbFamilyCasual != null) rbFamilyCasual.setChecked(true);
+        } else if (PreferencesHelper.FONT_FAMILY_CURSIVE.equals(currentFamily)) {
+            if (rbFamilyCursive != null) rbFamilyCursive.setChecked(true);
+        } else {
+            if (rbFamilySans != null) rbFamilySans.setChecked(true);
+        }
+
+        updateFontPreview(currentScale, currentFamily);
 
         rgFontScaleOptions.setOnCheckedChangeListener((group, checkedId) -> {
             float previewScale = PreferencesHelper.FONT_SCALE_DEFAULT;
@@ -2327,13 +2559,120 @@ public class MainActivity extends AppCompatActivity {
             if (etCustomFontSize != null) {
                 etCustomFontSize.setText(String.valueOf(Math.round(14f * previewScale)));
             }
-            updateFontPreview(previewScale);
+            updateFontPreview(previewScale, getSelectedFontFamilyFromRadio());
         });
+
+        if (rgFontFamilyOptions != null) {
+            rgFontFamilyOptions.setOnCheckedChangeListener((group, checkedId) -> {
+                float scale = PreferencesHelper.getFontScale(this);
+                if (etCustomFontSize != null && etCustomFontSize.getText() != null) {
+                    try {
+                        float sp = Float.parseFloat(etCustomFontSize.getText().toString().trim());
+                        scale = sp / 14f;
+                    } catch (Exception ignored) {}
+                }
+                updateFontPreview(scale, getSelectedFontFamilyFromRadio());
+            });
+        }
     }
 
-    private void updateFontPreview(float scale) {
-        if (tvFontPreviewHeading != null) tvFontPreviewHeading.setTextSize(18f * scale);
-        if (tvFontPreviewBody != null) tvFontPreviewBody.setTextSize(14f * scale);
+    private void setupFontRadioLabels() {
+        setupFontRadio(rbFamilySans, "Roboto Sans (System Default)", "Aa Bb Gg 123 · Clean & balanced", android.graphics.Typeface.SANS_SERIF);
+        setupFontRadio(rbFamilyLight, "Light Sans", "Aa Bb Gg 123 · Thin & minimalist", android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL));
+        setupFontRadio(rbFamilyCondensed, "Modern Condensed", "Aa Bb Gg 123 · Compact & efficient", android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.NORMAL));
+        setupFontRadio(rbFamilyMedium, "Medium Sans", "Aa Bb Gg 123 · High legibility weight", android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+        setupFontRadio(rbFamilyBlack, "Black Headline", "Aa Bb Gg 123 · Ultra bold impact", android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.BOLD));
+        setupFontRadio(rbFamilySerif, "Editorial Serif", "Aa Bb Gg 123 · Elegant & literary", android.graphics.Typeface.SERIF);
+        setupFontRadio(rbFamilyMonospace, "Developer Monospace", "Aa Bb Gg 123 · Code & terminal", android.graphics.Typeface.MONOSPACE);
+        setupFontRadio(rbFamilyCasual, "Casual Handwritten", "Aa Bb Gg 123 · Friendly & relaxed", android.graphics.Typeface.create("casual", android.graphics.Typeface.NORMAL));
+        setupFontRadio(rbFamilyCursive, "Cursive Script", "Aa Bb Gg 123 · Expressive handwriting", android.graphics.Typeface.create("cursive", android.graphics.Typeface.NORMAL));
+    }
+
+    private void setupFontRadio(android.widget.RadioButton rb, String title, String sample, android.graphics.Typeface sampleTf) {
+        if (rb == null) return;
+        android.text.SpannableStringBuilder ssb = new android.text.SpannableStringBuilder();
+        int startTitle = ssb.length();
+        ssb.append(title);
+        ssb.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), startTitle, ssb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new android.text.style.AbsoluteSizeSpan(15, true), startTitle, ssb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        ssb.append("\n");
+        int startSample = ssb.length();
+        ssb.append(sample);
+        ssb.setSpan(new android.text.style.AbsoluteSizeSpan(13, true), startSample, ssb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.parseColor("#94A3B8")), startSample, ssb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new android.text.style.MetricAffectingSpan() {
+            @Override
+            public void updateDrawState(android.text.TextPaint tp) {
+                tp.setTypeface(sampleTf);
+            }
+            @Override
+            public void updateMeasureState(android.text.TextPaint tp) {
+                tp.setTypeface(sampleTf);
+            }
+        }, startSample, ssb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        rb.setText(ssb);
+        rb.setLineSpacing(4f, 1.15f);
+    }
+
+    private String getSelectedFontFamilyFromRadio() {
+        if (rgFontFamilyOptions == null) return PreferencesHelper.FONT_FAMILY_SANS;
+        int checkedId = rgFontFamilyOptions.getCheckedRadioButtonId();
+        if (checkedId == R.id.rb_family_light) return PreferencesHelper.FONT_FAMILY_LIGHT;
+        if (checkedId == R.id.rb_family_condensed) return PreferencesHelper.FONT_FAMILY_CONDENSED;
+        if (checkedId == R.id.rb_family_medium) return PreferencesHelper.FONT_FAMILY_MEDIUM;
+        if (checkedId == R.id.rb_family_black) return PreferencesHelper.FONT_FAMILY_BLACK;
+        if (checkedId == R.id.rb_family_serif) return PreferencesHelper.FONT_FAMILY_SERIF;
+        if (checkedId == R.id.rb_family_monospace) return PreferencesHelper.FONT_FAMILY_MONOSPACE;
+        if (checkedId == R.id.rb_family_casual) return PreferencesHelper.FONT_FAMILY_CASUAL;
+        if (checkedId == R.id.rb_family_cursive) return PreferencesHelper.FONT_FAMILY_CURSIVE;
+        return PreferencesHelper.FONT_FAMILY_SANS;
+    }
+
+    private void updateFontPreview(float scale, String family) {
+        android.graphics.Typeface tf = getTypefaceForFamily(family);
+        if (tvFontPreviewHeading != null) {
+            tvFontPreviewHeading.setTextSize(18f * scale);
+            tvFontPreviewHeading.setTypeface(tf, android.graphics.Typeface.BOLD);
+        }
+        if (tvFontPreviewBody != null) {
+            tvFontPreviewBody.setTextSize(14f * scale);
+            tvFontPreviewBody.setTypeface(tf, android.graphics.Typeface.NORMAL);
+        }
+    }
+
+    private android.graphics.Typeface getTypefaceForFamily(String family) {
+        if (PreferencesHelper.FONT_FAMILY_LIGHT.equals(family)) {
+            return android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL);
+        } else if (PreferencesHelper.FONT_FAMILY_CONDENSED.equals(family)) {
+            return android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.NORMAL);
+        } else if (PreferencesHelper.FONT_FAMILY_MEDIUM.equals(family)) {
+            return android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL);
+        } else if (PreferencesHelper.FONT_FAMILY_BLACK.equals(family)) {
+            return android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.BOLD);
+        } else if (PreferencesHelper.FONT_FAMILY_SERIF.equals(family)) {
+            return android.graphics.Typeface.SERIF;
+        } else if (PreferencesHelper.FONT_FAMILY_MONOSPACE.equals(family)) {
+            return android.graphics.Typeface.MONOSPACE;
+        } else if (PreferencesHelper.FONT_FAMILY_CASUAL.equals(family)) {
+            return android.graphics.Typeface.create("casual", android.graphics.Typeface.NORMAL);
+        } else if (PreferencesHelper.FONT_FAMILY_CURSIVE.equals(family)) {
+            return android.graphics.Typeface.create("cursive", android.graphics.Typeface.NORMAL);
+        }
+        return android.graphics.Typeface.SANS_SERIF;
+    }
+
+    private String getFontFamilyDisplayName(String family) {
+        if (PreferencesHelper.FONT_FAMILY_LIGHT.equals(family)) return "Light Sans";
+        if (PreferencesHelper.FONT_FAMILY_CONDENSED.equals(family)) return "Condensed";
+        if (PreferencesHelper.FONT_FAMILY_MEDIUM.equals(family)) return "Medium Sans";
+        if (PreferencesHelper.FONT_FAMILY_BLACK.equals(family)) return "Black Headline";
+        if (PreferencesHelper.FONT_FAMILY_SERIF.equals(family)) return "Editorial Serif";
+        if (PreferencesHelper.FONT_FAMILY_MONOSPACE.equals(family)) return "Monospace";
+        if (PreferencesHelper.FONT_FAMILY_CASUAL.equals(family)) return "Casual";
+        if (PreferencesHelper.FONT_FAMILY_CURSIVE.equals(family)) return "Cursive";
+        return "Roboto Sans";
     }
 
     private void applySelectedFontScale() {
@@ -2355,9 +2694,420 @@ public class MainActivity extends AppCompatActivity {
             else if (checkedId == R.id.rb_font_huge) selectedScale = PreferencesHelper.FONT_SCALE_HUGE;
         }
 
+        String selectedFamily = getSelectedFontFamilyFromRadio();
+
         PreferencesHelper.setFontScale(this, selectedScale);
-        Toast.makeText(this, "Font size updated!", Toast.LENGTH_SHORT).show();
+        PreferencesHelper.setFontFamily(this, selectedFamily);
+        Toast.makeText(this, "Typography & font updated!", Toast.LENGTH_SHORT).show();
         recreate();
+    }
+
+    private void initAppearanceViews() {
+        viewAppearancePage = findViewById(R.id.view_appearance_page);
+        if (viewAppearancePage == null) return;
+
+        btnBackAppearance = findViewById(R.id.btn_back_appearance);
+        btnResetAppearanceTop = findViewById(R.id.btn_reset_appearance_top);
+        btnResetAppearanceFull = findViewById(R.id.btn_reset_appearance_full);
+        btnApplyAppearance = findViewById(R.id.btn_apply_appearance);
+
+        // Preview views
+        previewContainer = findViewById(R.id.preview_container);
+        previewTopBar = findViewById(R.id.preview_top_bar);
+        previewAppTitle = findViewById(R.id.preview_app_title);
+        previewTextTitle = findViewById(R.id.preview_text_title);
+        previewTextSubtitle = findViewById(R.id.preview_text_subtitle);
+        previewBadgePrimary = findViewById(R.id.preview_badge_primary);
+        previewBadgeStatus = findViewById(R.id.preview_badge_status);
+        previewBadgeTag = findViewById(R.id.preview_badge_tag);
+        previewInputField = findViewById(R.id.preview_input_field);
+        previewBtnPrimary = findViewById(R.id.preview_btn_primary);
+        previewBtnSecondary = findViewById(R.id.preview_btn_secondary);
+        previewBackIcon = findViewById(R.id.preview_back_icon);
+        previewSearchIcon = findViewById(R.id.preview_search_icon);
+
+        // Mode views
+        cardModeSystem = findViewById(R.id.card_mode_system);
+        cardModeLight = findViewById(R.id.card_mode_light);
+        cardModeDark = findViewById(R.id.card_mode_dark);
+        checkModeSystem = findViewById(R.id.check_mode_system);
+        checkModeLight = findViewById(R.id.check_mode_light);
+        checkModeDark = findViewById(R.id.check_mode_dark);
+        iconModeSystem = findViewById(R.id.icon_mode_system);
+        iconModeLight = findViewById(R.id.icon_mode_light);
+        iconModeDark = findViewById(R.id.icon_mode_dark);
+
+        // Palette views
+        cardPaletteGraphite = findViewById(R.id.card_palette_graphite);
+        cardPaletteArctic = findViewById(R.id.card_palette_arctic);
+        cardPaletteMidnight = findViewById(R.id.card_palette_midnight);
+        cardPaletteAmoled = findViewById(R.id.card_palette_amoled);
+        cardPaletteOcean = findViewById(R.id.card_palette_ocean);
+        cardPaletteSage = findViewById(R.id.card_palette_sage);
+        cardPaletteSunset = findViewById(R.id.card_palette_sunset);
+        cardPaletteRose = findViewById(R.id.card_palette_rose);
+
+        checkPaletteGraphite = findViewById(R.id.check_palette_graphite);
+        checkPaletteArctic = findViewById(R.id.check_palette_arctic);
+        checkPaletteMidnight = findViewById(R.id.check_palette_midnight);
+        checkPaletteAmoled = findViewById(R.id.check_palette_amoled);
+        checkPaletteOcean = findViewById(R.id.check_palette_ocean);
+        checkPaletteSage = findViewById(R.id.check_palette_sage);
+        checkPaletteSunset = findViewById(R.id.check_palette_sunset);
+        checkPaletteRose = findViewById(R.id.check_palette_rose);
+
+        // Dynamic colors
+        switchDynamicColors = findViewById(R.id.switch_dynamic_colors);
+        tvDynamicColorsDesc = findViewById(R.id.tv_dynamic_colors_desc);
+
+        // Click listeners
+        if (btnBackAppearance != null) btnBackAppearance.setOnClickListener(v -> closeSubPages());
+        if (btnResetAppearanceTop != null) btnResetAppearanceTop.setOnClickListener(v -> resetAppearanceToDefault());
+        if (btnResetAppearanceFull != null) btnResetAppearanceFull.setOnClickListener(v -> resetAppearanceToDefault());
+        if (btnApplyAppearance != null) btnApplyAppearance.setOnClickListener(v -> applyAppearanceChanges());
+
+        if (cardModeSystem != null) cardModeSystem.setOnClickListener(v -> selectAppearanceMode(PreferencesHelper.THEME_SYSTEM));
+        if (cardModeLight != null) cardModeLight.setOnClickListener(v -> selectAppearanceMode(PreferencesHelper.THEME_LIGHT));
+        if (cardModeDark != null) cardModeDark.setOnClickListener(v -> selectAppearanceMode(PreferencesHelper.THEME_DARK));
+
+        if (cardPaletteGraphite != null) cardPaletteGraphite.setOnClickListener(v -> selectPalette(PreferencesHelper.PALETTE_GRAPHITE));
+        if (cardPaletteArctic != null) cardPaletteArctic.setOnClickListener(v -> selectPalette(PreferencesHelper.PALETTE_ARCTIC));
+        if (cardPaletteMidnight != null) cardPaletteMidnight.setOnClickListener(v -> selectPalette(PreferencesHelper.PALETTE_MIDNIGHT));
+        if (cardPaletteAmoled != null) cardPaletteAmoled.setOnClickListener(v -> selectPalette(PreferencesHelper.PALETTE_AMOLED));
+        if (cardPaletteOcean != null) cardPaletteOcean.setOnClickListener(v -> selectPalette(PreferencesHelper.PALETTE_OCEAN));
+        if (cardPaletteSage != null) cardPaletteSage.setOnClickListener(v -> selectPalette(PreferencesHelper.PALETTE_SAGE));
+        if (cardPaletteSunset != null) cardPaletteSunset.setOnClickListener(v -> selectPalette(PreferencesHelper.PALETTE_SUNSET));
+        if (cardPaletteRose != null) cardPaletteRose.setOnClickListener(v -> selectPalette(PreferencesHelper.PALETTE_ROSE));
+
+        if (switchDynamicColors != null) {
+            boolean supported = com.zez.app.theme.ThemeManager.isDynamicColorSupported();
+            if (!supported) {
+                switchDynamicColors.setEnabled(false);
+                if (tvDynamicColorsDesc != null) {
+                    tvDynamicColorsDesc.setText("Dynamic Colors require Android 12+ (API 31+)");
+                }
+            } else {
+                switchDynamicColors.setEnabled(true);
+                switchDynamicColors.setOnCheckedChangeListener((btn, isChecked) -> {
+                    stagedDynamicColor = isChecked;
+                    updateLiveThemePreview();
+                });
+            }
+        }
+    }
+
+    private void openAppearancePage() {
+        scrollSettings.setVisibility(View.GONE);
+        viewFontPage.setVisibility(View.GONE);
+        viewHardwarePage.setVisibility(View.GONE);
+        if (viewAppearancePage != null) {
+            viewAppearancePage.setVisibility(View.VISIBLE);
+        }
+        tvTitle.setText("Appearance & Themes");
+        initAppearancePage();
+    }
+
+    private void initAppearancePage() {
+        stagedThemeMode = PreferencesHelper.getThemeMode(this);
+        stagedPalette = PreferencesHelper.getThemePalette(this);
+        stagedDynamicColor = PreferencesHelper.isDynamicColorEnabled(this);
+
+        if (switchDynamicColors != null && com.zez.app.theme.ThemeManager.isDynamicColorSupported()) {
+            switchDynamicColors.setChecked(stagedDynamicColor);
+        }
+
+        updateModeSelectionUi();
+        updatePaletteSelectionUi();
+        updateLiveThemePreview();
+    }
+
+    private void selectAppearanceMode(int mode) {
+        stagedThemeMode = mode;
+        updateModeSelectionUi();
+        updateLiveThemePreview();
+    }
+
+    private void selectPalette(String palette) {
+        stagedPalette = palette;
+        updatePaletteSelectionUi();
+        updateLiveThemePreview();
+    }
+
+    private void updateModeSelectionUi() {
+        if (cardModeSystem == null) return;
+        boolean isSystem = (stagedThemeMode == PreferencesHelper.THEME_SYSTEM);
+        boolean isLight = (stagedThemeMode == PreferencesHelper.THEME_LIGHT);
+        boolean isDark = (stagedThemeMode == PreferencesHelper.THEME_DARK);
+
+        cardModeSystem.setBackgroundResource(isSystem ? R.drawable.bg_theme_card_selected : R.drawable.bg_theme_card_unselected);
+        checkModeSystem.setVisibility(isSystem ? View.VISIBLE : View.GONE);
+        iconModeSystem.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, isSystem ? R.color.primary : R.color.theme_icon_tint)));
+
+        cardModeLight.setBackgroundResource(isLight ? R.drawable.bg_theme_card_selected : R.drawable.bg_theme_card_unselected);
+        checkModeLight.setVisibility(isLight ? View.VISIBLE : View.GONE);
+        iconModeLight.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, isLight ? R.color.primary : R.color.theme_icon_tint)));
+
+        cardModeDark.setBackgroundResource(isDark ? R.drawable.bg_theme_card_selected : R.drawable.bg_theme_card_unselected);
+        checkModeDark.setVisibility(isDark ? View.VISIBLE : View.GONE);
+        iconModeDark.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, isDark ? R.color.primary : R.color.theme_icon_tint)));
+    }
+
+    private void updatePaletteSelectionUi() {
+        setPaletteCardState(cardPaletteGraphite, checkPaletteGraphite, PreferencesHelper.PALETTE_GRAPHITE.equals(stagedPalette));
+        setPaletteCardState(cardPaletteArctic, checkPaletteArctic, PreferencesHelper.PALETTE_ARCTIC.equals(stagedPalette));
+        setPaletteCardState(cardPaletteMidnight, checkPaletteMidnight, PreferencesHelper.PALETTE_MIDNIGHT.equals(stagedPalette));
+        setPaletteCardState(cardPaletteAmoled, checkPaletteAmoled, PreferencesHelper.PALETTE_AMOLED.equals(stagedPalette));
+        setPaletteCardState(cardPaletteOcean, checkPaletteOcean, PreferencesHelper.PALETTE_OCEAN.equals(stagedPalette));
+        setPaletteCardState(cardPaletteSage, checkPaletteSage, PreferencesHelper.PALETTE_SAGE.equals(stagedPalette));
+        setPaletteCardState(cardPaletteSunset, checkPaletteSunset, PreferencesHelper.PALETTE_SUNSET.equals(stagedPalette));
+        setPaletteCardState(cardPaletteRose, checkPaletteRose, PreferencesHelper.PALETTE_ROSE.equals(stagedPalette));
+    }
+
+    private void setPaletteCardState(LinearLayout card, ImageView check, boolean isSelected) {
+        if (card != null) {
+            card.setBackgroundResource(isSelected ? R.drawable.bg_theme_card_selected : R.drawable.bg_theme_card_unselected);
+        }
+        if (check != null) {
+            check.setVisibility(isSelected ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void updateLiveThemePreview() {
+        boolean isNight;
+        if (stagedThemeMode == PreferencesHelper.THEME_DARK) {
+            isNight = true;
+        } else if (stagedThemeMode == PreferencesHelper.THEME_LIGHT) {
+            isNight = false;
+        } else {
+            isNight = com.zez.app.theme.ThemeManager.isDarkMode(this);
+        }
+
+        int primaryColor;
+        int surfaceColor;
+        int surfaceVariantColor;
+        int textPrimaryColor;
+        int textSecondaryColor;
+        int textMutedColor;
+        int borderColor;
+
+        if (isNight) {
+            textPrimaryColor = Color.parseColor("#F1F5F9");
+            textSecondaryColor = Color.parseColor("#94A3B8");
+            textMutedColor = Color.parseColor("#64748B");
+            borderColor = Color.parseColor("#2E333A");
+
+            switch (stagedPalette) {
+                case PreferencesHelper.PALETTE_ARCTIC:
+                    primaryColor = Color.parseColor("#38BDF8");
+                    surfaceColor = Color.parseColor("#111D2D");
+                    surfaceVariantColor = Color.parseColor("#18283D");
+                    borderColor = Color.parseColor("#233852");
+                    break;
+                case PreferencesHelper.PALETTE_MIDNIGHT:
+                    primaryColor = Color.parseColor("#818CF8");
+                    surfaceColor = Color.parseColor("#111726");
+                    surfaceVariantColor = Color.parseColor("#192237");
+                    borderColor = Color.parseColor("#24304D");
+                    break;
+                case PreferencesHelper.PALETTE_AMOLED:
+                    primaryColor = Color.parseColor("#00E5FF");
+                    surfaceColor = Color.parseColor("#0C0C0E");
+                    surfaceVariantColor = Color.parseColor("#161619");
+                    borderColor = Color.parseColor("#222227");
+                    textPrimaryColor = Color.parseColor("#FFFFFF");
+                    break;
+                case PreferencesHelper.PALETTE_OCEAN:
+                    primaryColor = Color.parseColor("#38BDF8");
+                    surfaceColor = Color.parseColor("#0F2236");
+                    surfaceVariantColor = Color.parseColor("#162E48");
+                    borderColor = Color.parseColor("#1E3F61");
+                    break;
+                case PreferencesHelper.PALETTE_SAGE:
+                    primaryColor = Color.parseColor("#34D399");
+                    surfaceColor = Color.parseColor("#13221C");
+                    surfaceVariantColor = Color.parseColor("#1B2F27");
+                    borderColor = Color.parseColor("#274136");
+                    break;
+                case PreferencesHelper.PALETTE_SUNSET:
+                    primaryColor = Color.parseColor("#FB7185");
+                    surfaceColor = Color.parseColor("#25181C");
+                    surfaceVariantColor = Color.parseColor("#332127");
+                    borderColor = Color.parseColor("#462E36");
+                    break;
+                case PreferencesHelper.PALETTE_ROSE:
+                    primaryColor = Color.parseColor("#F43F5E");
+                    surfaceColor = Color.parseColor("#23151C");
+                    surfaceVariantColor = Color.parseColor("#311F28");
+                    borderColor = Color.parseColor("#452C3A");
+                    break;
+                case PreferencesHelper.PALETTE_GRAPHITE:
+                default:
+                    primaryColor = Color.parseColor("#3B82F6");
+                    surfaceColor = Color.parseColor("#1A1D21");
+                    surfaceVariantColor = Color.parseColor("#22262B");
+                    borderColor = Color.parseColor("#2E333A");
+                    break;
+            }
+        } else {
+            textPrimaryColor = Color.parseColor("#0F172A");
+            textSecondaryColor = Color.parseColor("#475569");
+            textMutedColor = Color.parseColor("#94A3B8");
+            borderColor = Color.parseColor("#E2E8F0");
+
+            switch (stagedPalette) {
+                case PreferencesHelper.PALETTE_ARCTIC:
+                    primaryColor = Color.parseColor("#0284C7");
+                    surfaceColor = Color.parseColor("#FFFFFF");
+                    surfaceVariantColor = Color.parseColor("#E6EDF5");
+                    borderColor = Color.parseColor("#D5E1ED");
+                    break;
+                case PreferencesHelper.PALETTE_MIDNIGHT:
+                    primaryColor = Color.parseColor("#4F46E5");
+                    surfaceColor = Color.parseColor("#FFFFFF");
+                    surfaceVariantColor = Color.parseColor("#E8EAF4");
+                    borderColor = Color.parseColor("#D8DBEC");
+                    break;
+                case PreferencesHelper.PALETTE_AMOLED:
+                    primaryColor = Color.parseColor("#0891B2");
+                    surfaceColor = Color.parseColor("#FFFFFF");
+                    surfaceVariantColor = Color.parseColor("#F4F4F5");
+                    borderColor = Color.parseColor("#E4E4E7");
+                    break;
+                case PreferencesHelper.PALETTE_OCEAN:
+                    primaryColor = Color.parseColor("#0284C7");
+                    surfaceColor = Color.parseColor("#FFFFFF");
+                    surfaceVariantColor = Color.parseColor("#DBEAFE");
+                    borderColor = Color.parseColor("#BFDBFE");
+                    break;
+                case PreferencesHelper.PALETTE_SAGE:
+                    primaryColor = Color.parseColor("#059669");
+                    surfaceColor = Color.parseColor("#FFFFFF");
+                    surfaceVariantColor = Color.parseColor("#E6EDE6");
+                    borderColor = Color.parseColor("#D2DFD2");
+                    break;
+                case PreferencesHelper.PALETTE_SUNSET:
+                    primaryColor = Color.parseColor("#EA580C");
+                    surfaceColor = Color.parseColor("#FFFFFF");
+                    surfaceVariantColor = Color.parseColor("#FFEDD5");
+                    borderColor = Color.parseColor("#FED7AA");
+                    break;
+                case PreferencesHelper.PALETTE_ROSE:
+                    primaryColor = Color.parseColor("#E11D48");
+                    surfaceColor = Color.parseColor("#FFFFFF");
+                    surfaceVariantColor = Color.parseColor("#FFE4E6");
+                    borderColor = Color.parseColor("#FECDD3");
+                    break;
+                case PreferencesHelper.PALETTE_GRAPHITE:
+                default:
+                    primaryColor = Color.parseColor("#2563EB");
+                    surfaceColor = Color.parseColor("#FFFFFF");
+                    surfaceVariantColor = Color.parseColor("#F1F3F5");
+                    borderColor = Color.parseColor("#E2E8F0");
+                    break;
+            }
+        }
+
+        if (previewTopBar != null) previewTopBar.setBackgroundColor(surfaceVariantColor);
+        View previewBodySurface = findViewById(R.id.preview_body_surface);
+        if (previewBodySurface != null) previewBodySurface.setBackgroundColor(surfaceColor);
+        if (previewAppTitle != null) {
+            previewAppTitle.setTextColor(textPrimaryColor);
+            previewAppTitle.setText("TWING · " + getPaletteDisplayName(stagedPalette));
+        }
+        if (previewTextTitle != null) {
+            previewTextTitle.setTextColor(textPrimaryColor);
+            previewTextTitle.setText(getPaletteDisplayName(stagedPalette) + " Palette");
+        }
+        if (previewTextSubtitle != null) {
+            previewTextSubtitle.setTextColor(textSecondaryColor);
+            previewTextSubtitle.setText(getPaletteDescription(stagedPalette));
+        }
+        if (previewBadgePrimary != null) {
+            previewBadgePrimary.setBackgroundTintList(ColorStateList.valueOf(primaryColor));
+        }
+        if (previewBtnPrimary != null) {
+            previewBtnPrimary.setBackgroundTintList(ColorStateList.valueOf(primaryColor));
+        }
+        if (previewBtnSecondary != null) {
+            previewBtnSecondary.setStrokeColor(ColorStateList.valueOf(borderColor));
+            previewBtnSecondary.setTextColor(textPrimaryColor);
+        }
+        if (previewBackIcon != null) {
+            previewBackIcon.setImageTintList(ColorStateList.valueOf(textSecondaryColor));
+        }
+        if (previewSearchIcon != null) {
+            previewSearchIcon.setImageTintList(ColorStateList.valueOf(textSecondaryColor));
+        }
+        if (previewInputField != null) {
+            previewInputField.setTextColor(textPrimaryColor);
+            previewInputField.setHintTextColor(textMutedColor);
+        }
+
+        ColorStateList primaryCsl = ColorStateList.valueOf(primaryColor);
+        if (btnApplyAppearance != null) {
+            btnApplyAppearance.setBackgroundTintList(primaryCsl);
+        }
+        if (checkModeSystem != null) checkModeSystem.setImageTintList(primaryCsl);
+        if (checkModeLight != null) checkModeLight.setImageTintList(primaryCsl);
+        if (checkModeDark != null) checkModeDark.setImageTintList(primaryCsl);
+        if (checkPaletteGraphite != null) checkPaletteGraphite.setImageTintList(primaryCsl);
+        if (checkPaletteArctic != null) checkPaletteArctic.setImageTintList(primaryCsl);
+        if (checkPaletteMidnight != null) checkPaletteMidnight.setImageTintList(primaryCsl);
+        if (checkPaletteAmoled != null) checkPaletteAmoled.setImageTintList(primaryCsl);
+        if (checkPaletteOcean != null) checkPaletteOcean.setImageTintList(primaryCsl);
+        if (checkPaletteSage != null) checkPaletteSage.setImageTintList(primaryCsl);
+        if (checkPaletteSunset != null) checkPaletteSunset.setImageTintList(primaryCsl);
+        if (checkPaletteRose != null) checkPaletteRose.setImageTintList(primaryCsl);
+    }
+
+    private String getPaletteDisplayName(String palette) {
+        if (palette == null) return "Graphite";
+        switch (palette) {
+            case PreferencesHelper.PALETTE_ARCTIC: return "Arctic Light";
+            case PreferencesHelper.PALETTE_MIDNIGHT: return "Midnight";
+            case PreferencesHelper.PALETTE_AMOLED: return "AMOLED";
+            case PreferencesHelper.PALETTE_OCEAN: return "Ocean";
+            case PreferencesHelper.PALETTE_SAGE: return "Sage";
+            case PreferencesHelper.PALETTE_SUNSET: return "Sunset";
+            case PreferencesHelper.PALETTE_ROSE: return "Rose";
+            case PreferencesHelper.PALETTE_GRAPHITE:
+            default: return "Graphite";
+        }
+    }
+
+    private String getPaletteDescription(String palette) {
+        if (palette == null) return "Balanced neutral grays with electric blue accents";
+        switch (palette) {
+            case PreferencesHelper.PALETTE_ARCTIC: return "Cool frosty cyan with glacial blue highlights";
+            case PreferencesHelper.PALETTE_MIDNIGHT: return "Deep indigo and violet for low-light comfort";
+            case PreferencesHelper.PALETTE_AMOLED: return "Pure #000000 black saves battery on OLED displays";
+            case PreferencesHelper.PALETTE_OCEAN: return "Marine depth with vibrant azure accents";
+            case PreferencesHelper.PALETTE_SAGE: return "Forest greens and soothing botanical tones";
+            case PreferencesHelper.PALETTE_SUNSET: return "Warm amber, terracotta and dusk highlights";
+            case PreferencesHelper.PALETTE_ROSE: return "Rich crimson and elegant rose accents";
+            case PreferencesHelper.PALETTE_GRAPHITE:
+            default: return "Balanced neutral grays with electric blue accents";
+        }
+    }
+
+    private void applyAppearanceChanges() {
+        boolean modeChanged = (stagedThemeMode != PreferencesHelper.getThemeMode(this));
+        PreferencesHelper.setThemeMode(this, stagedThemeMode);
+        PreferencesHelper.setThemePalette(this, stagedPalette);
+        PreferencesHelper.setDynamicColorEnabled(this, stagedDynamicColor);
+
+        if (modeChanged) {
+            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(stagedThemeMode);
+        }
+        Toast.makeText(this, "Theme updated: " + getPaletteDisplayName(stagedPalette), Toast.LENGTH_SHORT).show();
+        recreate();
+    }
+
+    private void resetAppearanceToDefault() {
+        stagedThemeMode = PreferencesHelper.THEME_SYSTEM;
+        stagedPalette = PreferencesHelper.PALETTE_GRAPHITE;
+        stagedDynamicColor = false;
+        applyAppearanceChanges();
     }
 
     private void openHardwarePage() {
@@ -2374,6 +3124,9 @@ public class MainActivity extends AppCompatActivity {
         stopTelemetryUpdates();
         viewFontPage.setVisibility(View.GONE);
         viewHardwarePage.setVisibility(View.GONE);
+        if (viewAppearancePage != null) {
+            viewAppearancePage.setVisibility(View.GONE);
+        }
         scrollSettings.setVisibility(View.VISIBLE);
         tvTitle.setText("Settings");
         loadSettingsData();
@@ -2443,24 +3196,37 @@ public class MainActivity extends AppCompatActivity {
     private void loadSettingsData() {
         // Current Theme description
         int themeMode = PreferencesHelper.getThemeMode(this);
+        String modeStr;
         if (themeMode == PreferencesHelper.THEME_LIGHT) {
-            tvSettingThemeCurrent.setText("Light Mode");
+            modeStr = "Light";
         } else if (themeMode == PreferencesHelper.THEME_DARK) {
-            tvSettingThemeCurrent.setText("Dark Mode");
+            modeStr = "Dark";
         } else {
-            tvSettingThemeCurrent.setText("System default (Follow device)");
+            modeStr = "System Default";
+        }
+        String palette = PreferencesHelper.getThemePalette(this);
+        String paletteStr = getPaletteDisplayName(palette);
+        boolean dynamic = PreferencesHelper.isDynamicColorEnabled(this);
+        String dynStr = dynamic ? " · Dynamic" : "";
+        if (tvSettingThemeCurrent != null) {
+            tvSettingThemeCurrent.setText(modeStr + " · " + paletteStr + dynStr);
         }
 
-        // Current Font Size description
+        // Current Font description
         float scale = PreferencesHelper.getFontScale(this);
+        String famName = getFontFamilyDisplayName(PreferencesHelper.getFontFamily(this));
+        String sizeStr;
         if (Math.abs(scale - PreferencesHelper.FONT_SCALE_SMALL) < 0.05f) {
-            tvSettingFontCurrent.setText("Small (85% · ~12px)");
+            sizeStr = "Small (85% · ~12px)";
         } else if (Math.abs(scale - PreferencesHelper.FONT_SCALE_LARGE) < 0.05f) {
-            tvSettingFontCurrent.setText("Large (115% · ~16px)");
+            sizeStr = "Large (115% · ~16px)";
         } else if (Math.abs(scale - PreferencesHelper.FONT_SCALE_HUGE) < 0.05f) {
-            tvSettingFontCurrent.setText("Extra Large (130% · ~18px)");
+            sizeStr = "Extra Large (130% · ~18px)";
         } else {
-            tvSettingFontCurrent.setText("Default (100% · ~14px)");
+            sizeStr = "Default (100% · ~14px)";
+        }
+        if (tvSettingFontCurrent != null) {
+            tvSettingFontCurrent.setText(famName + " · " + sizeStr);
         }
 
         // Hardware summary
@@ -2552,6 +3318,72 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+        // Chat Account Status (Google Play Policy)
+        if (tvSettingChatAccountStatus != null) {
+            if (ChatPreferencesHelper.isChatRegistered(this)) {
+                String name = ChatPreferencesHelper.getUserName(this);
+                String phone = ChatPreferencesHelper.getUserPhone(this);
+                tvSettingChatAccountStatus.setText("Registered: " + name + " (" + phone + ")");
+                tvSettingChatAccountStatus.setTextColor(ContextCompat.getColor(this, R.color.call_incoming));
+            } else {
+                tvSettingChatAccountStatus.setText("Not registered (Tap to create)");
+                tvSettingChatAccountStatus.setTextColor(ContextCompat.getColor(this, R.color.theme_text_secondary));
+            }
+        }
+    }
+
+    private void confirmDeleteChatAccount() {
+        if (!ChatPreferencesHelper.isChatRegistered(this)) {
+            Toast.makeText(this, "No active chat account found on this device.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String name = ChatPreferencesHelper.getUserName(this);
+        String phone = ChatPreferencesHelper.getUserPhone(this);
+        String userId = ChatPreferencesHelper.getUserId(this);
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("Delete Chat Account?")
+                .setMessage("Are you sure you want to delete your chat account (" + name + " · " + phone + ")?\n\nThis will permanently delete:\n• Your chat profile and phone registration\n• All sent and received messages\n• Shared media and attachments\n• Active encryption sessions\n\nThis action cannot be undone and complies with Google Play Account Deletion requirements.")
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setPositiveButton("Delete Permanently", (dialog, which) -> {
+                    dialog.dismiss();
+                    executeDeleteChatAccount(userId);
+                })
+                .show();
+    }
+
+    private void executeDeleteChatAccount(String userId) {
+        android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
+        progress.setMessage("Deleting chat account and data...");
+        progress.setCancelable(false);
+        progress.show();
+
+        ChatApiClient.deleteAccount(this, userId, new ChatApiClient.ChatCallback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean result) {
+                if (progress.isShowing()) progress.dismiss();
+                finalizeChatAccountDeletion();
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                if (progress.isShowing()) progress.dismiss();
+                finalizeChatAccountDeletion();
+            }
+        });
+    }
+
+    private void finalizeChatAccountDeletion() {
+        ChatPreferencesHelper.clearChatUser(MainActivity.this);
+        com.zez.app.util.ChatLocalDbHelper.getInstance(MainActivity.this).clearAllData();
+        ChatNotificationManager.getInstance().stop();
+
+        Toast.makeText(MainActivity.this, "Chat account and all data deleted permanently.", Toast.LENGTH_LONG).show();
+
+        loadSettingsData();
+        loadChatsData();
     }
 
     private void initAccentColorSwatches() {
@@ -3020,7 +3852,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void applyAccentColor() {
-        int accentColor = PreferencesHelper.getAccentColorInt(this);
+        int accentColor = com.zez.app.theme.ThemeManager.getPrimaryColor(this);
 
         if (bottomNav != null) {
             int[][] states = new int[][] {
@@ -3029,7 +3861,7 @@ public class MainActivity extends AppCompatActivity {
             };
             int[] colors = new int[] {
                     accentColor,
-                    androidx.core.content.ContextCompat.getColor(this, R.color.theme_text_muted)
+                    com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeTextMuted)
             };
             android.content.res.ColorStateList colorStateList = new android.content.res.ColorStateList(states, colors);
             bottomNav.setItemIconTintList(colorStateList);
@@ -3053,6 +3885,54 @@ public class MainActivity extends AppCompatActivity {
         }
         if (viewCallsContainer != null && viewCallsContainer.getVisibility() == View.VISIBLE) {
             loadCallsData();
+        }
+    }
+
+    private void applyThemeColors() {
+        int bg = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeBackground);
+        int surface = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeSurface);
+        int primary = com.zez.app.theme.ThemeManager.getPrimaryColor(this);
+        int textPrimary = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeTextPrimary);
+        int textMuted = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeTextMuted);
+        int iconTint = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeIconTint);
+
+        View content = findViewById(android.R.id.content);
+        if (content != null) content.setBackgroundColor(bg);
+
+        View contentContainer = findViewById(R.id.content_container);
+        if (contentContainer != null) contentContainer.setBackgroundColor(bg);
+
+        layoutAppBar = findViewById(R.id.app_bar);
+        if (layoutAppBar != null) layoutAppBar.setBackgroundColor(surface);
+
+        layoutChatsSelectionBar = findViewById(R.id.layout_chats_selection_bar);
+        if (layoutChatsSelectionBar != null) layoutChatsSelectionBar.setBackgroundColor(surface);
+
+        applyAccentColor();
+
+        if (tvTitle != null) tvTitle.setTextColor(textPrimary);
+        if (tvSubtitle != null) tvSubtitle.setTextColor(textMuted);
+        if (btnMusicLauncher != null) btnMusicLauncher.setImageTintList(android.content.res.ColorStateList.valueOf(primary));
+        if (btnSync != null) btnSync.setImageTintList(android.content.res.ColorStateList.valueOf(iconTint));
+
+        if (viewChatsContainer != null) viewChatsContainer.setBackgroundColor(bg);
+        if (viewCallsContainer != null) viewCallsContainer.setBackgroundColor(bg);
+        if (viewGalleryContainer != null) viewGalleryContainer.setBackgroundColor(bg);
+        if (layoutAlarmsContainer != null) layoutAlarmsContainer.setBackgroundColor(bg);
+        if (scrollSettings != null) scrollSettings.setBackgroundColor(bg);
+        if (viewFontPage != null) viewFontPage.setBackgroundColor(bg);
+        if (viewHardwarePage != null) viewHardwarePage.setBackgroundColor(bg);
+        if (viewAppearancePage != null) viewAppearancePage.setBackgroundColor(bg);
+
+        if (galleryTabLayout != null) {
+            galleryTabLayout.setBackgroundColor(surface);
+            galleryTabLayout.setSelectedTabIndicatorColor(primary);
+            galleryTabLayout.setTabTextColors(textMuted, primary);
+        }
+        if (galleryActionBar != null) galleryActionBar.setBackgroundColor(surface);
+
+        if (layoutMainMiniPlayer != null) {
+            layoutMainMiniPlayer.setBackgroundColor(surface);
         }
     }
 
@@ -3222,6 +4102,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResult(com.zez.app.util.AppUpdateHelper.ReleaseInfo info) {
                 runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
                     if (finalCheckingDialog != null && finalCheckingDialog.isShowing()) {
                         finalCheckingDialog.dismiss();
                     }
@@ -3231,7 +4114,7 @@ public class MainActivity extends AppCompatActivity {
                                 ? info.releaseNotes
                                 : "Bug fixes and performance improvements.";
 
-                        String message = "A newer version of Zez is ready to install!\n\n"
+                        String message = "A newer version of Quacky is ready to install!\n\n"
                                 + "• Current version: v" + info.currentVersionName + " (Build " + info.currentVersionCode + ")\n"
                                 + "• Latest version: v" + info.latestVersionName + " (Build " + info.latestVersionCode + ")\n"
                                 + "• Download size: " + formatFileSize(info.fileSize) + "\n\n"
@@ -3248,7 +4131,7 @@ public class MainActivity extends AppCompatActivity {
                                 .show();
                     } else {
                         if (isManual) {
-                            String message = "You're already running the latest version of Zez.\n\n"
+                            String message = "You're already running the latest version of Quacky.\n\n"
                                     + "• Installed version: v" + info.currentVersionName + " (Build " + info.currentVersionCode + ")";
 
                             new com.google.android.material.dialog.MaterialAlertDialogBuilder(MainActivity.this)
@@ -3265,6 +4148,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
+                    }
                     if (finalCheckingDialog != null && finalCheckingDialog.isShowing()) {
                         finalCheckingDialog.dismiss();
                     }
@@ -3289,13 +4175,17 @@ public class MainActivity extends AppCompatActivity {
         com.zez.app.util.AppUpdateHelper.downloadAndInstall(this, info, new com.zez.app.util.AppUpdateHelper.DownloadProgressCallback() {
             @Override
             public void onProgress(int percent) {
-                runOnUiThread(() -> downloadProgress.setProgress(percent));
+                runOnUiThread(() -> {
+                    if (!isFinishing() && !isDestroyed() && downloadProgress.isShowing()) {
+                        downloadProgress.setProgress(percent);
+                    }
+                });
             }
 
             @Override
             public void onComplete(java.io.File file) {
                 runOnUiThread(() -> {
-                    if (downloadProgress.isShowing()) {
+                    if (!isFinishing() && !isDestroyed() && downloadProgress.isShowing()) {
                         downloadProgress.dismiss();
                     }
                     Toast.makeText(MainActivity.this, "Download complete! Opening installer...", Toast.LENGTH_SHORT).show();
@@ -3305,7 +4195,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
-                    if (downloadProgress.isShowing()) {
+                    if (!isFinishing() && !isDestroyed() && downloadProgress.isShowing()) {
                         downloadProgress.dismiss();
                     }
                     Toast.makeText(MainActivity.this, "Download failed: " + error, Toast.LENGTH_LONG).show();
@@ -3327,6 +4217,14 @@ public class MainActivity extends AppCompatActivity {
             conversationsAdapter.clearSelection();
             return;
         }
+        if (alarmAdapter != null && alarmAdapter.isSelectionMode()) {
+            alarmAdapter.clearSelection();
+            return;
+        }
+        if (galleryAdapter != null && galleryAdapter.isSelectMode()) {
+            galleryAdapter.exitSelectMode();
+            return;
+        }
         if (viewFontPage != null && viewFontPage.getVisibility() == View.VISIBLE) {
             closeSubPages();
             return;
@@ -3335,11 +4233,20 @@ public class MainActivity extends AppCompatActivity {
             closeSubPages();
             return;
         }
+        if (viewAppearancePage != null && viewAppearancePage.getVisibility() == View.VISIBLE) {
+            closeSubPages();
+            return;
+        }
         if (swipeBin != null && swipeBin.getVisibility() == View.VISIBLE) {
             switchTab(R.id.nav_gallery);
             if (bottomNav != null) {
                 bottomNav.setSelectedItemId(R.id.nav_gallery);
             }
+            return;
+        }
+        if (currentTab != R.id.nav_chats && bottomNav != null) {
+            currentTab = R.id.nav_chats;
+            bottomNav.setSelectedItemId(R.id.nav_chats);
             return;
         }
         super.onBackPressed();

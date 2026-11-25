@@ -9,6 +9,7 @@ import com.zez.app.receiver.BootReceiver;
 import com.zez.app.util.AlarmHelper;
 import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatNotificationManager;
+import com.zez.app.util.QuackyStorageHelper;
 
 public class ZezApplication extends Application {
     private static final String TAG = "ZezApplication";
@@ -19,15 +20,16 @@ public class ZezApplication extends Application {
         super.onCreate();
         Log.d(TAG, "Zez Application initialized.");
 
-        // Apply saved theme (System Default / Light / Dark)
-        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
-                com.zez.app.util.PreferencesHelper.getThemeMode(this)
-        );
+        // Apply saved theme (System Default / Light / Dark) & dynamic colors
+        com.zez.app.theme.ThemeManager.init(this);
 
         // Pre-register notification channel & start persistent background polling
         ChatNotificationHelper.createNotificationChannel(this);
         BootReceiver.schedulePeriodicSync(this);
         ChatNotificationManager.getInstance().start(this);
+
+        // Ensure public Quacky storage directories exist
+        QuackyStorageHelper.initDirectories(this);
 
         // Schedule periodic alarm sync with backend & perform initial background sync
         try {

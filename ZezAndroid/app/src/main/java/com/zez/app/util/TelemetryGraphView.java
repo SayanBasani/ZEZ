@@ -45,6 +45,13 @@ public class TelemetryGraphView extends View {
     }
 
     private void init() {
+        android.util.TypedValue typedValue = new android.util.TypedValue();
+        if (getContext().getTheme().resolveAttribute(com.zez.app.R.attr.colorThemePrimary, typedValue, true)
+                || getContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true)) {
+            lineColor = typedValue.data;
+            fillColor = (lineColor & 0x00FFFFFF) | 0x26000000;
+        }
+
         linePaint.setStyle(Paint.Style.STROKE);
         linePaint.setStrokeWidth(4f);
         linePaint.setColor(lineColor);

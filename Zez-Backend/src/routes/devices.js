@@ -254,10 +254,22 @@ router.post("/app-calls/sync", deviceAuth, async (req, res, next) => {
 router.post("/alarms/sync", deviceAuth, async (req, res, next) => {
   const deviceId = req.deviceId;
   const localAlarms = Array.isArray(req.body.alarms) ? req.body.alarms : [];
+  const clientDeletedIds = Array.isArray(req.body.deletedAlarmIds)
+    ? req.body.deletedAlarmIds.map(Number).filter(n => Number.isFinite(n) && n > 0)
+    : [];
 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
+    if (clientDeletedIds.length > 0) {
+      await client.query(
+        `UPDATE public.device_alarms
+         SET status = 'deleted', updated_at = NOW()
+         WHERE device_id = $1 AND alarm_id = ANY($2::bigint[])`,
+        [deviceId, clientDeletedIds]
+      );
+    }
 
     for (const a of localAlarms) {
       if (!a || !a.id) continue;

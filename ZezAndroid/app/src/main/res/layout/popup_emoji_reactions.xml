@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     app:cardCornerRadius="26dp"
     app:cardElevation="8dp"
-    app:cardBackgroundColor="@color/theme_surface"
+    app:cardBackgroundColor="?attr/colorThemeSurface"
     app:cardUseCompatPadding="true">
 
     <LinearLayout

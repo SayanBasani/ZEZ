@@ -47,6 +47,7 @@ import com.zez.app.music.download.MusicDownloadManager;
 import com.zez.app.music.model.MusicTrack;
 import com.zez.app.music.player.MusicPlayerManager;
 import com.zez.app.music.player.MusicPlayerService;
+import com.zez.app.music.util.MusicHistoryManager;
 import com.zez.app.music.util.YouTubeApiHelper;
 
 import java.util.List;
@@ -62,12 +63,27 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
     private EditText etSearch;
     private ImageButton btnSearchClear;
 
+    private TextView tvMusicMainTitle;
+    private TextView tvMusicModeBadge;
     private TextView chipTrending;
     private TextView chipTopTracks;
+    private TextView chipViral;
     private TextView chipRecommended;
     private TextView chipCharts;
     private TextView chipDownloads;
+    private TextView chipHistory;
     private TextView activeChip;
+
+    private View drawerItemYtMusic;
+    private View drawerItemViral;
+    private String currentContinuationToken = null;
+    private boolean isLoadingMore = false;
+    private boolean isYtMusicMode = false;
+
+    // History Header
+    private View layoutHistoryHeader;
+    private TextView tvHistoryCount;
+    private TextView btnClearPlaybackHistory;
 
     // Downloads Sub-Tabs
     private View layoutDownloadsSubtabs;
@@ -125,17 +141,43 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.zez.app.theme.ThemeManager.applyTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music);
 
         MusicPlayerManager.getInstance().init(this);
 
         initViews();
+        applyThemeColors();
         setupListeners();
         setupRecyclerViews();
 
         // Load default category
         selectCategory(chipTrending, "Trending");
+    }
+
+    private void applyThemeColors() {
+        int bg = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeBackground);
+        int surface = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeSurface);
+        int primary = com.zez.app.theme.ThemeManager.getPrimaryColor(this);
+        int textPrimary = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeTextPrimary);
+        int textMuted = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeTextMuted);
+        int iconTint = com.zez.app.theme.ThemeManager.resolveThemeColor(this, R.attr.colorThemeIconTint);
+
+        View content = findViewById(android.R.id.content);
+        if (content != null) content.setBackgroundColor(bg);
+
+        View appBar = findViewById(R.id.app_bar_music);
+        if (appBar != null) appBar.setBackgroundColor(surface);
+
+        View drawerNav = findViewById(R.id.nav_drawer_content);
+        if (drawerNav != null) drawerNav.setBackgroundColor(surface);
+
+        if (cardMiniPlayer != null) cardMiniPlayer.setBackgroundColor(surface);
+        if (btnMusicMenu != null) btnMusicMenu.setImageTintList(android.content.res.ColorStateList.valueOf(iconTint));
+        if (btnBack != null) btnBack.setImageTintList(android.content.res.ColorStateList.valueOf(iconTint));
+        if (btnSearchToggle != null) btnSearchToggle.setImageTintList(android.content.res.ColorStateList.valueOf(iconTint));
+        if (tvMusicMainTitle != null) tvMusicMainTitle.setTextColor(textPrimary);
     }
 
     private void initViews() {
@@ -147,11 +189,19 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         etSearch = findViewById(R.id.et_music_search);
         btnSearchClear = findViewById(R.id.btn_music_search_clear);
 
+        tvMusicMainTitle = findViewById(R.id.tv_music_main_title);
+        tvMusicModeBadge = findViewById(R.id.tv_music_mode_badge);
+
         chipTrending = findViewById(R.id.chip_cat_trending);
         chipTopTracks = findViewById(R.id.chip_cat_top_tracks);
+        chipViral = findViewById(R.id.chip_cat_viral);
         chipRecommended = findViewById(R.id.chip_cat_recommended);
         chipCharts = findViewById(R.id.chip_cat_charts);
         chipDownloads = findViewById(R.id.chip_cat_downloads);
+        chipHistory = findViewById(R.id.chip_cat_history);
+
+        drawerItemYtMusic = findViewById(R.id.drawer_item_yt_music);
+        drawerItemViral = findViewById(R.id.drawer_item_viral);
 
         swipeRefresh = findViewById(R.id.swipe_music);
         rvTracks = findViewById(R.id.rv_music_tracks);
@@ -165,6 +215,11 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         layoutDownloadsSubtabs = findViewById(R.id.layout_downloads_subtabs);
         btnSubtabDownloading = findViewById(R.id.btn_subtab_downloading);
         btnSubtabCompleted = findViewById(R.id.btn_subtab_completed);
+
+        // History Header
+        layoutHistoryHeader = findViewById(R.id.layout_history_header);
+        tvHistoryCount = findViewById(R.id.tv_history_count);
+        btnClearPlaybackHistory = findViewById(R.id.btn_clear_playback_history);
 
         // Mini player
         cardMiniPlayer = findViewById(R.id.card_mini_player);
@@ -190,7 +245,7 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
             if (drawerMusic != null && drawerMusic.isDrawerOpen(GravityCompat.START)) {
                 drawerMusic.closeDrawers();
             } else {
-                finish();
+                navigateBackToChat();
             }
         });
 
@@ -200,6 +255,7 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         setupDrawerItem(R.id.drawer_item_recommended, chipRecommended, "Recommended");
         setupDrawerItem(R.id.drawer_item_charts, chipCharts, "Charts");
         setupDrawerItem(R.id.drawer_item_downloads, chipDownloads, "Downloads");
+        setupDrawerItem(R.id.drawer_item_history, chipHistory, "History");
 
         View drawerSleep = findViewById(R.id.drawer_item_sleep_timer);
         if (drawerSleep != null) {
@@ -213,7 +269,7 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         if (drawerBackApp != null) {
             drawerBackApp.setOnClickListener(v -> {
                 if (drawerMusic != null) drawerMusic.closeDrawers();
-                finish();
+                navigateBackToChat();
             });
         }
 
@@ -226,12 +282,19 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
                 layoutSearchBox.setVisibility(View.VISIBLE);
                 etSearch.requestFocus();
                 showKeyboard();
+                showRecentSearchSuggestions();
             }
         });
 
         btnSearchClear.setOnClickListener(v -> {
             etSearch.setText("");
-            rvSuggestions.setVisibility(View.GONE);
+            showRecentSearchSuggestions();
+        });
+
+        etSearch.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && etSearch.getText().toString().trim().length() <= 1) {
+                showRecentSearchSuggestions();
+            }
         });
 
         etSearch.addTextChangedListener(new TextWatcher() {
@@ -252,7 +315,7 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
                     searchDebounceRunnable = () -> fetchSuggestions(s.toString());
                     searchDebounceHandler.postDelayed(searchDebounceRunnable, 300);
                 } else {
-                    rvSuggestions.setVisibility(View.GONE);
+                    showRecentSearchSuggestions();
                 }
             }
 
@@ -277,9 +340,62 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
 
         chipTrending.setOnClickListener(v -> selectCategory(chipTrending, "Trending"));
         chipTopTracks.setOnClickListener(v -> selectCategory(chipTopTracks, "Top tracks"));
+        if (chipViral != null) {
+            chipViral.setOnClickListener(v -> selectCategory(chipViral, "Viral 50"));
+        }
         chipRecommended.setOnClickListener(v -> selectCategory(chipRecommended, "Recommended"));
         chipCharts.setOnClickListener(v -> selectCategory(chipCharts, "Charts"));
         chipDownloads.setOnClickListener(v -> selectCategory(chipDownloads, "Downloads"));
+        if (chipHistory != null) {
+            chipHistory.setOnClickListener(v -> selectCategory(chipHistory, "History"));
+        }
+
+        if (drawerItemYtMusic != null) {
+            drawerItemYtMusic.setOnClickListener(v -> switchMode(true));
+        }
+        if (drawerItemViral != null) {
+            drawerItemViral.setOnClickListener(v -> {
+                if (drawerMusic != null) drawerMusic.closeDrawers();
+                if (chipViral != null) {
+                    selectCategory(chipViral, "Viral 50");
+                } else {
+                    selectCategory(chipTrending, "Viral 50");
+                }
+            });
+        }
+
+        // Infinite Scrolling on rvTracks
+        rvTracks.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@androidx.annotation.NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy > 0) { // Scrolling down
+                    LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (lm != null && !isLoadingMore && currentContinuationToken != null && !currentContinuationToken.isEmpty()) {
+                        int visibleCount = lm.getChildCount();
+                        int totalCount = lm.getItemCount();
+                        int firstVisible = lm.findFirstVisibleItemPosition();
+                        if ((visibleCount + firstVisible) >= totalCount - 4 && totalCount >= 10) {
+                            loadMoreTracks();
+                        }
+                    }
+                }
+            }
+        });
+
+        if (btnClearPlaybackHistory != null) {
+            btnClearPlaybackHistory.setOnClickListener(v -> {
+                new AlertDialog.Builder(this)
+                        .setTitle("Clear Playback History")
+                        .setMessage("Are you sure you want to clear your recently played songs?")
+                        .setPositiveButton("Clear", (dialog, which) -> {
+                            MusicHistoryManager.clearPlaybackHistory(this);
+                            loadPlaybackHistory();
+                            Toast.makeText(this, "Playback history cleared", Toast.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
 
         swipeRefresh.setOnRefreshListener(() -> {
             if ("Downloads".equalsIgnoreCase(currentCategory)) {
@@ -288,6 +404,8 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
                 } else {
                     loadCompletedDownloads();
                 }
+            } else if ("History".equalsIgnoreCase(currentCategory)) {
+                loadPlaybackHistory();
             } else {
                 loadCategoryMusic(currentCategory);
             }
@@ -331,15 +449,25 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         rvTracks.setLayoutManager(new LinearLayoutManager(this));
         rvTracks.setAdapter(musicAdapter);
 
-        suggestionAdapter = new MusicSuggestionAdapter(query -> {
-            isSelectingSuggestion = true;
-            searchDebounceHandler.removeCallbacksAndMessages(null);
-            etSearch.setText(query);
-            etSearch.setSelection(query.length());
-            rvSuggestions.setVisibility(View.GONE);
-            hideKeyboard();
-            performSearch(query);
-            isSelectingSuggestion = false;
+        suggestionAdapter = new MusicSuggestionAdapter(new MusicSuggestionAdapter.OnSuggestionClickListener() {
+            @Override
+            public void onSuggestionClick(String query) {
+                isSelectingSuggestion = true;
+                searchDebounceHandler.removeCallbacksAndMessages(null);
+                etSearch.setText(query);
+                etSearch.setSelection(query.length());
+                rvSuggestions.setVisibility(View.GONE);
+                hideKeyboard();
+                performSearch(query);
+                isSelectingSuggestion = false;
+            }
+
+            @Override
+            public void onClearHistoryClick() {
+                MusicHistoryManager.clearSearchHistory(MusicActivity.this);
+                rvSuggestions.setVisibility(View.GONE);
+                Toast.makeText(MusicActivity.this, "Search history cleared", Toast.LENGTH_SHORT).show();
+            }
         });
         rvSuggestions.setLayoutManager(new LinearLayoutManager(this));
         rvSuggestions.setAdapter(suggestionAdapter);
@@ -357,28 +485,37 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         this.currentCategory = category;
         if ("Downloads".equalsIgnoreCase(category)) {
             if (layoutDownloadsSubtabs != null) layoutDownloadsSubtabs.setVisibility(View.VISIBLE);
+            if (layoutHistoryHeader != null) layoutHistoryHeader.setVisibility(View.GONE);
             loadDownloads();
+        } else if ("History".equalsIgnoreCase(category)) {
+            if (layoutDownloadsSubtabs != null) layoutDownloadsSubtabs.setVisibility(View.GONE);
+            if (layoutHistoryHeader != null) layoutHistoryHeader.setVisibility(View.VISIBLE);
+            rvTracks.setAdapter(musicAdapter);
+            loadPlaybackHistory();
         } else {
             if (layoutDownloadsSubtabs != null) layoutDownloadsSubtabs.setVisibility(View.GONE);
+            if (layoutHistoryHeader != null) layoutHistoryHeader.setVisibility(View.GONE);
             rvTracks.setAdapter(musicAdapter);
             loadCategoryMusic(category);
         }
     }
 
     private void loadCategoryMusic(String category) {
+        currentContinuationToken = null;
         pbLoading.setVisibility(View.VISIBLE);
         layoutEmpty.setVisibility(View.GONE);
 
-        YouTubeApiHelper.getInstance().getTrending(category, new YouTubeApiHelper.Callback<List<MusicTrack>>() {
+        YouTubeApiHelper.getInstance().getTrending(category, new YouTubeApiHelper.Callback<YouTubeApiHelper.SearchResult>() {
             @Override
-            public void onSuccess(List<MusicTrack> result) {
+            public void onSuccess(YouTubeApiHelper.SearchResult result) {
                 pbLoading.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
-                if (result == null || result.isEmpty()) {
+                if (result == null || result.getTracks() == null || result.getTracks().isEmpty()) {
                     showEmpty("No tracks found", "Could not load " + category + " music.");
                 } else {
+                    currentContinuationToken = result.getContinuationToken();
                     layoutEmpty.setVisibility(View.GONE);
-                    musicAdapter.setTracks(result);
+                    musicAdapter.setTracks(result.getTracks());
                 }
             }
 
@@ -462,24 +599,54 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
         }
     }
 
+    private void loadPlaybackHistory() {
+        pbLoading.setVisibility(View.GONE);
+        swipeRefresh.setRefreshing(false);
+        List<MusicTrack> hist = MusicHistoryManager.getPlaybackHistory(this);
+        if (tvHistoryCount != null) {
+            tvHistoryCount.setText("Recently Played (" + hist.size() + ")");
+        }
+        if (hist.isEmpty()) {
+            showEmpty("No playback history", "Songs you listen to will automatically appear here.");
+            musicAdapter.setTracks(hist);
+        } else {
+            layoutEmpty.setVisibility(View.GONE);
+            musicAdapter.setTracks(hist);
+        }
+    }
+
+    private void showRecentSearchSuggestions() {
+        if (isSelectingSuggestion || isFinishing() || isDestroyed()) return;
+        List<String> history = MusicHistoryManager.getSearchHistory(this);
+        if (history != null && !history.isEmpty() && layoutSearchBox.getVisibility() == View.VISIBLE) {
+            suggestionAdapter.setHistorySuggestions(history);
+            rvSuggestions.setVisibility(View.VISIBLE);
+        } else {
+            rvSuggestions.setVisibility(View.GONE);
+        }
+    }
+
     private void performSearch(String query) {
+        currentContinuationToken = null;
+        MusicHistoryManager.addSearchQuery(this, query);
         searchDebounceHandler.removeCallbacksAndMessages(null);
         rvSuggestions.setVisibility(View.GONE);
         pbLoading.setVisibility(View.VISIBLE);
         layoutEmpty.setVisibility(View.GONE);
         musicAdapter.setTracks(null);
 
-        YouTubeApiHelper.getInstance().search(query, new YouTubeApiHelper.Callback<List<MusicTrack>>() {
+        YouTubeApiHelper.getInstance().search(query, new YouTubeApiHelper.Callback<YouTubeApiHelper.SearchResult>() {
             @Override
-            public void onSuccess(List<MusicTrack> result) {
+            public void onSuccess(YouTubeApiHelper.SearchResult result) {
                 if (isFinishing() || isDestroyed()) return;
                 pbLoading.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
-                if (result == null || result.isEmpty()) {
+                if (result == null || result.getTracks() == null || result.getTracks().isEmpty()) {
                     showEmpty("No results found", "Try another search keyword.");
                 } else {
+                    currentContinuationToken = result.getContinuationToken();
                     layoutEmpty.setVisibility(View.GONE);
-                    musicAdapter.setTracks(result);
+                    musicAdapter.setTracks(result.getTracks());
                 }
             }
 
@@ -491,6 +658,46 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
                 showEmpty("Search failed", "Please verify your internet connection.");
             }
         });
+    }
+
+    private void loadMoreTracks() {
+        if (isLoadingMore || currentContinuationToken == null || currentContinuationToken.isEmpty()) return;
+        isLoadingMore = true;
+        YouTubeApiHelper.getInstance().searchContinuation(currentContinuationToken, new YouTubeApiHelper.Callback<YouTubeApiHelper.SearchResult>() {
+            @Override
+            public void onSuccess(YouTubeApiHelper.SearchResult result) {
+                isLoadingMore = false;
+                if (isFinishing() || isDestroyed()) return;
+                currentContinuationToken = result.getContinuationToken();
+                if (result.getTracks() != null && !result.getTracks().isEmpty()) {
+                    musicAdapter.appendTracks(result.getTracks());
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                isLoadingMore = false;
+                android.util.Log.w("MusicActivity", "Error loading more tracks: " + e.getMessage());
+            }
+        });
+    }
+
+    private void switchMode(boolean isYtMusic) {
+        this.isYtMusicMode = isYtMusic;
+        if (drawerMusic != null) drawerMusic.closeDrawers();
+        if (tvMusicMainTitle != null) {
+            tvMusicMainTitle.setText(isYtMusic ? "YT Music" : "YMusic");
+        }
+        if (tvMusicModeBadge != null) {
+            tvMusicModeBadge.setText(isYtMusic ? "YouTube Music" : "Music");
+            tvMusicModeBadge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(isYtMusic ? "#EF4444" : "#FF0000")));
+        }
+        if (isYtMusic) {
+            selectCategory(chipViral != null ? chipViral : chipTrending, "Viral 50");
+            Toast.makeText(this, "Switched to YT Music (Charts & Viral)", Toast.LENGTH_SHORT).show();
+        } else {
+            selectCategory(chipTrending, "Trending");
+        }
     }
 
     private void fetchSuggestions(String query) {
@@ -815,13 +1022,35 @@ public class MusicActivity extends AppCompatActivity implements MusicPlayerManag
                 .show();
     }
 
+    private void navigateBackToChat() {
+        Intent result = new Intent();
+        result.putExtra("extra_return_to_chats", true);
+        setResult(RESULT_OK, result);
+        if (isTaskRoot()) {
+            Intent main = new Intent(this, com.zez.app.MainActivity.class);
+            main.putExtra("extra_open_tab", R.id.nav_chats);
+            main.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(main);
+        }
+        finish();
+    }
+
     @Override
     public void onBackPressed() {
         if (drawerMusic != null && drawerMusic.isDrawerOpen(GravityCompat.START)) {
             drawerMusic.closeDrawer(GravityCompat.START);
             return;
         }
-        super.onBackPressed();
+        if (playerSheetDialog != null && playerSheetDialog.isShowing()) {
+            playerSheetDialog.dismiss();
+            return;
+        }
+        if (layoutSearchBox != null && layoutSearchBox.getVisibility() == View.VISIBLE) {
+            layoutSearchBox.setVisibility(View.GONE);
+            if (rvSuggestions != null) rvSuggestions.setVisibility(View.GONE);
+            return;
+        }
+        navigateBackToChat();
     }
 
     // PlayerListener callbacks

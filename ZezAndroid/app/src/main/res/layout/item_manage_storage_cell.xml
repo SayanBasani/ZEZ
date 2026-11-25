@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_margin="1.5dp"
+    android:background="#141820"
+    app:layout_constraintDimensionRatio="1:1">
+
+    <!-- Thumbnail Image (for pictures/video frames) -->
+    <ImageView
+        android:id="@+id/iv_cell_thumb"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
+    <!-- File Icon & Badge (for MP4, Docs, Audios) -->
+    <LinearLayout
+        android:id="@+id/layout_cell_file_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <FrameLayout
+            android:layout_width="54dp"
+            android:layout_height="54dp">
+
+            <ImageView
+                android:id="@+id/iv_cell_icon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_file_doc"
+                app:tint="#4A5568" />
+
+            <TextView
+                android:id="@+id/tv_cell_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="MP4"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- Top Right File Size Label (e.g. 199 MB) -->
+    <TextView
+        android:id="@+id/tv_cell_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="6dp"
+        android:paddingHorizontal="5dp"
+        android:paddingVertical="1.5dp"
+        android:text="199 MB"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:shadowColor="#000000"
+        android:shadowRadius="3"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Bottom File Name Label (e.g. VID20261116...) -->
+    <TextView
+        android:id="@+id/tv_cell_filename"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="4dp"
+        android:background="#66000000"
+        android:text="InShot_2026..."
+        android:textColor="#E2E8F0"
+        android:textSize="10sp"
+        android:singleLine="true"
+        android:ellipsize="end"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Selection Checkmark & Tint Overlay -->
+    <View
+        android:id="@+id/view_cell_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#3322C55E"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/iv_cell_check"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_margin="6dp"
+        android:src="@drawable/ic_check_circle"
+        app:tint="@color/primary"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

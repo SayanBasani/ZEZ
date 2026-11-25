@@ -74,7 +74,7 @@
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
 
             <TextView
                 android:id="@+id/tv_conv_time"
@@ -82,7 +82,7 @@
                 android:layout_height="wrap_content"
                 android:text="12:45 PM"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_muted" />
+                android:textColor="?attr/colorThemeTextMuted" />
         </LinearLayout>
 
         <LinearLayout
@@ -97,7 +97,7 @@
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:src="@drawable/ic_check_double"
-                app:tint="@color/theme_text_muted"
+                app:tint="?attr/colorThemeTextMuted"
                 android:visibility="gone"
                 android:layout_marginEnd="4dp" />
 
@@ -110,7 +110,7 @@
                 android:textSize="13sp"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
 
             <TextView
                 android:id="@+id/tv_conv_unread_badge"
@@ -130,7 +130,7 @@
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:src="@drawable/ic_pin"
-                app:tint="@color/theme_text_muted"
+                app:tint="?attr/colorThemeTextMuted"
                 android:visibility="gone"
                 android:layout_marginStart="6dp" />
         </LinearLayout>

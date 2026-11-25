@@ -30,7 +30,7 @@
             android:text="Up Next · Queue"
             android:textSize="17sp"
             android:textStyle="bold"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <Button
             android:id="@+id/btn_queue_clear"
@@ -46,7 +46,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/theme_divider" />
+        android:background="?attr/colorThemeDivider" />
 
     <TextView
         android:id="@+id/tv_queue_empty"
@@ -54,7 +54,7 @@
         android:layout_height="120dp"
         android:gravity="center"
         android:text="Queue is empty"
-        android:textColor="@color/theme_text_muted"
+        android:textColor="?attr/colorThemeTextMuted"
         android:textSize="14sp"
         android:visibility="gone" />
 

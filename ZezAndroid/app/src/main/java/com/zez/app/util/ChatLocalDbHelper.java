@@ -300,6 +300,15 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
         }
     }
 
+    public synchronized void clearAllData() {
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            db.delete(TABLE_MESSAGES, null, null);
+            db.delete(TABLE_CONV, null, null);
+            db.delete(TABLE_CALLS, null, null);
+        } catch (Exception ignored) {}
+    }
+
     // ==========================================
     // CONVERSATIONS CACHE METHODS
     // ==========================================

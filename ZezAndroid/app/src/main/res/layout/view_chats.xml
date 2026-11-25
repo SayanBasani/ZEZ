@@ -5,7 +5,7 @@
     android:id="@+id/view_chats_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/theme_background"
+    android:background="?attr/colorThemeBackground"
     android:visibility="gone">
 
     <LinearLayout
@@ -36,7 +36,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_search"
-                    app:tint="@color/theme_text_muted" />
+                    app:tint="?attr/colorThemeTextMuted" />
 
                 <EditText
                     android:id="@+id/et_search_chats"
@@ -44,8 +44,8 @@
                     android:layout_height="match_parent"
                     android:background="@null"
                     android:hint="Search chats..."
-                    android:textColor="@color/theme_text_primary"
-                    android:textColorHint="@color/theme_text_muted"
+                    android:textColor="?attr/colorThemeTextPrimary"
+                    android:textColorHint="?attr/colorThemeTextMuted"
                     android:textSize="14sp"
                     android:paddingStart="10dp"
                     android:singleLine="true" />
@@ -58,7 +58,7 @@
                 android:layout_marginStart="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_more_vert"
-                app:tint="@color/theme_icon_tint"
+                app:tint="?attr/colorThemeIconTint"
                 android:contentDescription="Chat Settings" />
         </LinearLayout>
 
@@ -97,7 +97,7 @@
                     android:layout_width="72dp"
                     android:layout_height="72dp"
                     android:src="@drawable/ic_chat"
-                    app:tint="@color/theme_text_muted"
+                    app:tint="?attr/colorThemeTextMuted"
                     android:alpha="0.45" />
 
                 <TextView
@@ -108,7 +108,7 @@
                     android:text="No conversations yet"
                     android:textSize="17sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_secondary" />
+                    android:textColor="?attr/colorThemeTextSecondary" />
 
                 <TextView
                     android:id="@+id/tv_chats_empty_subtitle"
@@ -117,7 +117,7 @@
                     android:layout_marginTop="8dp"
                     android:text="Tap the message button below to start a chat with your contacts"
                     android:textSize="13sp"
-                    android:textColor="@color/theme_text_muted"
+                    android:textColor="?attr/colorThemeTextMuted"
                     android:gravity="center" />
 
                 <com.google.android.material.button.MaterialButton

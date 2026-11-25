@@ -17,7 +17,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="24dp"
         android:background="@drawable/bg_pill_badge"
-        android:backgroundTint="@color/theme_card_border" />
+        android:backgroundTint="?attr/colorThemeBorder" />
 
     <GridLayout
         android:layout_width="match_parent"
@@ -58,7 +58,7 @@
                 android:layout_marginTop="8dp"
                 android:text="Document"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
         </LinearLayout>
 
         <!-- 2. Camera -->
@@ -92,7 +92,7 @@
                 android:layout_marginTop="8dp"
                 android:text="Camera"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
         </LinearLayout>
 
         <!-- 3. Gallery -->
@@ -126,7 +126,7 @@
                 android:layout_marginTop="8dp"
                 android:text="Gallery"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
         </LinearLayout>
 
         <!-- 4. Video -->
@@ -160,7 +160,7 @@
                 android:layout_marginTop="8dp"
                 android:text="Video"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
         </LinearLayout>
 
         <!-- 5. Contact -->
@@ -194,7 +194,41 @@
                 android:layout_marginTop="8dp"
                 android:text="Contact"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
+        </LinearLayout>
+
+        <!-- 6. Games -->
+        <LinearLayout
+            android:id="@+id/btn_attach_games"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true">
+
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_attach_circle_games">
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_games"
+                    app:tint="@android:color/white" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Games"
+                android:textSize="12sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
         </LinearLayout>
 
     </GridLayout>

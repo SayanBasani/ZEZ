@@ -9,10 +9,11 @@
     android:background="?attr/selectableItemBackground">
 
     <ImageView
+        android:id="@+id/iv_suggestion_icon"
         android:layout_width="18dp"
         android:layout_height="18dp"
         android:src="@drawable/ic_search"
-        app:tint="@color/theme_text_muted" />
+        app:tint="?attr/colorThemeTextMuted" />
 
     <TextView
         android:id="@+id/tv_suggestion_text"
@@ -22,7 +23,7 @@
         android:layout_marginStart="14dp"
         android:text="Suggestion query"
         android:textSize="14sp"
-        android:textColor="@color/theme_text_primary"
+        android:textColor="?attr/colorThemeTextPrimary"
         android:maxLines="1"
         android:ellipsize="end" />
 
@@ -31,5 +32,5 @@
         android:layout_height="16dp"
         android:src="@drawable/ic_arrow_back"
         android:rotation="45"
-        app:tint="@color/theme_text_muted" />
+        app:tint="?attr/colorThemeTextMuted" />
 </LinearLayout>

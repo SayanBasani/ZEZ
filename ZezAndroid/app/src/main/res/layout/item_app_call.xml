@@ -26,7 +26,7 @@
             android:background="@drawable/bg_circle_glass"
             android:backgroundTint="#2022C55E"
             android:padding="6dp"
-            app:tint="@color/theme_icon_tint" />
+            app:tint="?attr/colorThemeIconTint" />
 
         <TextView
             android:id="@+id/tv_call_avatar_initials"
@@ -51,7 +51,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Contact Name"
-            android:textColor="@color/theme_text_primary"
+            android:textColor="?attr/colorThemeTextPrimary"
             android:textSize="15sp"
             android:textStyle="bold"
             android:singleLine="true" />
@@ -78,7 +78,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Voice call · 2 min"
-                android:textColor="@color/theme_text_secondary"
+                android:textColor="?attr/colorThemeTextSecondary"
                 android:textSize="12sp"
                 android:singleLine="true" />
 
@@ -86,7 +86,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" · "
-                android:textColor="@color/theme_text_muted"
+                android:textColor="?attr/colorThemeTextMuted"
                 android:textSize="12sp" />
 
             <TextView
@@ -94,7 +94,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="11/22/26"
-                android:textColor="@color/theme_text_muted"
+                android:textColor="?attr/colorThemeTextMuted"
                 android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>

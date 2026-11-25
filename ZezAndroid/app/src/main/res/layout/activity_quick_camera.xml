@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:keepScreenOn="true">
+
+    <!-- Camera Viewfinder -->
+    <TextureView
+        android:id="@+id/texture_quick_camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Captured Photo Preview -->
+    <ImageView
+        android:id="@+id/iv_camera_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:contentDescription="Captured photo preview" />
+
+    <!-- Shutter Flash Feedback Overlay -->
+    <View
+        android:id="@+id/view_camera_shutter_flash"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/white"
+        android:alpha="0"
+        android:visibility="gone" />
+
+    <!-- Tap-to-Focus Indicator -->
+    <View
+        android:id="@+id/view_camera_focus_ring"
+        android:layout_width="68dp"
+        android:layout_height="68dp"
+        android:background="@drawable/bg_focus_ring"
+        android:visibility="gone" />
+
+    <!-- Top Modern Translucent HUD -->
+    <LinearLayout
+        android:id="@+id/layout_camera_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="12dp">
+
+        <ImageButton
+            android:id="@+id/btn_camera_close"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_camera_pill"
+            android:src="@drawable/ic_close"
+            app:tint="@android:color/white"
+            android:contentDescription="Close camera" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Flash Toggle Pill -->
+        <LinearLayout
+            android:id="@+id/btn_camera_flash"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="14dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_camera_pill"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/iv_camera_flash"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_flash"
+                app:tint="@android:color/white"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:id="@+id/tv_camera_flash_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Auto"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
+        <!-- Flip Camera Button -->
+        <ImageButton
+            android:id="@+id/btn_camera_flip"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_camera_pill"
+            android:src="@drawable/ic_switch_camera"
+            app:tint="@android:color/white"
+            android:contentDescription="Flip Camera" />
+    </LinearLayout>
+
+    <!-- Bottom Capture Dock (Live Mode) -->
+    <LinearLayout
+        android:id="@+id/layout_camera_live_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingTop="12dp"
+        android:paddingBottom="28dp"
+        android:background="#88000000">
+
+        <!-- Zoom Preset Pills -->
+        <LinearLayout
+            android:id="@+id/layout_camera_zoom_pills"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_camera_pill">
+
+            <TextView
+                android:id="@+id/chip_zoom_1x"
+                android:layout_width="38dp"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:background="@drawable/bg_pill_badge"
+                android:backgroundTint="#2563EB"
+                android:text="1x"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white" />
+
+            <TextView
+                android:id="@+id/chip_zoom_15x"
+                android:layout_width="42dp"
+                android:layout_height="28dp"
+                android:layout_marginHorizontal="4dp"
+                android:gravity="center"
+                android:background="@drawable/bg_pill_badge"
+                android:backgroundTint="#00000000"
+                android:text="1.5x"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#CBD5E1" />
+
+            <TextView
+                android:id="@+id/chip_zoom_2x"
+                android:layout_width="38dp"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:background="@drawable/bg_pill_badge"
+                android:backgroundTint="#00000000"
+                android:text="2x"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#CBD5E1" />
+        </LinearLayout>
+
+        <!-- Mode Label -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            android:text="PHOTO"
+            android:letterSpacing="0.12"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#E2E8F0" />
+
+        <!-- Shutter Ring -->
+        <FrameLayout
+            android:id="@+id/btn_camera_shutter"
+            android:layout_width="82dp"
+            android:layout_height="82dp"
+            android:background="@drawable/bg_focus_ring"
+            android:clickable="true"
+            android:focusable="true">
+
+            <View
+                android:layout_width="66dp"
+                android:layout_height="66dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_circle_dot"
+                android:backgroundTint="@android:color/white" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- Bottom Confirm Controls Bar (Preview Mode) -->
+    <LinearLayout
+        android:id="@+id/layout_camera_confirm_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="26dp"
+        android:background="#AA000000"
+        android:visibility="gone">
+
+        <ImageButton
+            android:id="@+id/btn_camera_retake"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_camera_pill"
+            android:src="@drawable/ic_close"
+            app:tint="@android:color/white"
+            android:layout_marginEnd="36dp"
+            android:contentDescription="Retake photo" />
+
+        <ImageButton
+            android:id="@+id/btn_camera_send"
+            android:layout_width="68dp"
+            android:layout_height="68dp"
+            android:background="@drawable/bg_circle_dot"
+            android:backgroundTint="@color/primary"
+            android:src="@drawable/ic_check"
+            app:tint="@android:color/white"
+            android:contentDescription="Send photo" />
+    </LinearLayout>
+
+</FrameLayout>

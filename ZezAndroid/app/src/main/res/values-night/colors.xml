@@ -1,34 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand Accents -->
+    <!-- Brand / Default Primary Tokens -->
     <color name="primary">#3B82F6</color>
     <color name="primary_dark">#2563EB</color>
     <color name="accent">#60A5FA</color>
 
-    <!-- Semantic Theme Colors (Dark) -->
-    <color name="theme_background">#141415</color>
-    <color name="theme_surface">#19191B</color>
-    <color name="theme_card_border">#232325</color>
-    <color name="theme_border">#232325</color>
-    <color name="theme_divider">#2A2A2D</color>
-    <color name="theme_app_bar">#19191B</color>
-    <color name="theme_bottom_nav_bg">#19191B</color>
-    <color name="theme_text_primary">#EDEDED</color>
-    <color name="theme_text_secondary">#A1A1A6</color>
-    <color name="theme_text_muted">#85858B</color>
-    <color name="theme_icon_tint">#EDEDED</color>
+    <!-- Semantic Theme Colors (Dark Default / Fallback) -->
+    <color name="theme_background">#121417</color>
+    <color name="theme_surface">#1A1D21</color>
+    <color name="theme_surface_variant">#22262B</color>
+    <color name="theme_card_border">#2E333A</color>
+    <color name="theme_border">#2E333A</color>
+    <color name="theme_divider">#2E333A</color>
+    <color name="theme_app_bar">#1A1D21</color>
+    <color name="theme_bottom_nav_bg">#1A1D21</color>
+    <color name="theme_text_primary">#F1F5F9</color>
+    <color name="theme_text_secondary">#94A3B8</color>
+    <color name="theme_text_muted">#64748B</color>
+    <color name="theme_icon_tint">#F1F5F9</color>
 
     <!-- Legacy compatibility tokens mapped to dark in night mode -->
-    <color name="background_light">#141415</color>
-    <color name="surface_light">#19191B</color>
-    <color name="surface_variant">#232325</color>
-    <color name="text_primary_light">#EDEDED</color>
-    <color name="text_secondary_light">#A1A1A6</color>
-    <color name="border_light">#232325</color>
+    <color name="background_light">#121417</color>
+    <color name="surface_light">#1A1D21</color>
+    <color name="surface_variant">#22262B</color>
+    <color name="text_primary_light">#F1F5F9</color>
+    <color name="text_secondary_light">#94A3B8</color>
+    <color name="border_light">#2E333A</color>
 
     <!-- Call Badge Accents -->
     <color name="call_incoming">#4CC38A</color>
     <color name="call_outgoing">#60A5FA</color>
     <color name="call_missed">#E5484D</color>
     <color name="call_rejected">#C084FC</color>
+
+    <!-- PALETTE 1: Graphite (Dark) -->
+    <color name="graphite_dark_bg">#121417</color>
+    <color name="graphite_dark_surface">#1A1D21</color>
+    <color name="graphite_dark_surface_variant">#22262B</color>
+    <color name="graphite_dark_border">#2E333A</color>
+    <color name="graphite_dark_primary">#3B82F6</color>
+    <color name="graphite_dark_accent">#60A5FA</color>
+    <color name="graphite_dark_text_primary">#F1F5F9</color>
+    <color name="graphite_dark_text_secondary">#94A3B8</color>
+    <color name="graphite_dark_text_muted">#64748B</color>
+
+    <!-- PALETTE 2: Arctic Light (Dark) -->
+    <color name="arctic_dark_bg">#0A131F</color>
+    <color name="arctic_dark_surface">#102033</color>
+    <color name="arctic_dark_surface_variant">#172E47</color>
+    <color name="arctic_dark_border">#224163</color>
+    <color name="arctic_dark_primary">#06B6D4</color>
+    <color name="arctic_dark_accent">#22D3EE</color>
+    <color name="arctic_dark_text_primary">#F0F6FC</color>
+    <color name="arctic_dark_text_secondary">#97B3D0</color>
+    <color name="arctic_dark_text_muted">#627D9A</color>
+
+    <!-- PALETTE 3: Midnight (Dark) -->
+    <color name="midnight_dark_bg">#0C101E</color>
+    <color name="midnight_dark_surface">#151B33</color>
+    <color name="midnight_dark_surface_variant">#1F2749</color>
+    <color name="midnight_dark_border">#2D3966</color>
+    <color name="midnight_dark_primary">#6366F1</color>
+    <color name="midnight_dark_accent">#818CF8</color>
+    <color name="midnight_dark_text_primary">#F3F4F6</color>
+    <color name="midnight_dark_text_secondary">#9CA3AF</color>
+    <color name="midnight_dark_text_muted">#6B7280</color>
+
+    <!-- PALETTE 4: AMOLED (Dark - Pitch Black) -->
+    <color name="amoled_dark_bg">#000000</color>
+    <color name="amoled_dark_surface">#0D0D11</color>
+    <color name="amoled_dark_surface_variant">#17171E</color>
+    <color name="amoled_dark_border">#26262F</color>
+    <color name="amoled_dark_primary">#00E5FF</color>
+    <color name="amoled_dark_accent">#38BDF8</color>
+    <color name="amoled_dark_text_primary">#FFFFFF</color>
+    <color name="amoled_dark_text_secondary">#A1A1AA</color>
+    <color name="amoled_dark_text_muted">#71717A</color>
+
+    <!-- PALETTE 5: Ocean (Dark) -->
+    <color name="ocean_dark_bg">#081422</color>
+    <color name="ocean_dark_surface">#0F263D</color>
+    <color name="ocean_dark_surface_variant">#183756</color>
+    <color name="ocean_dark_border">#214972</color>
+    <color name="ocean_dark_primary">#0EA5E9</color>
+    <color name="ocean_dark_accent">#38BDF8</color>
+    <color name="ocean_dark_text_primary">#F0F9FF</color>
+    <color name="ocean_dark_text_secondary">#94A3B8</color>
+    <color name="ocean_dark_text_muted">#64748B</color>
+
+    <!-- PALETTE 6: Sage (Dark) -->
+    <color name="sage_dark_bg">#0B1713</color>
+    <color name="sage_dark_surface">#142921</color>
+    <color name="sage_dark_surface_variant">#1B362C</color>
+    <color name="sage_dark_border">#264B3E</color>
+    <color name="sage_dark_primary">#10B981</color>
+    <color name="sage_dark_accent">#34D399</color>
+    <color name="sage_dark_text_primary">#ECFDF5</color>
+    <color name="sage_dark_text_secondary">#A7F3D0</color>
+    <color name="sage_dark_text_muted">#6EE7B7</color>
+
+    <!-- PALETTE 7: Sunset (Dark) -->
+    <color name="sunset_dark_bg">#1B1113</color>
+    <color name="sunset_dark_surface">#2B191F</color>
+    <color name="sunset_dark_surface_variant">#3D242C</color>
+    <color name="sunset_dark_border">#54323D</color>
+    <color name="sunset_dark_primary">#F97316</color>
+    <color name="sunset_dark_accent">#FB923C</color>
+    <color name="sunset_dark_text_primary">#FFF1F2</color>
+    <color name="sunset_dark_text_secondary">#FECDD3</color>
+    <color name="sunset_dark_text_muted">#FDA4AF</color>
+
+    <!-- PALETTE 8: Rose (Dark) -->
+    <color name="rose_dark_bg">#1A0F15</color>
+    <color name="rose_dark_surface">#2B1622</color>
+    <color name="rose_dark_surface_variant">#3D1F31</color>
+    <color name="rose_dark_border">#542B43</color>
+    <color name="rose_dark_primary">#F43F5E</color>
+    <color name="rose_dark_accent">#FB7185</color>
+    <color name="rose_dark_text_primary">#FFF1F2</color>
+    <color name="rose_dark_text_secondary">#FDA4AF</color>
+    <color name="rose_dark_text_muted">#FB7185</color>
 </resources>

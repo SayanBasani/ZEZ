@@ -40,7 +40,7 @@
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <TextView
             android:id="@+id/tv_doc_info"
@@ -49,7 +49,7 @@
             android:layout_marginTop="2dp"
             android:text="1.2 MB · Oct 24, 2026"
             android:textSize="12sp"
-            android:textColor="@color/theme_text_muted" />
+            android:textColor="?attr/colorThemeTextMuted" />
     </LinearLayout>
 
     <TextView

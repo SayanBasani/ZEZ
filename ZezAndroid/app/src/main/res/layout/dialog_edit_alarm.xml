@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="20dp"
-        android:background="@color/theme_surface">
+        android:background="?attr/colorThemeSurface">
 
     <TextView
         android:id="@+id/tv_dialog_title"
@@ -21,7 +21,7 @@
         android:text="Set Alarm"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_primary"
+        android:textColor="?attr/colorThemeTextPrimary"
         android:layout_marginBottom="16dp" />
 
     <!-- TimePicker (Clock/Spinner) -->
@@ -72,7 +72,7 @@
                 android:text="Alarm Ringtone"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
 
             <TextView
                 android:id="@+id/tv_selected_ringtone"
@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:text="Default Alarm Ringtone"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
         </LinearLayout>
 
         <TextView
@@ -107,7 +107,7 @@
             android:layout_weight="1"
             android:text="Vibrate"
             android:textSize="14sp"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switch_vibrate"
@@ -152,7 +152,7 @@
                     android:text="Relentless Morning Wakeup"
                     android:textSize="12sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_primary"
+                    android:textColor="?attr/colorThemeTextPrimary"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
 
@@ -168,7 +168,7 @@
             android:layout_height="wrap_content"
             android:text="When enabled, this alarm refuses to let you oversleep. If not dismissed, it calls and rings repeatedly every 1 minute until you wake up and explicitly turn it off."
             android:textSize="11sp"
-            android:textColor="@color/theme_text_secondary"
+            android:textColor="?attr/colorThemeTextSecondary"
             android:lineSpacingExtra="2dp"
             android:layout_marginTop="6dp" />
     </LinearLayout>
@@ -180,7 +180,7 @@
         android:text="Repeat Days"
         android:textSize="13sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_muted"
+        android:textColor="?attr/colorThemeTextMuted"
         android:layout_marginBottom="8dp" />
 
     <LinearLayout
@@ -297,7 +297,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Cancel"
-            android:textColor="@color/theme_text_secondary"
+            android:textColor="?attr/colorThemeTextSecondary"
             android:textAllCaps="false" />
 
         <Button

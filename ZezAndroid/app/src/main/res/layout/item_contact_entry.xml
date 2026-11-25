@@ -22,7 +22,7 @@
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_person"
-            app:tint="@color/theme_text_secondary"
+            app:tint="?attr/colorThemeTextSecondary"
             android:background="@drawable/bg_circle_glass"
             android:padding="8dp" />
 
@@ -53,7 +53,7 @@
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <TextView
             android:id="@+id/tv_contact_detail"
@@ -63,7 +63,7 @@
             android:textSize="13sp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:textColor="@color/theme_text_secondary"
+            android:textColor="?attr/colorThemeTextSecondary"
             android:layout_marginTop="2dp" />
     </LinearLayout>
 

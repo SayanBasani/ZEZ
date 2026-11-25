@@ -73,17 +73,8 @@ public class MusicDownloadHelper {
     }
 
     public static File getDestinationFile(Context context, String fileName) {
-        try {
-            File publicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            if (publicDir != null && (publicDir.exists() || publicDir.mkdirs()) && publicDir.canWrite()) {
-                return new File(publicDir, fileName);
-            }
-        } catch (Exception ignored) {}
-        File appDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-        if (appDir == null) {
-            appDir = context.getFilesDir();
-        }
-        return new File(appDir, fileName);
+        File musicDir = com.zez.app.util.QuackyStorageHelper.getMusicDir(context);
+        return new File(musicDir, fileName);
     }
 
     private static void downloadDirectlyToFile(Context context, String downloadUrl, File destFile, MusicTrack track, DownloadCallback callback) {
@@ -154,17 +145,26 @@ public class MusicDownloadHelper {
             List<MusicTrack> valid = new ArrayList<>();
             for (MusicTrack t : list) {
                 if (t.getLocalFilePath() != null) {
-                    File f = new File(t.getLocalFilePath());
-                    if (f.exists() && f.length() > 0) {
-                        valid.add(t);
-                        continue;
-                    }
-                    // Check alternative destination directory
-                    File alt = getDestinationFile(context, f.getName());
-                    if (alt.exists() && alt.length() > 0) {
-                        t.setLocalFilePath(alt.getAbsolutePath());
-                        valid.add(t);
-                        continue;
+                    String lp = t.getLocalFilePath();
+                    if (lp.startsWith("content://")) {
+                        try (android.os.ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(Uri.parse(lp), "r")) {
+                            if (pfd != null && pfd.getStatSize() > 0) {
+                                valid.add(t);
+                                continue;
+                            }
+                        } catch (Exception ignored) {}
+                    } else {
+                        File f = new File(lp);
+                        if (f.exists() && f.length() > 0) {
+                            valid.add(t);
+                            continue;
+                        }
+                        File alt = getDestinationFile(context, f.getName());
+                        if (alt.exists() && alt.length() > 0) {
+                            t.setLocalFilePath(alt.getAbsolutePath());
+                            valid.add(t);
+                            continue;
+                        }
                     }
                 }
                 valid.add(t);
@@ -191,8 +191,13 @@ public class MusicDownloadHelper {
 
         if (track.getLocalFilePath() != null) {
             try {
-                File f = new File(track.getLocalFilePath());
-                if (f.exists()) f.delete();
+                String lp = track.getLocalFilePath();
+                if (lp.startsWith("content://")) {
+                    context.getContentResolver().delete(Uri.parse(lp), null, null);
+                } else {
+                    File f = new File(lp);
+                    if (f.exists()) f.delete();
+                }
             } catch (Exception ignored) {}
         }
 

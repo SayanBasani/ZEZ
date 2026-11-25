@@ -369,21 +369,42 @@ public class MusicPlayerService extends Service implements AudioManager.OnAudioF
 
         // 1. Check if track is already downloaded locally for offline playback
         if (track.getLocalFilePath() != null) {
-            File localFile = new File(track.getLocalFilePath());
-            if (!localFile.exists() || localFile.length() == 0) {
-                File altFile = MusicDownloadHelper.getDestinationFile(this, localFile.getName());
-                if (altFile.exists() && altFile.length() > 0) {
-                    localFile = altFile;
+            String lp = track.getLocalFilePath();
+            if (lp.startsWith("content://")) {
+                if (playLocalContentUri(Uri.parse(lp))) {
+                    return;
                 }
-            }
-            if (localFile.exists() && localFile.length() > 0) {
-                playDownloadedTrack(localFile);
-                return;
+            } else {
+                File localFile = new File(lp);
+                if (!localFile.exists() || localFile.length() == 0) {
+                    File altFile = MusicDownloadHelper.getDestinationFile(this, localFile.getName());
+                    if (altFile.exists() && altFile.length() > 0) {
+                        localFile = altFile;
+                    }
+                }
+                if (localFile.exists() && localFile.length() > 0) {
+                    playDownloadedTrack(localFile);
+                    return;
+                }
             }
         }
 
         // 2. Play online stream directly on-device with native MediaPlayer (client-side pure audio, loud, clear, zero ads)
         playOnlineStream(track.getId());
+    }
+
+    private boolean playLocalContentUri(Uri uri) {
+        try {
+            initMediaPlayer();
+            mediaPlayer.reset();
+            mediaPlayer.setDataSource(getApplicationContext(), uri);
+            isDataSourceSet = true;
+            mediaPlayer.prepareAsync();
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to play local content URI: " + e.getMessage(), e);
+            return false;
+        }
     }
 
     private void playDownloadedTrack(File localFile) {

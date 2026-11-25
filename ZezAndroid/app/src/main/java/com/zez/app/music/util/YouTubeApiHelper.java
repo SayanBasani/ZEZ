@@ -138,7 +138,51 @@ public class YouTubeApiHelper {
         return instance;
     }
 
-    public void search(String query, Callback<List<MusicTrack>> callback) {
+    public static class SearchResult {
+        private final List<MusicTrack> tracks;
+        private final String continuationToken;
+
+        public SearchResult(List<MusicTrack> tracks, String continuationToken) {
+            this.tracks = tracks != null ? tracks : new ArrayList<>();
+            this.continuationToken = continuationToken;
+        }
+
+        public List<MusicTrack> getTracks() {
+            return tracks;
+        }
+
+        public String getContinuationToken() {
+            return continuationToken;
+        }
+
+        public boolean hasMore() {
+            return continuationToken != null && !continuationToken.isEmpty();
+        }
+    }
+
+    public void search(String query, Callback<SearchResult> callback) {
+        searchInternal(query, null, callback);
+    }
+
+    public void searchTracks(String query, Callback<List<MusicTrack>> callback) {
+        search(query, new Callback<SearchResult>() {
+            @Override
+            public void onSuccess(SearchResult result) {
+                callback.onSuccess(result.getTracks());
+            }
+
+            @Override
+            public void onError(Exception e) {
+                callback.onError(e);
+            }
+        });
+    }
+
+    public void searchContinuation(String continuationToken, Callback<SearchResult> callback) {
+        searchInternal(null, continuationToken, callback);
+    }
+
+    private void searchInternal(String query, String continuationToken, Callback<SearchResult> callback) {
         new Thread(() -> {
             try {
                 JsonObject clientObj = new JsonObject();
@@ -152,7 +196,12 @@ public class YouTubeApiHelper {
 
                 JsonObject bodyObj = new JsonObject();
                 bodyObj.add("context", contextObj);
-                bodyObj.addProperty("query", query);
+
+                if (continuationToken != null && !continuationToken.isEmpty()) {
+                    bodyObj.addProperty("continuation", continuationToken);
+                } else if (query != null) {
+                    bodyObj.addProperty("query", query);
+                }
 
                 RequestBody body = RequestBody.create(bodyObj.toString(), JSON_MEDIA_TYPE);
                 Request request = new Request.Builder()
@@ -163,7 +212,7 @@ public class YouTubeApiHelper {
                         .header("Referer", "https://www.youtube.com/")
                         .build();
 
-                Log.d(TAG, "Executing YouTube search request for: " + query);
+                Log.d(TAG, "Executing YouTube search request (query=" + query + ", cont=" + (continuationToken != null) + ")");
                 Response response = httpClient.newCall(request).execute();
                 Log.d(TAG, "Search response code: " + response.code());
                 if (!response.isSuccessful() || response.body() == null) {
@@ -174,21 +223,27 @@ public class YouTubeApiHelper {
                 }
 
                 String responseStr = response.body().string();
-                List<MusicTrack> tracks = parseSearchResults(responseStr);
-                Log.d(TAG, "Parsed " + tracks.size() + " tracks for query: " + query);
-                mainHandler.post(() -> callback.onSuccess(tracks));
+                SearchResult result = parseSearchResultWithContinuation(responseStr);
+                Log.d(TAG, "Parsed " + result.getTracks().size() + " tracks, hasContinuation=" + result.hasMore());
+                mainHandler.post(() -> callback.onSuccess(result));
             } catch (Throwable e) {
-                Log.e(TAG, "Search error for query: " + query + " -> " + e.getClass().getName() + ": " + e.getMessage(), e);
+                Log.e(TAG, "Search error: " + e.getMessage(), e);
                 mainHandler.post(() -> callback.onError(new Exception(e.getMessage())));
             }
         }).start();
     }
 
-    public void getTrending(String category, Callback<List<MusicTrack>> callback) {
+    public void getTrending(String category, Callback<SearchResult> callback) {
         String searchQuery = "Trending Music";
         if (category != null && !category.isEmpty()) {
-            if ("Top tracks".equalsIgnoreCase(category)) {
-                searchQuery = "Top Global Music Songs";
+            if ("Viral 50".equalsIgnoreCase(category) || "Viral".equalsIgnoreCase(category)) {
+                searchQuery = "Viral 50 Global Songs Trending Music Hits";
+            } else if ("Top tracks".equalsIgnoreCase(category) || "Top Charts".equalsIgnoreCase(category)) {
+                searchQuery = "Top 100 Songs Global Billboard Music Charts";
+            } else if ("YT Music".equalsIgnoreCase(category) || "YouTube Music".equalsIgnoreCase(category)) {
+                searchQuery = "YouTube Music Top Charts and Viral Hits";
+            } else if ("New releases".equalsIgnoreCase(category)) {
+                searchQuery = "New Music Releases Official Audio";
             } else if ("Recommended".equalsIgnoreCase(category)) {
                 searchQuery = "Popular Music Hits";
             } else if ("Charts".equalsIgnoreCase(category)) {
@@ -230,150 +285,182 @@ public class YouTubeApiHelper {
         }).start();
     }
 
-    private List<MusicTrack> parseSearchResults(String jsonStr) {
-        List<MusicTrack> results = new ArrayList<>();
+    private SearchResult parseSearchResultWithContinuation(String jsonStr) {
+        List<MusicTrack> tracks = new ArrayList<>();
+        String nextToken = null;
         try {
             JsonObject root = JsonParser.parseString(jsonStr).getAsJsonObject();
-            JsonObject contents = root.getAsJsonObject("contents");
-            if (contents == null) return results;
-
-            JsonObject twoCol = contents.getAsJsonObject("twoColumnSearchResultsRenderer");
-            if (twoCol == null) return results;
-
-            JsonObject primary = twoCol.getAsJsonObject("primaryContents");
-            if (primary == null) return results;
-
-            JsonObject sectionList = primary.getAsJsonObject("sectionListRenderer");
-            if (sectionList == null) return results;
-
-            JsonArray sectionContents = sectionList.getAsJsonArray("contents");
-            if (sectionContents == null) return results;
-
-            for (JsonElement secEl : sectionContents) {
-                if (!secEl.isJsonObject()) continue;
-                JsonObject secObj = secEl.getAsJsonObject();
-                JsonObject itemSec = secObj.getAsJsonObject("itemSectionRenderer");
-                if (itemSec == null) continue;
-
-                JsonArray itemContents = itemSec.getAsJsonArray("contents");
-                if (itemContents == null) continue;
-
-                for (JsonElement itemEl : itemContents) {
-                    if (!itemEl.isJsonObject()) continue;
-                    JsonObject itemObj = itemEl.getAsJsonObject();
-                    JsonObject v = itemObj.getAsJsonObject("videoRenderer");
-                    if (v == null) continue;
-
-                    String videoId = v.has("videoId") ? v.get("videoId").getAsString() : null;
-                    if (videoId == null || videoId.isEmpty()) continue;
-
-                    // Extract title
-                    String title = "";
-                    if (v.has("title")) {
-                        JsonObject titleObj = v.getAsJsonObject("title");
-                        if (titleObj.has("runs")) {
-                            JsonArray runs = titleObj.getAsJsonArray("runs");
-                            if (runs.size() > 0) {
-                                title = runs.get(0).getAsJsonObject().get("text").getAsString();
-                            }
-                        } else if (titleObj.has("simpleText")) {
-                            title = titleObj.get("simpleText").getAsString();
-                        }
-                    }
-
-                    // Extract artist
-                    String artist = "YouTube Artist";
-                    if (v.has("ownerText")) {
-                        JsonObject ownerObj = v.getAsJsonObject("ownerText");
-                        if (ownerObj.has("runs")) {
-                            JsonArray runs = ownerObj.getAsJsonArray("runs");
-                            if (runs.size() > 0) {
-                                artist = runs.get(0).getAsJsonObject().get("text").getAsString();
-                            }
-                        }
-                    } else if (v.has("shortBylineText")) {
-                        JsonObject shortObj = v.getAsJsonObject("shortBylineText");
-                        if (shortObj.has("runs")) {
-                            JsonArray runs = shortObj.getAsJsonArray("runs");
-                            if (runs.size() > 0) {
-                                artist = runs.get(0).getAsJsonObject().get("text").getAsString();
-                            }
-                        }
-                    }
-
-                    // Extract duration
-                    String duration = "--:--";
-                    if (v.has("lengthText")) {
-                        JsonObject lenObj = v.getAsJsonObject("lengthText");
-                        if (lenObj.has("simpleText")) {
-                            duration = lenObj.get("simpleText").getAsString();
-                        } else if (lenObj.has("runs")) {
-                            JsonArray runs = lenObj.getAsJsonArray("runs");
-                            if (runs.size() > 0 && runs.get(0).getAsJsonObject().has("text")) {
-                                duration = runs.get(0).getAsJsonObject().get("text").getAsString();
-                            }
-                        }
-                    }
-                    if ("--:--".equals(duration) && v.has("thumbnailOverlays")) {
-                        try {
-                            JsonArray overlays = v.getAsJsonArray("thumbnailOverlays");
-                            for (JsonElement o : overlays) {
-                                if (!o.isJsonObject()) continue;
-                                JsonObject ro = o.getAsJsonObject();
-                                if (ro.has("thumbnailOverlayTimeStatusRenderer")) {
-                                    JsonObject timeObj = ro.getAsJsonObject("thumbnailOverlayTimeStatusRenderer");
-                                    if (timeObj != null && timeObj.has("text")) {
-                                        JsonObject textObj = timeObj.getAsJsonObject("text");
-                                        if (textObj.has("simpleText")) {
-                                            duration = textObj.get("simpleText").getAsString();
-                                            break;
-                                        } else if (textObj.has("runs")) {
-                                            JsonArray r = textObj.getAsJsonArray("runs");
-                                            if (r.size() > 0 && r.get(0).getAsJsonObject().has("text")) {
-                                                duration = r.get(0).getAsJsonObject().get("text").getAsString();
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (Exception ignored) {}
-                    }
-
-                    // Extract view count
-                    String views = "";
-                    if (v.has("viewCountText")) {
-                        JsonObject viewObj = v.getAsJsonObject("viewCountText");
-                        if (viewObj.has("simpleText")) {
-                            views = viewObj.get("simpleText").getAsString();
-                        } else if (viewObj.has("runs")) {
-                            StringBuilder sb = new StringBuilder();
-                            for (JsonElement r : viewObj.getAsJsonArray("runs")) {
-                                sb.append(r.getAsJsonObject().get("text").getAsString());
-                            }
-                            views = sb.toString();
-                        }
-                    }
-
-                    // Extract best thumbnail
-                    String thumbUrl = "https://i.ytimg.com/vi/" + videoId + "/hqdefault.jpg";
-                    if (v.has("thumbnail")) {
-                        JsonObject thumbObj = v.getAsJsonObject("thumbnail");
-                        if (thumbObj.has("thumbnails")) {
-                            JsonArray thumbs = thumbObj.getAsJsonArray("thumbnails");
-                            if (thumbs.size() > 0) {
-                                thumbUrl = thumbs.get(thumbs.size() - 1).getAsJsonObject().get("url").getAsString();
-                            }
-                        }
-                    }
-
-                    results.add(new MusicTrack(videoId, title, artist, duration, thumbUrl, views));
+            List<JsonObject> videoNodes = new ArrayList<>();
+            findVideoNodes(root, videoNodes);
+            for (JsonObject v : videoNodes) {
+                MusicTrack track = parseSingleVideoRenderer(v);
+                if (track != null) {
+                    tracks.add(track);
                 }
             }
+            nextToken = findContinuationToken(root);
         } catch (Exception e) {
             Log.e(TAG, "Error parsing search results", e);
         }
-        return results;
+        return new SearchResult(tracks, nextToken);
+    }
+
+    private void findVideoNodes(JsonElement el, List<JsonObject> list) {
+        if (el == null) return;
+        if (el.isJsonObject()) {
+            JsonObject obj = el.getAsJsonObject();
+            if (obj.has("videoRenderer") && obj.get("videoRenderer").isJsonObject()) {
+                list.add(obj.getAsJsonObject("videoRenderer"));
+            }
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                if (!"videoRenderer".equals(entry.getKey())) {
+                    findVideoNodes(entry.getValue(), list);
+                }
+            }
+        } else if (el.isJsonArray()) {
+            for (JsonElement item : el.getAsJsonArray()) {
+                findVideoNodes(item, list);
+            }
+        }
+    }
+
+    private String findContinuationToken(JsonElement el) {
+        if (el == null) return null;
+        if (el.isJsonObject()) {
+            JsonObject obj = el.getAsJsonObject();
+            if (obj.has("continuationCommand") && obj.get("continuationCommand").isJsonObject()) {
+                JsonObject cmd = obj.getAsJsonObject("continuationCommand");
+                if (cmd.has("token") && !cmd.get("token").getAsString().isEmpty()) {
+                    return cmd.get("token").getAsString();
+                }
+            }
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                String token = findContinuationToken(entry.getValue());
+                if (token != null) return token;
+            }
+        } else if (el.isJsonArray()) {
+            for (JsonElement item : el.getAsJsonArray()) {
+                String token = findContinuationToken(item);
+                if (token != null) return token;
+            }
+        }
+        return null;
+    }
+
+    private MusicTrack parseSingleVideoRenderer(JsonObject v) {
+        if (v == null) return null;
+        try {
+            String videoId = v.has("videoId") ? v.get("videoId").getAsString() : null;
+            if (videoId == null || videoId.isEmpty()) return null;
+
+            // Extract title
+            String title = "";
+            if (v.has("title")) {
+                JsonObject titleObj = v.getAsJsonObject("title");
+                if (titleObj.has("runs")) {
+                    JsonArray runs = titleObj.getAsJsonArray("runs");
+                    if (runs.size() > 0) {
+                        title = runs.get(0).getAsJsonObject().get("text").getAsString();
+                    }
+                } else if (titleObj.has("simpleText")) {
+                    title = titleObj.get("simpleText").getAsString();
+                }
+            }
+
+            // Extract artist
+            String artist = "YouTube Artist";
+            if (v.has("ownerText")) {
+                JsonObject ownerObj = v.getAsJsonObject("ownerText");
+                if (ownerObj.has("runs")) {
+                    JsonArray runs = ownerObj.getAsJsonArray("runs");
+                    if (runs.size() > 0) {
+                        artist = runs.get(0).getAsJsonObject().get("text").getAsString();
+                    }
+                }
+            } else if (v.has("shortBylineText")) {
+                JsonObject shortObj = v.getAsJsonObject("shortBylineText");
+                if (shortObj.has("runs")) {
+                    JsonArray runs = shortObj.getAsJsonArray("runs");
+                    if (runs.size() > 0) {
+                        artist = runs.get(0).getAsJsonObject().get("text").getAsString();
+                    }
+                }
+            }
+
+            // Extract duration
+            String duration = "--:--";
+            if (v.has("lengthText")) {
+                JsonObject lenObj = v.getAsJsonObject("lengthText");
+                if (lenObj.has("simpleText")) {
+                    duration = lenObj.get("simpleText").getAsString();
+                } else if (lenObj.has("runs")) {
+                    JsonArray runs = lenObj.getAsJsonArray("runs");
+                    if (runs.size() > 0 && runs.get(0).getAsJsonObject().has("text")) {
+                        duration = runs.get(0).getAsJsonObject().get("text").getAsString();
+                    }
+                }
+            }
+            if ("--:--".equals(duration) && v.has("thumbnailOverlays")) {
+                try {
+                    JsonArray overlays = v.getAsJsonArray("thumbnailOverlays");
+                    for (JsonElement o : overlays) {
+                        if (!o.isJsonObject()) continue;
+                        JsonObject ro = o.getAsJsonObject();
+                        if (ro.has("thumbnailOverlayTimeStatusRenderer")) {
+                            JsonObject timeObj = ro.getAsJsonObject("thumbnailOverlayTimeStatusRenderer");
+                            if (timeObj != null && timeObj.has("text")) {
+                                JsonObject textObj = timeObj.getAsJsonObject("text");
+                                if (textObj.has("simpleText")) {
+                                    duration = textObj.get("simpleText").getAsString();
+                                    break;
+                                } else if (textObj.has("runs")) {
+                                    JsonArray r = textObj.getAsJsonArray("runs");
+                                    if (r.size() > 0 && r.get(0).getAsJsonObject().has("text")) {
+                                        duration = r.get(0).getAsJsonObject().get("text").getAsString();
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            // Extract view count
+            String views = "";
+            if (v.has("viewCountText")) {
+                JsonObject viewObj = v.getAsJsonObject("viewCountText");
+                if (viewObj.has("simpleText")) {
+                    views = viewObj.get("simpleText").getAsString();
+                } else if (viewObj.has("runs")) {
+                    StringBuilder sb = new StringBuilder();
+                    for (JsonElement r : viewObj.getAsJsonArray("runs")) {
+                        sb.append(r.getAsJsonObject().get("text").getAsString());
+                    }
+                    views = sb.toString();
+                }
+            }
+
+            // Extract best thumbnail
+            String thumbUrl = "https://i.ytimg.com/vi/" + videoId + "/hqdefault.jpg";
+            if (v.has("thumbnail")) {
+                JsonObject thumbObj = v.getAsJsonObject("thumbnail");
+                if (thumbObj.has("thumbnails")) {
+                    JsonArray thumbs = thumbObj.getAsJsonArray("thumbnails");
+                    if (thumbs.size() > 0) {
+                        thumbUrl = thumbs.get(thumbs.size() - 1).getAsJsonObject().get("url").getAsString();
+                    }
+                }
+            }
+
+            return new MusicTrack(videoId, title, artist, duration, thumbUrl, views);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private List<MusicTrack> parseSearchResults(String jsonStr) {
+        return parseSearchResultWithContinuation(jsonStr).getTracks();
     }
 
     public void extractAudioStream(String videoId, Callback<String> callback) {
@@ -476,6 +563,21 @@ public class YouTubeApiHelper {
             Log.w(TAG, "Could not acquire visitorData from visitor_id endpoint: " + e.getMessage());
         }
         return cachedVisitorData;
+    }
+
+    public void invalidateCachedStream(String videoId) {
+        if (videoId != null) {
+            streamCache.remove(videoId);
+        }
+    }
+
+    public OkHttpClient getDownloadHttpClient() {
+        return httpClient.newBuilder()
+                .connectTimeout(25, TimeUnit.SECONDS)
+                .readTimeout(45, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
+                .build();
     }
 
     public String getStreamUrlSync(String videoId) {
@@ -713,20 +815,24 @@ public class YouTubeApiHelper {
 
     private List<String> parseSuggestions(String body) {
         List<String> list = new ArrayList<>();
+        if (body == null || body.trim().isEmpty()) return list;
         try {
+            String jsonStr;
             int start = body.indexOf('(');
             int end = body.lastIndexOf(')');
             if (start != -1 && end != -1 && end > start) {
-                String jsonStr = body.substring(start + 1, end);
-                JsonArray rootArr = JsonParser.parseString(jsonStr).getAsJsonArray();
-                if (rootArr.size() > 1 && rootArr.get(1).isJsonArray()) {
-                    JsonArray suggArr = rootArr.get(1).getAsJsonArray();
-                    for (JsonElement el : suggArr) {
-                        if (el.isJsonArray()) {
-                            JsonArray item = el.getAsJsonArray();
-                            if (item.size() > 0) {
-                                list.add(item.get(0).getAsString());
-                            }
+                jsonStr = body.substring(start + 1, end).trim();
+            } else {
+                jsonStr = body.trim();
+            }
+            JsonArray rootArr = JsonParser.parseString(jsonStr).getAsJsonArray();
+            if (rootArr.size() > 1 && rootArr.get(1).isJsonArray()) {
+                JsonArray suggArr = rootArr.get(1).getAsJsonArray();
+                for (JsonElement el : suggArr) {
+                    if (el.isJsonArray()) {
+                        JsonArray item = el.getAsJsonArray();
+                        if (item.size() > 0) {
+                            list.add(item.get(0).getAsString());
                         }
                     }
                 }

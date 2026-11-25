@@ -27,7 +27,57 @@ public class AlarmHelper {
     private static final String TAG = "AlarmHelper";
     private static final String PREF_ALARMS = "zez_alarms_pref";
     private static final String KEY_ALARM_LIST = "alarm_list_json";
+    private static final String KEY_DELETED_ALARM_IDS = "deleted_alarm_ids_json";
     private static final Gson gson = new Gson();
+
+    public static synchronized List<Long> getDeletedAlarmIdsList(Context context) {
+        if (context == null) return new ArrayList<>();
+        SharedPreferences prefs = context.getSharedPreferences(PREF_ALARMS, Context.MODE_PRIVATE);
+        String json = prefs.getString(KEY_DELETED_ALARM_IDS, null);
+        if (json == null || json.trim().isEmpty()) return new ArrayList<>();
+        try {
+            Type type = new TypeToken<List<Long>>() {}.getType();
+            List<Long> list = gson.fromJson(json, type);
+            return list != null ? list : new ArrayList<>();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private static synchronized void saveDeletedAlarmIdsList(Context context, List<Long> ids) {
+        if (context == null) return;
+        SharedPreferences prefs = context.getSharedPreferences(PREF_ALARMS, Context.MODE_PRIVATE);
+        List<Long> trimmed = new ArrayList<>();
+        if (ids != null) {
+            int start = Math.max(0, ids.size() - 300);
+            for (int i = start; i < ids.size(); i++) {
+                Long v = ids.get(i);
+                if (v != null && v > 0 && !trimmed.contains(v)) {
+                    trimmed.add(v);
+                }
+            }
+        }
+        prefs.edit().putString(KEY_DELETED_ALARM_IDS, gson.toJson(trimmed)).apply();
+    }
+
+    private static synchronized void markAlarmsDeletedLocally(Context context, List<Long> ids) {
+        if (context == null || ids == null || ids.isEmpty()) return;
+        List<Long> existing = getDeletedAlarmIdsList(context);
+        for (Long id : ids) {
+            if (id != null && id > 0 && !existing.contains(id)) {
+                existing.add(id);
+            }
+        }
+        saveDeletedAlarmIdsList(context, existing);
+    }
+
+    private static synchronized void unmarkAlarmDeletedLocally(Context context, long id) {
+        if (context == null || id <= 0) return;
+        List<Long> existing = getDeletedAlarmIdsList(context);
+        if (existing.remove(Long.valueOf(id))) {
+            saveDeletedAlarmIdsList(context, existing);
+        }
+    }
 
     public static List<AlarmItem> getAlarms(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_ALARMS, Context.MODE_PRIVATE);
@@ -75,6 +125,7 @@ public class AlarmHelper {
     }
 
     public static void addOrUpdateAlarm(Context context, AlarmItem item) {
+        unmarkAlarmDeletedLocally(context, item.id);
         List<AlarmItem> list = getAlarms(context);
         boolean found = false;
         for (int i = 0; i < list.size(); i++) {
@@ -98,32 +149,42 @@ public class AlarmHelper {
     }
 
     public static void deleteAlarm(Context context, long alarmId) {
+        deleteAlarms(context, Collections.singletonList(alarmId));
+    }
+
+    public static void deleteAlarms(Context context, List<Long> alarmIds) {
+        if (context == null || alarmIds == null || alarmIds.isEmpty()) return;
+        markAlarmsDeletedLocally(context, alarmIds);
+
         List<AlarmItem> list = getAlarms(context);
-        AlarmItem target = null;
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).id == alarmId) {
-                target = list.remove(i);
-                break;
+        for (int i = list.size() - 1; i >= 0; i--) {
+            AlarmItem candidate = list.get(i);
+            if (alarmIds.contains(candidate.id)) {
+                list.remove(i);
+                cancelAlarm(context, candidate);
+                cancelJitRepeat(context, candidate.id);
             }
         }
         saveAlarms(context, list);
-        if (target != null) {
-            cancelAlarm(context, target);
-        }
         syncWithBackend(context, null);
     }
 
     public static void setAlarmEnabled(Context context, long alarmId, boolean enabled) {
+        setAlarmsEnabled(context, Collections.singletonList(alarmId), enabled);
+    }
+
+    public static void setAlarmsEnabled(Context context, List<Long> alarmIds, boolean enabled) {
+        if (context == null || alarmIds == null || alarmIds.isEmpty()) return;
         List<AlarmItem> list = getAlarms(context);
         for (AlarmItem item : list) {
-            if (item.id == alarmId) {
+            if (alarmIds.contains(item.id)) {
                 item.isEnabled = enabled;
                 if (enabled) {
                     scheduleAlarm(context, item);
                 } else {
                     cancelAlarm(context, item);
+                    cancelJitRepeat(context, item.id);
                 }
-                break;
             }
         }
         saveAlarms(context, list);
@@ -362,9 +423,13 @@ public class AlarmHelper {
                     }
                 }
 
-                // 2. Add or update alarms created/modified by admin
+                // 2. Add or update alarms created/modified by admin (never resurrect alarms deleted by user)
+                List<Long> localDeletedIds = getDeletedAlarmIdsList(context);
                 if (serverActiveAlarms != null) {
                     for (AlarmItem serverAlarm : serverActiveAlarms) {
+                        if (localDeletedIds.contains(serverAlarm.id)) {
+                            continue;
+                        }
                         boolean exists = false;
                         for (int i = 0; i < current.size(); i++) {
                             if (current.get(i).id == serverAlarm.id) {

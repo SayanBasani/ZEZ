@@ -46,6 +46,8 @@ const upload = multer({
  */
 router.get("/latest", async (_req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.set("Pragma", "no-cache");
     const result = await pool.query(
       `SELECT id, version_name, version_code, release_notes, file_name, file_size, download_url, created_at
        FROM public.app_releases
@@ -136,37 +138,39 @@ router.post("/upload", adminAuth, (req, res, next) => {
       let downloadUrl = `/downloads/${req.file.filename}`;
       let objectKey = null;
       const uploadedBy = req.admin ? req.admin.username : "admin";
+      const safeVer = cleanVersionName.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const releaseKey = `releases/app-release-${safeVer}-${Date.now()}.apk`;
 
       // Upload directly to Backblaze B2 Cloud Object Storage
       try {
         const fileBuffer = fs.readFileSync(req.file.path);
         const uploadResult = await b2Storage.uploadFile({
           buffer: fileBuffer,
-          originalName: req.file.filename,
+          key: releaseKey,
+          originalName: `app-release-${safeVer}.apk`,
           category: "releases",
           mimeType: "application/vnd.android.package-archive"
         });
         objectKey = uploadResult.objectKey;
         downloadUrl = `/api/storage/file/${uploadResult.objectKey}`;
 
-        // Save reference in storage_files
+        // Save reference in media_files
         await pool.query(
-          `INSERT INTO public.storage_files 
-           (bucket_name, object_key, original_name, stored_name, mime_type, file_size, file_category, uploaded_by, upload_status, metadata)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', $9)
+          `INSERT INTO public.media_files
+           (storage_provider, bucket_name, object_key, original_file_name, mime_type, file_size, file_category, uploaded_by, upload_status, metadata)
+           VALUES ('backblaze_b2', $1, $2, $3, $4, $5, $6, $7, 'completed', $8)
            ON CONFLICT (object_key) DO NOTHING`,
           [
             uploadResult.bucketName,
             uploadResult.objectKey,
-            req.file.originalname || req.file.filename,
-            req.file.filename,
+            `app-release-${safeVer}.apk`,
             "application/vnd.android.package-archive",
             req.file.size,
             "releases",
             uploadedBy,
             JSON.stringify({ etag: uploadResult.etag })
           ]
-        );
+        ).catch(() => {});
 
         // Remove from local disk to keep backend server completely uncluttered
         if (fs.existsSync(req.file.path)) {
@@ -176,6 +180,7 @@ router.post("/upload", adminAuth, (req, res, next) => {
         console.warn("Backblaze B2 release upload error, keeping local file:", b2Err.message);
       }
 
+      await pool.query("UPDATE public.app_releases SET is_active = FALSE WHERE is_active = TRUE");
       const insertResult = await pool.query(
         `INSERT INTO public.app_releases (version_name, version_code, release_notes, file_name, file_size, download_url, is_active, uploaded_by)
          VALUES ($1, $2, $3, $4, $5, $6, TRUE, $7)
@@ -184,7 +189,7 @@ router.post("/upload", adminAuth, (req, res, next) => {
           cleanVersionName,
           numVersionCode,
           releaseNotes || "Performance optimizations and bug fixes.",
-          req.file.filename,
+          `app-release-${safeVer}.apk`,
           req.file.size,
           downloadUrl,
           uploadedBy,

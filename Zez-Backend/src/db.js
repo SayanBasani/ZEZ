@@ -10,7 +10,7 @@ if (!connectionString) {
 
 const pool = new Pool({
   connectionString,
-  max: 5,
+  max: 15,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
 });
@@ -118,7 +118,9 @@ async function initializeDatabase() {
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS reaction VARCHAR(32);
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS is_deleted_for_everyone BOOLEAN DEFAULT FALSE;
     ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS deleted_for_users JSONB DEFAULT '[]'::jsonb;
+    ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
     CREATE INDEX IF NOT EXISTS idx_chat_messages_mode ON public.chat_messages(conversation_id, mode);
+    CREATE INDEX IF NOT EXISTS idx_chat_messages_live_recv ON public.chat_messages(receiver_id, status, created_at ASC);
 
     -- High performance query indexes
     CREATE INDEX IF NOT EXISTS idx_call_logs_timestamp ON public.call_logs (call_timestamp DESC, id DESC);
@@ -235,6 +237,33 @@ async function initializeDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_active_calls_callee ON public.active_calls(callee_id, status);
     CREATE INDEX IF NOT EXISTS idx_call_signals_target ON public.call_signals(call_id, target_id, is_read);
+
+    -- Interactive 2-player in-chat games (Tic Tac Toe)
+    CREATE TABLE IF NOT EXISTS public.chat_games (
+      id UUID PRIMARY KEY,
+      conversation_id UUID REFERENCES public.chat_conversations(id) ON DELETE CASCADE,
+      game_type VARCHAR(32) NOT NULL DEFAULT 'tictactoe',
+      host_id UUID NOT NULL REFERENCES public.chat_users(id) ON DELETE CASCADE,
+      guest_id UUID NOT NULL REFERENCES public.chat_users(id) ON DELETE CASCADE,
+      host_name VARCHAR(128),
+      guest_name VARCHAR(128),
+      board JSONB NOT NULL DEFAULT '["","","","","","","","",""]'::jsonb,
+      current_turn UUID NOT NULL,
+      winner_id UUID,
+      winning_line JSONB,
+      is_draw BOOLEAN DEFAULT FALSE,
+      status VARCHAR(24) NOT NULL DEFAULT 'waiting',
+      host_score INTEGER DEFAULT 0,
+      guest_score INTEGER DEFAULT 0,
+      draws_count INTEGER DEFAULT 0,
+      round_number INTEGER DEFAULT 1,
+      guest_joined BOOLEAN DEFAULT FALSE,
+      version INTEGER DEFAULT 1,
+      ended_by UUID,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_games_players ON public.chat_games(host_id, guest_id, updated_at DESC);
   `);
 
   // Seed default admin if table is empty

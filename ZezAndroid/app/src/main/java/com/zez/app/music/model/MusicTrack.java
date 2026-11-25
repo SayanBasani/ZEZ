@@ -30,6 +30,10 @@ public class MusicTrack implements Serializable {
         return id;
     }
 
+    public String getVideoId() {
+        return id;
+    }
+
     public void setId(String id) {
         this.id = id;
     }

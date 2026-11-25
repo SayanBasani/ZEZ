@@ -1,8 +1,10 @@
 package com.zez.app;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -11,7 +13,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.ContactsContract;
 import android.provider.OpenableColumns;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,10 +50,17 @@ import com.google.gson.JsonParser;
 import com.zez.app.adapter.ChatMessageAdapter;
 import com.zez.app.model.ChatMessage;
 import com.zez.app.model.ChatUser;
+import com.zez.app.model.MediaItem;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatNotificationHelper;
+import com.zez.app.util.ChatNotificationManager;
 import com.zez.app.util.ChatPreferencesHelper;
+import com.zez.app.util.GalleryPopupHelper;
 import com.zez.app.util.PreferencesHelper;
+import com.zez.app.util.QuackyStorageHelper;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -196,9 +208,18 @@ public class ChatActivity extends AppCompatActivity {
     private ActivityResultLauncher<String> pickVideoLauncher;
     private ActivityResultLauncher<String> pickFileLauncher;
     private ActivityResultLauncher<Void> takePhotoLauncher;
+    private ActivityResultLauncher<Intent> customMediaPickerLauncher;
+    private ActivityResultLauncher<Intent> quickCameraLauncher;
+    private ActivityResultLauncher<String[]> mediaPermissionsLauncher;
+    private ActivityResultLauncher<String> contactPermissionLauncher;
+    private ActivityResultLauncher<Intent> ticTacToeLauncher;
+
+    private String pendingGalleryFilterAfterPerm = "image";
+    private final AtomicBoolean isPollInFlight = new AtomicBoolean(false);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        com.zez.app.theme.ThemeManager.applyTheme(this);
         super.onCreate(savedInstanceState);
         isoFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         setContentView(R.layout.activity_chat);
@@ -246,6 +267,29 @@ public class ChatActivity extends AppCompatActivity {
             if (bitmap != null) handleBitmapCapture(bitmap);
         });
 
+        customMediaPickerLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                ArrayList<String> uriStrings = result.getData().getStringArrayListExtra(MediaPickerActivity.EXTRA_SELECTED_URIS);
+                if (uriStrings != null && !uriStrings.isEmpty()) {
+                    for (String uriStr : uriStrings) {
+                        if (uriStr != null) {
+                            Uri uri = Uri.parse(uriStr);
+                            String mime = getContentResolver().getType(uri);
+                            String type = (mime != null && mime.startsWith("video")) ? "video" : "image";
+                            handleMediaSelection(uri, type);
+                        }
+                    }
+                }
+            }
+        });
+
+        quickCameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null && result.getData().getData() != null) {
+                Uri photoUri = result.getData().getData();
+                handleMediaSelection(photoUri, "image");
+            }
+        });
+
         pickWallpaperLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) saveAndApplyCustomWallpaper(uri);
         });
@@ -266,6 +310,30 @@ public class ChatActivity extends AppCompatActivity {
                         Toast.makeText(ChatActivity.this, "Failed to upload photo: " + errorMessage, Toast.LENGTH_SHORT).show();
                     }
                 });
+            }
+        });
+
+        mediaPermissionsLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+            if (GalleryPopupHelper.hasMediaPermission(this)) {
+                openWhatsAppGalleryPopup(pendingGalleryFilterAfterPerm);
+            } else {
+                Toast.makeText(this, "Allow media permission or choose via system picker", Toast.LENGTH_SHORT).show();
+                openFolderFallbackPicker(pendingGalleryFilterAfterPerm);
+            }
+        });
+
+        contactPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+            showShareContactSheet();
+        });
+
+        ticTacToeLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                boolean ended = result.getData().getBooleanExtra(TicTacToeActivity.RESULT_GAME_ENDED, false);
+                if (ended) {
+                    String gId = result.getData().getStringExtra(TicTacToeActivity.RESULT_GAME_ID);
+                    String summary = result.getData().getStringExtra(TicTacToeActivity.RESULT_GAME_SUMMARY);
+                    sendFormattedMessage(ChatMessage.formatGameSummary("tictactoe", gId, summary));
+                }
             }
         });
     }
@@ -1053,6 +1121,18 @@ public class ChatActivity extends AppCompatActivity {
             rowNotifications.setOnClickListener(v -> showMuteDialog(conversationId, tvNotifSub));
         }
 
+        if (rowStorage != null) {
+            rowStorage.setOnClickListener(v -> {
+                sheet.dismiss();
+                Intent storageIntent = new Intent(this, ManageStorageActivity.class);
+                storageIntent.putExtra(ManageStorageActivity.EXTRA_CONVERSATION_ID, conversationId);
+                storageIntent.putExtra(ManageStorageActivity.EXTRA_OTHER_USER_ID, otherUserId);
+                storageIntent.putExtra(ManageStorageActivity.EXTRA_CONTACT_NAME, name);
+                storageIntent.putExtra(ManageStorageActivity.EXTRA_CONTACT_AVATAR, isSelfChat ? ChatPreferencesHelper.getUserAvatar(this) : otherUserAvatar);
+                startActivity(storageIntent);
+            });
+        }
+
         TextView tvVisSub = view.findViewById(R.id.tv_profile_visibility_sub);
         if (tvVisSub != null && conversationId != null) {
             int vis = ChatPreferencesHelper.getMediaVisibility(this, conversationId);
@@ -1326,6 +1406,7 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         adapter.setOnMediaRetryListener(this::retryMediaMessage);
+        adapter.setOnGameInviteClickListener(this::openTicTacToeFromInvite);
 
         // WhatsApp-Style Effortless Swipe to Reply (both left & right, very low threshold)
         ItemTouchHelper.SimpleCallback swipeToReplyCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT) {
@@ -1899,6 +1980,43 @@ public class ChatActivity extends AppCompatActivity {
         drainPendingQueue();
     }
 
+    private void sendFormattedMessage(String formattedText) {
+        if (formattedText == null || formattedText.trim().isEmpty()) return;
+        final String activeMode = isSecretMode ? ChatMessage.MODE_SECRET : ChatMessage.MODE_NORMAL;
+        final String sessionUuid = isSecretMode ? currentSecretSessionId : null;
+
+        String tempId = "temp_fmt_" + System.currentTimeMillis() + "_" + (int) (Math.random() * 1000);
+        ChatMessage optimisticMsg = new ChatMessage(
+                tempId,
+                conversationId,
+                currentUserId,
+                otherUserId,
+                formattedText,
+                null,
+                ChatMessage.STATUS_PENDING,
+                isoFormat.format(new Date())
+        );
+        optimisticMsg.setMode(activeMode);
+        optimisticMsg.setSecretSessionId(sessionUuid);
+
+        if (isSecretMode) {
+            ephemeralSecretMessages.add(optimisticMsg);
+        } else {
+            normalMessages.add(optimisticMsg);
+        }
+        adapter.addMessage(optimisticMsg);
+        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+
+        PendingMessage task = new PendingMessage();
+        task.optimisticMsg = optimisticMsg;
+        task.text = formattedText;
+        task.activeMode = activeMode;
+        task.sessionUuid = sessionUuid;
+        pendingMessagesQueue.add(task);
+
+        drainPendingQueue();
+    }
+
     private void drainPendingQueue() {
         if (isDrainingQueue || pendingMessagesQueue.isEmpty()) return;
         final PendingMessage task = pendingMessagesQueue.get(0);
@@ -1958,6 +2076,7 @@ public class ChatActivity extends AppCompatActivity {
         View btnGallery = view.findViewById(R.id.btn_attach_gallery);
         View btnVideo = view.findViewById(R.id.btn_attach_video);
         View btnContact = view.findViewById(R.id.btn_attach_contact);
+        View btnGames = view.findViewById(R.id.btn_attach_games);
 
         if (btnDoc != null) {
             btnDoc.setOnClickListener(v -> {
@@ -1968,29 +2087,286 @@ public class ChatActivity extends AppCompatActivity {
         if (btnCamera != null) {
             btnCamera.setOnClickListener(v -> {
                 sheet.dismiss();
-                takePhotoLauncher.launch(null);
+                Intent intent = new Intent(this, QuickCameraActivity.class);
+                quickCameraLauncher.launch(intent);
             });
         }
         if (btnGallery != null) {
             btnGallery.setOnClickListener(v -> {
                 sheet.dismiss();
-                pickImageLauncher.launch("image/*");
+                launchGalleryPopup("image");
             });
         }
         if (btnVideo != null) {
             btnVideo.setOnClickListener(v -> {
                 sheet.dismiss();
-                pickVideoLauncher.launch("video/*");
+                launchGalleryPopup("video");
             });
         }
         if (btnContact != null) {
             btnContact.setOnClickListener(v -> {
                 sheet.dismiss();
-                Toast.makeText(this, "Select contact to share", Toast.LENGTH_SHORT).show();
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                    showShareContactSheet();
+                } else {
+                    contactPermissionLauncher.launch(Manifest.permission.READ_CONTACTS);
+                }
+            });
+        }
+        if (btnGames != null) {
+            btnGames.setOnClickListener(v -> {
+                sheet.dismiss();
+                showGamesPickerDialog();
             });
         }
 
         sheet.show();
+    }
+
+    private void launchGalleryPopup(String filterMode) {
+        pendingGalleryFilterAfterPerm = filterMode;
+        if (GalleryPopupHelper.hasMediaPermission(this)) {
+            openWhatsAppGalleryPopup(filterMode);
+        } else {
+            mediaPermissionsLauncher.launch(GalleryPopupHelper.getRequiredMediaPermissions());
+        }
+    }
+
+    private void openWhatsAppGalleryPopup(String filterMode) {
+        GalleryPopupHelper.show(this, filterMode, new GalleryPopupHelper.GallerySelectionCallback() {
+            @Override
+            public void onMediaSelected(List<MediaItem> selectedItems, String caption) {
+                if (selectedItems == null || selectedItems.isEmpty()) return;
+                for (int i = 0; i < selectedItems.size(); i++) {
+                    MediaItem item = selectedItems.get(i);
+                    if (item == null || item.getUri() == null) continue;
+                    String type = item.isVideo() ? "video" : "image";
+                    String itemCaption = (i == 0) ? caption : "";
+                    handleMediaSelection(item.getUri(), type, itemCaption);
+                }
+            }
+
+            @Override
+            public void onRequestFolderFallback(String mode) {
+                openFolderFallbackPicker(mode);
+            }
+        });
+    }
+
+    private void openFolderFallbackPicker(String filterMode) {
+        if ("video".equals(filterMode)) {
+            pickVideoLauncher.launch("video/*");
+        } else {
+            pickImageLauncher.launch("image/*");
+        }
+    }
+
+    private static class SimpleShareContact {
+        final String name;
+        final String phone;
+        SimpleShareContact(String name, String phone) {
+            this.name = name;
+            this.phone = phone;
+        }
+    }
+
+    private void showShareContactSheet() {
+        com.google.android.material.bottomsheet.BottomSheetDialog sheet =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_share_contact, null);
+        sheet.setContentView(view);
+
+        ImageButton btnClose = view.findViewById(R.id.btn_contact_sheet_close);
+        EditText etSearch = view.findViewById(R.id.et_contact_search);
+        RecyclerView rvContacts = view.findViewById(R.id.rv_share_contacts);
+        TextView tvEmpty = view.findViewById(R.id.tv_contacts_empty);
+
+        if (btnClose != null) btnClose.setOnClickListener(v -> sheet.dismiss());
+
+        final List<SimpleShareContact> allContacts = new ArrayList<>();
+        final List<SimpleShareContact> filteredContacts = new ArrayList<>();
+
+        rvContacts.setLayoutManager(new LinearLayoutManager(this));
+        RecyclerView.Adapter<RecyclerView.ViewHolder> contactAdapter = new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @NonNull
+            @Override
+            public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View row = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_share_contact, parent, false);
+                return new RecyclerView.ViewHolder(row) {};
+            }
+
+            @Override
+            public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                SimpleShareContact c = filteredContacts.get(position);
+                TextView tvInitial = holder.itemView.findViewById(R.id.tv_share_contact_initial);
+                TextView tvName = holder.itemView.findViewById(R.id.tv_share_contact_name);
+                TextView tvPhone = holder.itemView.findViewById(R.id.tv_share_contact_phone);
+                String initial = (c.name != null && !c.name.trim().isEmpty())
+                        ? String.valueOf(Character.toUpperCase(c.name.trim().charAt(0)))
+                        : "?";
+                tvInitial.setText(initial);
+                tvName.setText(c.name);
+                tvPhone.setText(c.phone);
+                holder.itemView.setOnClickListener(v -> {
+                    sheet.dismiss();
+                    sendFormattedMessage(ChatMessage.formatContactShare(c.name, c.phone));
+                });
+            }
+
+            @Override
+            public int getItemCount() {
+                return filteredContacts.size();
+            }
+        };
+        rvContacts.setAdapter(contactAdapter);
+
+        Runnable applyFilter = () -> {
+            String q = etSearch.getText() != null ? etSearch.getText().toString().trim().toLowerCase(Locale.US) : "";
+            filteredContacts.clear();
+            for (SimpleShareContact c : allContacts) {
+                if (q.isEmpty()
+                        || c.name.toLowerCase(Locale.US).contains(q)
+                        || c.phone.toLowerCase(Locale.US).contains(q)) {
+                    filteredContacts.add(c);
+                }
+            }
+            contactAdapter.notifyDataSetChanged();
+            tvEmpty.setVisibility(filteredContacts.isEmpty() ? View.VISIBLE : View.GONE);
+        };
+
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { applyFilter.run(); }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        sheet.show();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            List<SimpleShareContact> loaded = new ArrayList<>();
+            java.util.Set<String> dedupPhones = new java.util.HashSet<>();
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                try (Cursor c = getContentResolver().query(
+                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                        new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER},
+                        null, null,
+                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC")) {
+                    if (c != null) {
+                        int iName = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                        int iNum = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                        while (c.moveToNext()) {
+                            String nm = iName >= 0 ? c.getString(iName) : "";
+                            String ph = iNum >= 0 ? c.getString(iNum) : "";
+                            if (ph == null || ph.trim().isEmpty()) continue;
+                            String norm = com.zez.app.util.PhoneHelper.normalize(ph);
+                            if (dedupPhones.add(norm)) {
+                                loaded.add(new SimpleShareContact(nm != null && !nm.isEmpty() ? nm : ph, ph));
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            // Include self / peer Zez profile if list is empty or for quick access
+            String myName = ChatPreferencesHelper.getUserName(this);
+            String myPhone = ChatPreferencesHelper.getUserPhone(this);
+            if (myPhone != null && !myPhone.trim().isEmpty() && dedupPhones.add(com.zez.app.util.PhoneHelper.normalize(myPhone))) {
+                loaded.add(new SimpleShareContact(myName != null ? myName : "My Number", myPhone));
+            }
+            if (otherUserPhone != null && !otherUserPhone.trim().isEmpty() && dedupPhones.add(com.zez.app.util.PhoneHelper.normalize(otherUserPhone))) {
+                loaded.add(new SimpleShareContact(otherUserName != null ? otherUserName : otherUserPhone, otherUserPhone));
+            }
+
+            pollHandler.post(() -> {
+                if (!sheet.isShowing()) return;
+                allContacts.clear();
+                allContacts.addAll(loaded);
+                applyFilter.run();
+            });
+        });
+    }
+
+    private void showGamesPickerDialog() {
+        com.google.android.material.bottomsheet.BottomSheetDialog sheet =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_games_picker, null);
+        sheet.setContentView(view);
+
+        View btnClose = view.findViewById(R.id.btn_games_close);
+        View cardTtt = view.findViewById(R.id.card_game_tictactoe);
+        View btnPlayTtt = view.findViewById(R.id.btn_invite_tictactoe);
+
+        if (btnClose != null) btnClose.setOnClickListener(v -> sheet.dismiss());
+        View.OnClickListener startTtt = v -> {
+            sheet.dismiss();
+            startNewTicTacToeMatch();
+        };
+        if (cardTtt != null) cardTtt.setOnClickListener(startTtt);
+        if (btnPlayTtt != null) btnPlayTtt.setOnClickListener(startTtt);
+
+        sheet.show();
+    }
+
+    private void startNewTicTacToeMatch() {
+        if (currentUserId == null || otherUserId == null) {
+            Toast.makeText(this, "Unable to start game in this chat", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String myName = ChatPreferencesHelper.getUserName(this);
+        if (myName == null || myName.trim().isEmpty()) myName = "Player X";
+        String peerName = (otherUserName != null && !otherUserName.trim().isEmpty()) ? otherUserName : "Player O";
+        String gameId = "ttt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+
+        String inviteText = ChatMessage.formatGameInvite("tictactoe", gameId, currentUserId, myName);
+        sendFormattedMessage(inviteText);
+
+        final String finalMyName = myName;
+        ChatApiClient.createGame(this, gameId, conversationId, currentUserId, otherUserId, finalMyName, peerName,
+                new ChatApiClient.ChatCallback<ChatApiClient.GameState>() {
+                    @Override
+                    public void onSuccess(ChatApiClient.GameState data) {}
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        Log.w("ChatActivity", "createGame note: " + errorMessage);
+                    }
+                });
+
+        Intent intent = new Intent(this, TicTacToeActivity.class);
+        intent.putExtra(TicTacToeActivity.EXTRA_GAME_ID, gameId);
+        intent.putExtra(TicTacToeActivity.EXTRA_CONVERSATION_ID, conversationId);
+        intent.putExtra(TicTacToeActivity.EXTRA_HOST_ID, currentUserId);
+        intent.putExtra(TicTacToeActivity.EXTRA_HOST_NAME, finalMyName);
+        intent.putExtra(TicTacToeActivity.EXTRA_GUEST_ID, otherUserId);
+        intent.putExtra(TicTacToeActivity.EXTRA_GUEST_NAME, peerName);
+        ticTacToeLauncher.launch(intent);
+    }
+
+    private void openTicTacToeFromInvite(ChatMessage msg) {
+        if (msg == null || !msg.isGameInvite()) return;
+        String gameId = msg.getGameId();
+        if (gameId == null || gameId.trim().isEmpty()) return;
+
+        String hostId = msg.getGameHostId();
+        String hostName = msg.getGameHostName();
+        boolean amIHost = currentUserId != null && currentUserId.equals(hostId);
+        String myName = ChatPreferencesHelper.getUserName(this);
+        if (myName == null || myName.trim().isEmpty()) myName = "Player";
+
+        String resolvedHostId = (hostId != null && !hostId.isEmpty()) ? hostId : otherUserId;
+        String resolvedHostName = (hostName != null && !hostName.isEmpty()) ? hostName : (amIHost ? myName : (otherUserName != null ? otherUserName : "Player X"));
+        String resolvedGuestId = amIHost ? otherUserId : currentUserId;
+        String resolvedGuestName = amIHost ? (otherUserName != null ? otherUserName : "Player O") : myName;
+
+        Intent intent = new Intent(this, TicTacToeActivity.class);
+        intent.putExtra(TicTacToeActivity.EXTRA_GAME_ID, gameId);
+        intent.putExtra(TicTacToeActivity.EXTRA_CONVERSATION_ID, conversationId);
+        intent.putExtra(TicTacToeActivity.EXTRA_HOST_ID, resolvedHostId);
+        intent.putExtra(TicTacToeActivity.EXTRA_HOST_NAME, resolvedHostName);
+        intent.putExtra(TicTacToeActivity.EXTRA_GUEST_ID, resolvedGuestId);
+        intent.putExtra(TicTacToeActivity.EXTRA_GUEST_NAME, resolvedGuestName);
+        ticTacToeLauncher.launch(intent);
     }
 
     private static class PendingMediaTask {
@@ -2105,6 +2481,12 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void handleMediaSelection(Uri uri, String defaultType) {
+        String inputCaption = etInput.getText() != null ? etInput.getText().toString().trim() : "";
+        etInput.setText("");
+        handleMediaSelection(uri, defaultType, inputCaption);
+    }
+
+    private void handleMediaSelection(Uri uri, String defaultType, String explicitCaption) {
         String displayName = "attachment";
         long fileSize = 0;
         String mimeType = getContentResolver().getType(uri);
@@ -2118,11 +2500,23 @@ public class ChatActivity extends AppCompatActivity {
             }
         } catch (Exception ignored) {}
 
-        // Copy selected media to private internal storage to ensure permanent readability without permission timeouts
+        // Copy selected media to Quacky storage (respecting media visibility preference)
         Uri stableUri = uri;
         try {
-            File mediaDir = new File(getFilesDir(), "chat_media");
-            if (!mediaDir.exists()) mediaDir.mkdirs();
+            int vis = conversationId != null ? ChatPreferencesHelper.getMediaVisibility(this, conversationId) : 0;
+            boolean isVisible = (vis != 2);
+            File mediaDir;
+            String lowerType = defaultType != null ? defaultType.toLowerCase() : "";
+            if (lowerType.contains("video")) {
+                mediaDir = QuackyStorageHelper.getMediaVideoDir(this, isVisible);
+            } else if (lowerType.contains("audio")) {
+                mediaDir = QuackyStorageHelper.getMediaAudioDir(this, isVisible);
+            } else if (lowerType.contains("doc") || lowerType.contains("pdf")) {
+                mediaDir = QuackyStorageHelper.getMediaDocumentsDir(this);
+            } else {
+                mediaDir = QuackyStorageHelper.getMediaImagesDir(this, isVisible);
+            }
+
             String safeExt = "";
             if (displayName != null && displayName.contains(".")) {
                 safeExt = displayName.substring(displayName.lastIndexOf("."));
@@ -2143,12 +2537,14 @@ public class ChatActivity extends AppCompatActivity {
                     out.flush();
                     stableUri = Uri.fromFile(localMediaFile);
                     fileSize = localMediaFile.length();
+                    if (isVisible) {
+                        QuackyStorageHelper.scanFile(this, localMediaFile);
+                    }
                 }
             }
         } catch (Exception ignored) {}
 
-        String caption = etInput.getText() != null ? etInput.getText().toString().trim() : "";
-        etInput.setText("");
+        String caption = explicitCaption != null ? explicitCaption.trim() : "";
 
         if (replyingToMessage != null) {
             boolean isSelf = currentUserId != null && currentUserId.equals(replyingToMessage.getSenderId());
@@ -2213,11 +2609,62 @@ public class ChatActivity extends AppCompatActivity {
     private final Runnable pollRunnable = new Runnable() {
         @Override
         public void run() {
-            if (!isPollingActive) return;
+            if (!isPollingActive || currentUserId == null) return;
+            if (!isPollInFlight.compareAndSet(false, true)) return;
+            executePollNow();
+        }
+    };
 
-            ChatApiClient.pollUpdates(ChatActivity.this, currentUserId, lastPollTimestamp, conversationId, new ChatApiClient.ChatCallback<ChatApiClient.PollResult>() {
-                @Override
-                public void onSuccess(ChatApiClient.PollResult result) {
+    private final ChatNotificationManager.LiveMessageListener liveMessageListener = messages -> {
+        if (messages == null || messages.isEmpty() || isFinishing() || isDestroyed()) return;
+        boolean hasNew = false;
+        for (ChatMessage msg : messages) {
+            if (msg == null) continue;
+            if (msg.getId() != null && loadedMessageIds.contains(msg.getId())) continue;
+            boolean belongsToThisChat = (conversationId != null && conversationId.equals(msg.getConversationId()))
+                    || (otherUserId != null && otherUserId.equals(msg.getSenderId()));
+            if (!belongsToThisChat) continue;
+
+            if (conversationId == null && msg.getConversationId() != null) {
+                conversationId = msg.getConversationId();
+                activeConversationId = conversationId;
+            }
+            if (msg.getId() != null) loadedMessageIds.add(msg.getId());
+
+            if (msg.isSecretMode()) {
+                if (isSecretMode) {
+                    ephemeralSecretMessages.add(msg);
+                    adapter.addMessage(msg);
+                    hasNew = true;
+                }
+            } else {
+                normalMessages.add(msg);
+                if (chatDb != null) {
+                    chatDb.saveMessage(msg);
+                }
+                if (!isSecretMode) {
+                    adapter.addMessage(msg);
+                    hasNew = true;
+                }
+            }
+        }
+        if (hasNew) {
+            recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+            if (conversationId != null && currentUserId != null) {
+                ChatApiClient.markMessagesAsRead(ChatActivity.this, conversationId, currentUserId);
+            }
+        }
+        if (isPollingActive && isPollInFlight.compareAndSet(false, true)) {
+            pollHandler.removeCallbacks(pollRunnable);
+            executePollNow();
+        }
+    };
+
+    private void executePollNow() {
+        ChatApiClient.pollUpdates(ChatActivity.this, currentUserId, lastPollTimestamp, conversationId, new ChatApiClient.ChatCallback<ChatApiClient.PollResult>() {
+            @Override
+            public void onSuccess(ChatApiClient.PollResult result) {
+                isPollInFlight.set(false);
                     if (result != null) {
                         if (result.timestamp != null) lastPollTimestamp = result.timestamp;
 
@@ -2329,19 +2776,21 @@ public class ChatActivity extends AppCompatActivity {
                         }
                     }
                     if (isPollingActive) {
-                        pollHandler.postDelayed(pollRunnable, 1000); // 1.0s fast live polling
+                        pollHandler.removeCallbacks(pollRunnable);
+                        pollHandler.postDelayed(pollRunnable, 900);
                     }
                 }
 
                 @Override
                 public void onError(String errorMessage) {
+                    isPollInFlight.set(false);
                     if (isPollingActive) {
+                        pollHandler.removeCallbacks(pollRunnable);
                         pollHandler.postDelayed(pollRunnable, 2000);
                     }
                 }
             });
-        }
-    };
+    }
 
     @Override
     protected void onResume() {
@@ -2355,8 +2804,12 @@ public class ChatActivity extends AppCompatActivity {
             ChatNotificationHelper.clearNotification(this, conversationId);
         }
         isPollingActive = true;
+        isPollInFlight.set(false);
+        ChatNotificationManager.getInstance().start(getApplicationContext());
+        ChatNotificationManager.getInstance().setLiveMessageListener(liveMessageListener);
         updateModeUi();
-        pollHandler.postDelayed(pollRunnable, 500);
+        pollHandler.removeCallbacks(pollRunnable);
+        pollHandler.postDelayed(pollRunnable, 300);
         if (!pendingMessagesQueue.isEmpty()) {
             drainPendingQueue();
         }
@@ -2367,6 +2820,8 @@ public class ChatActivity extends AppCompatActivity {
         super.onPause();
         activeConversationId = null;
         isPollingActive = false;
+        isPollInFlight.set(false);
+        ChatNotificationManager.getInstance().setLiveMessageListener(null);
         pollHandler.removeCallbacks(pollRunnable);
         typingHandler.removeCallbacks(stopTypingRunnable);
         if (isCurrentlyTyping) {

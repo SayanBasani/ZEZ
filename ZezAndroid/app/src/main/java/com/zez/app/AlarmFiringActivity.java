@@ -23,6 +23,7 @@ public class AlarmFiringActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        com.zez.app.theme.ThemeManager.applyTheme(this);
         super.onCreate(savedInstanceState);
 
         // Turn screen on and show over lock screen

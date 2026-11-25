@@ -254,13 +254,21 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             }
             tvName.setText(displayName);
 
-            // Selection state: row background and green checkmark badge
+            // Selection state: row background and theme-aware checkmark badge
             if (isSelected) {
-                if (layoutRoot != null) layoutRoot.setBackgroundColor(Color.parseColor("#1B2E24")); // WhatsApp selection green
-                if (ivCheckBadge != null) ivCheckBadge.setVisibility(View.VISIBLE);
+                if (layoutRoot != null) {
+                    layoutRoot.setBackgroundColor(com.zez.app.theme.ThemeManager.getSelectionHighlightColor(itemView.getContext()));
+                }
+                if (ivCheckBadge != null) {
+                    ivCheckBadge.setVisibility(View.VISIBLE);
+                    ivCheckBadge.setColorFilter(com.zez.app.theme.ThemeManager.getPrimaryColor(itemView.getContext()));
+                }
             } else {
                 if (layoutRoot != null) layoutRoot.setBackgroundColor(Color.TRANSPARENT);
-                if (ivCheckBadge != null) ivCheckBadge.setVisibility(View.GONE);
+                if (ivCheckBadge != null) {
+                    ivCheckBadge.setVisibility(View.GONE);
+                    ivCheckBadge.clearColorFilter();
+                }
             }
 
             String avatarUrl = item.getOtherUserAvatar();

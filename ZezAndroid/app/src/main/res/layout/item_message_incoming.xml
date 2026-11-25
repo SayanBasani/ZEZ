@@ -66,7 +66,7 @@
                     android:textSize="12sp"
                     android:maxLines="2"
                     android:ellipsize="end"
-                    android:textColor="@color/theme_text_secondary" />
+                    android:textColor="?attr/colorThemeTextSecondary" />
             </LinearLayout>
 
             <ImageView
@@ -127,7 +127,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_document"
-                app:tint="@color/theme_icon_tint" />
+                app:tint="?attr/colorThemeIconTint" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -143,7 +143,7 @@
                     android:singleLine="true"
                     android:ellipsize="middle"
                     android:text="document.pdf"
-                    android:textColor="@color/theme_text_primary"
+                    android:textColor="?attr/colorThemeTextPrimary"
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
@@ -152,9 +152,75 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="1.2 MB"
-                    android:textColor="@color/theme_text_muted"
+                    android:textColor="?attr/colorThemeTextMuted"
                     android:textSize="11sp" />
             </LinearLayout>
+        </LinearLayout>
+
+        <!-- Interactive Game Invite Card -->
+        <LinearLayout
+            android:id="@+id/layout_msg_incoming_game_card"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="210dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="10dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/bg_game_invite_card"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_attach_circle_games">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_games"
+                    app:tint="@android:color/white" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tic Tac Toe"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorThemeTextPrimary" />
+
+                <TextView
+                    android:id="@+id/tv_msg_incoming_game_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tap Join to play together"
+                    android:textSize="11sp"
+                    android:textColor="?attr/colorThemeTextSecondary" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_msg_incoming_game_cta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:background="@drawable/bg_pill_badge"
+                android:backgroundTint="#10B981"
+                android:text="Join"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white" />
         </LinearLayout>
 
         <TextView
@@ -163,7 +229,7 @@
             android:layout_height="wrap_content"
             android:text="Incoming message text"
             android:textSize="15sp"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <TextView
             android:id="@+id/tv_msg_incoming_time"
@@ -173,7 +239,7 @@
             android:layout_marginTop="2dp"
             android:text="10:30 AM"
             android:textSize="10sp"
-            android:textColor="@color/theme_text_muted" />
+            android:textColor="?attr/colorThemeTextMuted" />
 
         <!-- Reaction Badge (Incoming: bottom-left) -->
         <LinearLayout

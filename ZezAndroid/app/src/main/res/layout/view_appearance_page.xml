@@ -1,0 +1,1053 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/view_appearance_page"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorThemeBackground"
+    android:visibility="gone">
+
+    <!-- Top Navigation Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="12dp"
+        android:background="?attr/colorThemeSurface"
+        android:elevation="2dp">
+
+        <ImageButton
+            android:id="@+id/btn_back_appearance"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="?attr/colorThemeIconTint"
+            android:contentDescription="Back to Settings" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Appearance &amp; Themes"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorThemeTextPrimary" />
+
+        <ImageButton
+            android:id="@+id/btn_reset_appearance_top"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_refresh"
+            app:tint="?attr/colorThemeIconTint"
+            android:contentDescription="Reset Appearance" />
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="40dp">
+
+            <!-- 1. LIVE INTERACTIVE THEME PREVIEW -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="LIVE THEME PREVIEW"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/preview_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_theme_card_unselected"
+                android:padding="0dp"
+                android:clipToPadding="false"
+                android:elevation="1dp"
+                android:layout_marginBottom="24dp">
+
+                <!-- Preview Mini App Bar -->
+                <LinearLayout
+                    android:id="@+id/preview_top_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="12dp"
+                    android:background="?attr/colorThemeSurfaceVariant">
+
+                    <ImageView
+                        android:id="@+id/preview_back_icon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_arrow_back"
+                        app:tint="?attr/colorThemeIconTint" />
+
+                    <TextView
+                        android:id="@+id/preview_app_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="TWING · Live Preview"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+
+                    <ImageView
+                        android:id="@+id/preview_search_icon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_search"
+                        app:tint="?attr/colorThemeIconTint" />
+                </LinearLayout>
+
+                <!-- Preview Body -->
+                <LinearLayout
+                    android:id="@+id/preview_body_surface"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:background="?attr/colorThemeSurface">
+
+                    <!-- Text Hierarchy -->
+                    <TextView
+                        android:id="@+id/preview_text_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Graphite Palette"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+
+                    <TextView
+                        android:id="@+id/preview_text_subtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Real-time responsive preview with live component tokens."
+                        android:textSize="12sp"
+                        android:textColor="?attr/colorThemeTextSecondary"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- Status Badges -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp">
+
+                        <TextView
+                            android:id="@+id/preview_badge_primary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Active Accent"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/white"
+                            android:background="@drawable/bg_pill_badge"
+                            android:backgroundTint="@color/primary"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="3dp"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:id="@+id/preview_badge_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Incoming Call"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/white"
+                            android:background="@drawable/bg_pill_badge"
+                            android:backgroundTint="@color/call_incoming"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="3dp"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:id="@+id/preview_badge_tag"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Encrypted"
+                            android:textSize="11sp"
+                            android:textColor="?attr/colorThemeTextSecondary"
+                            android:background="@drawable/bg_pill_badge"
+                            android:backgroundTint="?attr/colorThemeSurfaceVariant"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp" />
+                    </LinearLayout>
+
+                    <!-- Mock Input Field -->
+                    <EditText
+                        android:id="@+id/preview_input_field"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_search_input"
+                        android:hint="Type something to preview..."
+                        android:textColorHint="?attr/colorThemeTextMuted"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:textSize="13sp"
+                        android:paddingHorizontal="12dp"
+                        android:layout_marginBottom="12dp"
+                        android:inputType="text" />
+
+                    <!-- Action Buttons -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/preview_btn_primary"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:text="Primary Action"
+                            android:textSize="12sp"
+                            android:textAllCaps="false"
+                            android:layout_marginEnd="8dp"
+                            app:cornerRadius="8dp"
+                            android:backgroundTint="@color/primary" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/preview_btn_secondary"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:text="Outlined Button"
+                            android:textSize="12sp"
+                            android:textAllCaps="false"
+                            android:textColor="?attr/colorThemeTextPrimary"
+                            app:strokeColor="?attr/colorThemeBorder"
+                            app:cornerRadius="8dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+
+            <!-- 2. APPEARANCE MODE (Light / Dark / System) -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="APPEARANCE MODE"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="3"
+                android:layout_marginBottom="24dp">
+
+                <!-- System Mode Card -->
+                <LinearLayout
+                    android:id="@+id/card_mode_system"
+                    android:layout_width="0dp"
+                    android:layout_height="90dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_theme_card_selected"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+                        <ImageView
+                            android:id="@+id/icon_mode_system"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:src="@drawable/ic_mode_system"
+                            app:tint="@color/primary" />
+                        <ImageView
+                            android:id="@+id/check_mode_system"
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:layout_gravity="top|end"
+                            android:src="@drawable/ic_check_circle"
+                            app:tint="@color/primary"
+                            android:visibility="visible" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="System"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:layout_marginTop="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Auto follow"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <!-- Light Mode Card -->
+                <LinearLayout
+                    android:id="@+id/card_mode_light"
+                    android:layout_width="0dp"
+                    android:layout_height="90dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:layout_marginHorizontal="3dp"
+                    android:background="@drawable/bg_theme_card_unselected"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+                        <ImageView
+                            android:id="@+id/icon_mode_light"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:src="@drawable/ic_mode_light"
+                            app:tint="?attr/colorThemeIconTint" />
+                        <ImageView
+                            android:id="@+id/check_mode_light"
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:layout_gravity="top|end"
+                            android:src="@drawable/ic_check_circle"
+                            app:tint="@color/primary"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Light"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:layout_marginTop="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Crisp day"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <!-- Dark Mode Card -->
+                <LinearLayout
+                    android:id="@+id/card_mode_dark"
+                    android:layout_width="0dp"
+                    android:layout_height="90dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_theme_card_unselected"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+                        <ImageView
+                            android:id="@+id/icon_mode_dark"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:src="@drawable/ic_mode_dark"
+                            app:tint="?attr/colorThemeIconTint" />
+                        <ImageView
+                            android:id="@+id/check_mode_dark"
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:layout_gravity="top|end"
+                            android:src="@drawable/ic_check_circle"
+                            app:tint="@color/primary"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dark"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:layout_marginTop="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Night glow"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+            </LinearLayout>
+
+
+            <!-- 3. COLOR PALETTES (8) -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="COLOR PALETTES (8)"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Selected palette persists seamlessly across light and dark modes."
+                android:textSize="12sp"
+                android:textColor="?attr/colorThemeTextSecondary"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Palette 1: Graphite -->
+            <LinearLayout
+                android:id="@+id/card_palette_graphite"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_theme_card_selected"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="14dp">
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#2563EB"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#121417"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#3B82F6" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Graphite (Default)"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Neutral slate tones with electric blue accents"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/check_palette_graphite"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/primary"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+            <!-- Palette 2: Arctic Light -->
+            <LinearLayout
+                android:id="@+id/card_palette_arctic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_theme_card_unselected"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="14dp">
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#0284C7"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#0B131E"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#38BDF8" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Arctic Light"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cool frosty cyan with glacial blue highlights"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/check_palette_arctic"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/primary"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Palette 3: Midnight -->
+            <LinearLayout
+                android:id="@+id/card_palette_midnight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_theme_card_unselected"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="14dp">
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#4F46E5"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#0A0E17"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#818CF8" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Midnight"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deep indigo and violet for low-light comfort"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/check_palette_midnight"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/primary"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Palette 4: AMOLED (Pitch Black) -->
+            <LinearLayout
+                android:id="@+id/card_palette_amoled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_theme_card_unselected"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="14dp">
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#00E5FF"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#000000"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#38BDF8" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="AMOLED (Pitch Black)"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Pure #000000 black saves battery on OLED screens"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/check_palette_amoled"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/primary"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Palette 5: Ocean -->
+            <LinearLayout
+                android:id="@+id/card_palette_ocean"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_theme_card_unselected"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="14dp">
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#0284C7"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#08131F"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#0EA5E9" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ocean"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Marine depth with vibrant azure accents"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/check_palette_ocean"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/primary"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Palette 6: Sage -->
+            <LinearLayout
+                android:id="@+id/card_palette_sage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_theme_card_unselected"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="14dp">
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#059669"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#0B1612"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#10B981" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sage"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Forest greens and soothing botanical tones"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/check_palette_sage"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/primary"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Palette 7: Sunset -->
+            <LinearLayout
+                android:id="@+id/card_palette_sunset"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_theme_card_unselected"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="14dp">
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#EA580C"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#1A1012"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#FB7185" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sunset"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Warm amber, terracotta and dusk highlights"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/check_palette_sunset"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/primary"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Palette 8: Rose -->
+            <LinearLayout
+                android:id="@+id/card_palette_rose"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="14dp"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/bg_theme_card_unselected"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="14dp">
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#E11D48"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#170E12"
+                        android:layout_marginEnd="4dp" />
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_circle_dot"
+                        android:backgroundTint="#F43F5E" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Rose"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Rich crimson and elegant rose accents"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/check_palette_rose"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/primary"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+
+            <!-- 4. DYNAMIC COLORS (MATERIAL YOU) -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="DYNAMIC COLORS"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/card_dynamic_colors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="16dp"
+                android:background="@drawable/bg_theme_card_unselected"
+                android:layout_marginBottom="24dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_palette"
+                    app:tint="?attr/colorThemeIconTint"
+                    android:layout_marginEnd="14dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dynamic Colors (Material You)"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+
+                    <TextView
+                        android:id="@+id/tv_dynamic_colors_desc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sync app accents with device wallpaper (Android 12+)"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_dynamic_colors"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+
+            <!-- 5. ACTIONS: APPLY & RESET -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_apply_appearance"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Apply Appearance"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/primary"
+                app:cornerRadius="10dp"
+                android:layout_marginBottom="12dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_reset_appearance_full"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Reset to System Defaults"
+                android:textSize="14sp"
+                android:textAllCaps="false"
+                android:textColor="?attr/colorThemeTextPrimary"
+                app:strokeColor="?attr/colorThemeBorder"
+                app:cornerRadius="10dp" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

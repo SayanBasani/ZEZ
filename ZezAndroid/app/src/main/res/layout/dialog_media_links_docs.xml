@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/theme_background">
+    android:background="?attr/colorThemeBackground">
 
     <!-- Header Bar -->
     <LinearLayout
@@ -14,7 +14,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
-        android:background="@color/theme_surface"
+        android:background="?attr/colorThemeSurface"
         android:elevation="2dp">
 
         <ImageButton
@@ -23,7 +23,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Back" />
 
         <TextView
@@ -35,7 +35,7 @@
             android:text="Media, links and docs"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <ImageButton
             android:id="@+id/btn_mld_delete_selected"
@@ -43,7 +43,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_delete"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:visibility="gone"
             android:contentDescription="Delete selected" />
     </LinearLayout>
@@ -53,7 +53,7 @@
         android:layout_width="match_parent"
         android:layout_height="46dp"
         android:orientation="horizontal"
-        android:background="@color/theme_surface">
+        android:background="?attr/colorThemeSurface">
 
         <LinearLayout
             android:id="@+id/tab_mld_media"
@@ -104,7 +104,7 @@
                 android:text="Docs"
                 android:textSize="14sp"
                 android:textStyle="normal"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
 
             <View
                 android:id="@+id/indicator_tab_docs"
@@ -133,7 +133,7 @@
                 android:text="Links"
                 android:textSize="14sp"
                 android:textStyle="normal"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
 
             <View
                 android:id="@+id/indicator_tab_links"
@@ -190,7 +190,7 @@
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:src="@drawable/ic_photo_library"
-                app:tint="@color/theme_text_muted" />
+                app:tint="?attr/colorThemeTextMuted" />
 
             <TextView
                 android:id="@+id/tv_mld_empty_text"
@@ -199,7 +199,7 @@
                 android:layout_marginTop="16dp"
                 android:text="No media shared yet"
                 android:textSize="15sp"
-                android:textColor="@color/theme_text_muted" />
+                android:textColor="?attr/colorThemeTextMuted" />
         </LinearLayout>
     </FrameLayout>
 

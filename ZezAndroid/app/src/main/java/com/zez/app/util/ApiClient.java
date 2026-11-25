@@ -109,6 +109,14 @@ public class ApiClient {
                 }
             }
             body.add("alarms", array);
+            JsonArray deletedArr = new JsonArray();
+            List<Long> deletedIdsLocal = AlarmHelper.getDeletedAlarmIdsList(context);
+            if (deletedIdsLocal != null) {
+                for (Long dId : deletedIdsLocal) {
+                    if (dId != null && dId > 0) deletedArr.add(dId);
+                }
+            }
+            body.add("deletedAlarmIds", deletedArr);
 
             Request request = new Request.Builder()
                     .url(apiUrl + "/api/devices/alarms/sync")

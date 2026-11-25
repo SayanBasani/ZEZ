@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light">
+    android:background="?attr/colorThemeBackground">
 
     <!-- Top App Bar -->
     <LinearLayout
@@ -14,7 +14,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="18dp"
-        android:background="@color/theme_surface"
+        android:background="?attr/colorThemeSurface"
         android:elevation="3dp"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -37,7 +37,7 @@
                     android:text="Chats"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_primary" />
+                    android:textColor="?attr/colorThemeTextPrimary" />
 
                 <TextView
                     android:id="@+id/tv_top_badge"
@@ -47,7 +47,7 @@
                     android:text="Live"
                     android:textSize="10sp"
                     android:textStyle="bold"
-                    android:textColor="@color/primary"
+                    android:textColor="?attr/colorThemePrimary"
                     android:background="@drawable/bg_mode_toggle_normal"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="1dp"
@@ -60,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:text="Messages &amp; encrypted conversations"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_muted"
+                android:textColor="?attr/colorThemeTextMuted"
                 android:layout_marginTop="1dp" />
         </LinearLayout>
 
@@ -70,7 +70,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_music"
-            app:tint="@color/primary"
+            app:tint="?attr/colorThemePrimary"
             android:contentDescription="YMusic" />
 
         <ImageButton
@@ -79,7 +79,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_popup_sync"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Sync"
             android:visibility="gone" />
     </LinearLayout>
@@ -102,7 +102,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="14dp"
-        android:background="@color/theme_surface"
+        android:background="?attr/colorThemeSurface"
         android:elevation="4dp"
         android:visibility="gone"
         app:layout_constraintTop_toTopOf="parent">
@@ -113,7 +113,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Cancel selection" />
 
         <TextView
@@ -125,7 +125,7 @@
             android:text="1"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <ImageButton
             android:id="@+id/btn_chats_selection_pin"
@@ -133,7 +133,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_pin"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Pin chat" />
 
         <ImageButton
@@ -142,7 +142,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_delete"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Delete chat" />
 
         <ImageButton
@@ -151,7 +151,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_volume_off"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Mute notifications" />
 
         <ImageButton
@@ -160,7 +160,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_archive"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Archive chat" />
 
         <ImageButton
@@ -169,7 +169,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_more_vert"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="More options" />
     </LinearLayout>
 
@@ -229,7 +229,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="No items found"
-                android:textColor="@color/text_secondary_light"
+                android:textColor="?attr/colorThemeTextSecondary"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -241,6 +241,9 @@
 
         <!-- Storage & Hardware Sub-Page -->
         <include layout="@layout/view_hardware_page" />
+
+        <!-- Appearance & Themes Sub-Page -->
+        <include layout="@layout/view_appearance_page" />
 
         <!-- Alarms View -->
         <include layout="@layout/view_alarms" />
@@ -266,7 +269,7 @@
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:background="@color/surface_light"
+        android:background="?attr/colorThemeSurface"
         app:menu="@menu/bottom_nav_menu"
         app:layout_constraintBottom_toBottomOf="parent" />
 

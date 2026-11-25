@@ -61,6 +61,7 @@ public class ContactsActivity extends AppCompatActivity implements ContactsAdapt
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        com.zez.app.theme.ThemeManager.applyTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
 

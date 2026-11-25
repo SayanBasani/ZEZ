@@ -9,7 +9,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/background_light">
+        android:background="?attr/colorThemeBackground">
 
         <!-- Top App Bar -->
         <LinearLayout
@@ -19,7 +19,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="10dp"
-            android:background="@color/theme_surface"
+            android:background="?attr/colorThemeSurface"
             android:elevation="3dp"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -29,7 +29,7 @@
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_menu"
-                app:tint="@color/theme_icon_tint"
+                app:tint="?attr/colorThemeIconTint"
                 android:contentDescription="Open menu" />
 
             <ImageButton
@@ -39,7 +39,7 @@
                 android:layout_marginStart="2dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_arrow_back"
-                app:tint="@color/theme_icon_tint"
+                app:tint="?attr/colorThemeIconTint"
                 android:contentDescription="Back" />
 
             <LinearLayout
@@ -56,14 +56,16 @@
                     android:gravity="center_vertical">
 
                     <TextView
+                        android:id="@+id/tv_music_main_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="YMusic"
                         android:textSize="19sp"
                         android:textStyle="bold"
-                        android:textColor="@color/theme_text_primary" />
+                        android:textColor="?attr/colorThemeTextPrimary" />
 
                     <TextView
+                        android:id="@+id/tv_music_mode_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
@@ -82,7 +84,7 @@
                     android:layout_height="wrap_content"
                     android:text="Stream, Search &amp; Download"
                     android:textSize="11sp"
-                    android:textColor="@color/theme_text_muted"
+                    android:textColor="?attr/colorThemeTextMuted"
                     android:layout_marginTop="1dp" />
             </LinearLayout>
 
@@ -92,7 +94,7 @@
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_search"
-                app:tint="@color/theme_icon_tint"
+                app:tint="?attr/colorThemeIconTint"
                 android:contentDescription="Search" />
         </LinearLayout>
 
@@ -105,7 +107,7 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp"
-            android:background="@color/theme_surface"
+            android:background="?attr/colorThemeSurface"
             android:visibility="gone"
             app:layout_constraintTop_toBottomOf="@id/app_bar_music">
 
@@ -121,7 +123,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_search"
-                    app:tint="@color/theme_text_muted" />
+                    app:tint="?attr/colorThemeTextMuted" />
 
                 <EditText
                     android:id="@+id/et_music_search"
@@ -132,8 +134,8 @@
                     android:background="@null"
                     android:hint="Search songs, artists, albums..."
                     android:textSize="14sp"
-                    android:textColor="@color/theme_text_primary"
-                    android:textColorHint="@color/theme_text_muted"
+                    android:textColor="?attr/colorThemeTextPrimary"
+                    android:textColorHint="?attr/colorThemeTextMuted"
                     android:imeOptions="actionSearch"
                     android:inputType="text"
                     android:singleLine="true" />
@@ -144,7 +146,7 @@
                     android:layout_height="28dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_close"
-                    app:tint="@color/theme_text_muted"
+                    app:tint="?attr/colorThemeTextMuted"
                     android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
@@ -185,7 +187,19 @@
                     android:gravity="center"
                     android:text="Top Tracks"
                     android:textSize="12sp"
-                    android:textColor="@color/theme_text_secondary"
+                    android:textColor="?attr/colorThemeTextSecondary"
+                    android:background="@drawable/bg_mode_toggle_normal"
+                    android:paddingHorizontal="14dp"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/chip_cat_viral"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="🔥 Viral 50"
+                    android:textSize="12sp"
+                    android:textColor="?attr/colorThemeTextSecondary"
                     android:background="@drawable/bg_mode_toggle_normal"
                     android:paddingHorizontal="14dp"
                     android:layout_marginEnd="8dp" />
@@ -197,7 +211,7 @@
                     android:gravity="center"
                     android:text="Recommended"
                     android:textSize="12sp"
-                    android:textColor="@color/theme_text_secondary"
+                    android:textColor="?attr/colorThemeTextSecondary"
                     android:background="@drawable/bg_mode_toggle_normal"
                     android:paddingHorizontal="14dp"
                     android:layout_marginEnd="8dp" />
@@ -209,7 +223,7 @@
                     android:gravity="center"
                     android:text="Charts"
                     android:textSize="12sp"
-                    android:textColor="@color/theme_text_secondary"
+                    android:textColor="?attr/colorThemeTextSecondary"
                     android:background="@drawable/bg_mode_toggle_normal"
                     android:paddingHorizontal="14dp"
                     android:layout_marginEnd="8dp" />
@@ -221,7 +235,19 @@
                     android:gravity="center"
                     android:text="📥 Downloads"
                     android:textSize="12sp"
-                    android:textColor="@color/theme_text_secondary"
+                    android:textColor="?attr/colorThemeTextSecondary"
+                    android:background="@drawable/bg_mode_toggle_normal"
+                    android:paddingHorizontal="14dp"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/chip_cat_history"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="🕒 History"
+                    android:textSize="12sp"
+                    android:textColor="?attr/colorThemeTextSecondary"
                     android:background="@drawable/bg_mode_toggle_normal"
                     android:paddingHorizontal="14dp" />
             </LinearLayout>
@@ -235,7 +261,7 @@
             android:orientation="horizontal"
             android:paddingHorizontal="14dp"
             android:paddingVertical="6dp"
-            android:background="@color/theme_surface"
+            android:background="?attr/colorThemeSurface"
             android:visibility="gone"
             app:layout_constraintTop_toBottomOf="@id/scroll_music_categories">
 
@@ -248,7 +274,7 @@
                 android:text="⏳ Downloading (0)"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="@color/theme_text_primary"
+                android:textColor="?attr/colorThemeTextPrimary"
                 android:background="@drawable/bg_mode_toggle_active"
                 android:layout_marginEnd="6dp" />
 
@@ -260,9 +286,42 @@
                 android:gravity="center"
                 android:text="✓ Completed"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_secondary"
+                android:textColor="?attr/colorThemeTextSecondary"
                 android:background="@drawable/bg_mode_toggle_normal"
                 android:layout_marginStart="6dp" />
+        </LinearLayout>
+
+        <!-- Playback History Header (visible only when History category is selected) -->
+        <LinearLayout
+            android:id="@+id/layout_history_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:gravity="center_vertical"
+            android:background="?attr/colorThemeSurface"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/layout_downloads_subtabs">
+
+            <TextView
+                android:id="@+id/tv_history_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Recently Played (0)"
+                android:textColor="?attr/colorThemeTextSecondary"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/btn_clear_playback_history"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clear History"
+                android:textColor="@color/primary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:padding="6dp" />
         </LinearLayout>
 
         <!-- Main Content Frame -->
@@ -290,7 +349,7 @@
                 android:id="@+id/rv_music_suggestions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/theme_surface"
+                android:background="?attr/colorThemeSurface"
                 android:elevation="6dp"
                 android:visibility="gone" />
 
@@ -318,7 +377,7 @@
                     android:layout_width="72dp"
                     android:layout_height="72dp"
                     android:src="@drawable/ic_music"
-                    app:tint="@color/theme_text_muted" />
+                    app:tint="?attr/colorThemeTextMuted" />
 
                 <TextView
                     android:id="@+id/tv_music_empty_title"
@@ -327,7 +386,7 @@
                     android:text="No tracks found"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_primary"
+                    android:textColor="?attr/colorThemeTextPrimary"
                     android:layout_marginTop="16dp" />
 
                 <TextView
@@ -336,7 +395,7 @@
                     android:layout_height="wrap_content"
                     android:text="Try searching for another artist or song"
                     android:textSize="13sp"
-                    android:textColor="@color/theme_text_muted"
+                    android:textColor="?attr/colorThemeTextMuted"
                     android:layout_marginTop="4dp"
                     android:gravity="center" />
             </LinearLayout>
@@ -358,7 +417,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:orientation="vertical"
-        android:background="@color/theme_surface"
+        android:background="?attr/colorThemeSurface"
         android:fitsSystemWindows="true">
 
         <!-- Drawer Brand Header -->
@@ -369,7 +428,7 @@
             android:paddingHorizontal="20dp"
             android:paddingTop="36dp"
             android:paddingBottom="20dp"
-            android:background="@color/surface_variant">
+            android:background="?attr/colorThemeSurfaceVariant">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -405,7 +464,7 @@
                         android:text="YMusic"
                         android:textSize="20sp"
                         android:textStyle="bold"
-                        android:textColor="@color/theme_text_primary" />
+                        android:textColor="?attr/colorThemeTextPrimary" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -427,14 +486,14 @@
                 android:layout_height="wrap_content"
                 android:text="Stream, Download &amp; Background Player"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_muted"
+                android:textColor="?attr/colorThemeTextMuted"
                 android:layout_marginTop="12dp" />
         </LinearLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@color/theme_divider" />
+            android:background="?attr/colorThemeDivider" />
 
         <!-- Navigation items list -->
         <ScrollView
@@ -454,10 +513,88 @@
                     android:paddingHorizontal="20dp"
                     android:paddingTop="12dp"
                     android:paddingBottom="4dp"
-                    android:text="DISCOVER"
+                    android:text="YT MUSIC &amp; DISCOVER"
                     android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_muted" />
+                    android:textColor="#EF4444" />
+
+                <!-- YouTube Music Mode -->
+                <LinearLayout
+                    android:id="@+id/drawer_item_yt_music"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="20dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_play_circle"
+                        app:tint="#EF4444" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="YT Music (Explore)"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorThemeTextPrimary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="YouTube Music charts &amp; viral streams"
+                            android:textSize="11sp"
+                            android:textColor="?attr/colorThemeTextMuted" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="HOT"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"
+                        android:background="@drawable/bg_mode_toggle_active"
+                        android:backgroundTint="#EF4444"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="1dp" />
+                </LinearLayout>
+
+                <!-- Viral 50 Songs -->
+                <LinearLayout
+                    android:id="@+id/drawer_item_viral"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="20dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_star_filled"
+                        app:tint="#F59E0B" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="Viral 50 Songs"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                </LinearLayout>
 
                 <!-- Trending / Discover -->
                 <LinearLayout
@@ -473,7 +610,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:src="@drawable/ic_music"
-                        app:tint="@color/theme_icon_tint" />
+                        app:tint="?attr/colorThemeIconTint" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -481,7 +618,7 @@
                         android:layout_marginStart="16dp"
                         android:text="Trending / Discover"
                         android:textSize="14sp"
-                        android:textColor="@color/theme_text_primary" />
+                        android:textColor="?attr/colorThemeTextPrimary" />
                 </LinearLayout>
 
                 <!-- Top Tracks -->
@@ -498,7 +635,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:src="@drawable/ic_star_filled"
-                        app:tint="@color/theme_icon_tint" />
+                        app:tint="?attr/colorThemeIconTint" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -506,7 +643,7 @@
                         android:layout_marginStart="16dp"
                         android:text="Top Tracks"
                         android:textSize="14sp"
-                        android:textColor="@color/theme_text_primary" />
+                        android:textColor="?attr/colorThemeTextPrimary" />
                 </LinearLayout>
 
                 <!-- Recommended -->
@@ -523,7 +660,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:src="@drawable/ic_favorite_filled"
-                        app:tint="@color/theme_icon_tint" />
+                        app:tint="?attr/colorThemeIconTint" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -531,7 +668,7 @@
                         android:layout_marginStart="16dp"
                         android:text="Recommended"
                         android:textSize="14sp"
-                        android:textColor="@color/theme_text_primary" />
+                        android:textColor="?attr/colorThemeTextPrimary" />
                 </LinearLayout>
 
                 <!-- Charts -->
@@ -548,7 +685,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:src="@drawable/ic_hardware"
-                        app:tint="@color/theme_icon_tint" />
+                        app:tint="?attr/colorThemeIconTint" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -556,7 +693,7 @@
                         android:layout_marginStart="16dp"
                         android:text="Global Charts"
                         android:textSize="14sp"
-                        android:textColor="@color/theme_text_primary" />
+                        android:textColor="?attr/colorThemeTextPrimary" />
                 </LinearLayout>
 
                 <!-- Offline Downloads -->
@@ -585,10 +722,35 @@
                         android:textColor="@color/primary" />
                 </LinearLayout>
 
+                <!-- Playback History -->
+                <LinearLayout
+                    android:id="@+id/drawer_item_history"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="20dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_history"
+                        app:tint="?attr/colorThemeIconTint" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="Playback History"
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+                </LinearLayout>
+
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@color/theme_divider"
+                    android:background="?attr/colorThemeDivider"
                     android:layout_marginVertical="8dp" />
 
                 <TextView
@@ -600,7 +762,7 @@
                     android:text="TOOLS &amp; SETTINGS"
                     android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="@color/theme_text_muted" />
+                    android:textColor="?attr/colorThemeTextMuted" />
 
                 <!-- Sleep Timer -->
                 <LinearLayout
@@ -616,7 +778,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:src="@drawable/ic_clock"
-                        app:tint="@color/theme_icon_tint" />
+                        app:tint="?attr/colorThemeIconTint" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -624,7 +786,7 @@
                         android:layout_marginStart="16dp"
                         android:text="Sleep Timer"
                         android:textSize="14sp"
-                        android:textColor="@color/theme_text_primary" />
+                        android:textColor="?attr/colorThemeTextPrimary" />
                 </LinearLayout>
 
                 <!-- Back to Main App -->
@@ -641,7 +803,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:src="@drawable/ic_arrow_back"
-                        app:tint="@color/theme_icon_tint" />
+                        app:tint="?attr/colorThemeIconTint" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -649,7 +811,7 @@
                         android:layout_marginStart="16dp"
                         android:text="Return to Main App"
                         android:textSize="14sp"
-                        android:textColor="@color/theme_text_secondary" />
+                        android:textColor="?attr/colorThemeTextSecondary" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -661,14 +823,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp"
-            android:background="@color/surface_variant">
+            android:background="?attr/colorThemeSurfaceVariant">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="YMusic V4 · Powered by YouTube"
                 android:textSize="11sp"
-                android:textColor="@color/theme_text_muted" />
+                android:textColor="?attr/colorThemeTextMuted" />
         </LinearLayout>
     </LinearLayout>
 

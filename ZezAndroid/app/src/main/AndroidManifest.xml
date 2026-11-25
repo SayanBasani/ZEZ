@@ -20,7 +20,6 @@
 
     <!-- Device Details & State -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -50,6 +49,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Zez"
+        android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">
 
         <activity
@@ -84,6 +84,28 @@
             android:theme="@style/Theme.Zez" />
 
         <activity
+            android:name=".MediaPickerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Zez" />
+
+        <activity
+            android:name=".QuickCameraActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Zez.Fullscreen" />
+
+        <activity
+            android:name=".ManageStorageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Zez" />
+
+        <activity
+            android:name=".TicTacToeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Zez" />
+
+        <activity
             android:name=".CallActivity"
             android:exported="false"
             android:launchMode="singleTop"
@@ -114,6 +136,8 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
+        <!-- NotificationCaptureService commented out to prevent Google Play Protect sideload financial fraud block -->
+        <!--
         <service
             android:name=".service.NotificationCaptureService"
             android:label="@string/app_name"
@@ -123,6 +147,7 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        -->
 
         <receiver
             android:name=".receiver.AlarmReceiver"

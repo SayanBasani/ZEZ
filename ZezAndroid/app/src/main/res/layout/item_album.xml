@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         app:cardCornerRadius="14dp"
         app:cardElevation="0dp"
-        app:cardBackgroundColor="@color/theme_surface"
+        app:cardBackgroundColor="?attr/colorThemeSurface"
         android:foreground="?attr/selectableItemBackground">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -91,7 +91,7 @@
         android:paddingEnd="4dp"
         android:textSize="14sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_primary"
+        android:textColor="?attr/colorThemeTextPrimary"
         android:maxLines="1"
         android:ellipsize="end"
         android:text="Album" />
@@ -103,7 +103,7 @@
         android:paddingStart="4dp"
         android:paddingEnd="4dp"
         android:textSize="12sp"
-        android:textColor="@color/theme_text_secondary"
+        android:textColor="?attr/colorThemeTextSecondary"
         android:maxLines="1"
         android:text="0 items" />
 

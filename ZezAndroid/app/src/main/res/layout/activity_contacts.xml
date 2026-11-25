@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/theme_background">
+    android:background="?attr/colorThemeBackground">
 
     <!-- Top App Bar (WhatsApp Header Style) -->
     <LinearLayout
@@ -14,7 +14,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="8dp"
-        android:background="@color/theme_surface"
+        android:background="?attr/colorThemeSurface"
         android:elevation="2dp">
 
         <ImageButton
@@ -23,7 +23,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Back" />
 
         <LinearLayout
@@ -40,7 +40,7 @@
                 android:text="Select contact"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
 
             <TextView
                 android:id="@+id/tv_contacts_count"
@@ -48,7 +48,7 @@
                 android:layout_height="wrap_content"
                 android:text="Scanning contacts..."
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
         </LinearLayout>
 
         <ImageButton
@@ -57,7 +57,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_refresh"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Refresh" />
     </LinearLayout>
 
@@ -75,7 +75,7 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_search"
-            app:tint="@color/theme_icon_tint" />
+            app:tint="?attr/colorThemeIconTint" />
 
         <EditText
             android:id="@+id/et_search_contacts"
@@ -84,8 +84,8 @@
             android:layout_marginStart="8dp"
             android:background="@null"
             android:hint="Search contacts by name or phone..."
-            android:textColorHint="@color/theme_text_secondary"
-            android:textColor="@color/theme_text_primary"
+            android:textColorHint="?attr/colorThemeTextSecondary"
+            android:textColor="?attr/colorThemeTextPrimary"
             android:textSize="14sp"
             android:maxLines="1"
             android:inputType="text" />
@@ -131,21 +131,21 @@
                 android:text="New contact / Direct message"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Add to contacts or message any phone number"
                 android:textSize="12sp"
-                android:textColor="@color/theme_text_secondary" />
+                android:textColor="?attr/colorThemeTextSecondary" />
         </LinearLayout>
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/theme_card_border" />
+        android:background="?attr/colorThemeBorder" />
 
     <!-- Contacts List -->
     <FrameLayout
@@ -179,7 +179,7 @@
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:src="@drawable/ic_person"
-                app:tint="@color/theme_text_muted"
+                app:tint="?attr/colorThemeTextMuted"
                 android:layout_marginBottom="12dp" />
 
             <TextView
@@ -188,14 +188,14 @@
                 android:text="No contacts found"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/theme_text_primary" />
+                android:textColor="?attr/colorThemeTextPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Grant Contacts permission or tap refresh to scan."
                 android:textSize="13sp"
-                android:textColor="@color/theme_text_secondary"
+                android:textColor="?attr/colorThemeTextSecondary"
                 android:gravity="center"
                 android:layout_marginTop="4dp" />
         </LinearLayout>

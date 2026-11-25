@@ -23,7 +23,7 @@
             android:text="Chat Profile &amp; Settings"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <ImageButton
             android:id="@+id/btn_close_profile_dialog"
@@ -31,7 +31,7 @@
             android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@color/theme_icon_tint"
+            app:tint="?attr/colorThemeIconTint"
             android:contentDescription="Close" />
     </LinearLayout>
 
@@ -49,7 +49,7 @@
             android:scaleType="centerCrop"
             android:src="@drawable/ic_person"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.LargeComponent"
-            android:background="@color/theme_surface"
+            android:background="?attr/colorThemeSurface"
             app:strokeColor="@color/primary"
             app:strokeWidth="2dp" />
 
@@ -76,7 +76,7 @@
         android:layout_gravity="center_horizontal"
         android:text="Tap camera icon to change photo"
         android:textSize="11sp"
-        android:textColor="@color/theme_text_muted"
+        android:textColor="?attr/colorThemeTextMuted"
         android:layout_marginBottom="16dp" />
 
     <!-- Registered Phone Number -->
@@ -86,7 +86,7 @@
         android:text="Registered Phone Number"
         android:textSize="12sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_secondary"
+        android:textColor="?attr/colorThemeTextSecondary"
         android:layout_marginBottom="4dp" />
 
     <LinearLayout
@@ -106,7 +106,7 @@
             android:text="+91 9876543210"
             android:textSize="15sp"
             android:textStyle="bold"
-            android:textColor="@color/theme_text_primary" />
+            android:textColor="?attr/colorThemeTextPrimary" />
 
         <ImageView
             android:layout_width="18dp"
@@ -120,7 +120,7 @@
         android:layout_height="wrap_content"
         android:text="Your phone number is used for Zez 1-on-1 messaging."
         android:textSize="11sp"
-        android:textColor="@color/theme_text_muted"
+        android:textColor="?attr/colorThemeTextMuted"
         android:layout_marginBottom="14dp" />
 
     <!-- Name Field -->
@@ -130,7 +130,7 @@
         android:text="Your Name"
         android:textSize="12sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_secondary"
+        android:textColor="?attr/colorThemeTextSecondary"
         android:layout_marginBottom="4dp" />
 
     <EditText
@@ -140,7 +140,7 @@
         android:background="@drawable/bg_search_input"
         android:paddingHorizontal="12dp"
         android:textSize="15sp"
-        android:textColor="@color/theme_text_primary"
+        android:textColor="?attr/colorThemeTextPrimary"
         android:singleLine="true"
         android:layout_marginBottom="14dp" />
 
@@ -151,7 +151,7 @@
         android:text="About"
         android:textSize="12sp"
         android:textStyle="bold"
-        android:textColor="@color/theme_text_secondary"
+        android:textColor="?attr/colorThemeTextSecondary"
         android:layout_marginBottom="4dp" />
 
     <EditText
@@ -161,7 +161,7 @@
         android:background="@drawable/bg_search_input"
         android:paddingHorizontal="12dp"
         android:textSize="15sp"
-        android:textColor="@color/theme_text_primary"
+        android:textColor="?attr/colorThemeTextPrimary"
         android:singleLine="true"
         android:layout_marginBottom="20dp" />
 
@@ -178,7 +178,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Cancel"
-            android:textColor="@color/theme_text_secondary" />
+            android:textColor="?attr/colorThemeTextSecondary" />
 
         <Button
             android:id="@+id/btn_save_profile"

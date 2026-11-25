@@ -49,28 +49,31 @@ app.post('/api/ping', (req, res) => {
 
 // Admin Web Portal (Static UI)
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
-app.use('/downloads', express.static(path.join(__dirname, 'public/downloads')));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-// Downloads fallback for APK aliases or missing specific filenames
+// Always resolve app-release-latest.apk to the active DB release before static files
 app.get('/downloads/:filename', async (req, res, next) => {
   const reqFile = req.params.filename;
   if (!reqFile.endsWith('.apk')) return next();
 
+  const localRequested = path.join(__dirname, 'public/downloads', reqFile);
+  if (reqFile !== 'app-release-latest.apk' && fs.existsSync(localRequested)) {
+    return res.sendFile(localRequested);
+  }
+
   try {
     const { pool } = require('./db');
     const result = await pool.query(
-      `SELECT file_name, download_url FROM public.app_releases WHERE is_active = TRUE ORDER BY version_code DESC LIMIT 1`
+      `SELECT file_name, download_url FROM public.app_releases WHERE is_active = TRUE ORDER BY version_code DESC, id DESC LIMIT 1`
     );
     if (result.rows.length > 0) {
       const row = result.rows[0];
       const activeFile = row.file_name;
       const activePath = path.join(__dirname, 'public/downloads', activeFile);
-      if (fs.existsSync(activePath)) {
-        return res.sendFile(activePath);
-      }
       if (row.download_url && row.download_url.startsWith('/api/storage/file/')) {
         return res.redirect(row.download_url);
+      }
+      if (fs.existsSync(activePath)) {
+        return res.sendFile(activePath);
       }
     }
   } catch (err) {
@@ -78,6 +81,9 @@ app.get('/downloads/:filename', async (req, res, next) => {
   }
   next();
 });
+
+app.use('/downloads', express.static(path.join(__dirname, 'public/downloads')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.get('/', (_req, res) => res.redirect('/admin'));
 
 // API Routes
