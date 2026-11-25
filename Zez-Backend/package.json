@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "type-check": "tsc --noEmit",
-    "build": "npm run type-check",
+    "build": "tsc"
   },
   "engines": {
     "node": ">=20"
