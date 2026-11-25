@@ -213,6 +213,7 @@ public class ChatActivity extends AppCompatActivity {
     private ActivityResultLauncher<String[]> mediaPermissionsLauncher;
     private ActivityResultLauncher<String> contactPermissionLauncher;
     private ActivityResultLauncher<Intent> ticTacToeLauncher;
+    private ActivityResultLauncher<Intent> snakesLaddersLauncher;
 
     private String pendingGalleryFilterAfterPerm = "image";
     private final AtomicBoolean isPollInFlight = new AtomicBoolean(false);
@@ -333,6 +334,20 @@ public class ChatActivity extends AppCompatActivity {
                     String gId = result.getData().getStringExtra(TicTacToeActivity.RESULT_GAME_ID);
                     String summary = result.getData().getStringExtra(TicTacToeActivity.RESULT_GAME_SUMMARY);
                     sendFormattedMessage(ChatMessage.formatGameSummary("tictactoe", gId, summary));
+                }
+            }
+        });
+
+        snakesLaddersLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                String playAgainInviteId = result.getData().getStringExtra(
+                        com.zez.app.games.snakesladders.SnakesAndLaddersActivity.RESULT_PLAY_AGAIN_INVITE_ID);
+                if (playAgainInviteId != null && !playAgainInviteId.trim().isEmpty()) {
+                    long expiresAtMs = System.currentTimeMillis() + 10 * 60 * 1000L;
+                    String myName = ChatPreferencesHelper.getUserName(this);
+                    if (myName == null || myName.trim().isEmpty()) myName = "Friend";
+                    sendFormattedMessage("[game:snakes_and_ladders|" + playAgainInviteId + "|" + currentUserId + "|" + myName + "|" + expiresAtMs + "]");
+                    openSnakesLaddersActivity(null, playAgainInviteId);
                 }
             }
         });
@@ -1406,7 +1421,8 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         adapter.setOnMediaRetryListener(this::retryMediaMessage);
-        adapter.setOnGameInviteClickListener(this::openTicTacToeFromInvite);
+        adapter.setOnGameInviteClickListener(this::handleGameInviteClick);
+        adapter.setOnGameDeclineClickListener(this::handleGameDeclineClick);
 
         // WhatsApp-Style Effortless Swipe to Reply (both left & right, very low threshold)
         ItemTouchHelper.SimpleCallback swipeToReplyCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT) {
@@ -2296,6 +2312,9 @@ public class ChatActivity extends AppCompatActivity {
         View btnClose = view.findViewById(R.id.btn_games_close);
         View cardTtt = view.findViewById(R.id.card_game_tictactoe);
         View btnPlayTtt = view.findViewById(R.id.btn_invite_tictactoe);
+        View cardSl = view.findViewById(R.id.card_game_snakes_ladders);
+        View btnPlaySl = view.findViewById(R.id.btn_invite_snakes_ladders);
+        View btnSlHistory = view.findViewById(R.id.btn_games_sl_history);
 
         if (btnClose != null) btnClose.setOnClickListener(v -> sheet.dismiss());
         View.OnClickListener startTtt = v -> {
@@ -2305,7 +2324,149 @@ public class ChatActivity extends AppCompatActivity {
         if (cardTtt != null) cardTtt.setOnClickListener(startTtt);
         if (btnPlayTtt != null) btnPlayTtt.setOnClickListener(startTtt);
 
+        View.OnClickListener startSl = v -> {
+            sheet.dismiss();
+            startNewSnakesLaddersChallenge();
+        };
+        if (cardSl != null) cardSl.setOnClickListener(startSl);
+        if (btnPlaySl != null) btnPlaySl.setOnClickListener(startSl);
+
+        if (btnSlHistory != null) {
+            btnSlHistory.setOnClickListener(v -> {
+                sheet.dismiss();
+                startActivity(new Intent(this, com.zez.app.games.snakesladders.SnakesLaddersHistoryActivity.class));
+            });
+        }
+
         sheet.show();
+    }
+
+    private void startNewSnakesLaddersChallenge() {
+        if (currentUserId == null || otherUserId == null) {
+            Toast.makeText(this, "Unable to send Snakes & Ladders challenge in this chat", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String myName = ChatPreferencesHelper.getUserName(this);
+        if (myName == null || myName.trim().isEmpty()) myName = "Friend";
+        final String finalMyName = myName;
+
+        com.zez.app.games.snakesladders.SnakesLaddersApiClient.createInvitation(
+                this, currentUserId, otherUserId, conversationId,
+                new com.zez.app.games.snakesladders.SnakesLaddersApiClient.ApiCallback<com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationState>() {
+                    @Override
+                    public void onSuccess(com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationState inv) {
+                        if (inv == null || inv.id == null) return;
+                        long expiresAtMs = System.currentTimeMillis() + 10 * 60 * 1000L;
+                        String cleanSender = finalMyName.replace("|", " ").replace("]", ")");
+                        String inviteMsg = "[game:snakes_and_ladders|" + inv.id + "|" + currentUserId + "|" + cleanSender + "|" + expiresAtMs + "]";
+                        sendFormattedMessage(inviteMsg);
+                        openSnakesLaddersActivity(null, inv.id);
+                    }
+
+                    @Override
+                    public void onError(String message, int httpCode, String code) {
+                        Toast.makeText(ChatActivity.this, "Could not create challenge: " + message, Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void openSnakesLaddersActivity(String gameId, String invitationId) {
+        Intent intent = new Intent(this, com.zez.app.games.snakesladders.SnakesAndLaddersActivity.class);
+        if (gameId != null) intent.putExtra(com.zez.app.games.snakesladders.SnakesAndLaddersActivity.EXTRA_GAME_ID, gameId);
+        if (invitationId != null) intent.putExtra(com.zez.app.games.snakesladders.SnakesAndLaddersActivity.EXTRA_INVITATION_ID, invitationId);
+        intent.putExtra(com.zez.app.games.snakesladders.SnakesAndLaddersActivity.EXTRA_CONVERSATION_ID, conversationId);
+        intent.putExtra(com.zez.app.games.snakesladders.SnakesAndLaddersActivity.EXTRA_PEER_ID, otherUserId);
+        intent.putExtra(com.zez.app.games.snakesladders.SnakesAndLaddersActivity.EXTRA_PEER_NAME, otherUserName);
+        snakesLaddersLauncher.launch(intent);
+    }
+
+    private void handleGameInviteClick(ChatMessage msg) {
+        if (msg == null || !msg.isGameInvite()) return;
+        if (msg.isSnakesLaddersInvite()) {
+            handleSnakesLaddersInviteOpen(msg);
+        } else {
+            openTicTacToeFromInvite(msg);
+        }
+    }
+
+    private void handleSnakesLaddersInviteOpen(ChatMessage msg) {
+        String invId = msg.getGameId();
+        if (invId == null || invId.trim().isEmpty() || currentUserId == null) return;
+
+        com.zez.app.games.snakesladders.SnakesLaddersApiClient.getInvitation(this, invId, currentUserId,
+                new com.zez.app.games.snakesladders.SnakesLaddersApiClient.ApiCallback<com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationResult>() {
+                    @Override
+                    public void onSuccess(com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationResult res) {
+                        if (res == null || res.invitation == null) return;
+                        String st = res.invitation.status;
+                        if ("ACCEPTED".equals(st) && res.invitation.gameId != null) {
+                            openSnakesLaddersActivity(res.invitation.gameId, invId);
+                            return;
+                        }
+                        if ("DECLINED".equals(st)) {
+                            Toast.makeText(ChatActivity.this, "This invitation was declined.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if ("EXPIRED".equals(st)) {
+                            Toast.makeText(ChatActivity.this, "This invitation has expired.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        // Status is PENDING
+                        boolean amISender = currentUserId.equals(res.invitation.senderId);
+                        if (amISender) {
+                            openSnakesLaddersActivity(null, invId);
+                        } else {
+                            // Show clean accept/decline dialog (and let user accept immediately)
+                            new androidx.appcompat.app.AlertDialog.Builder(ChatActivity.this)
+                                    .setTitle("Invitation to a Game")
+                                    .setMessage(res.invitation.senderName + " invited you to play Snakes & Ladders.")
+                                    .setPositiveButton("Accept", (d, w) -> acceptSnakesLaddersInvite(invId))
+                                    .setNegativeButton("Decline", (d, w) -> handleGameDeclineClick(msg))
+                                    .show();
+                        }
+                    }
+
+                    @Override
+                    public void onError(String message, int httpCode, String code) {
+                        Toast.makeText(ChatActivity.this, message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void acceptSnakesLaddersInvite(String invId) {
+        com.zez.app.games.snakesladders.SnakesLaddersApiClient.acceptInvitation(this, invId, currentUserId,
+                new com.zez.app.games.snakesladders.SnakesLaddersApiClient.ApiCallback<com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationResult>() {
+                    @Override
+                    public void onSuccess(com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationResult data) {
+                        if (data != null && data.session != null) {
+                            openSnakesLaddersActivity(data.session.id, invId);
+                        } else if (data != null && data.invitation != null && data.invitation.gameId != null) {
+                            openSnakesLaddersActivity(data.invitation.gameId, invId);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String message, int httpCode, String code) {
+                        Toast.makeText(ChatActivity.this, message, Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void handleGameDeclineClick(ChatMessage msg) {
+        if (msg == null || !msg.isSnakesLaddersInvite() || currentUserId == null) return;
+        String invId = msg.getGameId();
+        com.zez.app.games.snakesladders.SnakesLaddersApiClient.declineInvitation(this, invId, currentUserId,
+                new com.zez.app.games.snakesladders.SnakesLaddersApiClient.ApiCallback<com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationState>() {
+                    @Override
+                    public void onSuccess(com.zez.app.games.snakesladders.SnakesLaddersModels.InvitationState data) {
+                        Toast.makeText(ChatActivity.this, "Invitation declined.", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(String message, int httpCode, String code) {
+                        Toast.makeText(ChatActivity.this, message, Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void startNewTicTacToeMatch() {
@@ -2316,7 +2477,7 @@ public class ChatActivity extends AppCompatActivity {
         String myName = ChatPreferencesHelper.getUserName(this);
         if (myName == null || myName.trim().isEmpty()) myName = "Player X";
         String peerName = (otherUserName != null && !otherUserName.trim().isEmpty()) ? otherUserName : "Player O";
-        String gameId = "ttt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        String gameId = UUID.randomUUID().toString();
 
         String inviteText = ChatMessage.formatGameInvite("tictactoe", gameId, currentUserId, myName);
         sendFormattedMessage(inviteText);

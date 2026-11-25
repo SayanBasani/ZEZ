@@ -76,9 +76,14 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         void onGameInviteClick(ChatMessage message);
     }
 
+    public interface OnGameDeclineClickListener {
+        void onGameDeclineClick(ChatMessage message);
+    }
+
     private OnMessageActionListener actionListener;
     private OnMediaRetryListener retryListener;
     private OnGameInviteClickListener gameInviteClickListener;
+    private OnGameDeclineClickListener gameDeclineClickListener;
 
     public void setOnMessageActionListener(OnMessageActionListener listener) {
         this.actionListener = listener;
@@ -90,6 +95,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void setOnGameInviteClickListener(OnGameInviteClickListener listener) {
         this.gameInviteClickListener = listener;
+    }
+
+    public void setOnGameDeclineClickListener(OnGameDeclineClickListener listener) {
+        this.gameDeclineClickListener = listener;
     }
 
     public String findMediaUrlForQuote(String quotedSender, String quotedText) {
@@ -495,6 +504,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         LinearLayout layoutReaction;
         TextView tvReaction;
         LinearLayout layoutGameCard;
+        TextView tvGameTitle;
         TextView tvGameSubtitle;
         TextView tvGameCta;
         View layoutBubble;
@@ -522,6 +532,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutReaction = itemView.findViewById(R.id.layout_msg_outgoing_reaction);
             tvReaction = itemView.findViewById(R.id.tv_msg_outgoing_reaction);
             layoutGameCard = itemView.findViewById(R.id.layout_msg_outgoing_game_card);
+            tvGameTitle = itemView.findViewById(R.id.tv_msg_outgoing_game_title);
             tvGameSubtitle = itemView.findViewById(R.id.tv_msg_outgoing_game_subtitle);
             tvGameCta = itemView.findViewById(R.id.tv_msg_outgoing_game_cta);
         }
@@ -650,7 +661,19 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (msg.isGameInvite() && layoutGameCard != null) {
                 layoutGameCard.setVisibility(View.VISIBLE);
                 tvText.setVisibility(View.GONE);
-                if (tvGameSubtitle != null) tvGameSubtitle.setText("Tap Open to play together");
+                if (msg.isSnakesLaddersInvite()) {
+                    if (tvGameTitle != null) tvGameTitle.setText("Snakes & Ladders Challenge");
+                    long exp = msg.getGameExpiresAtMillis();
+                    boolean expired = exp > 0 && System.currentTimeMillis() > exp;
+                    if (tvGameSubtitle != null) {
+                        tvGameSubtitle.setText(expired ? "Challenge expired" : "Invited by: " + msg.getGameHostName());
+                    }
+                    if (tvGameCta != null) tvGameCta.setText(expired ? "Expired" : "Open");
+                } else {
+                    if (tvGameTitle != null) tvGameTitle.setText("Tic Tac Toe");
+                    if (tvGameSubtitle != null) tvGameSubtitle.setText("Tap Open to play together");
+                    if (tvGameCta != null) tvGameCta.setText("Open");
+                }
                 View.OnClickListener openGame = v -> {
                     if (adapter.gameInviteClickListener != null) {
                         adapter.gameInviteClickListener.onGameInviteClick(msg);
@@ -713,7 +736,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         LinearLayout layoutReaction;
         TextView tvReaction;
         LinearLayout layoutGameCard;
+        TextView tvGameTitle;
         TextView tvGameSubtitle;
+        TextView tvGameDecline;
         TextView tvGameCta;
 
         IncomingViewHolder(@NonNull View itemView) {
@@ -734,7 +759,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutReaction = itemView.findViewById(R.id.layout_msg_incoming_reaction);
             tvReaction = itemView.findViewById(R.id.tv_msg_incoming_reaction);
             layoutGameCard = itemView.findViewById(R.id.layout_msg_incoming_game_card);
+            tvGameTitle = itemView.findViewById(R.id.tv_msg_incoming_game_title);
             tvGameSubtitle = itemView.findViewById(R.id.tv_msg_incoming_game_subtitle);
+            tvGameDecline = itemView.findViewById(R.id.tv_msg_incoming_game_decline);
             tvGameCta = itemView.findViewById(R.id.tv_msg_incoming_game_cta);
         }
 
@@ -852,7 +879,30 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (msg.isGameInvite() && layoutGameCard != null) {
                 layoutGameCard.setVisibility(View.VISIBLE);
                 tvText.setVisibility(View.GONE);
-                if (tvGameSubtitle != null) tvGameSubtitle.setText(msg.getGameHostName() + " invited you to play!");
+                if (msg.isSnakesLaddersInvite()) {
+                    if (tvGameTitle != null) tvGameTitle.setText("Snakes & Ladders Challenge");
+                    long exp = msg.getGameExpiresAtMillis();
+                    boolean expired = exp > 0 && System.currentTimeMillis() > exp;
+                    if (tvGameSubtitle != null) {
+                        tvGameSubtitle.setText(expired ? "Invitation expired" : "Invited by: " + msg.getGameHostName());
+                    }
+                    if (tvGameDecline != null) {
+                        tvGameDecline.setVisibility(expired ? View.GONE : View.VISIBLE);
+                        tvGameDecline.setOnClickListener(v -> {
+                            if (adapter.gameDeclineClickListener != null) {
+                                adapter.gameDeclineClickListener.onGameDeclineClick(msg);
+                            }
+                        });
+                    }
+                    if (tvGameCta != null) {
+                        tvGameCta.setText(expired ? "Expired" : "Accept Game");
+                    }
+                } else {
+                    if (tvGameTitle != null) tvGameTitle.setText("Tic Tac Toe");
+                    if (tvGameSubtitle != null) tvGameSubtitle.setText(msg.getGameHostName() + " invited you to play!");
+                    if (tvGameDecline != null) tvGameDecline.setVisibility(View.GONE);
+                    if (tvGameCta != null) tvGameCta.setText("Join");
+                }
                 View.OnClickListener openGame = v -> {
                     if (adapter.gameInviteClickListener != null) {
                         adapter.gameInviteClickListener.onGameInviteClick(msg);

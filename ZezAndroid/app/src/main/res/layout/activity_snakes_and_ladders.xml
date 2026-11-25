@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorThemeBackground"
+    android:paddingHorizontal="12dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="10dp">
+
+    <!-- 8.1 Game Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btn_sl_back"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="?attr/colorThemeTextPrimary"
+            android:contentDescription="Back" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Snakes &amp; Ladders"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorThemeTextPrimary"
+                android:singleLine="true" />
+
+            <TextView
+                android:id="@+id/tv_sl_conn_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Connecting..."
+                android:textSize="11sp"
+                android:textColor="#10B981"
+                android:singleLine="true" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_sl_history"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_history"
+            app:tint="?attr/colorThemeIconTint"
+            android:contentDescription="Game History" />
+
+        <ImageButton
+            android:id="@+id/btn_sl_menu"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_more_vert"
+            app:tint="?attr/colorThemeTextPrimary"
+            android:contentDescription="Game Menu" />
+    </LinearLayout>
+
+    <!-- 8.2 Player Info Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+
+        <!-- Player 1 Card -->
+        <LinearLayout
+            android:id="@+id/card_sl_p1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="8dp"
+            android:background="@drawable/bg_game_invite_card">
+
+            <FrameLayout
+                android:layout_width="34dp"
+                android:layout_height="34dp">
+                <TextView
+                    android:id="@+id/tv_sl_p1_token"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:gravity="center"
+                    android:text="P1"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/bg_circle_primary" />
+                <View
+                    android:id="@+id/dot_sl_p1_online"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_gravity="bottom|end"
+                    android:background="@drawable/bg_circle_dot"
+                    android:backgroundTint="#22C55E" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_sl_p1_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Player 1"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorThemeTextPrimary"
+                    android:singleLine="true"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/tv_sl_p1_meta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="RED · Pos 0"
+                    android:textSize="11sp"
+                    android:textColor="?attr/colorThemeTextSecondary"
+                    android:singleLine="true" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Player 2 Card -->
+        <LinearLayout
+            android:id="@+id/card_sl_p2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="8dp"
+            android:background="@drawable/bg_game_invite_card">
+
+            <FrameLayout
+                android:layout_width="34dp"
+                android:layout_height="34dp">
+                <TextView
+                    android:id="@+id/tv_sl_p2_token"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:gravity="center"
+                    android:text="P2"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/bg_circle_primary" />
+                <View
+                    android:id="@+id/dot_sl_p2_online"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_gravity="bottom|end"
+                    android:background="@drawable/bg_circle_dot"
+                    android:backgroundTint="#22C55E" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_sl_p2_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Player 2"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorThemeTextPrimary"
+                    android:singleLine="true"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/tv_sl_p2_meta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="BLUE · Pos 0"
+                    android:textSize="11sp"
+                    android:textColor="?attr/colorThemeTextSecondary"
+                    android:singleLine="true" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 8.5 Turn Information Banner -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="7dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/bg_search_input">
+
+        <TextView
+            android:id="@+id/tv_sl_turn_banner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connecting to board..."
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorThemeTextPrimary"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/tv_sl_substatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Synchronizing live state"
+            android:textSize="11sp"
+            android:textColor="?attr/colorThemeTextSecondary"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <!-- 8.3 Main Responsive 10x10 Square Board -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginVertical="8dp">
+
+        <com.zez.app.games.snakesladders.SnakesLaddersBoardView
+            android:id="@+id/view_sl_board"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center" />
+
+        <!-- 14. Result Card Overlay when FINISHED -->
+        <LinearLayout
+            android:id="@+id/layout_sl_result_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="16dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp"
+            android:elevation="8dp"
+            android:background="@drawable/bg_bottom_sheet"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🏆 SNAKES &amp; LADDERS"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#F59E0B" />
+
+            <TextView
+                android:id="@+id/tv_sl_result_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Winner: Player 1"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorThemeTextPrimary"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/tv_sl_result_details"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Final position: 100"
+                android:textSize="13sp"
+                android:textColor="?attr/colorThemeTextSecondary"
+                android:gravity="center" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_sl_play_again"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="#10B981"
+                    android:text="Play Again"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+
+                <Button
+                    android:id="@+id/btn_sl_return_chat"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:backgroundTint="?attr/colorThemePrimary"
+                    android:text="Return to Chat"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_sl_view_details"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="View Game History &amp; Stats"
+                android:textAllCaps="false"
+                android:textColor="?attr/colorThemePrimary" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- 8.4 & 8.6 Dice Section and Essential Bottom Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="6dp"
+        android:background="@drawable/bg_game_invite_card">
+
+        <com.zez.app.games.snakesladders.SnakesLaddersDiceView
+            android:id="@+id/view_sl_dice"
+            android:layout_width="54dp"
+            android:layout_height="54dp" />
+
+        <Button
+            android:id="@+id/btn_sl_roll_dice"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="10dp"
+            android:backgroundTint="#10B981"
+            android:text="ROLL DICE"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btn_sl_rules"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_info"
+            app:tint="?attr/colorThemeIconTint"
+            android:contentDescription="Game Rules" />
+
+        <ImageButton
+            android:id="@+id/btn_sl_sound"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_volume_up"
+            app:tint="?attr/colorThemeIconTint"
+            android:contentDescription="Toggle Sound" />
+
+        <ImageButton
+            android:id="@+id/btn_sl_exit"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_close"
+            app:tint="?attr/colorThemeTextSecondary"
+            android:contentDescription="Exit Game" />
+    </LinearLayout>
+
+</LinearLayout>

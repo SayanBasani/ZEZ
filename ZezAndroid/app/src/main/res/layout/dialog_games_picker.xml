@@ -130,4 +130,108 @@
             android:textColor="@android:color/white" />
     </LinearLayout>
 
+    <!-- Snakes & Ladders Card -->
+    <LinearLayout
+        android:id="@+id/card_game_snakes_ladders"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:background="@drawable/bg_game_invite_card"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_attach_circle_games"
+            android:backgroundTint="#2563EB"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎲"
+                android:textSize="22sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Snakes &amp; Ladders"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Classic 10×10 board with ladders, snakes &amp; live dice rolls"
+                android:textSize="12sp"
+                android:textColor="?attr/colorThemeTextSecondary" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btn_invite_snakes_ladders"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:background="@drawable/bg_pill_badge"
+            android:backgroundTint="#2563EB"
+            android:text="Play"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <!-- Game History & Stats Shortcut -->
+    <LinearLayout
+        android:id="@+id/btn_games_sl_history"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="11dp"
+        android:background="@drawable/bg_search_input"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_history"
+            app:tint="?attr/colorThemePrimary" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:text="Snakes &amp; Ladders History &amp; Stats"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorThemeTextPrimary" />
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="?attr/colorThemeTextSecondary" />
+    </LinearLayout>
+
 </LinearLayout>

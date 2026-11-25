@@ -11,6 +11,7 @@ const chatRouter = require("./routes/chat");
 const storageRouter = require("./routes/storage");
 const callSignalingRouter = require("./routes/callSignaling");
 const musicRouter = require("./routes/music");
+const snakesLaddersModule = require("../games/snakes-and-ladders");
 const path = require('path');
 const fs = require('fs');
 
@@ -96,6 +97,7 @@ app.use("/api/chat", chatRouter);
 app.use("/api/storage", storageRouter);
 app.use("/api/call", callSignalingRouter);
 app.use("/api/music", musicRouter);
+app.use("/api/games/snakes-and-ladders", snakesLaddersModule.router);
 
 app.use((error, _req, res, _next) => {
   if (error?.type === 'entity.too.large') {
@@ -125,6 +127,7 @@ app.use((error, _req, res, _next) => {
 
 async function startServer() {
   await initializeDatabase();
+  await require("../games/snakes-and-ladders").initializeSnakesLaddersSchema();
 
   const server = app.listen(port, host, () => {
     console.log(`Zez API listening on port ${port}`);

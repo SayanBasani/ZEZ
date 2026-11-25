@@ -1369,6 +1369,17 @@ const TTT_WIN_LINES = [
   [0, 4, 8], [2, 4, 6]
 ];
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function normalizeGameUuid(rawId) {
+  if (!rawId || typeof rawId !== "string") return null;
+  const trimmed = rawId.trim();
+  if (!trimmed) return null;
+  if (UUID_REGEX.test(trimmed)) return trimmed.toLowerCase();
+  const hash = require("node:crypto").createHash("sha256").update(`chat_game:${trimmed}`).digest("hex");
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-8${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
+}
+
 function checkTicTacToeWinner(board) {
   for (const line of TTT_WIN_LINES) {
     const [a, b, c] = line;
@@ -1417,7 +1428,8 @@ function serializeGame(row) {
 // POST /api/chat/game/create
 router.post("/game/create", async (req, res) => {
   try {
-    const { gameId, conversationId, hostId, guestId, hostName, guestName, gameType = "tictactoe" } = req.body || {};
+    const { gameId: rawGameId, conversationId, hostId, guestId, hostName, guestName, gameType = "tictactoe" } = req.body || {};
+    const gameId = normalizeGameUuid(rawGameId);
     if (!gameId || !hostId || !guestId) {
       return res.status(400).json({ success: false, error: "gameId, hostId, and guestId are required." });
     }
@@ -1440,6 +1452,7 @@ router.post("/game/create", async (req, res) => {
          id, conversation_id, game_type, host_id, guest_id, host_name, guest_name,
          board, current_turn, status, guest_joined, version
        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $4, 'waiting', $9, 1)
+       ON CONFLICT (id) DO NOTHING
        RETURNING *`,
       [
         gameId,
@@ -1454,7 +1467,13 @@ router.post("/game/create", async (req, res) => {
       ]
     );
 
-    const game = serializeGame(insertRes.rows[0]);
+    let row = insertRes.rows[0];
+    if (!row) {
+      const refetch = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
+      row = refetch.rows[0];
+    }
+
+    const game = serializeGame(row);
     chatEventEmitter.emit(`game:${gameId}`, game);
     return res.json({ success: true, game });
   } catch (err) {
@@ -1466,9 +1485,9 @@ router.post("/game/create", async (req, res) => {
 // POST /api/chat/game/:gameId/join
 router.post("/game/:gameId/join", async (req, res) => {
   try {
-    const { gameId } = req.params;
+    const gameId = normalizeGameUuid(req.params.gameId);
     const { userId } = req.body || {};
-    if (!userId) return res.status(400).json({ success: false, error: "userId is required." });
+    if (!gameId || !userId) return res.status(400).json({ success: false, error: "gameId and userId are required." });
 
     const existingRes = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
     if (existingRes.rows.length === 0) {
@@ -1506,7 +1525,9 @@ router.post("/game/:gameId/join", async (req, res) => {
 // GET /api/chat/game/:gameId
 router.get("/game/:gameId", async (req, res) => {
   try {
-    const { gameId } = req.params;
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    const gameId = normalizeGameUuid(req.params.gameId);
+    if (!gameId) return res.status(400).json({ success: false, error: "Invalid gameId." });
     const result = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, error: "Game not found." });
@@ -1521,7 +1542,9 @@ router.get("/game/:gameId", async (req, res) => {
 // GET /api/chat/game/:gameId/events?sinceVersion=...
 router.get("/game/:gameId/events", async (req, res) => {
   try {
-    const { gameId } = req.params;
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    const gameId = normalizeGameUuid(req.params.gameId);
+    if (!gameId) return res.status(400).json({ success: false, error: "Invalid gameId." });
     const sinceVersion = parseInt(req.query.sinceVersion || "0", 10);
 
     const result = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
@@ -1566,12 +1589,12 @@ router.get("/game/:gameId/events", async (req, res) => {
 // POST /api/chat/game/:gameId/move
 router.post("/game/:gameId/move", async (req, res) => {
   try {
-    const { gameId } = req.params;
+    const gameId = normalizeGameUuid(req.params.gameId);
     const { userId, cellIndex } = req.body || {};
     const idx = parseInt(cellIndex, 10);
 
-    if (!userId || isNaN(idx) || idx < 0 || idx > 8) {
-      return res.status(400).json({ success: false, error: "Valid userId and cellIndex (0-8) required." });
+    if (!gameId || !userId || isNaN(idx) || idx < 0 || idx > 8) {
+      return res.status(400).json({ success: false, error: "Valid gameId, userId and cellIndex (0-8) required." });
     }
 
     const resGame = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
@@ -1675,8 +1698,9 @@ router.post("/game/:gameId/move", async (req, res) => {
 // POST /api/chat/game/:gameId/rematch
 router.post("/game/:gameId/rematch", async (req, res) => {
   try {
-    const { gameId } = req.params;
+    const gameId = normalizeGameUuid(req.params.gameId);
     const { userId } = req.body || {};
+    if (!gameId) return res.status(400).json({ success: false, error: "Invalid gameId." });
 
     const resGame = await pool.query("SELECT * FROM public.chat_games WHERE id = $1", [gameId]);
     if (resGame.rows.length === 0) {
@@ -1719,8 +1743,9 @@ router.post("/game/:gameId/rematch", async (req, res) => {
 // POST /api/chat/game/:gameId/end
 router.post("/game/:gameId/end", async (req, res) => {
   try {
-    const { gameId } = req.params;
+    const gameId = normalizeGameUuid(req.params.gameId);
     const { userId } = req.body || {};
+    if (!gameId) return res.status(400).json({ success: false, error: "Invalid gameId." });
 
     const upd = await pool.query(
       `UPDATE public.chat_games

@@ -228,6 +228,19 @@ public class ChatMessage implements Serializable {
         return "";
     }
 
+    public boolean isSnakesLaddersInvite() {
+        return isGameInvite() && "snakes_and_ladders".equals(getGameType());
+    }
+
+    public long getGameExpiresAtMillis() {
+        if (!isGameInvite()) return 0L;
+        String[] p = splitTagParts("[game:");
+        if (p.length > 4) {
+            try { return Long.parseLong(p[4].trim()); } catch (Exception ignored) {}
+        }
+        return 0L;
+    }
+
     public String getGameHostId() {
         String[] p = splitTagParts("[game:");
         return p.length > 2 ? p[2] : "";
@@ -316,7 +329,11 @@ public class ChatMessage implements Serializable {
     }
 
     public String getDisplaySnippet() {
-        if (isGameInvite()) return "🎮 Tic Tac Toe Challenge";
+        if (isGameInvite()) {
+            return "snakes_and_ladders".equals(getGameType())
+                    ? "🎲 Let's play Snakes & Ladders!"
+                    : "🎮 Tic Tac Toe Challenge";
+        }
         if (isGameSummary()) return "🎮 " + getGameSummaryText();
         if (isContactCard()) return "👤 Contact: " + getSharedContactName();
         String clean = getCleanMessageText();

@@ -1284,14 +1284,14 @@ public class ChatApiClient {
 
     public static void getGame(Context context, String gameId, ChatCallback<GameState> callback) {
         String url = getBaseUrl(context) + "/api/chat/game/" + Uri.encode(gameId);
-        Request request = new Request.Builder().url(url).get().build();
+        Request request = new Request.Builder().url(url).header("Cache-Control", "no-cache").get().build();
         executeGameCall(request, callback);
     }
 
     public static GameEventsResult listenGameEventsSync(Context context, String gameId, int sinceVersion) {
         if (context == null || gameId == null) return null;
         String url = getBaseUrl(context) + "/api/chat/game/" + Uri.encode(gameId) + "/events?sinceVersion=" + sinceVersion;
-        Request request = new Request.Builder().url(url).get().build();
+        Request request = new Request.Builder().url(url).header("Cache-Control", "no-cache").get().build();
         OkHttpClient gamePollClient = client.newBuilder()
                 .readTimeout(25, TimeUnit.SECONDS)
                 .connectTimeout(12, TimeUnit.SECONDS)

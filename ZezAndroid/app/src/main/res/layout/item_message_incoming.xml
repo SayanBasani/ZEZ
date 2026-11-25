@@ -193,6 +193,7 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tv_msg_incoming_game_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Tic Tac Toe"
@@ -209,18 +210,40 @@
                     android:textColor="?attr/colorThemeTextSecondary" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tv_msg_incoming_game_cta"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp"
-                android:background="@drawable/bg_pill_badge"
-                android:backgroundTint="#10B981"
-                android:text="Join"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_msg_incoming_game_decline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="6dp"
+                    android:background="@drawable/bg_pill_badge"
+                    android:backgroundTint="#64748B"
+                    android:text="Decline"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tv_msg_incoming_game_cta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:background="@drawable/bg_pill_badge"
+                    android:backgroundTint="#10B981"
+                    android:text="Join"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
         </LinearLayout>
 
         <TextView
