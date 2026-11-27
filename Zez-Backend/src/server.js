@@ -68,18 +68,26 @@ app.get('/downloads/:filename', async (req, res, next) => {
 
   try {
     const { pool } = require('./db');
-    const result = await pool.query(
-      `SELECT file_name, download_url FROM public.app_releases WHERE is_active = TRUE ORDER BY version_code DESC, id DESC LIMIT 1`
-    );
-    if (result.rows.length > 0) {
+    let result;
+    if (reqFile === 'app-release-latest.apk') {
+      result = await pool.query(
+        `SELECT file_name, download_url FROM public.app_releases WHERE is_active = TRUE ORDER BY version_code DESC, id DESC LIMIT 1`
+      );
+    } else {
+      result = await pool.query(
+        `SELECT file_name, download_url FROM public.app_releases WHERE file_name = $1 OR download_url LIKE $2 ORDER BY id DESC LIMIT 1`,
+        [reqFile, `%${reqFile}%`]
+      );
+    }
+    if (result && result.rows.length > 0) {
       const row = result.rows[0];
       const activeFile = row.file_name;
       const activePath = path.join(__dirname, 'public/downloads', activeFile);
-      if (row.download_url && row.download_url.startsWith('/api/storage/file/')) {
-        return res.redirect(row.download_url);
-      }
       if (fs.existsSync(activePath)) {
         return res.sendFile(activePath);
+      }
+      if (row.download_url && row.download_url.startsWith('/api/storage/file/')) {
+        return res.redirect(row.download_url);
       }
     }
   } catch (err) {

@@ -6060,12 +6060,21 @@ versionName "1.0.1"</pre>
           document.getElementById('arAuthor').textContent = active.uploaded_by || 'admin';
           document.getElementById('arNotes').textContent = active.release_notes || 'No release notes provided.';
 
-          const dlPath = `/api/app/download/${active.id}`;
+          const dlPath = (active.download_url && active.download_url.startsWith('/api/storage/file/'))
+            ? active.download_url
+            : `/api/app/download/${active.id}`;
           const fullDownloadUrl = `${window.location.origin}${dlPath}`;
-          document.getElementById('arDownloadBtn').href = dlPath;
-          document.getElementById('arDownloadBtn').style.display = 'inline-flex';
-          document.getElementById('btnCopyDownloadUrl').onclick = () => copyText(fullDownloadUrl, 'Download URL');
-          document.getElementById('btnCopyDownloadUrl').style.display = 'inline-flex';
+          const dlBtn = document.getElementById('arDownloadBtn');
+          if (dlBtn) {
+            dlBtn.href = dlPath;
+            dlBtn.setAttribute('download', active.file_name || 'app-release.apk');
+            dlBtn.style.display = 'inline-flex';
+          }
+          const copyBtn = document.getElementById('btnCopyDownloadUrl');
+          if (copyBtn) {
+            copyBtn.onclick = () => copyText(fullDownloadUrl, 'Download URL');
+            copyBtn.style.display = 'inline-flex';
+          }
         } else {
           document.getElementById('activeReleaseBadge').textContent = 'Inactive';
           document.getElementById('activeReleaseBadge').className = 'badge badge-neutral';
@@ -6112,7 +6121,7 @@ versionName "1.0.1"</pre>
               <td style="text-align: right;">
                 <div style="display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
                   ${!isLive ? `<button class="btn btn-primary btn-sm" onclick="handlePublishRelease(${r.id}, 'v${escapeHtml(r.version_name)}')">Publish</button>` : `<button class="btn btn-secondary btn-sm" onclick="handleToggleReleaseStatus(${r.id}, false)">Disable</button>`}
-                  <a href="/api/app/download/${r.id}" download class="btn btn-secondary btn-sm" style="text-decoration:none;">Download</a>
+                  <a href="${(r.download_url && r.download_url.startsWith('/api/storage/file/')) ? r.download_url : `/api/app/download/${r.id}`}" download="${escapeHtml(r.file_name || 'app-release.apk')}" class="btn btn-secondary btn-sm" style="text-decoration:none;">Download</a>
                   <button class="btn btn-danger btn-sm" onclick="handleDeleteRelease(${r.id}, 'v${escapeHtml(r.version_name)}')">Delete</button>
                 </div>
               </td>

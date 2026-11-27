@@ -229,16 +229,31 @@ router.get("/download/:id", async (req, res, next) => {
     if (row.download_url && row.download_url.startsWith("/api/storage/file/")) {
       const safeKey = b2Storage.sanitizeKey(row.download_url.replace("/api/storage/file/", ""));
       try {
-        const fileData = await b2Storage.getFile(safeKey);
-        if (fileData && fileData.stream) {
-          if (fileData.contentLength) {
-            res.setHeader("Content-Length", String(fileData.contentLength));
+        const b2Res = await b2Storage.getFileStream(safeKey);
+        if (b2Res && b2Res.stream) {
+          if (b2Res.contentLength) {
+            res.setHeader("Content-Length", String(b2Res.contentLength));
           }
-          return fileData.stream.pipe(res);
+          res.setHeader("Accept-Ranges", "bytes");
+          return b2Res.stream.pipe(res);
+        }
+      } catch (b2StreamErr) {
+        console.warn("B2 getFileStream failed, trying getFile:", b2StreamErr.message);
+      }
+
+      try {
+        const fileData = await b2Storage.getFile(safeKey);
+        if (fileData && fileData.body) {
+          if (fileData.contentLength || fileData.body.length) {
+            res.setHeader("Content-Length", String(fileData.contentLength || fileData.body.length));
+          }
+          return res.send(fileData.body);
         }
       } catch (b2Err) {
-        console.warn("B2 download fallback failed:", b2Err.message);
+        console.warn("B2 getFile fallback failed:", b2Err.message);
       }
+
+      return res.redirect(row.download_url);
     }
 
     return res.status(404).json({ success: false, error: "APK binary not found on server or cloud storage." });
