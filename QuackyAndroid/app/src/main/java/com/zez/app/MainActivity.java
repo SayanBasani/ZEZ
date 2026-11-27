@@ -126,6 +126,11 @@ public class MainActivity extends AppCompatActivity {
     private com.google.android.material.button.MaterialButton btnSettingSaveUrl;
     private com.google.android.material.button.MaterialButton btnSettingResetUrl;
     private android.widget.Button btnSettingUpdate;
+    private android.widget.Button btnSettingRollback;
+    private TextView tvCompanionStatus;
+    private android.widget.Button btnCompanionAction;
+    private com.zez.app.util.AppUpdateHelper.ReleaseInfo rollbackReleaseInfo;
+    private com.zez.app.util.AppUpdateHelper.ReleaseInfo companionReleaseInfo;
 
     private TextView tvFooterAppVersion;
     private String actualDeviceId = "";
@@ -362,6 +367,9 @@ public class MainActivity extends AppCompatActivity {
         btnSettingResetUrl = findViewById(R.id.btn_setting_reset_url);
         tvSettingVersionInfo = findViewById(R.id.tv_setting_version_info);
         btnSettingUpdate = findViewById(R.id.btn_setting_update);
+        btnSettingRollback = findViewById(R.id.btn_setting_rollback);
+        tvCompanionStatus = findViewById(R.id.tv_companion_status);
+        btnCompanionAction = findViewById(R.id.btn_companion_action);
 
         tvFooterAppVersion = findViewById(R.id.tv_footer_app_version);
 
@@ -507,6 +515,7 @@ public class MainActivity extends AppCompatActivity {
 
         initThemeSpinner();
         btnSettingUpdate.setOnClickListener(v -> showUpdateDialog(true));
+        setupRollbackAndCompanion();
 
         recyclerCalls = findViewById(R.id.recycler_calls);
         recyclerBin = findViewById(R.id.recycler_bin);
@@ -4128,9 +4137,134 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void setupRollbackAndCompanion() {
+        checkRollbackAvailability();
+        checkCompanionAppStatus();
+    }
+
+    private void checkRollbackAvailability() {
+        com.zez.app.util.AppUpdateHelper.checkForRollback(this, new com.zez.app.util.AppUpdateHelper.UpdateCheckCallback() {
+            @Override
+            public void onResult(com.zez.app.util.AppUpdateHelper.ReleaseInfo info) {
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    if (info != null && info.isUpdateAvailable) {
+                        rollbackReleaseInfo = info;
+                        if (btnSettingRollback != null) {
+                            btnSettingRollback.setVisibility(View.VISIBLE);
+                            btnSettingRollback.setText("Rollback to v" + info.latestVersionName);
+                            btnSettingRollback.setOnClickListener(v -> confirmRollback(info));
+                        }
+                    } else {
+                        if (btnSettingRollback != null) {
+                            btnSettingRollback.setVisibility(View.GONE);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    if (btnSettingRollback != null) btnSettingRollback.setVisibility(View.GONE);
+                });
+            }
+        });
+    }
+
+    private void confirmRollback(com.zez.app.util.AppUpdateHelper.ReleaseInfo info) {
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("Rollback Quacky Update")
+                .setMessage("Are you sure you want to roll back to previous version v" + info.latestVersionName + " (Build " + info.latestVersionCode + ")?\n\nThis will download and install the previous official release.")
+                .setIcon(R.drawable.ic_system_update)
+                .setPositiveButton("Rollback", (dialog, which) -> {
+                    startApkDownload(info, "Downloading Rollback", "quacky-rollback");
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void checkCompanionAppStatus() {
+        boolean installed = com.zez.app.util.AppUpdateHelper.isAppInstalled(this, "com.zez.manager");
+        String installedVer = installed ? com.zez.app.util.AppUpdateHelper.getInstalledVersionName(this, "com.zez.manager") : "";
+        int installedCode = installed ? com.zez.app.util.AppUpdateHelper.getInstalledVersionCode(this, "com.zez.manager") : -1;
+
+        if (tvCompanionStatus != null) {
+            tvCompanionStatus.setText(installed ? ("Installed (v" + installedVer + ") · Checking server...") : "Checking availability on server...");
+        }
+
+        com.zez.app.util.AppUpdateHelper.checkForCompanionApp(this, "zez", new com.zez.app.util.AppUpdateHelper.UpdateCheckCallback() {
+            @Override
+            public void onResult(com.zez.app.util.AppUpdateHelper.ReleaseInfo info) {
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    companionReleaseInfo = info;
+                    if (installed) {
+                        boolean hasNewer = info != null && info.latestVersionCode > installedCode;
+                        if (hasNewer) {
+                            if (tvCompanionStatus != null) {
+                                tvCompanionStatus.setText("Installed (v" + installedVer + ") · Update Available (v" + info.latestVersionName + ")");
+                            }
+                            if (btnCompanionAction != null) {
+                                btnCompanionAction.setText("Update ZEZ");
+                                btnCompanionAction.setOnClickListener(v -> startApkDownload(info, "Downloading ZEZ", "zez-manager-update", "com.zez.manager"));
+                            }
+                        } else {
+                            if (tvCompanionStatus != null) {
+                                tvCompanionStatus.setText("Installed (v" + installedVer + ") · Up to date");
+                            }
+                            if (btnCompanionAction != null) {
+                                btnCompanionAction.setText("Open ZEZ");
+                                btnCompanionAction.setOnClickListener(v -> com.zez.app.util.AppUpdateHelper.openApp(MainActivity.this, "com.zez.manager"));
+                            }
+                        }
+                    } else {
+                        if (tvCompanionStatus != null) {
+                            tvCompanionStatus.setText("Not installed on this device" + (info != null ? " · Latest v" + info.latestVersionName : ""));
+                        }
+                        if (btnCompanionAction != null) {
+                            btnCompanionAction.setText("Download & Install ZEZ");
+                            btnCompanionAction.setOnClickListener(v -> {
+                                if (info != null) {
+                                    startApkDownload(info, "Downloading ZEZ", "zez-manager-companion", "com.zez.manager");
+                                } else {
+                                    Toast.makeText(MainActivity.this, "ZEZ release not found on server", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    if (installed) {
+                        if (tvCompanionStatus != null) tvCompanionStatus.setText("Installed (v" + installedVer + ")");
+                        if (btnCompanionAction != null) {
+                            btnCompanionAction.setText("Open ZEZ");
+                            btnCompanionAction.setOnClickListener(v -> com.zez.app.util.AppUpdateHelper.openApp(MainActivity.this, "com.zez.manager"));
+                        }
+                    } else {
+                        if (tvCompanionStatus != null) tvCompanionStatus.setText("Not installed");
+                    }
+                });
+            }
+        });
+    }
+
     private void startApkDownload(com.zez.app.util.AppUpdateHelper.ReleaseInfo info) {
+        startApkDownload(info, "Downloading Update", "quacky-update", getPackageName());
+    }
+
+    private void startApkDownload(com.zez.app.util.AppUpdateHelper.ReleaseInfo info, String dialogTitle, String fileName) {
+        startApkDownload(info, dialogTitle, fileName, getPackageName());
+    }
+
+    private void startApkDownload(com.zez.app.util.AppUpdateHelper.ReleaseInfo info, String dialogTitle, String fileName, String expectedPackageName) {
         android.app.ProgressDialog downloadProgress = new android.app.ProgressDialog(this);
-        downloadProgress.setTitle("Downloading Update");
+        downloadProgress.setTitle(dialogTitle);
         downloadProgress.setMessage("Downloading v" + info.latestVersionName + "...");
         downloadProgress.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
         downloadProgress.setMax(100);
@@ -4138,7 +4272,7 @@ public class MainActivity extends AppCompatActivity {
         downloadProgress.setCancelable(false);
         downloadProgress.show();
 
-        com.zez.app.util.AppUpdateHelper.downloadAndInstall(this, info, new com.zez.app.util.AppUpdateHelper.DownloadProgressCallback() {
+        com.zez.app.util.AppUpdateHelper.downloadAndInstall(this, fileName, expectedPackageName, info, new com.zez.app.util.AppUpdateHelper.DownloadProgressCallback() {
             @Override
             public void onProgress(int percent) {
                 runOnUiThread(() -> {

@@ -704,14 +704,118 @@
                         android:textColor="?attr/colorThemeTextSecondary" />
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/btn_setting_update"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Check Now"
-                    android:textAllCaps="false"
-                    android:textSize="13sp"
-                    app:backgroundTint="@color/primary" />
+                    android:orientation="vertical"
+                    android:gravity="end">
+
+                    <Button
+                        android:id="@+id/btn_setting_update"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Check Now"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
+                        app:backgroundTint="@color/primary" />
+
+                    <Button
+                        android:id="@+id/btn_setting_rollback"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Rollback Version"
+                        android:textAllCaps="false"
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        app:backgroundTint="#EF4444" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- COMPANION APP SECTION: ZEZ MANAGER (ZDG) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_companion_app"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorThemeBorder"
+            app:cardBackgroundColor="?attr/colorThemeSurface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_call"
+                        android:background="@drawable/bg_pill_badge"
+                        android:backgroundTint="#3B82F6"
+                        android:padding="8dp"
+                        app:tint="@android:color/white" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ZEZ Call Log Manager (ZDG)"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorThemeTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_companion_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Checking status..."
+                            android:textSize="12sp"
+                            android:textColor="?attr/colorThemeTextSecondary" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Sync call logs, contacts, and telemetry smoothly with your ZEZ server."
+                    android:textSize="12sp"
+                    android:textColor="?attr/colorThemeTextMuted" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <Button
+                        android:id="@+id/btn_companion_action"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Download &amp; Install"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
+                        app:backgroundTint="#2563EB" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

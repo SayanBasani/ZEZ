@@ -411,25 +411,27 @@ public class SnakesAndLaddersActivity extends AppCompatActivity {
         SnakesLaddersModels.MoveRecord move = session.lastMove;
         if (animateLastMove && move != null && (lastHandledActionId == null || !lastHandledActionId.equals(move.actionId))) {
             lastHandledActionId = move.actionId;
-            diceView.setValue(move.diceValue);
             isAnimatingMove = true;
             btnRollDice.setEnabled(false);
             btnRollDice.setAlpha(0.48f);
             showMoveFeedback(move, session);
 
-            boardView.animateMove(move, session.players, session.currentTurnPlayerId, () -> {
-                if (isFinishing() || isDestroyed()) return;
-                isAnimatingMove = false;
-                if ("LADDER".equals(move.specialMoveType)) {
-                    playTone(ToneGenerator.TONE_PROP_ACK, 180);
-                } else if ("SNAKE".equals(move.specialMoveType)) {
-                    playTone(ToneGenerator.TONE_PROP_NACK, 200);
-                }
-                bindPlayerCards(session);
-                updateControlsAndBanner(session);
-                if ("FINISHED".equals(session.status)) {
-                    showFinishedOverlay(session);
-                }
+            // Roll dice with tumbling animation for both self and opponent
+            diceView.rollDiceToValue(move.diceValue, 650L, () -> {
+                boardView.animateMove(move, session.players, session.currentTurnPlayerId, () -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    isAnimatingMove = false;
+                    if ("LADDER".equals(move.specialMoveType)) {
+                        playTone(ToneGenerator.TONE_PROP_ACK, 180);
+                    } else if ("SNAKE".equals(move.specialMoveType)) {
+                        playTone(ToneGenerator.TONE_PROP_NACK, 200);
+                    }
+                    bindPlayerCards(session);
+                    updateControlsAndBanner(session);
+                    if ("FINISHED".equals(session.status)) {
+                        showFinishedOverlay(session);
+                    }
+                });
             });
         } else {
             if (move != null && lastHandledActionId == null) {

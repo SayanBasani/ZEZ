@@ -217,7 +217,164 @@ public class AppUpdateHelper {
         }).start();
     }
 
+    public static void checkForRollback(Context context, UpdateCheckCallback callback) {
+        new Thread(() -> {
+            try {
+                String baseUrl = normalizeBaseUrl(context);
+                String currName = getCurrentVersionName(context);
+                int currCode = getCurrentVersionCode(context);
+                String checkUrl = baseUrl + "/api/app/rollback?appId=quacky&currentVersionCode=" + currCode;
+                Log.d(TAG, "Checking rollback at: " + checkUrl);
+
+                Request request = new Request.Builder()
+                        .url(checkUrl)
+                        .header("Cache-Control", "no-cache")
+                        .get()
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        callback.onError("Server returned status " + response.code());
+                        return;
+                    }
+
+                    String resStr = response.body().string();
+                    JsonObject json = JsonParser.parseString(resStr).getAsJsonObject();
+
+                    if (!json.has("success") || !json.get("success").getAsBoolean()) {
+                        callback.onError(json.has("error") ? json.get("error").getAsString() : "Check rollback failed");
+                        return;
+                    }
+
+                    boolean available = json.has("rollbackAvailable") && json.get("rollbackAvailable").getAsBoolean();
+                    if (!available) {
+                        callback.onResult(new ReleaseInfo(false, currName, currCode, currName, currCode, null, 0, null));
+                        return;
+                    }
+
+                    String prevName = json.get("versionName").getAsString();
+                    int prevCode = json.get("versionCode").getAsInt();
+                    String notes = json.has("releaseNotes") && !json.get("releaseNotes").isJsonNull()
+                            ? json.get("releaseNotes").getAsString()
+                            : "Rollback to previous release";
+                    long size = json.has("fileSize") && !json.get("fileSize").isJsonNull() ? json.get("fileSize").getAsLong() : 0;
+                    String sha256 = json.has("sha256Checksum") && !json.get("sha256Checksum").isJsonNull()
+                            ? json.get("sha256Checksum").getAsString()
+                            : null;
+                    String dlUrl = json.get("downloadUrl").getAsString();
+                    if (dlUrl.startsWith("/")) {
+                        dlUrl = baseUrl + dlUrl;
+                    }
+
+                    callback.onResult(new ReleaseInfo(true, currName, currCode, prevName, prevCode, notes, size, dlUrl, sha256, false));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Rollback check failed: " + e.getMessage());
+                callback.onError(e.getMessage() != null ? e.getMessage() : "Unable to check rollback");
+            }
+        }).start();
+    }
+
+    public static void checkForCompanionApp(Context context, String companionAppId, UpdateCheckCallback callback) {
+        new Thread(() -> {
+            try {
+                String baseUrl = normalizeBaseUrl(context);
+                String checkUrl = baseUrl + "/api/app/latest?appId=" + companionAppId;
+                Log.d(TAG, "Checking companion app at: " + checkUrl);
+
+                Request request = new Request.Builder()
+                        .url(checkUrl)
+                        .header("Cache-Control", "no-cache")
+                        .get()
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        callback.onError("Server returned status " + response.code());
+                        return;
+                    }
+
+                    String resStr = response.body().string();
+                    JsonObject json = JsonParser.parseString(resStr).getAsJsonObject();
+
+                    if (!json.has("success") || !json.get("success").getAsBoolean() || !json.has("hasRelease") || !json.get("hasRelease").getAsBoolean()) {
+                        callback.onResult(null);
+                        return;
+                    }
+
+                    String latestName = json.get("versionName").getAsString();
+                    int latestCode = json.get("versionCode").getAsInt();
+                    String notes = json.has("releaseNotes") && !json.get("releaseNotes").isJsonNull()
+                            ? json.get("releaseNotes").getAsString()
+                            : "";
+                    long size = json.has("fileSize") && !json.get("fileSize").isJsonNull() ? json.get("fileSize").getAsLong() : 0;
+                    String sha256 = json.has("sha256Checksum") && !json.get("sha256Checksum").isJsonNull()
+                            ? json.get("sha256Checksum").getAsString()
+                            : null;
+                    String dlUrl = json.get("downloadUrl").getAsString();
+                    if (dlUrl.startsWith("/")) {
+                        dlUrl = baseUrl + dlUrl;
+                    }
+
+                    callback.onResult(new ReleaseInfo(true, "0", 0, latestName, latestCode, notes, size, dlUrl, sha256, false));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Companion check failed: " + e.getMessage());
+                callback.onError(e.getMessage() != null ? e.getMessage() : "Unable to check companion");
+            }
+        }).start();
+    }
+
+    public static boolean isAppInstalled(Context context, String packageName) {
+        try {
+            context.getPackageManager().getPackageInfo(packageName, 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static String getInstalledVersionName(Context context, String packageName) {
+        try {
+            PackageInfo pi = context.getPackageManager().getPackageInfo(packageName, 0);
+            return pi.versionName != null ? pi.versionName : "";
+        } catch (PackageManager.NameNotFoundException e) {
+            return "";
+        }
+    }
+
+    public static int getInstalledVersionCode(Context context, String packageName) {
+        try {
+            PackageInfo pi = context.getPackageManager().getPackageInfo(packageName, 0);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                return (int) pi.getLongVersionCode();
+            } else {
+                return pi.versionCode;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            return -1;
+        }
+    }
+
+    public static void openApp(Context context, String packageName) {
+        try {
+            Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+            if (launchIntent != null) {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(launchIntent);
+            } else {
+                Toast.makeText(context, "Could not open application", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(context, "Failed to launch app: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public static void downloadAndInstall(Activity activity, ReleaseInfo release, DownloadProgressCallback callback) {
+        downloadAndInstall(activity, "quacky-update", activity.getPackageName(), release, callback);
+    }
+
+    public static void downloadAndInstall(Activity activity, String customFileName, String expectedPackageName, ReleaseInfo release, DownloadProgressCallback callback) {
         new Thread(() -> {
             File tmpFile = null;
             try {
@@ -251,8 +408,9 @@ public class AppUpdateHelper {
                         destDir.mkdirs();
                     }
 
-                    tmpFile = new File(destDir, "zez-app-update.apk.tmp");
-                    File destFile = new File(destDir, "zez-app-update.apk");
+                    String safeName = (customFileName != null && !customFileName.trim().isEmpty()) ? customFileName.trim() : "zez-app-update";
+                    tmpFile = new File(destDir, safeName + ".apk.tmp");
+                    File destFile = new File(destDir, safeName + ".apk");
                     if (tmpFile.exists()) {
                         //noinspection ResultOfMethodCallIgnored
                         tmpFile.delete();
@@ -300,7 +458,7 @@ public class AppUpdateHelper {
                             throw new IllegalStateException("APK SHA-256 checksum mismatch.");
                         }
                     }
-                    String pkgErr = verifyPackageIdentity(activity, tmpFile);
+                    String pkgErr = verifyPackageIdentity(activity, tmpFile, expectedPackageName);
                     if (pkgErr != null) {
                         throw new IllegalStateException(pkgErr);
                     }
@@ -363,7 +521,7 @@ public class AppUpdateHelper {
     }
 
     @SuppressWarnings("deprecation")
-    private static String verifyPackageIdentity(Activity activity, File apkFile) {
+    private static String verifyPackageIdentity(Activity activity, File apkFile, String expectedPkg) {
         try {
             PackageManager pm = activity.getPackageManager();
             int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
@@ -371,15 +529,18 @@ public class AppUpdateHelper {
                     : PackageManager.GET_SIGNATURES;
             PackageInfo archiveInfo = pm.getPackageArchiveInfo(apkFile.getAbsolutePath(), flags);
             if (archiveInfo == null) return "Could not parse downloaded APK package.";
-            if (!activity.getPackageName().equals(archiveInfo.packageName)) {
-                return "APK package mismatch: expected " + activity.getPackageName() + ", got " + archiveInfo.packageName;
+            String targetPkg = expectedPkg != null ? expectedPkg : activity.getPackageName();
+            if (!targetPkg.equals(archiveInfo.packageName)) {
+                return "APK package mismatch: expected " + targetPkg + ", got " + archiveInfo.packageName;
             }
-            PackageInfo installed = pm.getPackageInfo(activity.getPackageName(), flags);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && archiveInfo.signingInfo != null && installed.signingInfo != null) {
-                android.content.pm.Signature[] a = archiveInfo.signingInfo.getApkContentsSigners();
-                android.content.pm.Signature[] b = installed.signingInfo.getApkContentsSigners();
-                if (a != null && b != null && a.length > 0 && b.length > 0 && !a[0].equals(b[0])) {
-                    return "Update APK signing certificate does not match installed Quacky app.";
+            if (activity.getPackageName().equals(targetPkg)) {
+                PackageInfo installed = pm.getPackageInfo(activity.getPackageName(), flags);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && archiveInfo.signingInfo != null && installed.signingInfo != null) {
+                    android.content.pm.Signature[] a = archiveInfo.signingInfo.getApkContentsSigners();
+                    android.content.pm.Signature[] b = installed.signingInfo.getApkContentsSigners();
+                    if (a != null && b != null && a.length > 0 && b.length > 0 && !a[0].equals(b[0])) {
+                        return "Update APK signing certificate does not match installed app.";
+                    }
                 }
             }
         } catch (Exception e) {

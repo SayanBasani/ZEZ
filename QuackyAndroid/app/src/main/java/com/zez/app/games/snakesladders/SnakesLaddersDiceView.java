@@ -59,6 +59,57 @@ public class SnakesLaddersDiceView extends View {
         invalidate();
     }
 
+    public void rollDiceToValue(int diceValue, long durationMs, Runnable onSettled) {
+        stopRollingAnimation();
+        final int target = Math.max(1, Math.min(6, diceValue));
+        this.value = target;
+
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            setValue(target);
+            if (onSettled != null) onSettled.run();
+            return;
+        }
+
+        rollAnimator = ValueAnimator.ofFloat(0f, 1f);
+        rollAnimator.setDuration(Math.max(500L, durationMs));
+        rollAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(1.4f));
+
+        final java.util.Random rnd = new java.util.Random();
+        rollAnimator.addUpdateListener(anim -> {
+            float f = (float) anim.getAnimatedValue();
+            if (f < 0.80f) {
+                animatedPreviewValue = 1 + rnd.nextInt(6);
+                tiltDegrees = (float) Math.sin(f * Math.PI * 8.0) * (22f * (1f - f * 0.5f));
+                float scale = 1.0f + (float) Math.sin(f * Math.PI) * 0.16f;
+                setScaleX(scale);
+                setScaleY(scale);
+            } else {
+                animatedPreviewValue = target;
+                float local = (f - 0.80f) / 0.20f;
+                tiltDegrees = (float) Math.sin((1f - local) * Math.PI * 2.0) * 5f;
+                float scale = 1.0f + (1f - local) * 0.08f;
+                setScaleX(scale);
+                setScaleY(scale);
+            }
+            invalidate();
+        });
+
+        rollAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                stopRollingAnimation();
+                setValue(target);
+                animate().scaleX(1.15f).scaleY(1.15f).setDuration(100).withEndAction(() -> {
+                    animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).withEndAction(() -> {
+                        if (onSettled != null) onSettled.run();
+                    }).start();
+                }).start();
+            }
+        });
+
+        rollAnimator.start();
+    }
+
     public void startRollingAnimation() {
         stopRollingAnimation();
         if (!ValueAnimator.areAnimatorsEnabled()) return;

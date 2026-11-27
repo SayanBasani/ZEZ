@@ -44,7 +44,12 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     public void setOnAvatarClickListener(OnAvatarClickListener avatarClickListener) {
         this.avatarClickListener = avatarClickListener;
     }
-    private final SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+    private static SimpleDateFormat createUtcIsoFormat() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return sdf;
+    }
+    private final SimpleDateFormat isoFormat = createUtcIsoFormat();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy", Locale.getDefault());
 
@@ -317,11 +322,28 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
                     String cleanIso = rawTime.split("\\.")[0];
                     Date date = isoFmt.parse(cleanIso);
                     if (date != null) {
-                        long diff = System.currentTimeMillis() - date.getTime();
-                        if (diff < 24 * 60 * 60 * 1000) {
+                        java.util.Calendar nowCal = java.util.Calendar.getInstance();
+                        java.util.Calendar msgCal = java.util.Calendar.getInstance();
+                        msgCal.setTime(date);
+
+                        boolean isToday = nowCal.get(java.util.Calendar.YEAR) == msgCal.get(java.util.Calendar.YEAR)
+                                && nowCal.get(java.util.Calendar.DAY_OF_YEAR) == msgCal.get(java.util.Calendar.DAY_OF_YEAR);
+
+                        nowCal.add(java.util.Calendar.DAY_OF_YEAR, -1);
+                        boolean isYesterday = nowCal.get(java.util.Calendar.YEAR) == msgCal.get(java.util.Calendar.YEAR)
+                                && nowCal.get(java.util.Calendar.DAY_OF_YEAR) == msgCal.get(java.util.Calendar.DAY_OF_YEAR);
+
+                        if (isToday) {
                             tvTime.setText(timeFmt.format(date));
+                        } else if (isYesterday) {
+                            tvTime.setText("Yesterday");
                         } else {
-                            tvTime.setText(dateFmt.format(date));
+                            long diff = System.currentTimeMillis() - date.getTime();
+                            if (diff < 7L * 24 * 60 * 60 * 1000) {
+                                tvTime.setText(new SimpleDateFormat("EEE", Locale.getDefault()).format(date));
+                            } else {
+                                tvTime.setText(dateFmt.format(date));
+                            }
                         }
                     } else {
                         tvTime.setText("");

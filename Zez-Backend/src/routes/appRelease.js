@@ -183,6 +183,167 @@ router.get("/latest", async (req, res, next) => {
 });
 
 /**
+ * Public Endpoint: GET /api/app/rollback?appId=quacky|zez&currentVersionCode=...
+ * Returns the immediate previous active published release for this app,
+ * strictly governed by the administrator rollback toggle setting.
+ */
+router.get("/rollback", async (req, res, next) => {
+  try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.set("Pragma", "no-cache");
+
+    const appId = parseAppId(req.query.appId, "quacky");
+    if (!appId) {
+      return res.status(400).json({
+        success: false,
+        rollbackAvailable: false,
+        error: "Unsupported application identifier. Expected 'quacky' or 'zez'.",
+      });
+    }
+
+    // 1. Check if rollback is allowed by admin for this app
+    const settingKey = `rollback_enabled_${appId}`;
+    const settingRes = await pool.query(
+      "SELECT setting_value FROM public.app_release_settings WHERE setting_key = $1",
+      [settingKey]
+    );
+    const isRollbackEnabled =
+      settingRes.rows.length === 0 || parseBool(settingRes.rows[0].setting_value, true);
+
+    if (!isRollbackEnabled) {
+      return res.json({
+        success: true,
+        rollbackAvailable: false,
+        appId,
+        reason: `Rollback for ${appId.toUpperCase()} is currently disabled by administrator.`,
+      });
+    }
+
+    // 2. Query previous release
+    const rawCode = req.query.currentVersionCode ?? req.query.versionCode;
+    const parsedCode = rawCode !== undefined ? parseInt(String(rawCode), 10) : null;
+    const clientVersionCode = parsedCode !== null && !Number.isNaN(parsedCode) ? parsedCode : null;
+
+    let query;
+    let params;
+
+    if (clientVersionCode !== null && clientVersionCode > 0) {
+      query = `
+        SELECT id, app_id, version_name, version_code, release_notes, file_name, file_size,
+               download_url, sha256_checksum, minimum_supported_version, update_required,
+               release_status, package_name, is_active, created_at, published_at
+        FROM public.app_releases
+        WHERE app_id = $1
+          AND COALESCE(release_status, 'published') <> 'archived'
+          AND version_code < $2
+        ORDER BY version_code DESC, id DESC
+        LIMIT 1
+      `;
+      params = [appId, clientVersionCode];
+    } else {
+      query = `
+        SELECT id, app_id, version_name, version_code, release_notes, file_name, file_size,
+               download_url, sha256_checksum, minimum_supported_version, update_required,
+               release_status, package_name, is_active, created_at, published_at
+        FROM public.app_releases
+        WHERE app_id = $1
+          AND COALESCE(release_status, 'published') <> 'archived'
+        ORDER BY version_code DESC, id DESC
+        OFFSET 1
+        LIMIT 1
+      `;
+      params = [appId];
+    }
+
+    const prevRes = await pool.query(query, params);
+    if (prevRes.rows.length === 0) {
+      return res.json({
+        success: true,
+        rollbackAvailable: false,
+        appId,
+        reason: "No previous version available to roll back to.",
+      });
+    }
+
+    const formatted = formatReleaseRow(prevRes.rows[0], clientVersionCode);
+    return res.json({
+      success: true,
+      rollbackAvailable: true,
+      ...formatted,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/app/settings/rollback
+ * Get rollback enable status for Quacky and ZEZ.
+ */
+router.get("/settings/rollback", async (req, res, next) => {
+  try {
+    const sRes = await pool.query(
+      "SELECT setting_key, setting_value FROM public.app_release_settings WHERE setting_key IN ('rollback_enabled_quacky', 'rollback_enabled_zez')"
+    );
+    const map = {};
+    for (const r of sRes.rows) {
+      map[r.setting_key] = parseBool(r.setting_value, true);
+    }
+    res.json({
+      success: true,
+      quackyRollbackEnabled: map["rollback_enabled_quacky"] !== false,
+      zezRollbackEnabled: map["rollback_enabled_zez"] !== false,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/app/settings/rollback
+ * Admin toggles rollback availability for Quacky and/or ZEZ.
+ */
+router.post("/settings/rollback", adminAuth, async (req, res, next) => {
+  try {
+    const { quackyRollbackEnabled, zezRollbackEnabled } = req.body || {};
+
+    if (quackyRollbackEnabled !== undefined) {
+      await pool.query(
+        `INSERT INTO public.app_release_settings (setting_key, setting_value, updated_at)
+         VALUES ('rollback_enabled_quacky', $1, NOW())
+         ON CONFLICT (setting_key) DO UPDATE SET setting_value = $1, updated_at = NOW()`,
+        [String(quackyRollbackEnabled === true)]
+      );
+    }
+    if (zezRollbackEnabled !== undefined) {
+      await pool.query(
+        `INSERT INTO public.app_release_settings (setting_key, setting_value, updated_at)
+         VALUES ('rollback_enabled_zez', $1, NOW())
+         ON CONFLICT (setting_key) DO UPDATE SET setting_value = $1, updated_at = NOW()`,
+        [String(zezRollbackEnabled === true)]
+      );
+    }
+
+    const sRes = await pool.query(
+      "SELECT setting_key, setting_value FROM public.app_release_settings WHERE setting_key IN ('rollback_enabled_quacky', 'rollback_enabled_zez')"
+    );
+    const map = {};
+    for (const r of sRes.rows) {
+      map[r.setting_key] = parseBool(r.setting_value, true);
+    }
+
+    res.json({
+      success: true,
+      message: "Rollback settings successfully updated.",
+      quackyRollbackEnabled: map["rollback_enabled_quacky"] !== false,
+      zezRollbackEnabled: map["rollback_enabled_zez"] !== false,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * Public Endpoint: GET /api/app/download/:id
  * Downloads an APK release with SHA-256 header and local/B2 fallback.
  */

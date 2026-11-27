@@ -78,8 +78,8 @@ public class SnakesLaddersBoardView extends View {
     }
 
     private void init() {
-        blueTilePaint.setColor(Color.parseColor("#1D84D4"));
-        lightTilePaint.setColor(Color.parseColor("#FAF2DC"));
+        blueTilePaint.setColor(Color.parseColor("#1E40AF"));
+        lightTilePaint.setColor(Color.parseColor("#FEF9C3"));
 
         gridBorderPaint.setStyle(Paint.Style.STROKE);
         gridBorderPaint.setColor(Color.parseColor("#2A0F2442"));
@@ -236,34 +236,61 @@ public class SnakesLaddersBoardView extends View {
 
         final Path finalSpecialPath = specialPath;
         final PathMeasure specialMeasure = specialPath != null ? new PathMeasure(specialPath, false) : null;
-        final float stepPhaseEnd = hasSpecial ? 0.58f : 1.0f;
-        final long durationMs = (stepSquares.size() * 145L) + (hasSpecial ? 560L : 80L);
+
+        final int numSteps = Math.max(1, stepWaypoints.size() - 1);
+        final long stepDuration = numSteps * 220L;
+        final long pauseDuration = hasSpecial ? 260L : 0L;
+        final long specialDuration = hasSpecial ? 650L : 0L;
+        final long totalDuration = stepDuration + pauseDuration + specialDuration;
+
+        final float stepPhaseEnd = (float) stepDuration / totalDuration;
+        final float pausePhaseEnd = (float) (stepDuration + pauseDuration) / totalDuration;
 
         ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
-        animator.setDuration(Math.max(260L, durationMs));
-        animator.setInterpolator(new AccelerateDecelerateInterpolator());
+        animator.setDuration(Math.max(300L, totalDuration));
+        animator.setInterpolator(new android.view.animation.LinearInterpolator());
 
         animator.addUpdateListener(anim -> {
             float t = (float) anim.getAnimatedValue();
             PointF pt = new PointF();
-            if (t <= stepPhaseEnd || !hasSpecial || specialMeasure == null) {
-                float local = stepPhaseEnd > 0 ? Math.min(1f, t / stepPhaseEnd) : 1f;
-                int segments = Math.max(1, stepWaypoints.size() - 1);
-                float scaled = local * segments;
-                int idx = Math.min(segments - 1, (int) scaled);
-                float frac = scaled - idx;
-                PointF a = stepWaypoints.get(idx);
-                PointF b = stepWaypoints.get(idx + 1);
-                pt.x = a.x + (b.x - a.x) * frac;
-                float hopArc = (float) (Math.sin(frac * Math.PI) * (getWidth() * 0.018f));
-                pt.y = a.y + (b.y - a.y) * frac - hopArc;
+
+            if (t <= stepPhaseEnd) {
+                // Step-by-step hopping square by square (e.g. 10 -> 11 -> 12 -> 13 -> 14 -> 15)
+                float stepFraction = stepPhaseEnd > 0 ? (t / stepPhaseEnd) : 1f;
+                float scaled = stepFraction * numSteps;
+                int stepIdx = Math.min(numSteps - 1, (int) scaled);
+                float stepFrac = scaled - stepIdx;
+
+                PointF a = stepWaypoints.get(stepIdx);
+                PointF b = stepWaypoints.get(stepIdx + 1);
+
+                // Distinct parabolic hop arc for each individual square jump
+                float hopHeight = Math.max(16f, getWidth() * 0.055f);
+                float arc = (float) (Math.sin(stepFrac * Math.PI) * hopHeight);
+
+                pt.x = a.x + (b.x - a.x) * stepFrac;
+                pt.y = a.y + (b.y - a.y) * stepFrac - arc;
+            } else if (t <= pausePhaseEnd) {
+                // Settle on the square where the snake head or ladder bottom is
+                PointF dest = getPixelCenterForSquare(move.normalDestination);
+                pt.x = dest.x;
+                pt.y = dest.y;
             } else {
-                float local = (t - stepPhaseEnd) / (1f - stepPhaseEnd);
+                // Smoothly slide along snake or climb up ladder
+                float specialFrac = (pausePhaseEnd < 1f) ? (t - pausePhaseEnd) / (1f - pausePhaseEnd) : 1f;
+                float eased = (float) (0.5f - 0.5f * Math.cos(specialFrac * Math.PI));
                 float[] pos = new float[2];
-                specialMeasure.getPosTan(specialMeasure.getLength() * Math.min(1f, Math.max(0f, local)), pos, null);
-                pt.x = pos[0];
-                pt.y = pos[1];
+                if (specialMeasure != null) {
+                    specialMeasure.getPosTan(specialMeasure.getLength() * Math.min(1f, Math.max(0f, eased)), pos, null);
+                    pt.x = pos[0];
+                    pt.y = pos[1];
+                } else {
+                    PointF end = getPixelCenterForSquare(move.finalPosition);
+                    pt.x = end.x;
+                    pt.y = end.y;
+                }
             }
+
             animatedOverrides.put(move.playerId, pt);
             invalidate();
         });

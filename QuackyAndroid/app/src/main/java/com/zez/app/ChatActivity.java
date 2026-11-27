@@ -59,6 +59,7 @@ import com.zez.app.util.GalleryPopupHelper;
 import com.zez.app.util.PreferencesHelper;
 import com.zez.app.util.QuackyStorageHelper;
 
+import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -169,6 +170,10 @@ public class ChatActivity extends AppCompatActivity {
     private boolean isLoadingOlder = false;
     private boolean hasMoreOlder = true;
 
+    private LinearLayout layoutPeerTypingBubble;
+    private View dotTyping1, dotTyping2, dotTyping3;
+    private android.animation.AnimatorSet typingAnimatorSet;
+
     private static class PendingMessage {
         ChatMessage optimisticMsg;
         String text;
@@ -240,6 +245,7 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
+        isoFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
         chatDb = com.zez.app.util.ChatLocalDbHelper.getInstance(this);
         initActivityLaunchers();
         initViews();
@@ -363,6 +369,11 @@ public class ChatActivity extends AppCompatActivity {
         tvReplyPreviewText = findViewById(R.id.tv_reply_preview_text);
         ivReplyPreviewImage = findViewById(R.id.iv_reply_preview_image);
         btnCancelReply = findViewById(R.id.btn_cancel_reply);
+
+        layoutPeerTypingBubble = findViewById(R.id.layout_peer_typing_bubble);
+        dotTyping1 = findViewById(R.id.dot_typing_1);
+        dotTyping2 = findViewById(R.id.dot_typing_2);
+        dotTyping3 = findViewById(R.id.dot_typing_3);
 
         layoutNormalHeader = findViewById(R.id.layout_chat_normal_header);
         layoutSelectionBar = findViewById(R.id.layout_chat_selection_bar);
@@ -723,7 +734,15 @@ public class ChatActivity extends AppCompatActivity {
             normalMessages.clear();
             loadedMessageIds.clear();
             normalMessages.addAll(cached);
-            for (ChatMessage m : cached) {
+            Collections.sort(normalMessages, (a, b) -> {
+                String tA = a.getCreatedAt();
+                String tB = b.getCreatedAt();
+                if (tA == null && tB == null) return 0;
+                if (tA == null) return -1;
+                if (tB == null) return 1;
+                return tA.compareTo(tB);
+            });
+            for (ChatMessage m : normalMessages) {
                 if (m.getId() != null) loadedMessageIds.add(m.getId());
             }
             if (!isSecretMode && adapter != null) {
@@ -2067,6 +2086,68 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         }
+
+        showTypingBubble(peerStatus != null && peerStatus.isTyping && !isSecretMode);
+    }
+
+    private void showTypingBubble(boolean show) {
+        if (layoutPeerTypingBubble == null) return;
+        if (show) {
+            if (layoutPeerTypingBubble.getVisibility() == View.VISIBLE) return;
+            layoutPeerTypingBubble.setVisibility(View.VISIBLE);
+            layoutPeerTypingBubble.setAlpha(0f);
+            layoutPeerTypingBubble.animate().alpha(1f).setDuration(200).start();
+
+            startTypingDotsAnimation();
+            if (layoutManager != null && adapter != null && adapter.getItemCount() > 0) {
+                int lastVisible = layoutManager.findLastVisibleItemPosition();
+                if (lastVisible >= adapter.getItemCount() - 2) {
+                    recyclerView.smoothScrollToPosition(adapter.getItemCount() - 1);
+                }
+            }
+        } else {
+            if (layoutPeerTypingBubble.getVisibility() != View.VISIBLE) return;
+            stopTypingDotsAnimation();
+            layoutPeerTypingBubble.animate().alpha(0f).setDuration(150).withEndAction(() -> {
+                if (layoutPeerTypingBubble != null) layoutPeerTypingBubble.setVisibility(View.GONE);
+            }).start();
+        }
+    }
+
+    private void startTypingDotsAnimation() {
+        stopTypingDotsAnimation();
+        if (dotTyping1 == null || dotTyping2 == null || dotTyping3 == null) return;
+
+        android.animation.ObjectAnimator anim1 = android.animation.ObjectAnimator.ofFloat(dotTyping1, "translationY", 0f, -8f, 0f);
+        anim1.setDuration(600);
+        anim1.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        anim1.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+
+        android.animation.ObjectAnimator anim2 = android.animation.ObjectAnimator.ofFloat(dotTyping2, "translationY", 0f, -8f, 0f);
+        anim2.setDuration(600);
+        anim2.setStartDelay(160);
+        anim2.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        anim2.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+
+        android.animation.ObjectAnimator anim3 = android.animation.ObjectAnimator.ofFloat(dotTyping3, "translationY", 0f, -8f, 0f);
+        anim3.setDuration(600);
+        anim3.setStartDelay(320);
+        anim3.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        anim3.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+
+        typingAnimatorSet = new android.animation.AnimatorSet();
+        typingAnimatorSet.playTogether(anim1, anim2, anim3);
+        typingAnimatorSet.start();
+    }
+
+    private void stopTypingDotsAnimation() {
+        if (typingAnimatorSet != null) {
+            typingAnimatorSet.cancel();
+            typingAnimatorSet = null;
+        }
+        if (dotTyping1 != null) dotTyping1.setTranslationY(0f);
+        if (dotTyping2 != null) dotTyping2.setTranslationY(0f);
+        if (dotTyping3 != null) dotTyping3.setTranslationY(0f);
     }
 
     private Date parseIsoDate(String raw) {
@@ -2140,18 +2221,31 @@ public class ChatActivity extends AppCompatActivity {
                 }
                 boolean hasNew = false;
                 if (result != null && result.messages != null) {
-                    for (ChatMessage msg : result.messages) {
-                        if (msg != null && msg.getId() != null) {
-                            if (!loadedMessageIds.contains(msg.getId())) {
-                                loadedMessageIds.add(msg.getId());
-                                normalMessages.add(msg);
-                                hasNew = true;
-                            }
-                        }
+                    java.util.Map<String, ChatMessage> map = new java.util.LinkedHashMap<>();
+                    for (ChatMessage m : normalMessages) {
+                        if (m != null && m.getId() != null) map.put(m.getId(), m);
+                    }
+                    for (ChatMessage m : result.messages) {
+                        if (m != null && m.getId() != null) map.put(m.getId(), m);
+                    }
+                    normalMessages.clear();
+                    normalMessages.addAll(map.values());
+                    Collections.sort(normalMessages, (a, b) -> {
+                        String tA = a.getCreatedAt();
+                        String tB = b.getCreatedAt();
+                        if (tA == null && tB == null) return 0;
+                        if (tA == null) return -1;
+                        if (tB == null) return 1;
+                        return tA.compareTo(tB);
+                    });
+                    loadedMessageIds.clear();
+                    for (ChatMessage m : normalMessages) {
+                        if (m.getId() != null) loadedMessageIds.add(m.getId());
                     }
                     if (chatDb != null) {
                         chatDb.saveMessages(result.messages);
                     }
+                    hasNew = true;
                 }
 
                 if (result != null && result.isSecretMode) {
@@ -2302,7 +2396,10 @@ public class ChatActivity extends AppCompatActivity {
                     if (serverId != null) {
                         loadedMessageIds.add(serverId);
                     }
-                    adapter.updateTempMessage(task.optimisticMsg.getId(), serverId, st);
+                    if (sentMessage.getCreatedAt() != null && !sentMessage.getCreatedAt().isEmpty()) {
+                        task.optimisticMsg.setCreatedAt(sentMessage.getCreatedAt());
+                    }
+                    adapter.updateTempMessage(task.optimisticMsg.getId(), sentMessage);
                     if (serverId != null) {
                         task.optimisticMsg.setId(serverId);
                     }
@@ -3238,6 +3335,7 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        showTypingBubble(false);
         activeConversationId = null;
         isPollingActive = false;
         isPollInFlight.set(false);

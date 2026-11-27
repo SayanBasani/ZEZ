@@ -370,6 +370,42 @@
         android:clipToPadding="false"
         android:paddingVertical="8dp" />
 
+    <!-- WhatsApp-Style Incoming Typing Bubble Indicator -->
+    <LinearLayout
+        android:id="@+id/layout_peer_typing_bubble"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_gravity="start"
+        android:layout_marginStart="14dp"
+        android:layout_marginBottom="6dp"
+        android:background="@drawable/bg_typing_bubble"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="10dp"
+        android:visibility="gone">
+
+        <View
+            android:id="@+id/dot_typing_1"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:background="@drawable/bg_typing_dot" />
+
+        <View
+            android:id="@+id/dot_typing_2"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/bg_typing_dot" />
+
+        <View
+            android:id="@+id/dot_typing_3"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/bg_typing_dot" />
+    </LinearLayout>
+
     <!-- Quoted Reply Preview Bar (WhatsApp Style) -->
     <LinearLayout
         android:id="@+id/layout_reply_preview"

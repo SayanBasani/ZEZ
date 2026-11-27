@@ -2593,6 +2593,36 @@
           </div>
         </div>
 
+        <!-- Rollback Permissions & Controls Card -->
+        <div class="admin-card" style="margin-bottom: 18px; padding: 14px 18px;">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 10h10a5 5 0 0 1 5 5v2M3 10l6-6M3 10l6 6"/></svg>
+                <span style="font-size: 14px; font-weight: 600;">Single-Step Update Rollback Control</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                Allow users on the latest release to roll back to their immediately preceding version. Turn OFF to hide rollback from mobile clients.
+              </div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
+              <!-- Quacky Rollback Toggle -->
+              <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 13px;">
+                <input type="checkbox" id="chkRollbackQuacky" style="width: 17px; height: 17px; accent-color: var(--primary); cursor: pointer;">
+                <span style="font-weight: 500;">Quacky Rollback</span>
+                <span id="badgeRollbackQuacky" class="badge badge-incoming" style="font-size: 11px;">Enabled</span>
+              </label>
+
+              <!-- Zez Rollback Toggle -->
+              <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 13px;">
+                <input type="checkbox" id="chkRollbackZez" style="width: 17px; height: 17px; accent-color: var(--primary); cursor: pointer;">
+                <span style="font-weight: 500;">ZEZ Rollback</span>
+                <span id="badgeRollbackZez" class="badge badge-incoming" style="font-size: 11px;">Enabled</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <!-- Top Row: Upload Form & Current Active Release -->
         <div class="admin-grid-2col">
           
@@ -6253,7 +6283,61 @@ versionName "1.0.1"</pre>
       setReleaseAppTab(e.target.value);
     });
 
+    async function loadRollbackSettings() {
+      try {
+        const res = await fetch('/api/app/settings/rollback');
+        const data = await res.json();
+        if (data && data.success) {
+          const chkQ = document.getElementById('chkRollbackQuacky');
+          const chkZ = document.getElementById('chkRollbackZez');
+          const bgQ = document.getElementById('badgeRollbackQuacky');
+          const bgZ = document.getElementById('badgeRollbackZez');
+          if (chkQ) chkQ.checked = data.quackyRollbackEnabled !== false;
+          if (chkZ) chkZ.checked = data.zezRollbackEnabled !== false;
+          if (bgQ) {
+            bgQ.textContent = chkQ?.checked ? 'Enabled' : 'Disabled';
+            bgQ.className = chkQ?.checked ? 'badge badge-incoming' : 'badge badge-missed';
+          }
+          if (bgZ) {
+            bgZ.textContent = chkZ?.checked ? 'Enabled' : 'Disabled';
+            bgZ.className = chkZ?.checked ? 'badge badge-incoming' : 'badge badge-missed';
+          }
+        }
+      } catch (err) {
+        console.error('Error loading rollback settings:', err);
+      }
+    }
+
+    async function updateRollbackSetting(targetApp, enabled) {
+      try {
+        const body = targetApp === 'quacky' ? { quackyRollbackEnabled: enabled } : { zezRollbackEnabled: enabled };
+        const res = await fetch('/api/app/settings/rollback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentToken}`
+          },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to update rollback settings');
+        showToast(data.message || 'Rollback settings updated');
+        loadRollbackSettings();
+      } catch (err) {
+        showToast('Error: ' + err.message);
+        loadRollbackSettings();
+      }
+    }
+
+    document.getElementById('chkRollbackQuacky')?.addEventListener('change', (e) => {
+      updateRollbackSetting('quacky', e.target.checked);
+    });
+    document.getElementById('chkRollbackZez')?.addEventListener('change', (e) => {
+      updateRollbackSetting('zez', e.target.checked);
+    });
+
     async function loadReleases() {
+      loadRollbackSettings();
       const tbody = document.getElementById('releasesTableBody');
       const alertBox = document.getElementById('releaseUploadAlert');
       if (alertBox) alertBox.style.display = 'none';

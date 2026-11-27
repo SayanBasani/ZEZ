@@ -92,6 +92,15 @@ async function initializeDatabase() {
     ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS package_name VARCHAR(128);
     ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ DEFAULT NOW();
     CREATE INDEX IF NOT EXISTS idx_app_releases_app_active ON public.app_releases(app_id, is_active, version_code DESC, id DESC);
+
+    CREATE TABLE IF NOT EXISTS public.app_release_settings (
+      setting_key VARCHAR(64) PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    INSERT INTO public.app_release_settings (setting_key, setting_value)
+    VALUES ('rollback_enabled_quacky', 'true'), ('rollback_enabled_zez', 'true')
+    ON CONFLICT (setting_key) DO NOTHING;
   `);
 
   // Ensure chat tables exist (Isolated chat subsystem)

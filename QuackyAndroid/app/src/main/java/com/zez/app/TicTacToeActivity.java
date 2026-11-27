@@ -448,14 +448,14 @@ public class TicTacToeActivity extends AppCompatActivity {
 
     private void stylePlayerCard(LinearLayout card, boolean highlighted, int activeStrokeColor) {
         GradientDrawable gd = new GradientDrawable();
-        gd.setColor(Color.parseColor("#1A1F2E"));
-        gd.setCornerRadius(16 * getResources().getDisplayMetrics().density);
-        int strokePx = (int) ((highlighted ? 2.5f : 1.2f) * getResources().getDisplayMetrics().density);
-        gd.setStroke(strokePx, highlighted ? activeStrokeColor : Color.parseColor("#2E364D"));
+        gd.setColor(highlighted ? Color.parseColor("#1E293B") : Color.parseColor("#131B2A"));
+        gd.setCornerRadius(18 * getResources().getDisplayMetrics().density);
+        int strokePx = (int) ((highlighted ? 2.8f : 1.2f) * getResources().getDisplayMetrics().density);
+        gd.setStroke(strokePx, highlighted ? activeStrokeColor : Color.parseColor("#263248"));
         card.setBackground(gd);
         card.animate()
-                .scaleX(highlighted ? 1.03f : 0.98f)
-                .scaleY(highlighted ? 1.03f : 0.98f)
+                .scaleX(highlighted ? 1.04f : 0.98f)
+                .scaleY(highlighted ? 1.04f : 0.98f)
                 .alpha(highlighted ? 1f : 0.78f)
                 .setDuration(180)
                 .start();

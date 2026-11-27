@@ -70,6 +70,11 @@ public class SettingsViewController {
     private TextView tvSettingServerCurrent;
     private TextView tvSettingVersionInfo;
     private Button btnSettingUpdate;
+    private Button btnSettingRollback;
+    private TextView tvCompanionStatus;
+    private Button btnCompanionAction;
+    private AppUpdateHelper.ReleaseInfo rollbackReleaseInfo = null;
+    private AppUpdateHelper.ReleaseInfo companionReleaseInfo = null;
     private TextView tvFooterAppVersion;
 
     // Accent Swatches & Checks
@@ -179,6 +184,9 @@ public class SettingsViewController {
         tvSettingServerCurrent = root.findViewById(R.id.tv_setting_server_current);
         tvSettingVersionInfo = root.findViewById(R.id.tv_setting_version_info);
         btnSettingUpdate = root.findViewById(R.id.btn_setting_update);
+        btnSettingRollback = root.findViewById(R.id.btn_setting_rollback);
+        tvCompanionStatus = root.findViewById(R.id.tv_companion_status);
+        btnCompanionAction = root.findViewById(R.id.btn_companion_action);
         tvFooterAppVersion = root.findViewById(R.id.tv_footer_app_version);
 
         // Accent Swatches
@@ -237,6 +245,7 @@ public class SettingsViewController {
         if (tvFooterAppVersion != null) tvFooterAppVersion.setOnClickListener(devTapListener);
 
         if (rowSettingServer != null) rowSettingServer.setOnClickListener(v -> showServerConfigDialog());
+        setupRollbackAndCompanion();
     }
 
     public void loadSettingsData() {
@@ -1367,9 +1376,134 @@ public class SettingsViewController {
         builder.show();
     }
 
+    private void setupRollbackAndCompanion() {
+        checkRollbackAvailability();
+        checkCompanionAppStatus();
+    }
+
+    private void checkRollbackAvailability() {
+        AppUpdateHelper.checkForRollback(activity, new AppUpdateHelper.UpdateCheckCallback() {
+            @Override
+            public void onResult(AppUpdateHelper.ReleaseInfo info) {
+                activity.runOnUiThread(() -> {
+                    if (activity.isFinishing() || activity.isDestroyed()) return;
+                    if (info != null && info.isUpdateAvailable) {
+                        rollbackReleaseInfo = info;
+                        if (btnSettingRollback != null) {
+                            btnSettingRollback.setVisibility(View.VISIBLE);
+                            btnSettingRollback.setText("Rollback to v" + info.latestVersionName);
+                            btnSettingRollback.setOnClickListener(v -> confirmRollback(info));
+                        }
+                    } else {
+                        if (btnSettingRollback != null) {
+                            btnSettingRollback.setVisibility(View.GONE);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                activity.runOnUiThread(() -> {
+                    if (btnSettingRollback != null) btnSettingRollback.setVisibility(View.GONE);
+                });
+            }
+        });
+    }
+
+    private void confirmRollback(AppUpdateHelper.ReleaseInfo info) {
+        new AlertDialog.Builder(activity)
+                .setTitle("Rollback ZEZ Update")
+                .setMessage("Are you sure you want to roll back to previous version v" + info.latestVersionName + " (Build " + info.latestVersionCode + ")?\n\nThis will download and install the previous official release.")
+                .setIcon(R.drawable.ic_system_update)
+                .setPositiveButton("Rollback", (dialog, which) -> {
+                    startApkDownload(info, "Downloading Rollback", "zez-rollback", activity.getPackageName());
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void checkCompanionAppStatus() {
+        final String quackyPkg = "com.zez.app";
+        boolean installed = AppUpdateHelper.isAppInstalled(activity, quackyPkg);
+        String installedVer = installed ? AppUpdateHelper.getInstalledVersionName(activity, quackyPkg) : "";
+        int installedCode = installed ? AppUpdateHelper.getInstalledVersionCode(activity, quackyPkg) : -1;
+
+        if (tvCompanionStatus != null) {
+            tvCompanionStatus.setText(installed ? ("Installed (v" + installedVer + ") · Checking server...") : "Checking availability on server...");
+        }
+
+        AppUpdateHelper.checkForCompanionApp(activity, "quacky", new AppUpdateHelper.UpdateCheckCallback() {
+            @Override
+            public void onResult(AppUpdateHelper.ReleaseInfo info) {
+                activity.runOnUiThread(() -> {
+                    if (activity.isFinishing() || activity.isDestroyed()) return;
+                    companionReleaseInfo = info;
+                    if (installed) {
+                        boolean hasNewer = info != null && info.latestVersionCode > installedCode;
+                        if (hasNewer) {
+                            if (tvCompanionStatus != null) {
+                                tvCompanionStatus.setText("Installed (v" + installedVer + ") · Update Available (v" + info.latestVersionName + ")");
+                            }
+                            if (btnCompanionAction != null) {
+                                btnCompanionAction.setText("Update Quacky");
+                                btnCompanionAction.setOnClickListener(v -> startApkDownload(info, "Downloading Quacky", "quacky-companion-update", quackyPkg));
+                            }
+                        } else {
+                            if (tvCompanionStatus != null) {
+                                tvCompanionStatus.setText("Installed (v" + installedVer + ") · Up to date");
+                            }
+                            if (btnCompanionAction != null) {
+                                btnCompanionAction.setText("Open Quacky");
+                                btnCompanionAction.setOnClickListener(v -> AppUpdateHelper.openApp(activity, quackyPkg));
+                            }
+                        }
+                    } else {
+                        if (tvCompanionStatus != null) {
+                            tvCompanionStatus.setText("Not installed on this device" + (info != null ? " · Latest v" + info.latestVersionName : ""));
+                        }
+                        if (btnCompanionAction != null) {
+                            btnCompanionAction.setText("Download & Install Quacky");
+                            btnCompanionAction.setOnClickListener(v -> {
+                                if (info != null) {
+                                    startApkDownload(info, "Downloading Quacky", "quacky-companion", quackyPkg);
+                                } else {
+                                    Toast.makeText(activity, "Quacky release not found on server", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                activity.runOnUiThread(() -> {
+                    if (activity.isFinishing() || activity.isDestroyed()) return;
+                    if (tvCompanionStatus != null) {
+                        tvCompanionStatus.setText(installed ? ("Installed (v" + installedVer + ")") : "Not installed");
+                    }
+                    if (btnCompanionAction != null) {
+                        if (installed) {
+                            btnCompanionAction.setText("Open Quacky");
+                            btnCompanionAction.setOnClickListener(v -> AppUpdateHelper.openApp(activity, quackyPkg));
+                        } else {
+                            btnCompanionAction.setText("Check Again");
+                            btnCompanionAction.setOnClickListener(v -> checkCompanionAppStatus());
+                        }
+                    }
+                });
+            }
+        });
+    }
+
     private void startApkDownload(AppUpdateHelper.ReleaseInfo info) {
+        startApkDownload(info, "Downloading Zez Update", "zez-update", activity.getPackageName());
+    }
+
+    private void startApkDownload(AppUpdateHelper.ReleaseInfo info, String title, String tag, String expectedPackage) {
         ProgressDialog dlProgress = new ProgressDialog(activity);
-        dlProgress.setTitle("Downloading Zez Update");
+        dlProgress.setTitle(title != null ? title : "Downloading Update");
         dlProgress.setMessage("Downloading APK...");
         dlProgress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dlProgress.setMax(100);
@@ -1381,7 +1515,7 @@ public class SettingsViewController {
         });
         dlProgress.show();
 
-        AppUpdateHelper.downloadAndVerifyApk(activity, info, new AppUpdateHelper.DownloadProgressCallback() {
+        AppUpdateHelper.downloadAndVerifyApk(activity, tag, expectedPackage, info, new AppUpdateHelper.DownloadProgressCallback() {
             @Override
             public void onProgress(int percent) {
                 dlProgress.setProgress(percent);

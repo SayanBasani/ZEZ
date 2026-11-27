@@ -60,7 +60,12 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private final java.util.Set<String> selectedMessageIds = new java.util.HashSet<>();
     private boolean isSelectionMode = false;
     private String highlightedMessageId = null;
-    private final SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+    private static SimpleDateFormat createUtcIsoFormat() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf;
+    }
+    private final SimpleDateFormat isoFormat = createUtcIsoFormat();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
     private final SimpleDateFormat dayFormat = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
 
@@ -378,6 +383,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if (realMsg.getMediaType() != null) row.message.setMediaType(realMsg.getMediaType());
                     if (realMsg.getFileName() != null) row.message.setFileName(realMsg.getFileName());
                     if (realMsg.getFileSize() != null && realMsg.getFileSize() > 0) row.message.setFileSize(realMsg.getFileSize());
+                    if (realMsg.getCreatedAt() != null && !realMsg.getCreatedAt().isEmpty()) row.message.setCreatedAt(realMsg.getCreatedAt());
                     notifyItemChanged(i);
                     return;
                 }
@@ -392,10 +398,19 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             Date d = isoFormat.parse(clean);
             if (d == null) return "Today";
 
-            long now = System.currentTimeMillis();
-            long diff = now - d.getTime();
-            if (diff < 24 * 60 * 60 * 1000) return "Today";
-            if (diff < 48 * 60 * 60 * 1000) return "Yesterday";
+            java.util.Calendar nowCal = java.util.Calendar.getInstance();
+            java.util.Calendar msgCal = java.util.Calendar.getInstance();
+            msgCal.setTime(d);
+
+            boolean isToday = nowCal.get(java.util.Calendar.YEAR) == msgCal.get(java.util.Calendar.YEAR)
+                    && nowCal.get(java.util.Calendar.DAY_OF_YEAR) == msgCal.get(java.util.Calendar.DAY_OF_YEAR);
+            if (isToday) return "Today";
+
+            nowCal.add(java.util.Calendar.DAY_OF_YEAR, -1);
+            boolean isYesterday = nowCal.get(java.util.Calendar.YEAR) == msgCal.get(java.util.Calendar.YEAR)
+                    && nowCal.get(java.util.Calendar.DAY_OF_YEAR) == msgCal.get(java.util.Calendar.DAY_OF_YEAR);
+            if (isYesterday) return "Yesterday";
+
             return dayFormat.format(d);
         } catch (Exception e) {
             return "Today";
@@ -1172,7 +1187,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (raw == null || raw.isEmpty()) return "";
         try {
             String clean = raw.split("\\.")[0];
-            Date d = isoFmt.parse(clean);
+            if (isoFmt != null && (isoFmt.getTimeZone() == null || !"UTC".equals(isoFmt.getTimeZone().getID()))) {
+                isoFmt.setTimeZone(TimeZone.getTimeZone("UTC"));
+            }
+            Date d = isoFmt != null ? isoFmt.parse(clean) : null;
             return d != null ? timeFmt.format(d) : "";
         } catch (Exception e) {
             return "";
