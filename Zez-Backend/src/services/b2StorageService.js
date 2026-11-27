@@ -127,15 +127,26 @@ function sanitizeKey(rawKey) {
   if (!rawKey || typeof rawKey !== "string") {
     throw new Error("Invalid object key.");
   }
+  let clean = rawKey;
+  try {
+    clean = decodeURIComponent(clean);
+  } catch (_) {}
+
+  if (clean.includes("\0")) {
+    throw new Error("Null byte injection detected.");
+  }
+
   // Replace backslashes with forward slashes
-  let clean = rawKey.trim().replace(/\\/g, "/");
-  // Prevent directory traversal
-  clean = clean.replace(/\.\./g, "");
+  clean = clean.trim().replace(/\\/g, "/");
   // Normalize consecutive slashes
   clean = clean.replace(/\/+/g, "/");
+  // Iteratively strip directory traversal sequences
+  while (clean.includes("..")) {
+    clean = clean.replace(/\.\./g, "");
+  }
   // Strip leading and trailing slashes
   clean = clean.replace(/^\/+/, "").replace(/\/+$/, "");
-  if (!clean) {
+  if (!clean || clean === "." || clean.startsWith("/")) {
     throw new Error("Sanitized object key is empty.");
   }
   return clean;

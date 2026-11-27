@@ -5,6 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { pool, hashPassword, verifyPassword } = require("../db");
 const { adminAuth, createAdminToken } = require("../middleware/adminAuth");
+const { adminLoginRateLimiter } = require("../middleware/security");
 const { decryptStoredPayload } = require("../crypto");
 const b2Storage = require("../services/b2StorageService");
 
@@ -166,7 +167,7 @@ function decodeRecord(row) {
  * POST /api/admin/login
  * Public endpoint to exchange username and password for an admin JWT.
  */
-router.post("/login", async (req, res, next) => {
+router.post("/login", adminLoginRateLimiter, async (req, res, next) => {
   try {
     const { username, password } = req.body || {};
     const inputUser = String(username || "").trim();

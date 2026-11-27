@@ -12,7 +12,7 @@ const pool = new Pool({
   connectionString,
   max: 15,
   idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 10_000,
+  connectionTimeoutMillis: 30_000,
 });
 
 pool.on("error", (error) => {
@@ -37,7 +37,20 @@ function verifyPassword(password, stored) {
 }
 
 async function initializeDatabase() {
-  await pool.query("SELECT 1");
+  let connected = false;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await pool.query("SELECT 1");
+      connected = true;
+      break;
+    } catch (err) {
+      console.warn(`Database connection attempt ${attempt} failed: ${err.message}. Retrying...`);
+      if (attempt < 3) await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+  if (!connected) {
+    throw new Error("Unable to connect to database after 3 attempts.");
+  }
 
   // Ensure admin_users table exists
   await pool.query(`

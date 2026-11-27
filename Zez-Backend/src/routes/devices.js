@@ -23,6 +23,13 @@ router.post("/register", async (req, res, next) => {
     });
   }
 
+  if ((androidId && androidId.length > 256) || (persistentId && persistentId.length > 256)) {
+    return res.status(400).json({
+      success: false,
+      error: "Device identifiers exceed maximum allowed length (256 chars).",
+    });
+  }
+
   const token = crypto.randomBytes(32).toString("base64url");
   const tokenHash = hashToken(token);
   const details = body.deviceDetails ?? {};

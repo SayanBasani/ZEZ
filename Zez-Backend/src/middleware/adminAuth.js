@@ -1,7 +1,17 @@
 const crypto = require("node:crypto");
 
+let runtimeSecret = null;
 function getSecret() {
-  return process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_PASSWORD || "zez_default_secret_key_2026";
+  if (process.env.ADMIN_SESSION_SECRET && process.env.ADMIN_SESSION_SECRET.trim().length >= 16) {
+    return process.env.ADMIN_SESSION_SECRET.trim();
+  }
+  if (process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.trim().length >= 8) {
+    return process.env.ADMIN_PASSWORD.trim();
+  }
+  if (!runtimeSecret) {
+    runtimeSecret = crypto.randomBytes(32).toString("hex");
+  }
+  return runtimeSecret;
 }
 
 function base64UrlEncode(str) {

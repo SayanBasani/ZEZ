@@ -2475,8 +2475,14 @@
             <div style="font-size: 12px; color: var(--text-secondary);">Manage Quacky and Zez APK releases independently so each app only receives its own builds.</div>
           </div>
           <div style="display: inline-flex; gap: 8px; background: var(--surface-deep); padding: 4px; border-radius: 8px; border: 1px solid var(--hairline);">
-            <button type="button" class="btn btn-primary btn-sm release-app-tab" id="releaseTabQuacky" data-app="quacky">Quacky (com.zez.app)</button>
-            <button type="button" class="btn btn-secondary btn-sm release-app-tab" id="releaseTabZez" data-app="zez">Zez (com.zez.manager)</button>
+            <button type="button" class="btn btn-primary btn-sm release-app-tab" id="releaseTabQuacky" data-app="quacky" style="display: inline-flex; align-items: center; gap: 8px;">
+              <img src="/admin/images/quacky-logo.png" alt="Quacky" style="width: 20px; height: 20px; border-radius: 5px; object-fit: cover; display: inline-block;">
+              <span>Quacky (com.zez.app)</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm release-app-tab" id="releaseTabZez" data-app="zez" style="display: inline-flex; align-items: center; gap: 8px;">
+              <img src="/admin/images/zez-logo.png" alt="Zez" style="width: 20px; height: 20px; border-radius: 5px; object-fit: cover; display: inline-block;">
+              <span>Zez (com.zez.manager)</span>
+            </button>
           </div>
         </div>
 
@@ -2498,10 +2504,13 @@
             <form id="releaseUploadForm" enctype="multipart/form-data">
               <div class="form-group" style="margin-bottom: 14px;">
                 <label class="form-label">Target Application</label>
-                <select id="releaseAppId" class="form-input">
-                  <option value="quacky">Quacky (quacky · com.zez.app)</option>
-                  <option value="zez">Zez Call Log Manager (zez · com.zez.manager)</option>
-                </select>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img id="formAppLogo" src="/admin/images/quacky-logo.png" alt="App Logo" style="width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--hairline); object-fit: cover; flex-shrink: 0;">
+                  <select id="releaseAppId" class="form-input" style="flex: 1;">
+                    <option value="quacky">Quacky (quacky · com.zez.app)</option>
+                    <option value="zez">Zez Call Log Manager (zez · com.zez.manager)</option>
+                  </select>
+                </div>
               </div>
 
               <div class="form-group" style="margin-bottom: 14px;">
@@ -2562,7 +2571,7 @@
           <div class="admin-card" style="display: flex; flex-direction: column;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <img id="arAppLogo" src="/admin/images/quacky-logo.png" alt="Quacky Logo" style="width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--hairline); object-fit: cover; flex-shrink: 0;">
                 <h3 style="font-size: 15px; font-weight: 600;" id="arHeading">Active Quacky Release</h3>
               </div>
               <span id="activeReleaseBadge" class="badge badge-neutral" style="font-size: 11px;">Inactive</span>
@@ -2605,7 +2614,10 @@
         <!-- Release History Table -->
         <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; padding: 20px; margin-bottom: 24px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-            <h4 style="font-size: 14px; font-weight: 600;" id="releasesTableHeading">Release Distribution History</h4>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <img id="tblAppLogo" src="/admin/images/quacky-logo.png" alt="App Logo" style="width: 22px; height: 22px; border-radius: 5px; object-fit: cover;">
+              <h4 style="font-size: 14px; font-weight: 600;" id="releasesTableHeading">Quacky Release Distribution History</h4>
+            </div>
             <button class="btn btn-secondary btn-sm" id="btnRefreshReleases" type="button">Refresh list</button>
           </div>
           <div class="table-container" style="max-height: 320px; overflow-y: auto;">
@@ -5988,6 +6000,8 @@ versionName "1.0.1"</pre>
 
     function setReleaseAppTab(appId) {
       currentReleaseAppId = appId === 'zez' ? 'zez' : 'quacky';
+      const logoSrc = currentReleaseAppId === 'zez' ? '/admin/images/zez-logo.png' : '/admin/images/quacky-logo.png';
+      const appName = currentReleaseAppId === 'zez' ? 'Zez' : 'Quacky';
       const tabQ = document.getElementById('releaseTabQuacky');
       const tabZ = document.getElementById('releaseTabZez');
       if (tabQ) tabQ.className = `btn btn-sm release-app-tab ${currentReleaseAppId === 'quacky' ? 'btn-primary' : 'btn-secondary'}`;
@@ -5995,16 +6009,25 @@ versionName "1.0.1"</pre>
       const sel = document.getElementById('releaseAppId');
       if (sel) sel.value = currentReleaseAppId;
       const arHeading = document.getElementById('arHeading');
-      if (arHeading) arHeading.textContent = currentReleaseAppId === 'zez' ? 'Active Zez Release' : 'Active Quacky Release';
+      if (arHeading) arHeading.textContent = `Active ${appName} Release`;
+      const arLogo = document.getElementById('arAppLogo');
+      if (arLogo) { arLogo.src = logoSrc; arLogo.alt = `${appName} Logo`; }
+      const formLogo = document.getElementById('formAppLogo');
+      if (formLogo) { formLogo.src = logoSrc; formLogo.alt = `${appName} Logo`; }
+      const tblLogo = document.getElementById('tblAppLogo');
+      if (tblLogo) { tblLogo.src = logoSrc; tblLogo.alt = `${appName} Logo`; }
       const arLabel = document.getElementById('arAppLabel');
       if (arLabel) arLabel.textContent = currentReleaseAppId;
       const tblHead = document.getElementById('releasesTableHeading');
-      if (tblHead) tblHead.textContent = `${currentReleaseAppId === 'zez' ? 'Zez' : 'Quacky'} Release Distribution History`;
+      if (tblHead) tblHead.textContent = `${appName} Release Distribution History`;
       loadReleases();
     }
 
     document.getElementById('releaseTabQuacky')?.addEventListener('click', () => setReleaseAppTab('quacky'));
     document.getElementById('releaseTabZez')?.addEventListener('click', () => setReleaseAppTab('zez'));
+    document.getElementById('releaseAppId')?.addEventListener('change', (e) => {
+      setReleaseAppTab(e.target.value);
+    });
 
     async function loadReleases() {
       const tbody = document.getElementById('releasesTableBody');

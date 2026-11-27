@@ -673,16 +673,28 @@ router.get("/messages", async (req, res) => {
       convId = convRow.id;
     } else if (convId) {
       const cRes = await pool.query(
-        "SELECT id, is_secret_mode, secret_session_id, secret_mode_updated_at FROM public.chat_conversations WHERE id = $1",
+        "SELECT id, is_secret_mode, secret_session_id, secret_mode_updated_at, user1_id, user2_id FROM public.chat_conversations WHERE id = $1",
         [convId]
       );
       if (cRes.rows.length > 0) {
         convRow = cRes.rows[0];
+      } else {
+        return res.status(404).json({ error: "Conversation not found." });
       }
     }
 
-    if (!convId) {
+    if (!convId || !convRow) {
       return res.status(400).json({ error: "conversationId or (userId and otherUserId) required." });
+    }
+
+    // IDOR participant validation:
+    // Requester must supply their userId and be a participant in this conversation.
+    if (!userId) {
+      return res.status(401).json({ error: "userId parameter is required to access messages." });
+    }
+    const cleanUid = String(userId).trim();
+    if (convRow.user1_id !== cleanUid && convRow.user2_id !== cleanUid) {
+      return res.status(403).json({ error: "Access denied. You are not a participant in this conversation." });
     }
 
     // Ephemeral Secret Mode rule:
