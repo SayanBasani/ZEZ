@@ -12,16 +12,16 @@
     "semantic_hash": "b5318fa003631b97782bdab1080191fd"
   },
   "Zez-Backend/src/db.js": {
-    "mtime": 1795699159.652813,
-    "seen": 1795701735.4367244,
-    "ast_hash": "8a6b75a813b772d33652e9d9cef0df16",
+    "mtime": 1795752773.8327274,
+    "seen": 1795753104.1460469,
+    "ast_hash": "f3d9bb315c9d18f25eda6d632255861b",
     "semantic_hash": ""
   },
   "Zez-Backend/src/middleware/adminAuth.js": {
-    "mtime": 1794836149.557988,
-    "seen": 1795010101.3299284,
-    "ast_hash": "04b42953dd6efc31b83623044b2b6ec4",
-    "semantic_hash": "04b42953dd6efc31b83623044b2b6ec4"
+    "mtime": 1795752265.485797,
+    "seen": 1795753104.1460514,
+    "ast_hash": "6fbdeeef77a0ffaa52c93b1daa18c570",
+    "semantic_hash": ""
   },
   "Zez-Backend/src/middleware/deviceAuth.js": {
     "mtime": 1795019933.6289198,
@@ -30,9 +30,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/admin.js": {
-    "mtime": 1795384346.001035,
-    "seen": 1795384532.9501922,
-    "ast_hash": "8f6fc5b9a6aade179841084966a6555a",
+    "mtime": 1795752256.636432,
+    "seen": 1795753104.1460602,
+    "ast_hash": "046a37ec0057c0105016f253dc4532ef",
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/appRelease.js": {
@@ -54,21 +54,21 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/chat.js": {
-    "mtime": 1795632498.2763393,
-    "seen": 1795635946.5241096,
-    "ast_hash": "f5ed9ad121b5134bbaba72c08553f0eb",
+    "mtime": 1795752265.8146985,
+    "seen": 1795753104.1460745,
+    "ast_hash": "a15adeec672e90508b39bcf44934d154",
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/devices.js": {
-    "mtime": 1795594524.6197376,
-    "seen": 1795595047.7464087,
-    "ast_hash": "e06cf77de4ebd2396a10a6d169bfb1b7",
+    "mtime": 1795752452.219511,
+    "seen": 1795753104.146077,
+    "ast_hash": "a0b78d16ddb57073948237c0f423c9c2",
     "semantic_hash": ""
   },
   "Zez-Backend/src/server.js": {
-    "mtime": 1795698366.0454464,
-    "seen": 1795701735.43676,
-    "ast_hash": "4ab6edc8b9f1ab2556f61a749b8a00b2",
+    "mtime": 1795752704.6050298,
+    "seen": 1795753104.1460848,
+    "ast_hash": "99c38573488106c9d28e836f642105e5",
     "semantic_hash": ""
   },
   "Zez-Backend/test_backend_suite.js": {
@@ -114,9 +114,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/public/admin/index.html": {
-    "mtime": 1795699262.7310715,
-    "seen": 1795701735.43691,
-    "ast_hash": "b2cafa962147f23f07ea3d67c0c533fb",
+    "mtime": 1795752695.426932,
+    "seen": 1795753104.1463637,
+    "ast_hash": "8104f996096ce940c84429e4bf87cfee",
     "semantic_hash": ""
   },
   "Zez-Backend/src/types/index.d.ts": {
@@ -264,9 +264,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/services/b2StorageService.js": {
-    "mtime": 1795228536.7546892,
-    "seen": 1795231022.5551348,
-    "ast_hash": "35e0233c0f483001253de3e547989a4b",
+    "mtime": 1795752280.3168645,
+    "seen": 1795753104.1460874,
+    "ast_hash": "2b3550f7d3cc97be407ed84434e87c0a",
     "semantic_hash": ""
   },
   "Zez-Backend/tests/test-b2-integration.js": {
@@ -1635,6 +1635,30 @@
     "mtime": 1795721151.4280224,
     "seen": 1795721935.1333568,
     "ast_hash": "b76c11f67917fdc922b8ac18f58fa94e",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/src/middleware/security.js": {
+    "mtime": 1795752202.8985267,
+    "seen": 1795753104.1460574,
+    "ast_hash": "60ebddf7e610e02107c2c1339197b8cb",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/tests/security_audit_test.js": {
+    "mtime": 1795752074.7544205,
+    "seen": 1795753104.1461124,
+    "ast_hash": "14e503366c8be0a81f32ca38e84ca045",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/src/public/admin/images/quacky-logo.png": {
+    "mtime": 1795632498.274133,
+    "seen": 1795753104.146407,
+    "ast_hash": "b669b97aeb126db35c90a3a6f34a96e1",
+    "semantic_hash": ""
+  },
+  "Zez-Backend/src/public/admin/images/zez-logo.png": {
+    "mtime": 1795627682.9518268,
+    "seen": 1795753104.14641,
+    "ast_hash": "58812b2d3fc1d0d41fe16a356c7c8f18",
     "semantic_hash": ""
   },
   "Zez-Backend/package-lock.json": {
