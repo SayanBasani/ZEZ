@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/view_font_page"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorThemeBackground"
+    android:visibility="gone">
+
+    <!-- Top Sub-Page Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="12dp"
+        android:background="?attr/colorThemeSurface"
+        android:elevation="1dp">
+
+        <ImageButton
+            android:id="@+id/btn_back_font"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="?attr/colorThemeIconTint"
+            android:contentDescription="Back" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Font &amp; Typography"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorThemeTextPrimary" />
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Live Typography Preview Card -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LIVE PREVIEW"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="?attr/colorThemeBorder"
+                app:cardBackgroundColor="?attr/colorThemeSurface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_font_preview_heading"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Zez Utility &amp; Music"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:id="@+id/tv_font_preview_body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="The quick brown fox jumps over the lazy dog. 1234567890."
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorThemeTextSecondary"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_font_preview_caption"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Selected typeface and scale are previewed here."
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorThemeTextMuted" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Font Style / Typeface Selection Card -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FONT STYLE &amp; TYPEFACE"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="?attr/colorThemeBorder"
+                app:cardBackgroundColor="?attr/colorThemeSurface">
+
+                <RadioGroup
+                    android:id="@+id/rg_font_family_options"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp">
+
+                    <!-- Roboto / Sans-Serif Default -->
+                    <RadioButton
+                        android:id="@+id/rb_family_sans"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="58dp"
+                        android:paddingVertical="8dp"
+                        android:text="Roboto (System Sans - Default)"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Light Minimalist -->
+                    <RadioButton
+                        android:id="@+id/rb_family_light"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="58dp"
+                        android:paddingVertical="8dp"
+                        android:text="Light Sans (Clean &amp; Minimal)"
+                        android:fontFamily="sans-serif-light"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Condensed -->
+                    <RadioButton
+                        android:id="@+id/rb_family_condensed"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="58dp"
+                        android:paddingVertical="8dp"
+                        android:text="Modern Condensed (Compact)"
+                        android:fontFamily="sans-serif-condensed"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Medium Bold -->
+                    <RadioButton
+                        android:id="@+id/rb_family_medium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="58dp"
+                        android:paddingVertical="8dp"
+                        android:text="Medium Sans (Prominent)"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Ultra-Bold Black -->
+                    <RadioButton
+                        android:id="@+id/rb_family_black"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="58dp"
+                        android:paddingVertical="8dp"
+                        android:text="Black Headline (Ultra-Bold)"
+                        android:fontFamily="sans-serif-black"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Serif -->
+                    <RadioButton
+                        android:id="@+id/rb_family_serif"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="58dp"
+                        android:paddingVertical="8dp"
+                        android:text="Editorial Serif (Book &amp; Elegant)"
+                        android:fontFamily="serif"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Monospace -->
+                    <RadioButton
+                        android:id="@+id/rb_family_monospace"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="58dp"
+                        android:paddingVertical="8dp"
+                        android:text="Developer Monospace (Code &amp; Terminal)"
+                        android:fontFamily="monospace"
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Casual / Handwritten -->
+                    <RadioButton
+                        android:id="@+id/rb_family_casual"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="58dp"
+                        android:paddingVertical="8dp"
+                        android:text="Casual Handwritten (Friendly &amp; Playful)"
+                        android:fontFamily="casual"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Cursive Script -->
+                    <RadioButton
+                        android:id="@+id/rb_family_cursive"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="58dp"
+                        android:paddingVertical="8dp"
+                        android:text="Cursive Script (Stylized)"
+                        android:fontFamily="cursive"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+                </RadioGroup>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Custom Font Size Input Card -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CUSTOM FONT SIZE"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="?attr/colorThemeBorder"
+                app:cardBackgroundColor="?attr/colorThemeSurface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Base Font Size (px / sp)"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Standard default size is 14sp. You can specify any exact size between 10sp and 26sp."
+                        android:textSize="12sp"
+                        android:textColor="?attr/colorThemeTextSecondary"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            app:boxBackgroundMode="outline"
+                            app:boxCornerRadiusTopStart="10dp"
+                            app:boxCornerRadiusTopEnd="10dp"
+                            app:boxCornerRadiusBottomStart="10dp"
+                            app:boxCornerRadiusBottomEnd="10dp"
+                            app:boxStrokeColor="@color/primary"
+                            android:hint="Size (e.g. 14)"
+                            android:layout_marginEnd="12dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_custom_font_size"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="numberDecimal"
+                                android:text="14"
+                                android:textSize="14sp"
+                                android:textColor="?attr/colorThemeTextPrimary" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_reset_font_default"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="48dp"
+                            android:text="Reset Default (14px)"
+                            android:textSize="12sp"
+                            android:textAllCaps="false"
+                            app:strokeColor="?attr/colorThemeBorder"
+                            android:textColor="?attr/colorThemeTextSecondary" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Scaling Options -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SCALE SELECTION (% OR PX EQUIVALENT)"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="?attr/colorThemeBorder"
+                app:cardBackgroundColor="?attr/colorThemeSurface">
+
+                <RadioGroup
+                    android:id="@+id/rg_font_scale_options"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp">
+
+                    <!-- Small (85% / -2px) -->
+                    <RadioButton
+                        android:id="@+id/rb_font_small"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:text="Small (85% · ~12px base)"
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Default (100% / Standard 14px) -->
+                    <RadioButton
+                        android:id="@+id/rb_font_default"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:text="Default (100% · ~14px base - Recommended)"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Large (115% / +2px) -->
+                    <RadioButton
+                        android:id="@+id/rb_font_large"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:text="Large (115% · ~16px base)"
+                        android:textSize="16sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorThemeBorder"
+                        android:layout_marginHorizontal="8dp" />
+
+                    <!-- Huge (130% / +4px) -->
+                    <RadioButton
+                        android:id="@+id/rb_font_huge"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:text="Extra Large (130% · ~18px base)"
+                        android:textSize="17sp"
+                        android:textColor="?attr/colorThemeTextPrimary"
+                        android:buttonTint="@color/primary" />
+                </RadioGroup>
+            </com.google.android.material.card.MaterialCardView>
+
+            <Button
+                android:id="@+id/btn_apply_font"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="Apply Typography &amp; Font Settings"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/primary" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

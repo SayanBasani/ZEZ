@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TWING Semantic Multi-Theme Attributes -->
+    <attr name="colorThemeBackground" format="color" />
+    <attr name="colorThemeSurface" format="color" />
+    <attr name="colorThemeSurfaceVariant" format="color" />
+    <attr name="colorThemeAppBar" format="color" />
+    <attr name="colorThemeCardBg" format="color" />
+    <attr name="colorThemeInputBg" format="color" />
+    <attr name="colorThemeNavBg" format="color" />
+    <attr name="colorThemeBorder" format="color" />
+    <attr name="colorThemeDivider" format="color" />
+    <attr name="colorThemeTextPrimary" format="color" />
+    <attr name="colorThemeTextSecondary" format="color" />
+    <attr name="colorThemeTextMuted" format="color" />
+    <attr name="colorThemeIconTint" format="color" />
+    <attr name="colorThemePrimary" format="color" />
+    <attr name="colorThemeAccent" format="color" />
+    <attr name="colorThemeBadge" format="color" />
+</resources>

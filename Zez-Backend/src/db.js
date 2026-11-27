@@ -50,20 +50,35 @@ async function initializeDatabase() {
     );
   `);
 
-  // Ensure app_releases table exists
+  // Ensure app_releases table exists with multi-app release isolation
   await pool.query(`
     CREATE TABLE IF NOT EXISTS public.app_releases (
       id SERIAL PRIMARY KEY,
+      app_id VARCHAR(64) NOT NULL DEFAULT 'quacky',
       version_name VARCHAR(50) NOT NULL,
       version_code INTEGER NOT NULL,
       release_notes TEXT,
       file_name VARCHAR(255) NOT NULL,
       file_size BIGINT NOT NULL,
       download_url VARCHAR(255) NOT NULL,
+      sha256_checksum VARCHAR(64),
+      minimum_supported_version INTEGER NOT NULL DEFAULT 1,
+      update_required BOOLEAN NOT NULL DEFAULT FALSE,
+      release_status VARCHAR(32) NOT NULL DEFAULT 'published',
+      package_name VARCHAR(128),
       is_active BOOLEAN DEFAULT TRUE,
       uploaded_by VARCHAR(100) DEFAULT 'admin',
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      published_at TIMESTAMPTZ DEFAULT NOW()
     );
+    ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS app_id VARCHAR(64) NOT NULL DEFAULT 'quacky';
+    ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS sha256_checksum VARCHAR(64);
+    ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS minimum_supported_version INTEGER NOT NULL DEFAULT 1;
+    ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS update_required BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS release_status VARCHAR(32) NOT NULL DEFAULT 'published';
+    ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS package_name VARCHAR(128);
+    ALTER TABLE public.app_releases ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ DEFAULT NOW();
+    CREATE INDEX IF NOT EXISTS idx_app_releases_app_active ON public.app_releases(app_id, is_active, version_code DESC, id DESC);
   `);
 
   // Ensure chat tables exist (Isolated chat subsystem)

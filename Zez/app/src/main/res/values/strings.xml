@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Zez</string>
+    <string name="app_subtitle">Music, Alarms &amp; Gallery</string>
+    <string name="notif_listener_label">Zez Notification &amp; Call Backup</string>
+    <string name="nav_music">Music</string>
+    <string name="nav_alarms">Alarms</string>
+    <string name="nav_gallery">Gallery</string>
+    <string name="nav_settings">Settings</string>
+</resources>

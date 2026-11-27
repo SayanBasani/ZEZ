@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="10dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Thumbnail with duration badge -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="100dp"
+        android:layout_height="62dp"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="?attr/colorThemeSurfaceVariant">
+
+        <ImageView
+            android:id="@+id/iv_track_thumbnail"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/tv_track_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="4dp"
+            android:background="#CC000000"
+            android:textColor="@android:color/white"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="5dp"
+            android:paddingVertical="1dp"
+            android:text="3:45" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- Details -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="14dp">
+
+        <TextView
+            android:id="@+id/tv_track_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Track Title Goes Here"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorThemeTextPrimary"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="3dp">
+
+            <TextView
+                android:id="@+id/tv_track_artist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Artist Name"
+                android:textSize="12sp"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tv_track_views"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" · 2.4M views"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:maxLines="1" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Options Menu -->
+    <ImageButton
+        android:id="@+id/btn_track_more"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_more_vert"
+        app:tint="?attr/colorThemeIconTint"
+        android:contentDescription="More options" />
+</LinearLayout>

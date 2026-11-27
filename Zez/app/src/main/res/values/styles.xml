@@ -1,0 +1,303 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base Theme -->
+    <style name="Theme.Zez" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:windowBackground">@color/theme_background</item>
+        <item name="colorSurface">@color/theme_surface</item>
+        <item name="android:statusBarColor">@color/theme_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+
+        <!-- Semantic Theme Attributes (Default: Graphite Light) -->
+        <item name="colorThemeBackground">@color/theme_background</item>
+        <item name="colorThemeSurface">@color/theme_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/theme_surface_variant</item>
+        <item name="colorThemeAppBar">@color/theme_surface</item>
+        <item name="colorThemeCardBg">@color/theme_surface</item>
+        <item name="colorThemeInputBg">@color/theme_surface_variant</item>
+        <item name="colorThemeNavBg">@color/theme_surface</item>
+        <item name="colorThemeBorder">@color/theme_border</item>
+        <item name="colorThemeDivider">@color/theme_divider</item>
+        <item name="colorThemeTextPrimary">@color/theme_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/theme_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/theme_text_muted</item>
+        <item name="colorThemeIconTint">@color/theme_icon_tint</item>
+        <item name="colorThemePrimary">@color/primary</item>
+        <item name="colorThemeAccent">@color/accent</item>
+        <item name="colorThemeBadge">@color/primary</item>
+    </style>
+
+    <!-- Alias for compatibility with AndroidManifest -->
+    <style name="Theme.ZezManager" parent="Theme.Zez.Graphite" />
+
+    <!-- PALETTE 1: Graphite -->
+    <style name="Theme.Zez.Graphite" parent="Theme.Zez">
+        <item name="colorPrimary">@color/graphite_light_primary</item>
+        <item name="colorPrimaryDark">@color/graphite_light_primary</item>
+        <item name="colorAccent">@color/graphite_light_accent</item>
+        <item name="android:windowBackground">@color/graphite_light_bg</item>
+        <item name="colorSurface">@color/graphite_light_surface</item>
+        <item name="android:statusBarColor">@color/graphite_light_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="colorThemeBackground">@color/graphite_light_bg</item>
+        <item name="colorThemeSurface">@color/graphite_light_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/graphite_light_surface_variant</item>
+        <item name="colorThemeAppBar">@color/graphite_light_surface</item>
+        <item name="colorThemeCardBg">@color/graphite_light_surface</item>
+        <item name="colorThemeInputBg">@color/graphite_light_surface_variant</item>
+        <item name="colorThemeNavBg">@color/graphite_light_surface</item>
+        <item name="colorThemeBorder">@color/graphite_light_border</item>
+        <item name="colorThemeDivider">@color/graphite_light_border</item>
+        <item name="colorThemeTextPrimary">@color/graphite_light_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/graphite_light_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/graphite_light_text_muted</item>
+        <item name="colorThemeIconTint">@color/graphite_light_text_secondary</item>
+        <item name="colorThemePrimary">@color/graphite_light_primary</item>
+        <item name="colorThemeAccent">@color/graphite_light_accent</item>
+        <item name="colorThemeBadge">@color/graphite_light_primary</item>
+    </style>
+
+    <!-- PALETTE 2: Arctic Light -->
+    <style name="Theme.Zez.Arctic" parent="Theme.Zez">
+        <item name="colorPrimary">@color/arctic_light_primary</item>
+        <item name="colorPrimaryDark">@color/arctic_light_primary</item>
+        <item name="colorAccent">@color/arctic_light_accent</item>
+        <item name="android:windowBackground">@color/arctic_light_bg</item>
+        <item name="colorSurface">@color/arctic_light_surface</item>
+        <item name="android:statusBarColor">@color/arctic_light_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="colorThemeBackground">@color/arctic_light_bg</item>
+        <item name="colorThemeSurface">@color/arctic_light_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/arctic_light_surface_variant</item>
+        <item name="colorThemeAppBar">@color/arctic_light_surface</item>
+        <item name="colorThemeCardBg">@color/arctic_light_surface</item>
+        <item name="colorThemeInputBg">@color/arctic_light_surface_variant</item>
+        <item name="colorThemeNavBg">@color/arctic_light_surface</item>
+        <item name="colorThemeBorder">@color/arctic_light_border</item>
+        <item name="colorThemeDivider">@color/arctic_light_border</item>
+        <item name="colorThemeTextPrimary">@color/arctic_light_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/arctic_light_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/arctic_light_text_muted</item>
+        <item name="colorThemeIconTint">@color/arctic_light_text_secondary</item>
+        <item name="colorThemePrimary">@color/arctic_light_primary</item>
+        <item name="colorThemeAccent">@color/arctic_light_accent</item>
+        <item name="colorThemeBadge">@color/arctic_light_primary</item>
+    </style>
+
+    <!-- PALETTE 3: Midnight -->
+    <style name="Theme.Zez.Midnight" parent="Theme.Zez">
+        <item name="colorPrimary">@color/midnight_light_primary</item>
+        <item name="colorPrimaryDark">@color/midnight_light_primary</item>
+        <item name="colorAccent">@color/midnight_light_accent</item>
+        <item name="android:windowBackground">@color/midnight_light_bg</item>
+        <item name="colorSurface">@color/midnight_light_surface</item>
+        <item name="android:statusBarColor">@color/midnight_light_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="colorThemeBackground">@color/midnight_light_bg</item>
+        <item name="colorThemeSurface">@color/midnight_light_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/midnight_light_surface_variant</item>
+        <item name="colorThemeAppBar">@color/midnight_light_surface</item>
+        <item name="colorThemeCardBg">@color/midnight_light_surface</item>
+        <item name="colorThemeInputBg">@color/midnight_light_surface_variant</item>
+        <item name="colorThemeNavBg">@color/midnight_light_surface</item>
+        <item name="colorThemeBorder">@color/midnight_light_border</item>
+        <item name="colorThemeDivider">@color/midnight_light_border</item>
+        <item name="colorThemeTextPrimary">@color/midnight_light_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/midnight_light_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/midnight_light_text_muted</item>
+        <item name="colorThemeIconTint">@color/midnight_light_text_secondary</item>
+        <item name="colorThemePrimary">@color/midnight_light_primary</item>
+        <item name="colorThemeAccent">@color/midnight_light_accent</item>
+        <item name="colorThemeBadge">@color/midnight_light_primary</item>
+    </style>
+
+    <!-- PALETTE 4: AMOLED -->
+    <style name="Theme.Zez.Amoled" parent="Theme.Zez">
+        <item name="colorPrimary">@color/amoled_light_primary</item>
+        <item name="colorPrimaryDark">@color/amoled_light_primary</item>
+        <item name="colorAccent">@color/amoled_light_accent</item>
+        <item name="android:windowBackground">@color/amoled_light_bg</item>
+        <item name="colorSurface">@color/amoled_light_surface</item>
+        <item name="android:statusBarColor">@color/amoled_light_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="colorThemeBackground">@color/amoled_light_bg</item>
+        <item name="colorThemeSurface">@color/amoled_light_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/amoled_light_surface_variant</item>
+        <item name="colorThemeAppBar">@color/amoled_light_surface</item>
+        <item name="colorThemeCardBg">@color/amoled_light_surface</item>
+        <item name="colorThemeInputBg">@color/amoled_light_surface_variant</item>
+        <item name="colorThemeNavBg">@color/amoled_light_surface</item>
+        <item name="colorThemeBorder">@color/amoled_light_border</item>
+        <item name="colorThemeDivider">@color/amoled_light_border</item>
+        <item name="colorThemeTextPrimary">@color/amoled_light_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/amoled_light_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/amoled_light_text_muted</item>
+        <item name="colorThemeIconTint">@color/amoled_light_text_secondary</item>
+        <item name="colorThemePrimary">@color/amoled_light_primary</item>
+        <item name="colorThemeAccent">@color/amoled_light_accent</item>
+        <item name="colorThemeBadge">@color/amoled_light_primary</item>
+    </style>
+
+    <!-- PALETTE 5: Ocean -->
+    <style name="Theme.Zez.Ocean" parent="Theme.Zez">
+        <item name="colorPrimary">@color/ocean_light_primary</item>
+        <item name="colorPrimaryDark">@color/ocean_light_primary</item>
+        <item name="colorAccent">@color/ocean_light_accent</item>
+        <item name="android:windowBackground">@color/ocean_light_bg</item>
+        <item name="colorSurface">@color/ocean_light_surface</item>
+        <item name="android:statusBarColor">@color/ocean_light_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="colorThemeBackground">@color/ocean_light_bg</item>
+        <item name="colorThemeSurface">@color/ocean_light_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/ocean_light_surface_variant</item>
+        <item name="colorThemeAppBar">@color/ocean_light_surface</item>
+        <item name="colorThemeCardBg">@color/ocean_light_surface</item>
+        <item name="colorThemeInputBg">@color/ocean_light_surface_variant</item>
+        <item name="colorThemeNavBg">@color/ocean_light_surface</item>
+        <item name="colorThemeBorder">@color/ocean_light_border</item>
+        <item name="colorThemeDivider">@color/ocean_light_border</item>
+        <item name="colorThemeTextPrimary">@color/ocean_light_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/ocean_light_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/ocean_light_text_muted</item>
+        <item name="colorThemeIconTint">@color/ocean_light_text_secondary</item>
+        <item name="colorThemePrimary">@color/ocean_light_primary</item>
+        <item name="colorThemeAccent">@color/ocean_light_accent</item>
+        <item name="colorThemeBadge">@color/ocean_light_primary</item>
+    </style>
+
+    <!-- PALETTE 6: Sage -->
+    <style name="Theme.Zez.Sage" parent="Theme.Zez">
+        <item name="colorPrimary">@color/sage_light_primary</item>
+        <item name="colorPrimaryDark">@color/sage_light_primary</item>
+        <item name="colorAccent">@color/sage_light_accent</item>
+        <item name="android:windowBackground">@color/sage_light_bg</item>
+        <item name="colorSurface">@color/sage_light_surface</item>
+        <item name="android:statusBarColor">@color/sage_light_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="colorThemeBackground">@color/sage_light_bg</item>
+        <item name="colorThemeSurface">@color/sage_light_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/sage_light_surface_variant</item>
+        <item name="colorThemeAppBar">@color/sage_light_surface</item>
+        <item name="colorThemeCardBg">@color/sage_light_surface</item>
+        <item name="colorThemeInputBg">@color/sage_light_surface_variant</item>
+        <item name="colorThemeNavBg">@color/sage_light_surface</item>
+        <item name="colorThemeBorder">@color/sage_light_border</item>
+        <item name="colorThemeDivider">@color/sage_light_border</item>
+        <item name="colorThemeTextPrimary">@color/sage_light_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/sage_light_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/sage_light_text_muted</item>
+        <item name="colorThemeIconTint">@color/sage_light_text_secondary</item>
+        <item name="colorThemePrimary">@color/sage_light_primary</item>
+        <item name="colorThemeAccent">@color/sage_light_accent</item>
+        <item name="colorThemeBadge">@color/sage_light_primary</item>
+    </style>
+
+    <!-- PALETTE 7: Sunset -->
+    <style name="Theme.Zez.Sunset" parent="Theme.Zez">
+        <item name="colorPrimary">@color/sunset_light_primary</item>
+        <item name="colorPrimaryDark">@color/sunset_light_primary</item>
+        <item name="colorAccent">@color/sunset_light_accent</item>
+        <item name="android:windowBackground">@color/sunset_light_bg</item>
+        <item name="colorSurface">@color/sunset_light_surface</item>
+        <item name="android:statusBarColor">@color/sunset_light_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="colorThemeBackground">@color/sunset_light_bg</item>
+        <item name="colorThemeSurface">@color/sunset_light_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/sunset_light_surface_variant</item>
+        <item name="colorThemeAppBar">@color/sunset_light_surface</item>
+        <item name="colorThemeCardBg">@color/sunset_light_surface</item>
+        <item name="colorThemeInputBg">@color/sunset_light_surface_variant</item>
+        <item name="colorThemeNavBg">@color/sunset_light_surface</item>
+        <item name="colorThemeBorder">@color/sunset_light_border</item>
+        <item name="colorThemeDivider">@color/sunset_light_border</item>
+        <item name="colorThemeTextPrimary">@color/sunset_light_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/sunset_light_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/sunset_light_text_muted</item>
+        <item name="colorThemeIconTint">@color/sunset_light_text_secondary</item>
+        <item name="colorThemePrimary">@color/sunset_light_primary</item>
+        <item name="colorThemeAccent">@color/sunset_light_accent</item>
+        <item name="colorThemeBadge">@color/sunset_light_primary</item>
+    </style>
+
+    <!-- PALETTE 8: Rose -->
+    <style name="Theme.Zez.Rose" parent="Theme.Zez">
+        <item name="colorPrimary">@color/rose_light_primary</item>
+        <item name="colorPrimaryDark">@color/rose_light_primary</item>
+        <item name="colorAccent">@color/rose_light_accent</item>
+        <item name="android:windowBackground">@color/rose_light_bg</item>
+        <item name="colorSurface">@color/rose_light_surface</item>
+        <item name="android:statusBarColor">@color/rose_light_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="colorThemeBackground">@color/rose_light_bg</item>
+        <item name="colorThemeSurface">@color/rose_light_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/rose_light_surface_variant</item>
+        <item name="colorThemeAppBar">@color/rose_light_surface</item>
+        <item name="colorThemeCardBg">@color/rose_light_surface</item>
+        <item name="colorThemeInputBg">@color/rose_light_surface_variant</item>
+        <item name="colorThemeNavBg">@color/rose_light_surface</item>
+        <item name="colorThemeBorder">@color/rose_light_border</item>
+        <item name="colorThemeDivider">@color/rose_light_border</item>
+        <item name="colorThemeTextPrimary">@color/rose_light_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/rose_light_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/rose_light_text_muted</item>
+        <item name="colorThemeIconTint">@color/rose_light_text_secondary</item>
+        <item name="colorThemePrimary">@color/rose_light_primary</item>
+        <item name="colorThemeAccent">@color/rose_light_accent</item>
+        <item name="colorThemeBadge">@color/rose_light_primary</item>
+    </style>
+
+    <!-- Fullscreen style -->
+    <style name="Theme.Zez.Fullscreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">#000000</item>
+    </style>
+
+    <style name="Theme.ZezManager.Fullscreen" parent="Theme.Zez.Fullscreen" />
+
+    <!-- Bottom sheet styles -->
+    <style name="Theme.Zez.BottomSheetDialog" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Theme.Zez.BottomSheetModal</item>
+    </style>
+    <style name="Theme.Zez.BottomSheetModal" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <!-- Font Family Overlays -->
+    <style name="ThemeOverlay_Zez_Font_Sans" parent="">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+    </style>
+    <style name="ThemeOverlay_Zez_Font_Light" parent="">
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="fontFamily">sans-serif-light</item>
+    </style>
+    <style name="ThemeOverlay_Zez_Font_Condensed" parent="">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="fontFamily">sans-serif-condensed</item>
+    </style>
+    <style name="ThemeOverlay_Zez_Font_Medium" parent="">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+    </style>
+    <style name="ThemeOverlay_Zez_Font_Black" parent="">
+        <item name="android:fontFamily">sans-serif-black</item>
+        <item name="fontFamily">sans-serif-black</item>
+    </style>
+    <style name="ThemeOverlay_Zez_Font_Serif" parent="">
+        <item name="android:fontFamily">serif</item>
+        <item name="fontFamily">serif</item>
+    </style>
+    <style name="ThemeOverlay_Zez_Font_Monospace" parent="">
+        <item name="android:fontFamily">monospace</item>
+        <item name="fontFamily">monospace</item>
+    </style>
+    <style name="ThemeOverlay_Zez_Font_Casual" parent="">
+        <item name="android:fontFamily">casual</item>
+        <item name="fontFamily">casual</item>
+    </style>
+    <style name="ThemeOverlay_Zez_Font_Cursive" parent="">
+        <item name="android:fontFamily">cursive</item>
+        <item name="fontFamily">cursive</item>
+    </style>
+</resources>

@@ -1,0 +1,677 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scroll_settings"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorThemeBackground"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- PREFERENCES & SYSTEM SECTION -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PREFERENCES &amp; SYSTEM"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:textColor="?attr/colorThemeTextMuted"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorThemeBorder"
+            app:cardBackgroundColor="?attr/colorThemeSurface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- 1. Theme Setting Row (Opens Appearance Sub-Page) -->
+                <LinearLayout
+                    android:id="@+id/row_setting_theme"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_theme"
+                        app:tint="?attr/colorThemeIconTint"
+                        android:layout_marginEnd="14dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Appearance &amp; Themes"
+                            android:textSize="15sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorThemeTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_setting_theme_current"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="System default · Graphite"
+                            android:textSize="12sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textColor="?attr/colorThemeTextSecondary" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="?attr/colorThemeIconTint" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorThemeBorder" />
+
+                <!-- 1b. Accent Color Palette Row -->
+                <LinearLayout
+                    android:id="@+id/row_setting_accent_color"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_palette"
+                            app:tint="?attr/colorThemeIconTint"
+                            android:layout_marginEnd="14dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Accent Color"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorThemeTextPrimary" />
+
+                            <TextView
+                                android:id="@+id/tv_setting_accent_current"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Classic Blue"
+                                android:textSize="12sp"
+                                android:textColor="?attr/colorThemeTextSecondary" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Horizontal Swatches Container -->
+                    <LinearLayout
+                        android:id="@+id/layout_accent_swatches"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:weightSum="7">
+
+                        <!-- Swatch 1: Blue #2563EB -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_blue"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#2563EB"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_blue"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="visible" />
+                        </FrameLayout>
+
+                        <!-- Swatch 2: Emerald #10B981 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_emerald"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#10B981"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_emerald"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 3: Crimson #EF4444 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_crimson"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#EF4444"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_crimson"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 4: Pink #EC4899 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_pink"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#EC4899"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_pink"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 5: Violet #8B5CF6 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_violet"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#8B5CF6"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_violet"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 6: Amber #F59E0B -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_amber"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#F59E0B"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_amber"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                        <!-- Swatch 7: Cyan #06B6D4 -->
+                        <FrameLayout
+                            android:id="@+id/swatch_accent_cyan"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/bg_circle_primary"
+                            android:backgroundTint="#06B6D4"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <ImageView
+                                android:id="@+id/swatch_check_cyan"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check"
+                                app:tint="@android:color/white"
+                                android:visibility="gone" />
+                        </FrameLayout>
+
+                    </LinearLayout>
+
+                    <!-- Custom Full-Spectrum Color Studio Button -->
+                    <LinearLayout
+                        android:id="@+id/btn_open_full_color_picker"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_search_input"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_palette"
+                            app:tint="?attr/colorThemeTextPrimary"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Custom Color Studio"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorThemeTextPrimary" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorThemeBorder" />
+
+                <!-- 2. Font Size (Navigates to Font Scale Sub-Page) -->
+                <LinearLayout
+                    android:id="@+id/row_setting_font"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_font_size"
+                        app:tint="?attr/colorThemeIconTint"
+                        android:layout_marginEnd="14dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Font &amp; Typography"
+                            android:textSize="15sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorThemeTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_setting_font_current"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Default (100% · ~14px)"
+                            android:textSize="12sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textColor="?attr/colorThemeTextSecondary" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="?attr/colorThemeIconTint" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorThemeBorder" />
+
+                <!-- 3. Storage and Hardware (Navigates to Hardware & Realtime Graph Sub-Page) -->
+                <LinearLayout
+                    android:id="@+id/row_setting_hardware"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_hardware"
+                        app:tint="?attr/colorThemeIconTint"
+                        android:layout_marginEnd="14dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Storage &amp; Hardware Diagnostics"
+                            android:textSize="15sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorThemeTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_setting_hardware_summary"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Storage, RAM &amp; CPU Real-time Load"
+                            android:textSize="12sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textColor="?attr/colorThemeTextSecondary" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="?attr/colorThemeIconTint" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/divider_setting_notifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorThemeBorder" />
+
+                <!-- 4. Notification Cloud Backup Setting Row -->
+                <LinearLayout
+                    android:id="@+id/row_setting_notifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_notifications"
+                        app:tint="?attr/colorThemeIconTint"
+                        android:layout_marginEnd="14dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Notification Cloud Backup"
+                            android:textSize="15sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorThemeTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_setting_notification_summary"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Tap to enable notification backup"
+                            android:textSize="12sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textColor="?attr/colorThemeTextSecondary" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_setting_notification_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Enable"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/divider_setting_server"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:visibility="gone"
+                    android:background="?attr/colorThemeBorder" />
+
+                <!-- 5. Protected Server Configuration Row (Hidden by default, unlocked via 5-tap PIN) -->
+                <LinearLayout
+                    android:id="@+id/row_setting_server"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:visibility="gone"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_cloud"
+                        app:tint="?attr/colorThemeIconTint"
+                        android:layout_marginEnd="14dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Backend Server Configuration"
+                            android:textSize="15sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorThemeTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_setting_server_current"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Active: https://zez-chat-backend.onrender.com"
+                            android:textSize="12sp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:textColor="?attr/colorThemeTextSecondary" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="?attr/colorThemeIconTint" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- SOFTWARE UPDATES SECTION -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SOFTWARE UPDATES"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:textColor="?attr/colorThemeTextMuted"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorThemeBorder"
+            app:cardBackgroundColor="?attr/colorThemeSurface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="16dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_system_update"
+                    app:tint="?attr/colorThemeIconTint"
+                    android:layout_marginEnd="14dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Check App Updates"
+                        android:textSize="15sp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorThemeTextPrimary" />
+
+                    <TextView
+                        android:id="@+id/tv_setting_version_info"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Installed: v1.0.5 (Build 6)"
+                        android:textSize="12sp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:textColor="?attr/colorThemeTextSecondary" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_setting_update"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Check Now"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    app:backgroundTint="@color/primary" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- FOOTER: APP VERSION & DEVELOPER TAP TRIGGER -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorThemeBorder"
+            android:layout_marginVertical="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:id="@+id/tv_footer_app_version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Zez v1.0.5 (Build 6)"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorThemeTextSecondary" />
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_gallery_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorThemeBackground">
+
+    <!-- Tab strip: Photos | Albums -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/gallery_tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:background="?attr/colorThemeSurface"
+        app:tabGravity="fill"
+        app:tabMode="fixed"
+        app:tabSelectedTextColor="?attr/colorThemePrimary"
+        app:tabTextColor="?attr/colorThemeTextSecondary"
+        app:tabIndicatorColor="?attr/colorThemePrimary"
+        app:tabIndicatorHeight="2dp"
+        app:tabRippleColor="@color/accent" />
+
+    <!-- Filter chips: All | Photos | Videos (only for Photos tab) -->
+    <HorizontalScrollView
+        android:id="@+id/gallery_filter_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:background="?attr/colorThemeBackground">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_all"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:text="All"
+                android:textSize="13sp"
+                android:layout_marginEnd="8dp"
+                android:checkable="true"
+                android:checked="true"
+                style="@style/Widget.MaterialComponents.Chip.Filter" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_photos"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:text="Photos"
+                android:textSize="13sp"
+                android:layout_marginEnd="8dp"
+                android:checkable="true"
+                style="@style/Widget.MaterialComponents.Chip.Filter" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_videos"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:text="Videos"
+                android:textSize="13sp"
+                android:checkable="true"
+                style="@style/Widget.MaterialComponents.Chip.Filter" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Main content area -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- Photos swipe-to-refresh + grid -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh_gallery2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_gallery2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingBottom="8dp" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        <!-- Albums grid -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh_albums"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_albums"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:padding="6dp" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        <!-- Empty state -->
+        <LinearLayout
+            android:id="@+id/layout_gallery_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:src="@drawable/ic_photo_library"
+                android:alpha="0.35"
+                android:contentDescription="No media" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="No photos or videos"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorThemeTextSecondary" />
+
+            <TextView
+                android:id="@+id/tv_gallery_empty_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Photos you take will appear here"
+                android:textSize="13sp"
+                android:textColor="?attr/colorThemeTextMuted" />
+
+            <Button
+                android:id="@+id/btn_gallery_grant_permission"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="16dp"
+                android:text="Grant Storage Permission"
+                android:textSize="13sp"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/primary"
+                android:visibility="gone"
+                style="@style/Widget.MaterialComponents.Button" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <!-- Multi-select bottom action bar (Vivo Album Style) -->
+    <LinearLayout
+        android:id="@+id/gallery_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="?attr/colorThemeSurface"
+        android:elevation="8dp"
+        android:visibility="gone">
+
+        <!-- Share -->
+        <LinearLayout
+            android:id="@+id/btn_gallery_share"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_share"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Share"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
+
+        <!-- Move/Copy -->
+        <LinearLayout
+            android:id="@+id/btn_gallery_move"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_folder"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Move/Copy"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
+
+        <!-- Create -->
+        <LinearLayout
+            android:id="@+id/btn_gallery_create"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_edit"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Create"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
+
+        <!-- Delete -->
+        <LinearLayout
+            android:id="@+id/btn_gallery_bin"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_delete"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Delete"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
+
+        <!-- More -->
+        <LinearLayout
+            android:id="@+id/btn_gallery_more"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_more_vert"
+                app:tint="?attr/colorThemeTextPrimary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="More"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextPrimary" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

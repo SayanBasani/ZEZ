@@ -2468,6 +2468,18 @@
 
       <!-- ================= SECTION 4: APP RELEASES & UPDATES ================= -->
       <div id="sectionReleases" style="display: none;">
+        <!-- Application Switcher Tabs (Quacky vs Zez) -->
+        <div class="admin-card" style="margin-bottom: 18px; padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-size: 14px; font-weight: 600;">Application Release Channel</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">Manage Quacky and Zez APK releases independently so each app only receives its own builds.</div>
+          </div>
+          <div style="display: inline-flex; gap: 8px; background: var(--surface-deep); padding: 4px; border-radius: 8px; border: 1px solid var(--hairline);">
+            <button type="button" class="btn btn-primary btn-sm release-app-tab" id="releaseTabQuacky" data-app="quacky">Quacky (com.zez.app)</button>
+            <button type="button" class="btn btn-secondary btn-sm release-app-tab" id="releaseTabZez" data-app="zez">Zez (com.zez.manager)</button>
+          </div>
+        </div>
+
         <!-- Top Row: Upload Form & Current Active Release -->
         <div class="admin-grid-2col">
           
@@ -2477,28 +2489,51 @@
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
               <h3 style="font-size: 15px; font-weight: 600;">Publish New APK Release</h3>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
-              Upload a newly compiled Android APK. All connected devices checking for updates will be prompted to install this version.
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+              Upload a signed APK for the selected application. SHA-256 checksums and minimum version rules are enforced automatically.
             </p>
 
             <div id="releaseUploadAlert" class="auth-alert" style="display: none;"></div>
 
             <form id="releaseUploadForm" enctype="multipart/form-data">
               <div class="form-group" style="margin-bottom: 14px;">
+                <label class="form-label">Target Application</label>
+                <select id="releaseAppId" class="form-input">
+                  <option value="quacky">Quacky (quacky · com.zez.app)</option>
+                  <option value="zez">Zez Call Log Manager (zez · com.zez.manager)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 14px;">
                 <label class="form-label">APK Package File (.apk)</label>
                 <input type="file" id="releaseApkFile" class="form-input" accept=".apk" required style="padding-top: 6px;">
-                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">Max file size: 100 MB</span>
+                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">Max file size: 120 MB</span>
               </div>
 
               <div style="display: flex; gap: 12px; margin-bottom: 14px;">
                 <div style="flex: 1;">
                   <label class="form-label">Version Name</label>
-                  <input type="text" id="releaseVersionName" class="form-input" placeholder="e.g. 1.0.1" required>
+                  <input type="text" id="releaseVersionName" class="form-input" placeholder="e.g. 1.0.64" required>
                 </div>
                 <div style="flex: 1;">
                   <label class="form-label">Version Code</label>
-                  <input type="number" id="releaseVersionCode" class="form-input" placeholder="e.g. 2" min="1" required>
+                  <input type="number" id="releaseVersionCode" class="form-input" placeholder="e.g. 65" min="1" required>
                 </div>
+                <div style="flex: 1;">
+                  <label class="form-label">Min Supported Code</label>
+                  <input type="number" id="releaseMinVersionCode" class="form-input" value="1" min="1">
+                </div>
+              </div>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 14px;">
+                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
+                  <input type="checkbox" id="releaseUpdateRequired">
+                  Mandatory Update
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
+                  <input type="checkbox" id="releasePublishImmediately" checked>
+                  Publish immediately as active release
+                </label>
               </div>
 
               <div class="form-group" style="margin-bottom: 20px;">
@@ -2518,7 +2553,7 @@
 
               <button type="submit" class="btn btn-primary" id="btnUploadRelease">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-                Publish Release
+                Upload & Publish Release
               </button>
             </form>
           </div>
@@ -2528,12 +2563,12 @@
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <h3 style="font-size: 15px; font-weight: 600;">Active Production Release</h3>
+                <h3 style="font-size: 15px; font-weight: 600;" id="arHeading">Active Quacky Release</h3>
               </div>
               <span id="activeReleaseBadge" class="badge badge-neutral" style="font-size: 11px;">Inactive</span>
             </div>
             <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
-              Current version distributed to client devices upon update check.
+              Current version distributed to <strong id="arAppLabel">quacky</strong> devices upon update check.
             </p>
 
             <div id="activeReleaseDetails" style="flex: 1;">
@@ -2545,6 +2580,9 @@
                 <div style="font-size: 12px; color: var(--text-secondary); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
                   <div>File Size: <strong id="arSize" style="color: var(--text-primary);">-</strong></div>
                   <div>Published: <strong id="arDate" style="color: var(--text-primary);">-</strong></div>
+                  <div>Min Supported: <strong id="arMinCode" style="color: var(--text-primary);">-</strong></div>
+                  <div>Policy: <strong id="arPolicy" style="color: var(--text-primary);">-</strong></div>
+                  <div style="grid-column: 1 / -1; word-break: break-all;">SHA-256: <code id="arSha256" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">-</code></div>
                   <div>Uploaded By: <strong id="arAuthor" style="color: var(--text-primary);">-</strong></div>
                 </div>
                 <div style="border-top: 1px solid var(--hairline); padding-top: 10px;">
@@ -2567,20 +2605,20 @@
         <!-- Release History Table -->
         <div style="background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 8px; padding: 20px; margin-bottom: 24px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-            <h4 style="font-size: 14px; font-weight: 600;">Release Distribution History</h4>
+            <h4 style="font-size: 14px; font-weight: 600;" id="releasesTableHeading">Release Distribution History</h4>
             <button class="btn btn-secondary btn-sm" id="btnRefreshReleases" type="button">Refresh list</button>
           </div>
-          <div class="table-container" style="max-height: 260px; overflow-y: auto;">
+          <div class="table-container" style="max-height: 320px; overflow-y: auto;">
             <table>
               <thead>
                 <tr>
                   <th>Version</th>
-                  <th>Version Code</th>
-                  <th>File Size</th>
+                  <th>Code / Min</th>
+                  <th>Size / Policy</th>
+                  <th>SHA-256</th>
                   <th>Release Notes</th>
                   <th>Published Date</th>
-                  <th>Uploaded By</th>
-                  <th style="text-align: right;">Action</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="releasesTableBody">
@@ -5944,15 +5982,37 @@ versionName "1.0.1"</pre>
     });
 
     // ============================================================================
-    // APP RELEASES MANAGEMENT LOGIC
+    // APP RELEASES MANAGEMENT LOGIC (Quacky + Zez Isolated Channels)
     // ============================================================================
+    let currentReleaseAppId = 'quacky';
+
+    function setReleaseAppTab(appId) {
+      currentReleaseAppId = appId === 'zez' ? 'zez' : 'quacky';
+      const tabQ = document.getElementById('releaseTabQuacky');
+      const tabZ = document.getElementById('releaseTabZez');
+      if (tabQ) tabQ.className = `btn btn-sm release-app-tab ${currentReleaseAppId === 'quacky' ? 'btn-primary' : 'btn-secondary'}`;
+      if (tabZ) tabZ.className = `btn btn-sm release-app-tab ${currentReleaseAppId === 'zez' ? 'btn-primary' : 'btn-secondary'}`;
+      const sel = document.getElementById('releaseAppId');
+      if (sel) sel.value = currentReleaseAppId;
+      const arHeading = document.getElementById('arHeading');
+      if (arHeading) arHeading.textContent = currentReleaseAppId === 'zez' ? 'Active Zez Release' : 'Active Quacky Release';
+      const arLabel = document.getElementById('arAppLabel');
+      if (arLabel) arLabel.textContent = currentReleaseAppId;
+      const tblHead = document.getElementById('releasesTableHeading');
+      if (tblHead) tblHead.textContent = `${currentReleaseAppId === 'zez' ? 'Zez' : 'Quacky'} Release Distribution History`;
+      loadReleases();
+    }
+
+    document.getElementById('releaseTabQuacky')?.addEventListener('click', () => setReleaseAppTab('quacky'));
+    document.getElementById('releaseTabZez')?.addEventListener('click', () => setReleaseAppTab('zez'));
+
     async function loadReleases() {
       const tbody = document.getElementById('releasesTableBody');
       const alertBox = document.getElementById('releaseUploadAlert');
       if (alertBox) alertBox.style.display = 'none';
 
       try {
-        const res = await fetch('/api/app/releases', {
+        const res = await fetch(`/api/app/releases?appId=${encodeURIComponent(currentReleaseAppId)}`, {
           headers: {
             'Authorization': `Bearer ${currentToken}`
           }
@@ -5961,21 +6021,25 @@ versionName "1.0.1"</pre>
         if (!res.ok || !data.success) throw new Error(data.error || 'Failed to load releases');
 
         const releases = data.releases || [];
+        const active = releases.find(r => r.is_active && (r.release_status || 'published') === 'published');
 
         // Update Active Release Card
-        if (releases.length > 0) {
-          const active = releases[0];
+        if (active) {
           document.getElementById('activeReleaseBadge').textContent = 'Live';
           document.getElementById('activeReleaseBadge').className = 'badge badge-incoming';
           document.getElementById('arVersion').textContent = `v${active.version_name}`;
           document.getElementById('arCode').textContent = `Code: ${active.version_code}`;
           document.getElementById('arSize').textContent = `${(active.file_size / (1024 * 1024)).toFixed(2)} MB`;
-          document.getElementById('arDate').textContent = new Date(active.created_at).toLocaleDateString();
+          document.getElementById('arDate').textContent = new Date(active.published_at || active.created_at).toLocaleDateString();
+          document.getElementById('arMinCode').textContent = `>= ${active.minimum_supported_version || 1}`;
+          document.getElementById('arPolicy').textContent = active.update_required ? 'Mandatory' : 'Optional';
+          document.getElementById('arSha256').textContent = active.sha256_checksum || 'Not recorded';
           document.getElementById('arAuthor').textContent = active.uploaded_by || 'admin';
           document.getElementById('arNotes').textContent = active.release_notes || 'No release notes provided.';
 
-          const fullDownloadUrl = `${window.location.origin}${active.download_url}`;
-          document.getElementById('arDownloadBtn').href = active.download_url;
+          const dlPath = `/api/app/download/${active.id}`;
+          const fullDownloadUrl = `${window.location.origin}${dlPath}`;
+          document.getElementById('arDownloadBtn').href = dlPath;
           document.getElementById('arDownloadBtn').style.display = 'inline-flex';
           document.getElementById('btnCopyDownloadUrl').onclick = () => copyText(fullDownloadUrl, 'Download URL');
           document.getElementById('btnCopyDownloadUrl').style.display = 'inline-flex';
@@ -5986,41 +6050,46 @@ versionName "1.0.1"</pre>
           document.getElementById('arCode').textContent = 'Code: -';
           document.getElementById('arSize').textContent = '-';
           document.getElementById('arDate').textContent = '-';
+          document.getElementById('arMinCode').textContent = '-';
+          document.getElementById('arPolicy').textContent = '-';
+          document.getElementById('arSha256').textContent = '-';
           document.getElementById('arAuthor').textContent = '-';
-          document.getElementById('arNotes').textContent = 'Publish a release using the form on the left.';
+          document.getElementById('arNotes').textContent = `Publish a ${currentReleaseAppId} release using the form on the left.`;
           document.getElementById('arDownloadBtn').style.display = 'none';
           document.getElementById('btnCopyDownloadUrl').style.display = 'none';
         }
 
         // Populate Table
         if (releases.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No releases uploaded yet.</td></tr>';
+          tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No ${currentReleaseAppId} releases uploaded yet.</td></tr>`;
           return;
         }
 
-        tbody.innerHTML = releases.map((r, idx) => {
+        tbody.innerHTML = releases.map((r) => {
           const sizeMb = (r.file_size / (1024 * 1024)).toFixed(2);
-          const dateStr = r.created_at ? new Date(r.created_at).toLocaleString() : '-';
-          const isLatest = idx === 0;
+          const dateStr = (r.published_at || r.created_at) ? new Date(r.published_at || r.created_at).toLocaleString() : '-';
+          const isLive = Boolean(r.is_active) && (r.release_status || 'published') === 'published';
+          const shortHash = r.sha256_checksum ? `${String(r.sha256_checksum).slice(0, 12)}...` : '-';
 
           return `
             <tr>
               <td>
-                <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                   <strong style="font-family: 'JetBrains Mono', monospace;">v${escapeHtml(r.version_name)}</strong>
-                  ${isLatest ? '<span class="badge badge-incoming" style="font-size: 10px;">Latest</span>' : ''}
+                  ${isLive ? '<span class="badge badge-incoming" style="font-size: 10px;">Active</span>' : `<span class="badge badge-neutral" style="font-size: 10px;">${escapeHtml(r.release_status || 'disabled')}</span>`}
                 </div>
               </td>
-              <td class="cell-mono">${r.version_code}</td>
-              <td class="cell-mono">${sizeMb} MB</td>
-              <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(r.release_notes)}">
+              <td class="cell-mono">${r.version_code} / min ${r.minimum_supported_version || 1}</td>
+              <td class="cell-mono">${sizeMb} MB<br><span style="font-size:10px; color:var(--text-muted);">${r.update_required ? 'Mandatory' : 'Optional'}</span></td>
+              <td class="cell-mono" title="${escapeHtml(r.sha256_checksum || '')}">${escapeHtml(shortHash)}</td>
+              <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(r.release_notes || '')}">
                 ${escapeHtml(r.release_notes || '-')}
               </td>
               <td style="font-size: 12px; color: var(--text-secondary);">${dateStr}</td>
-              <td style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(r.uploaded_by || 'admin')}</td>
               <td style="text-align: right;">
-                <div style="display: inline-flex; gap: 6px;">
-                  <a href="${r.download_url}" download class="btn btn-secondary btn-sm" style="text-decoration:none;">Download</a>
+                <div style="display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+                  ${!isLive ? `<button class="btn btn-primary btn-sm" onclick="handlePublishRelease(${r.id}, 'v${escapeHtml(r.version_name)}')">Publish</button>` : `<button class="btn btn-secondary btn-sm" onclick="handleToggleReleaseStatus(${r.id}, false)">Disable</button>`}
+                  <a href="/api/app/download/${r.id}" download class="btn btn-secondary btn-sm" style="text-decoration:none;">Download</a>
                   <button class="btn btn-danger btn-sm" onclick="handleDeleteRelease(${r.id}, 'v${escapeHtml(r.version_name)}')">Delete</button>
                 </div>
               </td>
@@ -6063,14 +6132,22 @@ versionName "1.0.1"</pre>
         return;
       }
 
+      const appId = document.getElementById('releaseAppId').value;
       const versionName = document.getElementById('releaseVersionName').value.trim();
       const versionCode = document.getElementById('releaseVersionCode').value;
+      const minVersionCode = document.getElementById('releaseMinVersionCode').value || '1';
+      const updateRequired = document.getElementById('releaseUpdateRequired').checked;
+      const publishImmediately = document.getElementById('releasePublishImmediately').checked;
       const releaseNotes = document.getElementById('releaseNotes').value.trim();
 
       const formData = new FormData();
       formData.append('apkFile', file);
+      formData.append('appId', appId);
       formData.append('versionName', versionName);
       formData.append('versionCode', versionCode);
+      formData.append('minimumSupportedVersion', minVersionCode);
+      formData.append('updateRequired', String(updateRequired));
+      formData.append('publishImmediately', String(publishImmediately));
       formData.append('releaseNotes', releaseNotes);
 
       uploadProgressBarContainer.style.display = 'block';
@@ -6097,9 +6174,9 @@ versionName "1.0.1"</pre>
         try {
           const res = JSON.parse(xhr.responseText);
           if (xhr.status >= 200 && xhr.status < 300 && res.success) {
-            showToast(res.message || 'Release published successfully!');
+            showToast(res.message || 'Release uploaded successfully!');
             releaseUploadForm.reset();
-            loadReleases();
+            setReleaseAppTab(appId);
           } else {
             releaseUploadAlert.textContent = res.error || 'Upload failed.';
             releaseUploadAlert.style.display = 'block';
@@ -6119,6 +6196,41 @@ versionName "1.0.1"</pre>
 
       xhr.send(formData);
     });
+
+    window.handlePublishRelease = async function(releaseId, label) {
+      if (!confirm(`Publish / roll back active release to ${label}?`)) return;
+      try {
+        const res = await fetch(`/api/app/releases/${releaseId}/publish`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to publish release');
+        showToast(data.message || 'Release published');
+        loadReleases();
+      } catch (err) {
+        showToast('Error: ' + err.message);
+      }
+    };
+
+    window.handleToggleReleaseStatus = async function(releaseId, enable) {
+      try {
+        const res = await fetch(`/api/app/releases/${releaseId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentToken}`
+          },
+          body: JSON.stringify({ isActive: enable, releaseStatus: enable ? 'published' : 'disabled' })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to update release status');
+        showToast(data.message || 'Release updated');
+        loadReleases();
+      } catch (err) {
+        showToast('Error: ' + err.message);
+      }
+    };
 
     // Delete Release
     window.handleDeleteRelease = async function(releaseId, label) {

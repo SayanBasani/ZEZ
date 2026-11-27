@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand / Default Primary Tokens -->
+    <color name="primary">#2563EB</color>
+    <color name="primary_dark">#1D4ED8</color>
+    <color name="accent">#3B82F6</color>
+
+    <!-- Semantic Theme Colors (Default / Fallback) -->
+    <color name="theme_background">#F8F9FA</color>
+    <color name="theme_surface">#FFFFFF</color>
+    <color name="theme_surface_variant">#F1F3F5</color>
+    <color name="theme_card_border">#E2E8F0</color>
+    <color name="theme_border">#E2E8F0</color>
+    <color name="theme_divider">#E2E8F0</color>
+    <color name="theme_app_bar">#FFFFFF</color>
+    <color name="theme_bottom_nav_bg">#FFFFFF</color>
+    <color name="theme_text_primary">#0F172A</color>
+    <color name="theme_text_secondary">#475569</color>
+    <color name="theme_text_muted">#94A3B8</color>
+    <color name="theme_icon_tint">#475569</color>
+
+    <!-- Legacy compatibility tokens -->
+    <color name="background_light">#F8F9FA</color>
+    <color name="surface_light">#FFFFFF</color>
+    <color name="surface_variant">#F1F3F5</color>
+    <color name="text_primary_light">#0F172A</color>
+    <color name="text_secondary_light">#475569</color>
+    <color name="border_light">#E2E8F0</color>
+
+    <!-- Call Badge Accents -->
+    <color name="call_incoming">#16A34A</color>
+    <color name="call_outgoing">#2563EB</color>
+    <color name="call_missed">#DC2626</color>
+    <color name="call_rejected">#9333EA</color>
+
+    <!-- PALETTE 1: Graphite (Light) -->
+    <color name="graphite_light_bg">#F8F9FA</color>
+    <color name="graphite_light_surface">#FFFFFF</color>
+    <color name="graphite_light_surface_variant">#F1F3F5</color>
+    <color name="graphite_light_border">#E2E8F0</color>
+    <color name="graphite_light_primary">#2563EB</color>
+    <color name="graphite_light_accent">#3B82F6</color>
+    <color name="graphite_light_text_primary">#0F172A</color>
+    <color name="graphite_light_text_secondary">#475569</color>
+    <color name="graphite_light_text_muted">#94A3B8</color>
+
+    <!-- PALETTE 2: Arctic Light (Light) -->
+    <color name="arctic_light_bg">#EFF6FB</color>
+    <color name="arctic_light_surface">#FFFFFF</color>
+    <color name="arctic_light_surface_variant">#E0EDF7</color>
+    <color name="arctic_light_border">#CCE2F2</color>
+    <color name="arctic_light_primary">#0284C7</color>
+    <color name="arctic_light_accent">#38BDF8</color>
+    <color name="arctic_light_text_primary">#0C1A2E</color>
+    <color name="arctic_light_text_secondary">#3B526F</color>
+    <color name="arctic_light_text_muted">#758BA5</color>
+
+    <!-- PALETTE 3: Midnight (Light) -->
+    <color name="midnight_light_bg">#EEF2FF</color>
+    <color name="midnight_light_surface">#FFFFFF</color>
+    <color name="midnight_light_surface_variant">#E0E7FF</color>
+    <color name="midnight_light_border">#C7D2FE</color>
+    <color name="midnight_light_primary">#4F46E5</color>
+    <color name="midnight_light_accent">#6366F1</color>
+    <color name="midnight_light_text_primary">#111827</color>
+    <color name="midnight_light_text_secondary">#4B5563</color>
+    <color name="midnight_light_text_muted">#9CA3AF</color>
+
+    <!-- PALETTE 4: AMOLED (Light) -->
+    <color name="amoled_light_bg">#F4F4F5</color>
+    <color name="amoled_light_surface">#FFFFFF</color>
+    <color name="amoled_light_surface_variant">#E4E4E7</color>
+    <color name="amoled_light_border">#D4D4D8</color>
+    <color name="amoled_light_primary">#0891B2</color>
+    <color name="amoled_light_accent">#06B6D4</color>
+    <color name="amoled_light_text_primary">#09090B</color>
+    <color name="amoled_light_text_secondary">#52525B</color>
+    <color name="amoled_light_text_muted">#A1A1AA</color>
+
+    <!-- PALETTE 5: Ocean (Light) -->
+    <color name="ocean_light_bg">#EBF5FF</color>
+    <color name="ocean_light_surface">#FFFFFF</color>
+    <color name="ocean_light_surface_variant">#DBEAFE</color>
+    <color name="ocean_light_border">#BFDBFE</color>
+    <color name="ocean_light_primary">#0284C7</color>
+    <color name="ocean_light_accent">#0EA5E9</color>
+    <color name="ocean_light_text_primary">#0F172A</color>
+    <color name="ocean_light_text_secondary">#334155</color>
+    <color name="ocean_light_text_muted">#64748B</color>
+
+    <!-- PALETTE 6: Sage (Light) -->
+    <color name="sage_light_bg">#ECFDF5</color>
+    <color name="sage_light_surface">#FFFFFF</color>
+    <color name="sage_light_surface_variant">#D1FAE5</color>
+    <color name="sage_light_border">#A7F3D0</color>
+    <color name="sage_light_primary">#059669</color>
+    <color name="sage_light_accent">#10B981</color>
+    <color name="sage_light_text_primary">#062E1E</color>
+    <color name="sage_light_text_secondary">#2D5A46</color>
+    <color name="sage_light_text_muted">#6B9080</color>
+
+    <!-- PALETTE 7: Sunset (Light) -->
+    <color name="sunset_light_bg">#FFF7ED</color>
+    <color name="sunset_light_surface">#FFFFFF</color>
+    <color name="sunset_light_surface_variant">#FFEDD5</color>
+    <color name="sunset_light_border">#FED7AA</color>
+    <color name="sunset_light_primary">#EA580C</color>
+    <color name="sunset_light_accent">#F97316</color>
+    <color name="sunset_light_text_primary">#271406</color>
+    <color name="sunset_light_text_secondary">#5F3714</color>
+    <color name="sunset_light_text_muted">#9A6032</color>
+
+    <!-- PALETTE 8: Rose (Light) -->
+    <color name="rose_light_bg">#FFF1F2</color>
+    <color name="rose_light_surface">#FFFFFF</color>
+    <color name="rose_light_surface_variant">#FFE4E6</color>
+    <color name="rose_light_border">#FECDD3</color>
+    <color name="rose_light_primary">#E11D48</color>
+    <color name="rose_light_accent">#F43F5E</color>
+    <color name="rose_light_text_primary">#2D0612</color>
+    <color name="rose_light_text_secondary">#661D32</color>
+    <color name="rose_light_text_muted">#9F4A63</color>
+</resources>

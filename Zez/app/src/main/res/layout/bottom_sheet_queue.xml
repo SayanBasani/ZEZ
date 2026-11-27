@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_sheet_top_rounded"
+    android:paddingBottom="24dp">
+
+    <!-- Pill Indicator -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_pill_indicator" />
+
+    <!-- Top Action Row -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:paddingHorizontal="16dp"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/tv_queue_heading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Up Next · Queue"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorThemeTextPrimary" />
+
+        <Button
+            android:id="@+id/btn_queue_clear"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="Clear"
+            android:textColor="@color/primary" />
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorThemeDivider" />
+
+    <TextView
+        android:id="@+id/tv_queue_empty"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:gravity="center"
+        android:text="Queue is empty"
+        android:textColor="?attr/colorThemeTextMuted"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_player_queue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="360dp"
+        android:clipToPadding="false"
+        android:paddingTop="8dp" />
+</LinearLayout>

@@ -1,0 +1,28 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.ZezManager" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:windowBackground">@color/theme_background</item>
+        <item name="colorSurface">@color/theme_surface</item>
+        <item name="android:statusBarColor">@color/theme_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+
+        <item name="colorThemeBackground">@color/theme_background</item>
+        <item name="colorThemeSurface">@color/theme_surface</item>
+        <item name="colorThemeSurfaceVariant">@color/theme_surface_variant</item>
+        <item name="colorThemeAppBar">@color/theme_surface</item>
+        <item name="colorThemeCardBg">@color/theme_surface</item>
+        <item name="colorThemeInputBg">@color/theme_surface_variant</item>
+        <item name="colorThemeNavBg">@color/theme_surface</item>
+        <item name="colorThemeBorder">@color/theme_border</item>
+        <item name="colorThemeDivider">@color/theme_divider</item>
+        <item name="colorThemeTextPrimary">@color/theme_text_primary</item>
+        <item name="colorThemeTextSecondary">@color/theme_text_secondary</item>
+        <item name="colorThemeTextMuted">@color/theme_text_muted</item>
+        <item name="colorThemeIconTint">@color/theme_icon_tint</item>
+        <item name="colorThemePrimary">@color/primary</item>
+        <item name="colorThemeAccent">@color/accent</item>
+        <item name="colorThemeBadge">@color/primary</item>
+    </style>
+</resources>

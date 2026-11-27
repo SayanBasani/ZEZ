@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_music"
+        android:icon="@drawable/ic_music"
+        android:title="@string/nav_music" />
+    <item
+        android:id="@+id/nav_alarms"
+        android:icon="@drawable/ic_alarm"
+        android:title="@string/nav_alarms" />
+    <item
+        android:id="@+id/nav_gallery"
+        android:icon="@drawable/ic_photo_library"
+        android:title="@string/nav_gallery" />
+    <item
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/nav_settings" />
+</menu>

@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_sheet_top_rounded"
+    android:paddingBottom="24dp">
+
+    <!-- Drag Handle -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_pill_indicator" />
+
+    <!-- Top Action Row: Collapse, Audio/Video Switcher, Queue, Options -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btn_player_collapse"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_expand_more"
+            app:tint="?attr/colorThemeIconTint"
+            android:contentDescription="Collapse player" />
+
+        <!-- Audio / Video Mode Toggle Pill -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:layout_centerInParent="true"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_search_input"
+            android:padding="2dp">
+
+            <TextView
+                android:id="@+id/btn_mode_audio"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Audio"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_mode_toggle_active"
+                android:paddingHorizontal="14dp" />
+
+            <TextView
+                android:id="@+id/btn_mode_video"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Video"
+                android:textSize="12sp"
+                android:textColor="?attr/colorThemeTextMuted"
+                android:background="@android:color/transparent"
+                android:paddingHorizontal="14dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_player_queue_top"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_queue_music"
+                app:tint="?attr/colorThemeIconTint"
+                android:contentDescription="Play queue" />
+
+            <ImageButton
+                android:id="@+id/btn_player_more"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                app:tint="?attr/colorThemeIconTint"
+                android:contentDescription="More options" />
+
+            <ImageButton
+                android:id="@+id/btn_player_close"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close"
+                app:tint="?attr/colorThemeIconTint"
+                android:contentDescription="Stop and close player" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- Album Art / Video Container -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="260dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="8dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="6dp"
+        app:cardBackgroundColor="?attr/colorThemeSurfaceVariant">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/iv_player_album_art"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop" />
+
+            <!-- In-App Video Viewport (Web Player container) -->
+            <FrameLayout
+                android:id="@+id/layout_player_video_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/black"
+                android:visibility="gone" />
+        </FrameLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Track Info -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="28dp"
+        android:layout_marginTop="16dp">
+
+        <TextView
+            android:id="@+id/tv_player_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Song Title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorThemeTextPrimary"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tv_player_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Artist Name"
+            android:textSize="13sp"
+            android:textColor="?attr/colorThemeTextMuted"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginTop="3dp" />
+    </LinearLayout>
+
+    <!-- Scrubber Seek Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:layout_marginTop="12dp">
+
+        <SeekBar
+            android:id="@+id/sb_player_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:progressTint="@color/primary"
+            android:thumbTint="@color/primary"
+            android:max="100" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="8dp"
+            android:layout_marginTop="2dp">
+
+            <TextView
+                android:id="@+id/tv_player_current_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0:00"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextMuted" />
+
+            <TextView
+                android:id="@+id/tv_player_total_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="0:00"
+                android:textSize="11sp"
+                android:textColor="?attr/colorThemeTextMuted" />
+        </RelativeLayout>
+    </LinearLayout>
+
+    <!-- Media Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="12dp"
+        android:paddingHorizontal="20dp">
+
+        <ImageButton
+            android:id="@+id/btn_player_shuffle"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_shuffle"
+            app:tint="?attr/colorThemeIconTint"
+            android:contentDescription="Shuffle" />
+
+        <ImageButton
+            android:id="@+id/btn_player_prev"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_marginStart="14dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_skip_previous"
+            app:tint="?attr/colorThemeTextPrimary"
+            android:contentDescription="Previous" />
+
+        <!-- Big Play / Pause Button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_player_play_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="18dp"
+            android:src="@drawable/ic_play_arrow"
+            app:backgroundTint="@color/primary"
+            app:tint="@android:color/white"
+            app:fabSize="normal"
+            app:elevation="6dp"
+            android:contentDescription="Play/Pause" />
+
+        <ImageButton
+            android:id="@+id/btn_player_next"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_marginEnd="14dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_skip_next"
+            app:tint="?attr/colorThemeTextPrimary"
+            android:contentDescription="Next" />
+
+        <ImageButton
+            android:id="@+id/btn_player_repeat"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_repeat"
+            app:tint="?attr/colorThemeIconTint"
+            android:contentDescription="Repeat" />
+    </LinearLayout>
+
+    <!-- Additional Bottom Actions: Download, Queue, Share -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <Button
+            android:id="@+id/btn_player_download"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📥 Download"
+            android:textColor="@color/primary" />
+
+        <Button
+            android:id="@+id/btn_player_queue_btn"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="📑 Up Next"
+            android:textColor="?attr/colorThemeTextSecondary" />
+
+        <Button
+            android:id="@+id/btn_player_share"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="🔗 Share"
+            android:textColor="?attr/colorThemeTextMuted" />
+    </LinearLayout>
+</LinearLayout>
