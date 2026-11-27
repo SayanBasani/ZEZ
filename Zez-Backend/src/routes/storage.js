@@ -69,19 +69,27 @@ router.get("/file/*key", async (req, res) => {
 
     // 1. Instant Cache Hit: Serve directly from local disk (<5ms)
     if (fs.existsSync(cachedFilePath)) {
-      const headers = {
-        "Cache-Control": "public, max-age=86400, immutable"
-      };
-      if (isApk) {
-        headers["Content-Disposition"] = `attachment; filename="${path.basename(objectKey)}"`;
-        headers["Content-Type"] = "application/vnd.android.package-archive";
-      }
-      return res.sendFile(path.resolve(cachedFilePath), {
-        acceptRanges: true,
-        cacheControl: true,
-        maxAge: 86400000,
-        headers
-      });
+      try {
+        const st = fs.statSync(cachedFilePath);
+        if (st.size > 0) {
+          let dlName = req.query.name || req.query.filename || path.basename(objectKey);
+          const headers = {
+            "Cache-Control": "public, max-age=86400, immutable"
+          };
+          if (isApk || req.query.download === "true") {
+            headers["Content-Disposition"] = `attachment; filename="${dlName}"`;
+            headers["Content-Type"] = isApk ? "application/vnd.android.package-archive" : "application/octet-stream";
+          }
+          return res.sendFile(path.resolve(cachedFilePath), {
+            acceptRanges: true,
+            cacheControl: true,
+            maxAge: 86400000,
+            headers
+          });
+        } else {
+          try { fs.unlinkSync(cachedFilePath); } catch (_) {}
+        }
+      } catch (_) {}
     }
 
     // 2. Cache Miss: Handle HEAD cleanly without pulling the full object body

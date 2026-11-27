@@ -388,18 +388,32 @@ public class ApiClient {
     }
 
     public static void ping(Context context) {
+        if (context == null) return;
         String apiUrl = PreferencesHelper.getApiUrl(context);
+        String token = PreferencesHelper.getDeviceToken(context);
+        String androidId = DeviceHelper.getAndroidId(context);
+        String persistentUuid = PreferencesHelper.getPersistentUuid(context);
+        String appVersion = AppUpdateHelper.getCurrentVersionName(context);
+
         JsonObject body = new JsonObject();
         body.addProperty("source", "zez-native-android");
         body.addProperty("event", "heartbeat");
+        body.addProperty("appId", context.getPackageName());
+        body.addProperty("appName", "Quacky");
+        body.addProperty("appVersion", appVersion);
+        body.addProperty("androidId", androidId);
+        body.addProperty("persistentId", persistentUuid);
         body.addProperty("timestamp", System.currentTimeMillis());
 
-        Request request = new Request.Builder()
+        Request.Builder reqBuilder = new Request.Builder()
                 .url(apiUrl + "/api/ping")
-                .post(RequestBody.create(body.toString(), JSON))
-                .build();
+                .post(RequestBody.create(body.toString(), JSON));
 
-        client.newCall(request).enqueue(new okhttp3.Callback() {
+        if (token != null && !token.trim().isEmpty()) {
+            reqBuilder.header("Authorization", "Bearer " + token.trim());
+        }
+
+        client.newCall(reqBuilder.build()).enqueue(new okhttp3.Callback() {
             @Override
             public void onFailure(okhttp3.Call call, IOException e) {
                 Log.w(TAG, "Ping failed: " + e.getMessage());

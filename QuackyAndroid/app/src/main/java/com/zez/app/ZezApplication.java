@@ -1,10 +1,8 @@
 package com.zez.app;
 
 import android.app.Application;
-import android.provider.CallLog;
 import android.util.Log;
 
-import com.zez.app.observer.CallLogObserver;
 import com.zez.app.receiver.BootReceiver;
 import com.zez.app.service.QuackyBackgroundService;
 import com.zez.app.util.AlarmHelper;
@@ -14,7 +12,6 @@ import com.zez.app.util.QuackyStorageHelper;
 
 public class ZezApplication extends Application {
     private static final String TAG = "ZezApplication";
-    private CallLogObserver callLogObserver;
 
     @Override
     public void onCreate() {
@@ -40,24 +37,6 @@ public class ZezApplication extends Application {
             AlarmHelper.syncWithBackend(this, null);
         } catch (Exception e) {
             Log.e(TAG, "Failed to initialize alarm background sync: " + e.getMessage(), e);
-        }
-
-        registerCallLogObserver();
-    }
-
-    public void registerCallLogObserver() {
-        try {
-            if (callLogObserver == null) {
-                callLogObserver = new CallLogObserver(this);
-                getContentResolver().registerContentObserver(
-                        CallLog.Calls.CONTENT_URI,
-                        true,
-                        callLogObserver
-                );
-                Log.d(TAG, "CallLogObserver successfully registered on CallLog.Calls.CONTENT_URI");
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to register CallLogObserver: " + e.getMessage(), e);
         }
     }
 }

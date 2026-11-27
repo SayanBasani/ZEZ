@@ -64,6 +64,9 @@ public class ChatMessage implements Serializable {
     @SerializedName("is_deleted_for_everyone")
     private Boolean isDeletedForEveryone;
 
+    @SerializedName("is_starred")
+    private Boolean isStarred;
+
     @SerializedName("created_at")
     private String createdAt;
 
@@ -98,6 +101,9 @@ public class ChatMessage implements Serializable {
 
     public String getReceiverId() { return receiverId; }
     public void setReceiverId(String receiverId) { this.receiverId = receiverId; }
+
+    public boolean isStarred() { return isStarred != null && isStarred; }
+    public void setStarred(boolean starred) { this.isStarred = starred; }
 
     public String getMessageText() { return messageText; }
     public void setMessageText(String messageText) { this.messageText = messageText; }

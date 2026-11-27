@@ -199,14 +199,17 @@ router.get("/download/:id", async (req, res, next) => {
     }
 
     const row = rowRes.rows[0];
+    const cleanFileName = path.basename(row.file_name || `${row.app_id || 'app'}-release.apk`);
+    const expectedSize = Number(row.file_size) || null;
+
     if (row.sha256_checksum) {
       res.setHeader("X-Checksum-Sha256", row.sha256_checksum);
     }
     res.setHeader("X-Application-Id", row.app_id || "quacky");
     res.setHeader("Content-Type", "application/vnd.android.package-archive");
-    res.setHeader("Content-Disposition", `attachment; filename="${path.basename(row.file_name || "app-release.apk")}"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${cleanFileName}"`);
 
-    // 1. Check downloadsDir (by stored downloadUrl or file_name)
+    // 1. Check local disk candidates (downloadsDir or storageCacheDir)
     const candidates = [];
     if (row.download_url && row.download_url.startsWith("/downloads/")) {
       candidates.push(path.join(downloadsDir, path.basename(row.download_url)));
@@ -219,38 +222,134 @@ router.get("/download/:id", async (req, res, next) => {
       candidates.push(path.join(storageCacheDir, safeKey));
     }
 
+    let validCandidate = null;
     for (const candidate of candidates) {
       if (candidate && fs.existsSync(candidate)) {
-        return res.sendFile(candidate);
+        try {
+          const st = fs.statSync(candidate);
+          if (expectedSize && st.size === expectedSize && st.size > 0) {
+            validCandidate = candidate;
+            break;
+          } else if (!expectedSize && st.size > 0) {
+            validCandidate = candidate;
+            break;
+          } else if (expectedSize && st.size !== expectedSize) {
+            // Delete truncated or corrupt cached file
+            try { fs.unlinkSync(candidate); } catch (_) {}
+          }
+        } catch (_) {}
       }
     }
 
-    // 2. Fallback to Backblaze B2 object if stored in B2
+    if (validCandidate) {
+      return res.sendFile(path.resolve(validCandidate), {
+        acceptRanges: true,
+        cacheControl: true,
+        maxAge: 86400000,
+        headers: {
+          "Content-Disposition": `attachment; filename="${cleanFileName}"`,
+          "Content-Type": "application/vnd.android.package-archive",
+          "Accept-Ranges": "bytes"
+        }
+      });
+    }
+
+    // 2. Stream directly from Backblaze B2 and cache atomically
     if (row.download_url && row.download_url.startsWith("/api/storage/file/")) {
       const safeKey = b2Storage.sanitizeKey(row.download_url.replace("/api/storage/file/", ""));
+      const cacheDest = path.join(storageCacheDir, safeKey);
+      const rangeHeader = req.headers.range || null;
+
       try {
-        const b2Res = await b2Storage.getFileStream(safeKey);
+        const b2Res = await b2Storage.getFileStream(safeKey, rangeHeader);
         if (b2Res && b2Res.stream) {
-          if (b2Res.contentLength) {
+          res.status(b2Res.statusCode || 200);
+          res.setHeader("Content-Type", "application/vnd.android.package-archive");
+          res.setHeader("Content-Disposition", `attachment; filename="${cleanFileName}"`);
+          res.setHeader("Accept-Ranges", "bytes");
+          if (b2Res.contentLength !== undefined) {
             res.setHeader("Content-Length", String(b2Res.contentLength));
           }
-          res.setHeader("Accept-Ranges", "bytes");
+          if (b2Res.contentRange) {
+            res.setHeader("Content-Range", String(b2Res.contentRange));
+          }
+
+          let writeStream = null;
+          let tmpFile = null;
+          let streamEnded = false;
+
+          if (!rangeHeader && (!b2Res.statusCode || b2Res.statusCode === 200)) {
+            try {
+              fs.mkdirSync(path.dirname(cacheDest), { recursive: true });
+              tmpFile = `${cacheDest}.tmp.${Date.now()}`;
+              writeStream = fs.createWriteStream(tmpFile);
+              b2Res.stream.pipe(writeStream);
+
+              writeStream.on("finish", () => {
+                try {
+                  if (streamEnded && tmpFile && fs.existsSync(tmpFile)) {
+                    const st = fs.statSync(tmpFile);
+                    if (expectedSize ? st.size === expectedSize : st.size > 0) {
+                      fs.renameSync(tmpFile, cacheDest);
+                    } else {
+                      fs.unlinkSync(tmpFile);
+                    }
+                  } else if (tmpFile && fs.existsSync(tmpFile)) {
+                    fs.unlinkSync(tmpFile);
+                  }
+                } catch (_) {}
+              });
+
+              writeStream.on("error", () => {
+                try { if (tmpFile && fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
+              });
+            } catch (_) {}
+          }
+
+          b2Res.stream.on("end", () => {
+            streamEnded = true;
+          });
+
+          b2Res.stream.on("error", (sErr) => {
+            console.warn("[Download] B2 stream error:", sErr.message);
+            if (writeStream) writeStream.destroy();
+            try { if (tmpFile && fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
+            if (!res.writableEnded) res.destroy(sErr);
+          });
+
+          res.on("close", () => {
+            if (!streamEnded && b2Res.stream && typeof b2Res.stream.destroy === "function") {
+              b2Res.stream.destroy();
+            }
+            if (!streamEnded && writeStream) {
+              writeStream.destroy();
+              try { if (tmpFile && fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
+            }
+          });
+
           return b2Res.stream.pipe(res);
         }
       } catch (b2StreamErr) {
-        console.warn("B2 getFileStream failed, trying getFile:", b2StreamErr.message);
+        console.warn("[Download] B2 getFileStream failed, trying getFile:", b2StreamErr.message);
       }
 
       try {
         const fileData = await b2Storage.getFile(safeKey);
         if (fileData && fileData.body) {
+          res.setHeader("Content-Disposition", `attachment; filename="${cleanFileName}"`);
+          res.setHeader("Content-Type", "application/vnd.android.package-archive");
           if (fileData.contentLength || fileData.body.length) {
             res.setHeader("Content-Length", String(fileData.contentLength || fileData.body.length));
           }
+          // Cache buffer to disk atomically
+          try {
+            fs.mkdirSync(path.dirname(cacheDest), { recursive: true });
+            fs.writeFileSync(cacheDest, fileData.body);
+          } catch (_) {}
           return res.send(fileData.body);
         }
       } catch (b2Err) {
-        console.warn("B2 getFile fallback failed:", b2Err.message);
+        console.warn("[Download] B2 getFile fallback failed:", b2Err.message);
       }
 
       return res.redirect(row.download_url);

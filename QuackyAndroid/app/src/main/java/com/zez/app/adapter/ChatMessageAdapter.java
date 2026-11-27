@@ -310,6 +310,20 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         notifyItemRangeInserted(startIndex, addedCount);
     }
 
+    public int prependMessages(List<ChatMessage> olderMessages) {
+        if (olderMessages == null || olderMessages.isEmpty()) return 0;
+        List<ChatMessage> combined = new ArrayList<>();
+        combined.addAll(olderMessages);
+        for (ChatRowItem row : rowItems) {
+            if (!row.isHeader && row.message != null) {
+                combined.add(row.message);
+            }
+        }
+        int oldCount = rowItems.size();
+        setMessages(combined);
+        return rowItems.size() - oldCount;
+    }
+
     public ChatMessage getMessageAt(int position) {
         if (position >= 0 && position < rowItems.size()) {
             ChatRowItem row = rowItems.get(position);
@@ -528,6 +542,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView tvGameSubtitle;
         TextView tvGameCta;
         View layoutBubble;
+        ImageView ivStarred;
 
         OutgoingViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -535,6 +550,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             tvText = itemView.findViewById(R.id.tv_msg_outgoing_text);
             tvTime = itemView.findViewById(R.id.tv_msg_outgoing_time);
             ivTick = itemView.findViewById(R.id.iv_msg_status_tick);
+            ivStarred = itemView.findViewById(R.id.iv_msg_outgoing_starred);
             layoutMedia = itemView.findViewById(R.id.layout_msg_outgoing_media);
             ivImage = itemView.findViewById(R.id.iv_msg_outgoing_image);
             ivPlay = itemView.findViewById(R.id.iv_msg_outgoing_play);
@@ -611,6 +627,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (layoutReaction != null) layoutReaction.setVisibility(View.GONE);
                 if (layoutGameCard != null) layoutGameCard.setVisibility(View.GONE);
                 if (ivTick != null) ivTick.setVisibility(View.GONE);
+                if (ivStarred != null) ivStarred.setVisibility(View.GONE);
                 tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
                 return;
             }
@@ -740,6 +757,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
+            if (ivStarred != null) {
+                ivStarred.setVisibility(msg.isStarred() ? View.VISIBLE : View.GONE);
+            }
             bindReactionOnly(msg);
             bindStatusOnly(msg);
         }
@@ -766,12 +786,14 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView tvGameSubtitle;
         TextView tvGameDecline;
         TextView tvGameCta;
+        ImageView ivStarred;
 
         IncomingViewHolder(@NonNull View itemView) {
             super(itemView);
             layoutBubble = itemView.findViewById(R.id.layout_msg_incoming_bubble);
             tvText = itemView.findViewById(R.id.tv_msg_incoming_text);
             tvTime = itemView.findViewById(R.id.tv_msg_incoming_time);
+            ivStarred = itemView.findViewById(R.id.iv_msg_incoming_starred);
             layoutMedia = itemView.findViewById(R.id.layout_msg_incoming_media);
             ivImage = itemView.findViewById(R.id.iv_msg_incoming_image);
             ivPlay = itemView.findViewById(R.id.iv_msg_incoming_play);
@@ -844,6 +866,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (layoutQuote != null) layoutQuote.setVisibility(View.GONE);
                 if (layoutReaction != null) layoutReaction.setVisibility(View.GONE);
                 if (layoutGameCard != null) layoutGameCard.setVisibility(View.GONE);
+                if (ivStarred != null) ivStarred.setVisibility(View.GONE);
                 tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
                 return;
             }
@@ -975,6 +998,9 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             tvTime.setText(formatTime(msg.getCreatedAt(), isoFmt, timeFmt));
+            if (ivStarred != null) {
+                ivStarred.setVisibility(msg.isStarred() ? View.VISIBLE : View.GONE);
+            }
             bindReactionOnly(msg);
         }
     }
@@ -1142,7 +1168,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         return String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024.0));
     }
 
-    private static String formatTime(String raw, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
+    public static String formatTime(String raw, SimpleDateFormat isoFmt, SimpleDateFormat timeFmt) {
         if (raw == null || raw.isEmpty()) return "";
         try {
             String clean = raw.split("\\.")[0];

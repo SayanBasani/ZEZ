@@ -303,7 +303,7 @@ router.get("/devices", async (req, res, next) => {
         d.id, d.androidid, d.persistentid, d.device_name, d.device_model,
         d.manufacturer, d.brand, d.platform, d.os_version, d.app_version,
         d.primary_phone_number, d.sim1_carrier, d.sim2_carrier,
-        d.registration_status, d.last_seen_at, d.created_at, d.updated_at,
+        d.registration_status, d.last_seen_at, d.created_at, d.updated_at, d.device_details,
         COUNT(cl.id)::int AS total_calls
       FROM public.devices d
       LEFT JOIN public.call_logs cl ON cl.device_id = d.id
@@ -332,10 +332,66 @@ router.get("/devices", async (req, res, next) => {
 
     const result = await pool.query(query, params);
 
+    const now = Date.now();
+    const processedDevices = result.rows.map(d => {
+      let details = d.device_details || {};
+      if (typeof details === 'string') {
+        try { details = JSON.parse(details); } catch (e) { details = {}; }
+      }
+
+      const lastSeenMs = d.last_seen_at ? new Date(d.last_seen_at).getTime() : 0;
+      const diffMinutes = lastSeenMs ? (now - lastSeenMs) / 60000 : 999999;
+      const isOnline = diffMinutes <= 15;
+      const isStandby = !isOnline && diffMinutes <= 60;
+
+      const rawApps = details.apps || {};
+      const apps = {
+        quacky: {
+          key: 'quacky',
+          name: 'Quacky',
+          package: 'com.zez.app',
+          installed: !!rawApps.quacky,
+          version: rawApps.quacky?.version || (d.app_version && d.app_version.includes('6') ? d.app_version : '1.0.65'),
+          last_seen: rawApps.quacky?.last_seen || (d.app_version && d.app_version.includes('6') ? d.last_seen_at : null),
+          is_active: !!rawApps.quacky && ((now - new Date(rawApps.quacky.last_seen).getTime()) < 7 * 86400000)
+        },
+        zez: {
+          key: 'zez',
+          name: 'ZEZ',
+          package: 'app.z.manager',
+          installed: !!rawApps.zez,
+          version: rawApps.zez?.version || '1.0.6',
+          last_seen: rawApps.zez?.last_seen || null,
+          is_active: !!rawApps.zez && ((now - new Date(rawApps.zez.last_seen).getTime()) < 7 * 86400000)
+        }
+      };
+
+      if (!rawApps.quacky && !rawApps.zez) {
+        if (d.app_version && (d.app_version.includes('65') || d.app_version.includes('64') || d.app_version.includes('66'))) {
+          apps.quacky.installed = true;
+          apps.quacky.is_active = isOnline || diffMinutes < 1440;
+          apps.quacky.last_seen = d.last_seen_at;
+          apps.quacky.version = d.app_version;
+        } else {
+          apps.zez.installed = true;
+          apps.zez.is_active = isOnline || diffMinutes < 1440;
+          apps.zez.last_seen = d.last_seen_at;
+          apps.zez.version = d.app_version || '1.0.6';
+        }
+      }
+
+      return {
+        ...d,
+        is_online: isOnline,
+        is_standby: isStandby,
+        apps_status: apps
+      };
+    });
+
     res.json({
       success: true,
-      count: result.rows.length,
-      devices: result.rows,
+      count: processedDevices.length,
+      devices: processedDevices,
     });
   } catch (error) {
     next(error);

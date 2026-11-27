@@ -18,7 +18,7 @@ import java.util.List;
 public class ChatLocalDbHelper extends SQLiteOpenHelper {
     private static final String TAG = "ChatLocalDbHelper";
     private static final String DATABASE_NAME = "zez_chat_local.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     private static final String TABLE_MESSAGES = "local_chat_messages";
     private static final String COL_ID = "id";
@@ -36,6 +36,7 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
     private static final String COL_STATUS = "status";
     private static final String COL_REACTION = "reaction";
     private static final String COL_DELETED_EVERYONE = "is_deleted_for_everyone";
+    private static final String COL_IS_STARRED = "is_starred";
     private static final String COL_CREATED_AT = "created_at";
 
     // Conversations cache table
@@ -96,6 +97,7 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
                 + COL_STATUS + " TEXT, "
                 + COL_REACTION + " TEXT, "
                 + COL_DELETED_EVERYONE + " INTEGER DEFAULT 0, "
+                + COL_IS_STARRED + " INTEGER DEFAULT 0, "
                 + COL_CREATED_AT + " TEXT"
                 + ");";
         db.execSQL(createMessages);
@@ -146,6 +148,11 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
         if (oldVersion < 3) {
             createConversationsTable(db);
             createAppCallsTable(db);
+        }
+        if (oldVersion < 4) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_MESSAGES + " ADD COLUMN " + COL_IS_STARRED + " INTEGER DEFAULT 0;");
+            } catch (Exception ignored) {}
         }
     }
 
@@ -498,8 +505,101 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
         cv.put(COL_STATUS, msg.getStatus());
         cv.put(COL_REACTION, msg.getReaction());
         cv.put(COL_DELETED_EVERYONE, msg.isDeletedForEveryone() ? 1 : 0);
+        cv.put(COL_IS_STARRED, msg.isStarred() ? 1 : 0);
         cv.put(COL_CREATED_AT, msg.getCreatedAt());
         return cv;
+    }
+
+    public synchronized void toggleStarMessage(String messageId, boolean isStarred) {
+        if (messageId == null) return;
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_IS_STARRED, isStarred ? 1 : 0);
+        db.update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{messageId});
+    }
+
+    public synchronized List<ChatMessage> getStarredMessages(String conversationId) {
+        List<ChatMessage> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            String selection = COL_IS_STARRED + " = 1 AND " + COL_MODE + " = 'normal'";
+            String[] args = null;
+            if (conversationId != null) {
+                selection += " AND " + COL_CONV_ID + " = ?";
+                args = new String[]{conversationId};
+            }
+            cursor = db.query(TABLE_MESSAGES, null, selection, args, null, null, COL_CREATED_AT + " DESC", "100");
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    list.add(fromCursor(cursor));
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error querying starred messages: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return list;
+    }
+
+    public synchronized int getStarredCount(String conversationId) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            String query = "SELECT COUNT(*) FROM " + TABLE_MESSAGES + " WHERE " + COL_IS_STARRED + " = 1 AND " + COL_MODE + " = 'normal'";
+            String[] args = null;
+            if (conversationId != null) {
+                query += " AND " + COL_CONV_ID + " = ?";
+                args = new String[]{conversationId};
+            }
+            cursor = db.rawQuery(query, args);
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting starred count: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return 0;
+    }
+
+    public synchronized List<ChatMessage> getMessagesBefore(String conversationId, String beforeTimestamp, int limit) {
+        List<ChatMessage> list = new ArrayList<>();
+        if (conversationId == null) return list;
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            String selection = COL_CONV_ID + " = ? AND " + COL_MODE + " = 'normal'";
+            List<String> argsList = new ArrayList<>();
+            argsList.add(conversationId);
+            if (beforeTimestamp != null && !beforeTimestamp.isEmpty()) {
+                selection += " AND " + COL_CREATED_AT + " < ?";
+                argsList.add(beforeTimestamp);
+            }
+            cursor = db.query(
+                    TABLE_MESSAGES,
+                    null,
+                    selection,
+                    argsList.toArray(new String[0]),
+                    null,
+                    null,
+                    COL_CREATED_AT + " DESC",
+                    String.valueOf(limit > 0 ? limit : 30)
+            );
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    list.add(fromCursor(cursor));
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error querying messages before: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        Collections.reverse(list);
+        return list;
     }
 
     private ChatMessage fromCursor(Cursor cursor) {
@@ -523,6 +623,10 @@ public class ChatLocalDbHelper extends SQLiteOpenHelper {
         msg.setStatus(cursor.getString(cursor.getColumnIndexOrThrow(COL_STATUS)));
         msg.setReaction(cursor.getString(cursor.getColumnIndexOrThrow(COL_REACTION)));
         msg.setDeletedForEveryone(cursor.getInt(cursor.getColumnIndexOrThrow(COL_DELETED_EVERYONE)) == 1);
+        int starredIdx = cursor.getColumnIndex(COL_IS_STARRED);
+        if (starredIdx != -1 && !cursor.isNull(starredIdx)) {
+            msg.setStarred(cursor.getInt(starredIdx) == 1);
+        }
         msg.setCreatedAt(cursor.getString(cursor.getColumnIndexOrThrow(COL_CREATED_AT)));
         return msg;
     }

@@ -47,9 +47,65 @@ app.get('/health', async (_req, res) => {
   }
 });
 
-app.post('/api/ping', (req, res) => {
-  const { source, event, timestamp } = req.body || {};
-  console.log(`[Ping] from ${source || 'unknown'} - event: ${event || 'none'} at ${timestamp || new Date().toISOString()}`);
+app.post('/api/ping', async (req, res) => {
+  const { source, event, timestamp, appId, appName, appVersion, androidId, persistentId } = req.body || {};
+  const authHeader = req.headers['authorization'];
+  let token = null;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7).trim();
+  }
+
+  try {
+    const { pool } = require('./db');
+    const crypto = require('node:crypto');
+    let device = null;
+
+    if (token) {
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const dRes = await pool.query(`SELECT id, device_details FROM public.devices WHERE token_hash = $1`, [tokenHash]);
+      if (dRes.rows.length > 0) device = dRes.rows[0];
+    }
+
+    if (!device && (androidId || persistentId)) {
+      const dRes = await pool.query(
+        `SELECT id, device_details FROM public.devices WHERE ($1::text IS NOT NULL AND androidid = $1) OR ($2::text IS NOT NULL AND persistentid = $2)`,
+        [androidId || null, persistentId || null]
+      );
+      if (dRes.rows.length > 0) device = dRes.rows[0];
+    }
+
+    if (device) {
+      const appKey = (appId === 'com.zez.app' || appName === 'Quacky') ? 'quacky' : ((appId === 'app.z.manager' || appName === 'ZEZ') ? 'zez' : null);
+      let details = device.device_details || {};
+      if (typeof details === 'string') {
+        try { details = JSON.parse(details); } catch (e) { details = {}; }
+      }
+      if (!details.apps) details.apps = {};
+
+      if (appKey) {
+        details.apps[appKey] = {
+          package: appId || (appKey === 'quacky' ? 'com.zez.app' : 'app.z.manager'),
+          name: appName || (appKey === 'quacky' ? 'Quacky' : 'ZEZ'),
+          version: appVersion || (appKey === 'quacky' ? '1.0.65' : '1.0.6'),
+          installed: true,
+          last_seen: new Date().toISOString()
+        };
+      }
+
+      await pool.query(
+        `UPDATE public.devices
+         SET last_seen_at = NOW(),
+             device_details = $2::jsonb,
+             app_version = COALESCE($3, app_version),
+             updated_at = NOW()
+         WHERE id = $1`,
+        [device.id, JSON.stringify(details), appVersion || null]
+      );
+    }
+  } catch (err) {
+    console.warn('[Ping] Device update warning:', err.message);
+  }
+
   res.json({ success: true, status: 'acknowledged', serverTime: new Date().toISOString() });
 });
 
@@ -71,11 +127,11 @@ app.get('/downloads/:filename', async (req, res, next) => {
     let result;
     if (reqFile === 'app-release-latest.apk') {
       result = await pool.query(
-        `SELECT file_name, download_url FROM public.app_releases WHERE is_active = TRUE ORDER BY version_code DESC, id DESC LIMIT 1`
+        `SELECT id, file_name, download_url FROM public.app_releases WHERE is_active = TRUE ORDER BY version_code DESC, id DESC LIMIT 1`
       );
     } else {
       result = await pool.query(
-        `SELECT file_name, download_url FROM public.app_releases WHERE file_name = $1 OR download_url LIKE $2 ORDER BY id DESC LIMIT 1`,
+        `SELECT id, file_name, download_url FROM public.app_releases WHERE file_name = $1 OR download_url LIKE $2 ORDER BY id DESC LIMIT 1`,
         [reqFile, `%${reqFile}%`]
       );
     }
@@ -86,9 +142,7 @@ app.get('/downloads/:filename', async (req, res, next) => {
       if (fs.existsSync(activePath)) {
         return res.sendFile(activePath);
       }
-      if (row.download_url && row.download_url.startsWith('/api/storage/file/')) {
-        return res.redirect(row.download_url);
-      }
+      return res.redirect(`/api/app/download/${row.id}`);
     }
   } catch (err) {
     console.error('Downloads fallback error:', err.message);

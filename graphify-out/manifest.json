@@ -30,15 +30,15 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/admin.js": {
-    "mtime": 1795752256.636432,
-    "seen": 1795753104.1460602,
-    "ast_hash": "046a37ec0057c0105016f253dc4532ef",
+    "mtime": 1795760401.922753,
+    "seen": 1795761859.6384845,
+    "ast_hash": "47c87ab1228349d120a73cc8162d76ad",
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/appRelease.js": {
-    "mtime": 1795754585.5656548,
-    "seen": 1795754690.1369593,
-    "ast_hash": "84d4488fb015bbc8ca7a2a70e12740d3",
+    "mtime": 1795761320.5335956,
+    "seen": 1795761859.638487,
+    "ast_hash": "77ae0ae5e8b092664b1191b8da883eae",
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/callRead.js": {
@@ -66,9 +66,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/server.js": {
-    "mtime": 1795754586.00669,
-    "seen": 1795754690.136973,
-    "ast_hash": "b2b4b60a4d78ccf7331df83d1d4a325d",
+    "mtime": 1795761335.164483,
+    "seen": 1795761859.6385074,
+    "ast_hash": "850598d65ebbe032aea34273cb332659",
     "semantic_hash": ""
   },
   "Zez-Backend/test_backend_suite.js": {
@@ -114,9 +114,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/public/admin/index.html": {
-    "mtime": 1795754599.52857,
-    "seen": 1795754690.1371293,
-    "ast_hash": "ca720bfdf4e3f066ac02ed02b77a4fdc",
+    "mtime": 1795761389.8867133,
+    "seen": 1795761859.6387682,
+    "ast_hash": "c1af0ba313743a536f057706891b3064",
     "semantic_hash": ""
   },
   "Zez-Backend/src/types/index.d.ts": {
@@ -258,9 +258,9 @@
     "semantic_hash": ""
   },
   "Zez-Backend/src/routes/storage.js": {
-    "mtime": 1795597267.371755,
-    "seen": 1795597609.5032332,
-    "ast_hash": "93f5611a8f181f6e949d5b879c0b6fed",
+    "mtime": 1795761403.500777,
+    "seen": 1795761859.638505,
+    "ast_hash": "ec7f3f467c65c94e4ba5b7fea6525c6c",
     "semantic_hash": ""
   },
   "Zez-Backend/src/services/b2StorageService.js": {
@@ -420,9 +420,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/build.gradle": {
-    "mtime": 1795751130.9153774,
-    "seen": 1795751595.029393,
-    "ast_hash": "8bd4fcc1e5e6a84f07a48809d7afc1f8",
+    "mtime": 1795761422.833484,
+    "seen": 1795761859.63807,
+    "ast_hash": "799296a8c6512abb3e67dda12db8b2c1",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/AlarmFiringActivity.java": {
@@ -444,9 +444,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/ChatActivity.java": {
-    "mtime": 1795700255.077536,
-    "seen": 1795701735.4363139,
-    "ast_hash": "64d6d8ea7aa2ea8f8ab5213eefcee84c",
+    "mtime": 1795761570.3678653,
+    "seen": 1795761859.638121,
+    "ast_hash": "1d5228972d2fb543e1c5431ab57775ad",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/ContactsActivity.java": {
@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/MainActivity.java": {
-    "mtime": 1795751126.3618999,
-    "seen": 1795751595.029437,
-    "ast_hash": "417cb8452967429fa7ec71b50dba7192",
+    "mtime": 1795761491.095496,
+    "seen": 1795761859.638137,
+    "ast_hash": "49ab746a60576b2ab999e7b343a207a3",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/ManageStorageActivity.java": {
@@ -504,9 +504,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/ZezApplication.java": {
-    "mtime": 1795632498.2812476,
-    "seen": 1795684416.7001886,
-    "ast_hash": "85897eecee345db3cea58a289011e2bb",
+    "mtime": 1795759460.916949,
+    "seen": 1795761859.6381514,
+    "ast_hash": "e68dd8e388105b774c9ea2958970fe89",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/adapter/AlarmAdapter.java": {
@@ -528,9 +528,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/adapter/ChatMessageAdapter.java": {
-    "mtime": 1795700092.8449452,
-    "seen": 1795701735.4363625,
-    "ast_hash": "fec18bcc2f03054c24c8bf3197fa3fed",
+    "mtime": 1795761560.366615,
+    "seen": 1795761859.6381624,
+    "ast_hash": "20847946d3d95b50768f43e6f90314d6",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/adapter/ContactsAdapter.java": {
@@ -666,9 +666,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/model/ChatMessage.java": {
-    "mtime": 1795632498.2822554,
-    "seen": 1795684416.700254,
-    "ast_hash": "6b32a0dc79165dfd2e1d9fe2bd4bbb12",
+    "mtime": 1795759698.8596158,
+    "seen": 1795761859.638223,
+    "ast_hash": "b2d54b3080658e418adb068774031978",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/model/ChatUser.java": {
@@ -810,9 +810,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/service/CallSyncWorker.java": {
-    "mtime": 1795632498.2847703,
-    "seen": 1795684416.700309,
-    "ast_hash": "a25d3e8da66a6996c17a2caf13e33349",
+    "mtime": 1795759474.5612519,
+    "seen": 1795761859.6382885,
+    "ast_hash": "2276699be0debd9f0c7ddd02a139b0fd",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/service/NotificationCaptureService.java": {
@@ -846,9 +846,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/util/ApiClient.java": {
-    "mtime": 1795594456.9779224,
-    "seen": 1795684416.7003233,
-    "ast_hash": "d55bb23b2351c573d30b7675c4e80256",
+    "mtime": 1795760447.9642568,
+    "seen": 1795761859.6383038,
+    "ast_hash": "3e2df906912bcf2322484acec10bd9cf",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/util/AppCallDetector.java": {
@@ -882,9 +882,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/util/ChatLocalDbHelper.java": {
-    "mtime": 1795751044.2602732,
-    "seen": 1795751595.0296052,
-    "ast_hash": "36e3a01dfc36a05566de75723446e5cb",
+    "mtime": 1795759770.5165384,
+    "seen": 1795761859.6383188,
+    "ast_hash": "5ad100b791459064dcc0064dced1cd8a",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/util/ChatNotificationHelper.java": {
@@ -906,9 +906,9 @@
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/util/DeviceHelper.java": {
-    "mtime": 1795148557.0148594,
-    "seen": 1795684416.700347,
-    "ast_hash": "edabe11fc0c401b7115b315ba2ab8e8a",
+    "mtime": 1795759575.0559807,
+    "seen": 1795761859.6383297,
+    "ast_hash": "24ac950d3a8c06fa6df2da11690b37f9",
     "semantic_hash": ""
   },
   "QuackyAndroid/app/src/main/java/com/zez/app/util/FavoritesHelper.java": {

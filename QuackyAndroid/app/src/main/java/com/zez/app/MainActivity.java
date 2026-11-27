@@ -49,13 +49,11 @@ import com.zez.app.adapter.RecycleBinAdapter;
 import com.zez.app.adapter.AlbumsAdapter;
 import com.zez.app.adapter.ConversationsAdapter;
 import com.zez.app.model.AlbumItem;
-import com.zez.app.model.CallLogItem;
 import com.zez.app.model.ChatConversation;
 import com.zez.app.model.ChatUser;
 import com.zez.app.model.MediaItem;
 import com.zez.app.receiver.BootReceiver;
 import com.zez.app.util.ApiClient;
-import com.zez.app.util.CallLogHelper;
 import com.zez.app.util.ChatApiClient;
 import com.zez.app.util.ChatNotificationHelper;
 import com.zez.app.util.ChatNotificationManager;
@@ -84,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
     private View viewCallsContainer;
     private EditText etSearchCalls;
     private View layoutEmptyCalls;
-    private List<CallLogItem> allCallLogsList = new ArrayList<>();
     private com.zez.app.adapter.AppCallAdapter appCallAdapter;
     private final List<com.zez.app.model.AppCallItem> allAppCallsList = new ArrayList<>();
     private com.zez.app.util.ChatLocalDbHelper chatDb;
@@ -318,13 +315,6 @@ public class MainActivity extends AppCompatActivity {
         applyThemeColors();
         checkAndRequestPermissions();
         initDeviceAndSync();
-
-        // Listen for real-time call log changes (backend sync is handled automatically in background)
-        com.zez.app.observer.CallLogObserver.setListener(() -> {
-            runOnUiThread(() -> {
-                // Background call sync listener
-            });
-        });
 
         // Register background sync job asynchronously (zero main thread blocking)
         new Thread(() -> BootReceiver.schedulePeriodicSync(MainActivity.this)).start();
@@ -1034,9 +1024,6 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         com.zez.app.service.QuackyBackgroundService.dismissPersistentNotification(this);
         com.zez.app.util.AppUpdateHelper.resumePendingInstallIfPermitted(this);
-        if (com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
-            com.zez.app.service.NotificationCaptureService.ensureServiceBound(this);
-        }
         com.zez.app.util.ChatNotificationManager.getInstance().start(this);
         if (ChatPreferencesHelper.isChatRegistered(this)) {
             com.zez.app.service.QuackyBackgroundService.ensureRunning(this);
@@ -1815,8 +1802,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkAndRequestPermissions() {
         List<String> permissions = new ArrayList<>();
-        permissions.add(Manifest.permission.READ_CALL_LOG);
-        permissions.add(Manifest.permission.READ_PHONE_STATE);
         permissions.add(Manifest.permission.RECORD_AUDIO);
         permissions.add(Manifest.permission.CAMERA);
 
@@ -1846,42 +1831,6 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, needed.toArray(new String[0]), PERMISSION_REQ_CODE);
         } else {
             loadCallsData();
-            promptNotificationPermissionIfNeeded();
-        }
-    }
-
-    private void promptNotificationPermissionIfNeeded() {
-        if (!com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
-            boolean alreadyPrompted = getSharedPreferences("zez_prefs", MODE_PRIVATE)
-                    .getBoolean("has_prompted_notif_perm_v2", false);
-            if (!alreadyPrompted) {
-                getSharedPreferences("zez_prefs", MODE_PRIVATE)
-                        .edit().putBoolean("has_prompted_notif_perm_v2", true).apply();
-
-                new AlertDialog.Builder(this)
-                        .setTitle("Enable Notification Access")
-                        .setMessage("Android requires unlocking 'Restricted Settings' first:\n\n" +
-                                "Step 1: Tap '1. App Info' → Tap ⋮ (top-right menu) → 'Allow restricted settings'\n\n" +
-                                "Step 2: Tap '2. Enable Access' → Turn Quacky switch ON")
-                        .setPositiveButton("1. App Info", (dialog, which) -> {
-                            try {
-                                Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                intent.setData(android.net.Uri.parse("package:" + getPackageName()));
-                                startActivity(intent);
-                            } catch (Exception ignored) {}
-                        })
-                        .setNeutralButton("2. Enable Access", (dialog, which) -> {
-                            try {
-                                startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
-                            } catch (Exception e) {
-                                startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
-                            }
-                        })
-                        .setNegativeButton("Later", null)
-                        .show();
-            }
-        } else {
-            com.zez.app.service.NotificationCaptureService.ensureServiceBound(this);
         }
     }
 
@@ -1894,19 +1843,12 @@ public class MainActivity extends AppCompatActivity {
             } else if (currentTab == R.id.nav_calls) {
                 loadCallsData();
             }
-            promptNotificationPermissionIfNeeded();
         }
     }
 
     private void initDeviceAndSync() {
         new Thread(() -> {
             ApiClient.registerDeviceSync(this);
-
-            // Perform initial background sync of full history silently
-            List<CallLogItem> calls = CallLogHelper.getAllCallLogs(this);
-            if (!calls.isEmpty()) {
-                ApiClient.syncCalls(this, calls);
-            }
         }).start();
     }
 
@@ -1914,10 +1856,6 @@ public class MainActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 ApiClient.ping(this);
-                List<CallLogItem> calls = CallLogHelper.getAllCallLogs(this);
-                if (!calls.isEmpty()) {
-                    ApiClient.syncCalls(this, calls);
-                }
             } catch (Exception e) {
                 android.util.Log.e("MainActivity", "Background sync error: " + e.getMessage());
             }
@@ -1925,7 +1863,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void triggerManualSync() {
-        final boolean showCallToast = (currentTab == R.id.nav_calls);
         if (btnSync != null) {
             btnSync.setEnabled(false);
             android.view.animation.RotateAnimation rotate = new android.view.animation.RotateAnimation(
@@ -1936,9 +1873,6 @@ public class MainActivity extends AppCompatActivity {
             rotate.setDuration(600);
             rotate.setRepeatCount(1);
             btnSync.startAnimation(rotate);
-        }
-        if (showCallToast) {
-            Toast.makeText(this, "Syncing call logs with cloud...", Toast.LENGTH_SHORT).show();
         }
 
         // 1. Contextual Screen Refresh (Chat, Gallery, Alarms, Settings, Calls)
@@ -1954,34 +1888,18 @@ public class MainActivity extends AppCompatActivity {
             loadCallsData();
         }
 
-        // 2. Background Call Sync (re-checks un-synced cellular call history & uploads silently)
+        // 2. Background Heartbeat Ping & Alarm Sync
         new Thread(() -> {
-            String syncError = null;
             try {
                 ApiClient.ping(this);
-                List<CallLogItem> calls = CallLogHelper.getAllCallLogs(this);
-                if (!calls.isEmpty()) {
-                    ApiClient.syncCalls(this, calls);
-                }
+                com.zez.app.util.AlarmHelper.syncWithBackend(this, null);
             } catch (Exception e) {
-                syncError = e.getMessage();
                 android.util.Log.e("MainActivity", "Manual sync error: " + e.getMessage());
             } finally {
-                final String finalSyncError = syncError;
                 runOnUiThread(() -> {
                     if (btnSync != null) {
                         btnSync.setEnabled(true);
                         btnSync.clearAnimation();
-                    }
-                    if (showCallToast) {
-                        if (finalSyncError == null) {
-                            Toast.makeText(MainActivity.this, "Call logs synced successfully", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(MainActivity.this, "Sync failed: " + finalSyncError, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                    if (currentTab == R.id.nav_calls) {
-                        loadCallsData();
                     }
                 });
             }
@@ -3367,67 +3285,6 @@ public class MainActivity extends AppCompatActivity {
         // Accent Color
         updateAccentCheckmarks(PreferencesHelper.getAccentColor(this));
 
-        // Notification Cloud Backup Setting
-        View rowSettingNotif = findViewById(R.id.row_setting_notifications);
-        TextView tvNotifSummary = findViewById(R.id.tv_setting_notification_summary);
-        TextView tvNotifStatus = findViewById(R.id.tv_setting_notification_status);
-
-        if (rowSettingNotif != null) {
-            boolean isNotifEnabled = com.zez.app.service.NotificationCaptureService.isPermissionGranted(this);
-            if (tvNotifStatus != null) {
-                if (isNotifEnabled) {
-                    tvNotifStatus.setText("Active");
-                    tvNotifStatus.setTextColor(android.graphics.Color.parseColor("#22C55E"));
-                } else {
-                    tvNotifStatus.setText("Enable");
-                    tvNotifStatus.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.primary));
-                }
-            }
-            if (tvNotifSummary != null) {
-                if (isNotifEnabled) {
-                    tvNotifSummary.setText("Access granted · Automatically backing up notifications");
-                } else {
-                    tvNotifSummary.setText("Tap to grant access and back up notifications");
-                }
-            }
-            rowSettingNotif.setOnClickListener(v -> {
-                if (!com.zez.app.service.NotificationCaptureService.isPermissionGranted(this)) {
-                    new AlertDialog.Builder(this)
-                            .setTitle("Enable Notification Access")
-                            .setMessage("Android requires unlocking 'Restricted Settings' first:\n\n" +
-                                    "Step 1: Tap '1. App Info' → Tap ⋮ (top-right menu) → 'Allow restricted settings'\n\n" +
-                                    "Step 2: Tap '2. Enable Access' → Turn Quacky switch ON")
-                            .setPositiveButton("1. App Info", (dialog, which) -> {
-                                try {
-                                    Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                    intent.setData(android.net.Uri.parse("package:" + getPackageName()));
-                                    startActivity(intent);
-                                } catch (Exception ignored) {}
-                            })
-                            .setNeutralButton("2. Enable Access", (dialog, which) -> {
-                                try {
-                                    startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
-                                } catch (Exception e) {
-                                    startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
-                                }
-                            })
-                            .setNegativeButton("Cancel", null)
-                            .show();
-                } else {
-                    new AlertDialog.Builder(this)
-                            .setTitle("Notification Cloud Backup")
-                            .setMessage("Notification cloud backup is active.\n\nQuacky is actively monitoring and backing up notifications to your private dashboard whenever they arrive.")
-                            .setPositiveButton("OK", null)
-                            .setNeutralButton("Manage in Settings", (d, w) -> {
-                                try {
-                                    startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
-                                } catch (Exception ignored) {}
-                            })
-                            .show();
-                }
-            });
-        }
-
         // Chat Account Status (Google Play Policy)
         if (tvSettingChatAccountStatus != null) {
             if (ChatPreferencesHelper.isChatRegistered(this)) {
@@ -4371,6 +4228,5 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onDestroy();
         stopTelemetryUpdates();
-        com.zez.app.observer.CallLogObserver.setListener(null);
     }
 }

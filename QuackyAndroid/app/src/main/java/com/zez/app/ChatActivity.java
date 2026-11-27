@@ -165,6 +165,9 @@ public class ChatActivity extends AppCompatActivity {
     private String lastPollTimestamp = null;
     private final SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
     private final Set<String> loadedMessageIds = new HashSet<>();
+    private int activeSwipeReplyPos = -1;
+    private boolean isLoadingOlder = false;
+    private boolean hasMoreOlder = true;
 
     private static class PendingMessage {
         ChatMessage optimisticMsg;
@@ -508,7 +511,22 @@ public class ChatActivity extends AppCompatActivity {
                 if (adapter != null) {
                     List<ChatMessage> selected = adapter.getSelectedMessages();
                     if (!selected.isEmpty()) {
-                        Toast.makeText(this, "Starred " + selected.size() + " message(s)", Toast.LENGTH_SHORT).show();
+                        boolean allStarred = true;
+                        for (ChatMessage m : selected) {
+                            if (!m.isStarred()) {
+                                allStarred = false;
+                                break;
+                            }
+                        }
+                        boolean newTarget = !allStarred;
+                        for (ChatMessage m : selected) {
+                            m.setStarred(newTarget);
+                            if (chatDb != null && m.getId() != null) {
+                                chatDb.toggleStarMessage(m.getId(), newTarget);
+                            }
+                        }
+                        adapter.notifyDataSetChanged();
+                        Toast.makeText(this, (newTarget ? "Starred " : "Unstarred ") + selected.size() + " message(s)", Toast.LENGTH_SHORT).show();
                     }
                     adapter.clearSelection();
                 }
@@ -700,7 +718,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void loadCachedMessages() {
         if (chatDb == null) return;
-        List<ChatMessage> cached = chatDb.getMessages(conversationId, otherUserId, 200);
+        List<ChatMessage> cached = chatDb.getMessages(conversationId, otherUserId, 30);
         if (cached != null && !cached.isEmpty()) {
             normalMessages.clear();
             loadedMessageIds.clear();
@@ -715,6 +733,86 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    private void loadOlderMessages() {
+        if (isLoadingOlder || !hasMoreOlder || isSecretMode || normalMessages.isEmpty()) return;
+        isLoadingOlder = true;
+
+        String oldestTime = null;
+        for (ChatMessage m : normalMessages) {
+            if (m.getCreatedAt() != null && !m.getCreatedAt().isEmpty()) {
+                oldestTime = m.getCreatedAt();
+                break;
+            }
+        }
+
+        final String finalOldestTime = oldestTime;
+        List<ChatMessage> olderFromDb = chatDb != null ? chatDb.getMessagesBefore(conversationId, finalOldestTime, 30) : new ArrayList<>();
+        if (!olderFromDb.isEmpty()) {
+            List<ChatMessage> trulyNewOlder = new ArrayList<>();
+            for (ChatMessage m : olderFromDb) {
+                if (m.getId() != null && !loadedMessageIds.contains(m.getId())) {
+                    loadedMessageIds.add(m.getId());
+                    trulyNewOlder.add(m);
+                }
+            }
+            if (!trulyNewOlder.isEmpty()) {
+                normalMessages.addAll(0, trulyNewOlder);
+                LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int firstVisible = lm != null ? lm.findFirstVisibleItemPosition() : 0;
+                View v = lm != null ? lm.getChildAt(0) : null;
+                int topOffset = (v == null) ? 0 : (v.getTop() - recyclerView.getPaddingTop());
+
+                int addedRows = adapter.prependMessages(trulyNewOlder);
+                if (lm != null) {
+                    lm.scrollToPositionWithOffset(firstVisible + addedRows, topOffset);
+                }
+                isLoadingOlder = false;
+                return;
+            }
+        }
+
+        ChatApiClient.getMessages(this, conversationId, currentUserId, otherUserId, 30, "normal", finalOldestTime, new ChatApiClient.ChatCallback<ChatApiClient.MessagesResult>() {
+            @Override
+            public void onSuccess(ChatApiClient.MessagesResult result) {
+                isLoadingOlder = false;
+                if (result == null || result.messages == null || result.messages.isEmpty()) {
+                    hasMoreOlder = false;
+                    return;
+                }
+                List<ChatMessage> olderMessages = result.messages;
+                if (chatDb != null) {
+                    chatDb.saveMessages(olderMessages);
+                }
+                List<ChatMessage> trulyNewOlder = new ArrayList<>();
+                for (ChatMessage m : olderMessages) {
+                    if (m.getId() != null && !loadedMessageIds.contains(m.getId())) {
+                        loadedMessageIds.add(m.getId());
+                        trulyNewOlder.add(m);
+                    }
+                }
+                if (trulyNewOlder.isEmpty()) {
+                    hasMoreOlder = false;
+                    return;
+                }
+                normalMessages.addAll(0, trulyNewOlder);
+                LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int firstVisible = lm != null ? lm.findFirstVisibleItemPosition() : 0;
+                View v = lm != null ? lm.getChildAt(0) : null;
+                int topOffset = (v == null) ? 0 : (v.getTop() - recyclerView.getPaddingTop());
+
+                int addedRows = adapter.prependMessages(trulyNewOlder);
+                if (lm != null) {
+                    lm.scrollToPositionWithOffset(firstVisible + addedRows, topOffset);
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                isLoadingOlder = false;
+            }
+        });
     }
 
     private void saveAndApplyCustomWallpaper(Uri uri) {
@@ -1140,8 +1238,16 @@ public class ChatActivity extends AppCompatActivity {
             rowVisibility.setOnClickListener(v -> showMediaVisibilityDialog(conversationId, tvVisSub));
         }
 
+        int starredCount = chatDb != null ? chatDb.getStarredCount(conversationId) : 0;
+        if (tvStarredCount != null) {
+            tvStarredCount.setText(String.valueOf(starredCount));
+        }
+
         if (rowStarred != null) {
-            rowStarred.setOnClickListener(v -> Toast.makeText(this, "No starred messages", Toast.LENGTH_SHORT).show());
+            rowStarred.setOnClickListener(v -> {
+                sheet.dismiss();
+                showStarredMessagesSheet();
+            });
         }
 
         sheet.show();
@@ -1240,6 +1346,97 @@ public class ChatActivity extends AppCompatActivity {
                 }, 2000);
                 break;
             }
+        }
+    }
+
+    private void jumpToStarredMessage(String messageId) {
+        if (messageId == null || adapter == null || recyclerView == null) return;
+        boolean found = false;
+        for (int i = 0; i < adapter.getItemCount(); i++) {
+            ChatMessage m = adapter.getMessageAt(i);
+            if (m != null && messageId.equals(m.getId())) {
+                found = true;
+                break;
+            }
+        }
+        if (!found && chatDb != null) {
+            List<ChatMessage> fullCached = chatDb.getMessages(conversationId, otherUserId, 150);
+            if (!fullCached.isEmpty()) {
+                normalMessages.clear();
+                loadedMessageIds.clear();
+                normalMessages.addAll(fullCached);
+                for (ChatMessage m : fullCached) {
+                    if (m.getId() != null) loadedMessageIds.add(m.getId());
+                }
+                adapter.setMessages(normalMessages);
+            }
+        }
+        recyclerView.post(() -> scrollToMessage(messageId));
+    }
+
+    private void showStarredMessagesSheet() {
+        if (chatDb == null) return;
+        List<ChatMessage> starredList = chatDb.getStarredMessages(conversationId);
+        com.google.android.material.bottomsheet.BottomSheetDialog dialog =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_starred_messages, null);
+        dialog.setContentView(view);
+
+        TextView tvCount = view.findViewById(R.id.tv_starred_sheet_count);
+        View btnClose = view.findViewById(R.id.btn_close_starred_sheet);
+        View layoutEmpty = view.findViewById(R.id.layout_starred_empty);
+        RecyclerView recycler = view.findViewById(R.id.recycler_starred_messages);
+
+        if (tvCount != null) tvCount.setText(String.valueOf(starredList.size()));
+        if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        if (starredList.isEmpty()) {
+            if (layoutEmpty != null) layoutEmpty.setVisibility(View.VISIBLE);
+            if (recycler != null) recycler.setVisibility(View.GONE);
+        } else {
+            if (layoutEmpty != null) layoutEmpty.setVisibility(View.GONE);
+            if (recycler != null) {
+                recycler.setVisibility(View.VISIBLE);
+                recycler.setLayoutManager(new LinearLayoutManager(this));
+                recycler.setAdapter(new RecyclerView.Adapter<StarredItemViewHolder>() {
+                    @NonNull
+                    @Override
+                    public StarredItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_starred_message, parent, false);
+                        return new StarredItemViewHolder(itemView);
+                    }
+
+                    @Override
+                    public void onBindViewHolder(@NonNull StarredItemViewHolder holder, int position) {
+                        ChatMessage m = starredList.get(position);
+                        boolean isSelf = currentUserId != null && currentUserId.equals(m.getSenderId());
+                        holder.tvSender.setText(isSelf ? "You" : (otherUserName != null ? otherUserName : "Contact"));
+                        holder.tvTime.setText(com.zez.app.adapter.ChatMessageAdapter.formatTime(m.getCreatedAt(), isoFormat, new SimpleDateFormat("hh:mm a", Locale.getDefault())));
+                        holder.tvSnippet.setText(m.getDisplaySnippet());
+
+                        holder.itemView.setOnClickListener(v -> {
+                            dialog.dismiss();
+                            jumpToStarredMessage(m.getId());
+                        });
+                    }
+
+                    @Override
+                    public int getItemCount() {
+                        return starredList.size();
+                    }
+                });
+            }
+        }
+        dialog.show();
+    }
+
+    private static class StarredItemViewHolder extends RecyclerView.ViewHolder {
+        TextView tvSender, tvTime, tvSnippet;
+        StarredItemViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvSender = itemView.findViewById(R.id.tv_starred_item_sender);
+            tvTime = itemView.findViewById(R.id.tv_starred_item_time);
+            tvSnippet = itemView.findViewById(R.id.tv_starred_item_snippet);
         }
     }
 
@@ -1410,6 +1607,19 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(null);
 
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                super.onScrolled(rv, dx, dy);
+                if (dy < 0) { // Scrolling towards older messages
+                    LinearLayoutManager lm = (LinearLayoutManager) rv.getLayoutManager();
+                    if (lm != null && lm.findFirstVisibleItemPosition() <= 4 && !isLoadingOlder && hasMoreOlder) {
+                        loadOlderMessages();
+                    }
+                }
+            }
+        });
+
         adapter.setOnMessageActionListener(new ChatMessageAdapter.OnMessageActionListener() {
             @Override
             public void onSelectionChanged(int selectedCount) {
@@ -1465,17 +1675,19 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public float getSwipeThreshold(@NonNull RecyclerView.ViewHolder viewHolder) {
-                return 0.12f; // Low threshold for effortless swipe
+                // High threshold ensures ItemTouchHelper never treats swipe as dismiss
+                // and always cleanly springs back to 0 without getting stuck
+                return 2.0f;
             }
 
             @Override
             public float getSwipeVelocityThreshold(float defaultValue) {
-                return defaultValue * 0.2f;
+                return defaultValue * 2f;
             }
 
             @Override
             public float getSwipeEscapeVelocity(float defaultValue) {
-                return defaultValue * 0.2f;
+                return defaultValue * 2f;
             }
 
             @Override
@@ -1483,32 +1695,38 @@ public class ChatActivity extends AppCompatActivity {
                 super.clearView(recyclerView, viewHolder);
                 getDefaultUIUtil().clearView(viewHolder.itemView);
                 viewHolder.itemView.setTranslationX(0f);
+                activeSwipeReplyPos = -1;
             }
 
             @Override
             public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
                                     @NonNull RecyclerView.ViewHolder viewHolder,
                                     float dX, float dY, int actionState, boolean isCurrentlyActive) {
-                float maxOffset = 140f;
+                float density = getResources().getDisplayMetrics().density;
+                float maxOffset = 90f * density;
                 float clampedDx = dX > 0 ? Math.min(dX, maxOffset) : Math.max(dX, -maxOffset);
+
+                float triggerDist = 44f * density;
+                int pos = viewHolder.getBindingAdapterPosition();
+                if (isCurrentlyActive && Math.abs(dX) >= triggerDist && activeSwipeReplyPos != pos) {
+                    activeSwipeReplyPos = pos;
+                    viewHolder.itemView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
+                    if (pos != RecyclerView.NO_POSITION && adapter != null) {
+                        ChatMessage msg = adapter.getMessageAt(pos);
+                        if (msg != null && !msg.isDeletedForEveryone()) {
+                            startReply(msg);
+                        }
+                    }
+                }
+
                 getDefaultUIUtil().onDraw(c, recyclerView, viewHolder.itemView, clampedDx, dY, actionState, isCurrentlyActive);
             }
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int pos = viewHolder.getBindingAdapterPosition();
-                if (pos != RecyclerView.NO_POSITION && adapter != null) {
-                    ChatMessage msg = adapter.getMessageAt(pos);
-                    if (msg != null && !msg.isDeletedForEveryone()) {
-                        startReply(msg);
-                    }
-                }
-                // Unconditionally clear translation & snap bubble back into place without sticking
                 getDefaultUIUtil().clearView(viewHolder.itemView);
                 viewHolder.itemView.setTranslationX(0f);
-                if (pos != RecyclerView.NO_POSITION && adapter != null) {
-                    adapter.notifyItemChanged(pos);
-                }
+                activeSwipeReplyPos = -1;
             }
         };
         new ItemTouchHelper(swipeToReplyCallback).attachToRecyclerView(recyclerView);

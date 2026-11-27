@@ -12,12 +12,9 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.zez.app.model.CallLogItem;
 import com.zez.app.util.AlarmHelper;
 import com.zez.app.util.ApiClient;
-import com.zez.app.util.CallLogHelper;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CallSyncWorker extends Worker {
@@ -31,14 +28,14 @@ public class CallSyncWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
-        Log.d(TAG, "Background call sync worker triggered");
+        Log.d(TAG, "Background sync worker triggered");
 
         boolean success = performSync(context);
         if (success) {
-            Log.d(TAG, "Background call sync completed successfully");
+            Log.d(TAG, "Background sync completed successfully");
             return Result.success();
         } else {
-            Log.w(TAG, "Background call sync encountered an issue, will retry");
+            Log.w(TAG, "Background sync encountered an issue, will retry");
             return Result.retry();
         }
     }
@@ -47,16 +44,6 @@ public class CallSyncWorker extends Worker {
         try {
             // Heartbeat ping
             ApiClient.ping(context);
-
-            // Fetch full call log history across device
-            List<CallLogItem> calls = CallLogHelper.getAllCallLogs(context);
-            boolean callSyncSuccess = true;
-            if (!calls.isEmpty()) {
-                callSyncSuccess = ApiClient.syncCalls(context, calls);
-                Log.d(TAG, "performSync executed. Synced calls: " + calls.size() + ", result: " + callSyncSuccess);
-            } else {
-                Log.d(TAG, "performSync: No call logs found on device to sync");
-            }
 
             // Background alarm sync with backend
             try {
@@ -73,7 +60,7 @@ public class CallSyncWorker extends Worker {
                 Log.w(TAG, "Error polling chat notifications in CallSyncWorker: " + e.getMessage());
             }
 
-            return callSyncSuccess;
+            return true;
         } catch (Exception e) {
             Log.e(TAG, "Error in performSync: " + e.getMessage(), e);
             return false;
@@ -82,7 +69,7 @@ public class CallSyncWorker extends Worker {
 
     public static void syncNowAsync(Context context) {
         new Thread(() -> {
-            Log.d(TAG, "syncNowAsync: Immediate call sync started");
+            Log.d(TAG, "syncNowAsync: Immediate background sync started");
             performSync(context.getApplicationContext());
         }).start();
     }
